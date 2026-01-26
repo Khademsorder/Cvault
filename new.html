@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Hybrid Vault Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <style>
+        :root {
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --primary: #6366f1;
+            --text: #f8fafc;
+            --text-mute: #94a3b8;
+            --danger: #ef4444;
+            --radius: 12px;
+            --nav-height: 70px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+        body { background: var(--bg); color: var(--text); overflow: hidden; height: 100vh; display: flex; flex-direction: column; }
+
+        /* === 1. SPEED MANAGER (TOP BAR) === */
+        #speedManager {
+            background: linear-gradient(90deg, #312e81, #4338ca);
+            height: 0; overflow: hidden; transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column; justify-content: center; padding: 0 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.5); z-index: 1000; position: relative;
+        }
+        #speedManager.active { height: 70px; padding: 10px 20px; }
+        
+        .sm-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 5px; }
+        .sm-speed { font-weight: 700; color: #a5b4fc; font-family: monospace; }
+        
+        .progress-track { width: 100%; height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 4px; }
+        .progress-fill { height: 100%; background: #4ade80; width: 0%; transition: width 0.2s linear; box-shadow: 0 0 10px #4ade80; }
+
+        /* === 2. HEADER === */
+        .header {
+            height: 60px; padding: 0 20px; background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+            display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--surface-light);
+            z-index: 50; flex-shrink: 0;
+        }
+        .storage-pill {
+            background: var(--surface-light); padding: 6px 14px; border-radius: 20px;
+            font-size: 0.75rem; color: var(--text); display: flex; align-items: center; gap: 8px;
+            border: 1px solid rgba(255,255,255,0.1); cursor: pointer;
+        }
+
+        /* === 3. GALLERY GRID === */
+        .content-area {
+            flex: 1; overflow-y: auto; padding: 15px;
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px; align-content: start;
+        }
+        .file-card {
+            aspect-ratio: 1; background: var(--surface); border-radius: var(--radius);
+            overflow: hidden; position: relative; border: 1px solid var(--surface-light);
+            transition: transform 0.1s; cursor: pointer;
+        }
+        .file-card:active { transform: scale(0.96); border-color: var(--primary); }
+        .thumb { width: 100%; height: 100%; object-fit: cover; opacity: 0.85; transition: opacity 0.3s; }
+        .file-card:hover .thumb { opacity: 1; }
+        
+        .file-type-badge {
+            position: absolute; top: 6px; right: 6px; background: rgba(0,0,0,0.6);
+            padding: 2px 6px; border-radius: 4px; font-size: 0.6rem; color: white; backdrop-filter: blur(2px);
+        }
+        .file-name-overlay {
+            position: absolute; bottom: 0; left: 0; width: 100%;
+            background: linear-gradient(to top, rgba(0,0,0,0.9), transparent);
+            padding: 20px 8px 8px 8px; font-size: 0.75rem; color: white;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* === 4. BOTTOM NAV === */
+        .bottom-nav {
+            height: var(--nav-height); background: var(--surface); border-top: 1px solid var(--surface-light);
+            display: flex; justify-content: space-around; align-items: center; padding-bottom: 10px;
+            z-index: 60; flex-shrink: 0;
+        }
+        .nav-icon { font-size: 1.4rem; padding: 10px; opacity: 0.7; transition: 0.2s; }
+        .nav-icon.active { opacity: 1; color: var(--primary); transform: scale(1.1); }
+        
+        .fab {
+            width: 56px; height: 56px; background: var(--primary); border-radius: 50%;
+            display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white;
+            transform: translateY(-24px); border: 4px solid var(--bg); 
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+            cursor: pointer;
+        }
+        .fab:active { transform: translateY(-24px) scale(0.9); }
+
+        /* === 5. PIN SCREEN === */
+        #pinScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg);
+            z-index: 9999; display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+        .pin-dots { display: flex; gap: 15px; margin: 30px 0; }
+        .dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--surface-light); transition: 0.2s; }
+        .dot.filled { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
+        
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 280px; }
+        .key { 
+            width: 70px; height: 70px; border-radius: 50%; background: var(--surface); 
+            color: white; border: none; font-size: 1.5rem; font-weight: 600;
+            cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center;
+        }
+        .key:active { background: var(--surface-light); transform: scale(0.95); }
+
+        /* === 6. MODALS === */
+        .modal {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); z-index: 200; display: none;
+            justify-content: center; align-items: flex-end; backdrop-filter: blur(4px);
+        }
+        .sheet {
+            background: var(--surface); width: 100%; max-width: 500px;
+            border-radius: 24px 24px 0 0; padding: 30px; border-top: 1px solid var(--surface-light);
+            animation: slideUp 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+        }
+        @keyframes slideUp { from {transform: translateY(100%);} to {transform: translateY(0);} }
+
+        .btn-list { display: flex; flex-direction: column; gap: 12px; }
+        .btn-item {
+            padding: 16px; background: var(--surface-light); border-radius: 16px;
+            display: flex; align-items: center; gap: 15px;
+            transition: 0.2s; cursor: pointer; border: 1px solid transparent;
+        }
+        .btn-item:active { background: #475569; border-color: var(--primary); }
+
+        /* PLAYER & TOAST */
+        #playerOverlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: black;
+            z-index: 500; display: none; flex-direction: column; justify-content: center; align-items: center;
+        }
+        .close-player {
+            position: absolute; top: 20px; right: 20px; width: 40px; height: 40px;
+            background: rgba(255,255,255,0.2); border-radius: 50%; display: flex; 
+            align-items: center; justify-content: center; cursor: pointer; z-index: 501;
+        }
+
+    </style>
+</head>
+<body>
+
+    <div id="speedManager">
+        <div class="sm-row">
+            <span id="smStatus" style="font-weight: 600;">Processing...</span>
+            <span class="sm-speed" id="smSpeed">0.0 MB/s</span>
+        </div>
+        <div class="sm-row" style="color: rgba(255,255,255,0.7);">
+            <span id="smSize">0 MB / 0 MB</span>
+            <span id="smPercent">0%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="smBar"></div>
+        </div>
+    </div>
+
+    <div id="pinScreen">
+        <div style="font-size: 4rem; margin-bottom: 20px;">🔒</div>
+        <h2 style="margin-bottom: 10px;">Vault Access</h2>
+        <div class="pin-dots" id="pinDots">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        <div class="keypad">
+            <button class="key" onclick="pressKey(1)">1</button>
+            <button class="key" onclick="pressKey(2)">2</button>
+            <button class="key" onclick="pressKey(3)">3</button>
+            <button class="key" onclick="pressKey(4)">4</button>
+            <button class="key" onclick="pressKey(5)">5</button>
+            <button class="key" onclick="pressKey(6)">6</button>
+            <button class="key" onclick="pressKey(7)">7</button>
+            <button class="key" onclick="pressKey(8)">8</button>
+            <button class="key" onclick="pressKey(9)">9</button>
+            <button class="key" onclick="clearPin()" style="color: var(--danger)">✕</button>
+            <button class="key" onclick="pressKey(0)">0</button>
+            <button class="key" style="background: transparent; cursor: default;"></button>
+        </div>
+    </div>
+
+    <div id="app" style="display:none; flex-direction:column; height:100%;">
+        <div class="header">
+            <div>
+                <div style="font-weight: 700; font-size: 1.1rem;">Secure Drive</div>
+                <div style="font-size: 0.7rem; color: var(--success); display: none;" id="onlineIndicator">● Online</div>
+            </div>
+            <div class="storage-pill" onclick="refreshStorage()">
+                <span style="font-size: 1rem;">☁️</span> 
+                <span id="storageText">Check Storage</span>
+            </div>
+        </div>
+
+        <div class="content-area" id="galleryGrid">
+            <div style="grid-column: 1/-1; text-align: center; margin-top: 60px; color: var(--text-mute);">
+                <div style="font-size: 3rem; opacity: 0.3; margin-bottom: 15px;">📂</div>
+                Not Connected to Drive<br>
+                <button onclick="handleAuth()" style="margin-top:15px; padding:10px 20px; background:var(--primary); border:none; border-radius:8px; color:white;">Connect Google Drive</button>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-icon active" onclick="loadGallery()">🏠</div>
+            <div class="fab" onclick="openUploadMenu()">+</div>
+            <div class="nav-icon" onclick="handleAuth()">👤</div>
+        </div>
+    </div>
+
+    <input type="file" id="fileInput" multiple hidden>
+    <input type="file" id="folderInput" webkitdirectory hidden>
+
+    <div id="uploadModal" class="modal" onclick="if(event.target===this) closeModal('uploadModal')">
+        <div class="sheet">
+            <h3 style="margin-bottom: 20px;">Backup Options</h3>
+            <div class="btn-list">
+                <div class="btn-item" onclick="triggerFileSelect()">
+                    <span style="font-size: 1.5rem;">📄</span>
+                    <div>
+                        <div style="font-weight: 600;">Upload Files</div>
+                        <div style="font-size: 0.8rem; color: var(--text-mute);">Select specific photos/videos</div>
+                    </div>
+                </div>
+                <div class="btn-item" onclick="triggerFolderSelect()">
+                    <span style="font-size: 1.5rem;">📁</span>
+                    <div>
+                        <div style="font-weight: 600;">Upload Folder</div>
+                        <div style="font-size: 0.8rem; color: var(--text-mute);">Backup full directory</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="confirmModal" class="modal">
+        <div class="sheet">
+            <h3>Confirm Backup</h3>
+            <div style="margin: 20px 0; background: var(--bg); padding: 15px; border-radius: 12px;">
+                <p id="confirmText" style="color: var(--text);"></p>
+            </div>
+            <div style="display: flex; gap: 10px;">
+                <button onclick="cancelUpload()" style="flex:1; padding:14px; background: var(--surface-light); color: white; border:none; border-radius:12px; font-weight: 600;">Cancel</button>
+                <button onclick="startUploadProcess()" style="flex:1; padding:14px; background: var(--primary); color: white; border:none; border-radius:12px; font-weight: 600;">Start Upload</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="playerOverlay">
+        <div class="close-player" onclick="closePlayer()">✕</div>
+        <div id="playerContainer" style="width: 100%; height: 80%; display: flex; justify-content: center; align-items: center;"></div>
+        <div style="margin-top: 20px;">
+             <button onclick="downloadCurrent()" style="padding: 10px 25px; border-radius: 30px; border: none; background: white; color: black; font-weight: 700;">⬇ Download Original</button>
+        </div>
+    </div>
+
+    <script>
+        // ============ CONFIGURATION ============
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            app: {
+                pin: "1171", // SET DEFAULT PIN
+                chunkSize: 256 * 1024 * 20 // 5MB Chunks for reliability
+            }
+        };
+
+        // ============ STATE VARIABLES ============
+        firebase.initializeApp(CONFIG.firebase);
+        let currentUser = null;
+        let accessToken = null;
+        let pinBuffer = "";
+        let uploadQueue = [];
+        let totalUploadSize = 0;
+        let currentFileViewer = null;
+
+        // ============ 1. PIN LOCK SYSTEM ============
+        function pressKey(num) {
+            if(pinBuffer.length < 4) {
+                pinBuffer += num;
+                updatePinDots();
+                // Haptic feedback
+                if(navigator.vibrate) navigator.vibrate(30);
+                
+                if(pinBuffer.length === 4) {
+                    setTimeout(checkPin, 300);
+                }
+            }
+        }
+        function clearPin() { pinBuffer = ""; updatePinDots(); }
+        
+        function updatePinDots() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((d, i) => {
+                i < pinBuffer.length ? d.classList.add('filled') : d.classList.remove('filled');
+            });
+        }
+
+        function checkPin() {
+            if(pinBuffer === CONFIG.app.pin) {
+                document.getElementById('pinScreen').style.display = 'none';
+                document.getElementById('app').style.display = 'flex';
+                // Auto check auth
+                firebase.auth().onAuthStateChanged(u => {
+                    if(u) {
+                        currentUser = u;
+                        // Attempt to restore token session if possible, else rely on re-auth for fresh token
+                        // For demo, we assume user might need to click "Connect" to refresh OAuth token
+                        document.getElementById('onlineIndicator').style.display = 'block';
+                    }
+                });
+            } else {
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                clearPin();
+            }
+        }
+
+        // ============ 2. GOOGLE DRIVE AUTH ============
+        function handleAuth() {
+            if(accessToken) {
+                if(confirm("Disconnect Drive?")) {
+                     firebase.auth().signOut().then(() => location.reload());
+                }
+                return;
+            }
+
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('https://www.googleapis.com/auth/drive');
+            
+            // Capture OAuth Access Token
+            firebase.auth().signInWithPopup(provider).then((result) => {
+                accessToken = result.credential.accessToken;
+                currentUser = result.user;
+                document.getElementById('onlineIndicator').style.display = 'block';
+                loadGallery();
+                fetchStorageQuota();
+            }).catch(e => alert("Login Error: " + e.message));
+        }
+
+        // ============ 3. UPLOAD LOGIC (SPEED & FOLDERS) ============
+        function openUploadMenu() { document.getElementById('uploadModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function triggerFileSelect() { document.getElementById('fileInput').click(); }
+        function triggerFolderSelect() { document.getElementById('folderInput').click(); }
+
+        [document.getElementById('fileInput'), document.getElementById('folderInput')].forEach(input => {
+            input.onchange = (e) => {
+                closeModal('uploadModal');
+                uploadQueue = Array.from(e.target.files);
+                if(!uploadQueue.length) return;
+
+                // Pre-calculation
+                totalUploadSize = uploadQueue.reduce((acc, f) => acc + f.size, 0);
+                
+                document.getElementById('confirmText').innerHTML = `
+                    Files: <b>${uploadQueue.length}</b><br>
+                    Total Size: <b>${formatSize(totalUploadSize)}</b><br>
+                    <span style="font-size:0.8rem; color:gray">Will be uploaded to Drive root</span>
+                `;
+                document.getElementById('confirmModal').style.display = 'flex';
+            };
+        });
+
+        function cancelUpload() {
+            uploadQueue = [];
+            document.getElementById('confirmModal').style.display = 'none';
+        }
+
+        async function startUploadProcess() {
+            document.getElementById('confirmModal').style.display = 'none';
+            if(!accessToken) { alert("Please connect Drive first!"); return; }
+
+            showSpeedManager(true);
+            
+            let globalLoaded = 0;
+            let startTime = Date.now();
+            let lastLoadedInfo = 0;
+
+            for(let i=0; i<uploadQueue.length; i++) {
+                const file = uploadQueue[i];
+                updateStatus(`Uploading ${i+1}/${uploadQueue.length}: ${file.name.substring(0, 15)}...`);
+                
+                try {
+                    await uploadFileResumable(file, (chunkLoaded) => {
+                        // Progress Calculation
+                        let currentTotal = globalLoaded + chunkLoaded;
+                        let percent = ((currentTotal / totalUploadSize) * 100).toFixed(1);
+                        
+                        // Speed Calculation (MB/s)
+                        let now = Date.now();
+                        let timeDiff = (now - startTime) / 1000; // seconds
+                        if(timeDiff >= 1) {
+                            let bytesDiff = currentTotal - lastLoadedInfo;
+                            let speed = (bytesDiff / 1024 / 1024) / timeDiff;
+                            document.getElementById('smSpeed').innerText = speed.toFixed(1) + " MB/s";
+                            
+                            startTime = now;
+                            lastLoadedInfo = currentTotal;
+                        }
+
+                        document.getElementById('smSize').innerText = `${formatSize(currentTotal)} / ${formatSize(totalUploadSize)}`;
+                        document.getElementById('smPercent').innerText = percent + "%";
+                        document.getElementById('smBar').style.width = percent + "%";
+                    });
+                    
+                    globalLoaded += file.size; // Add completed file size
+                } catch(e) {
+                    console.error(e);
+                }
+            }
+            
+            updateStatus("All Uploads Complete!");
+            document.getElementById('smSpeed').innerText = "DONE";
+            setTimeout(() => {
+                showSpeedManager(false);
+                loadGallery();
+                fetchStorageQuota();
+            }, 3000);
+        }
+
+        // Resumable Upload (Core Logic)
+        async function uploadFileResumable(file, onProgress) {
+            const metadata = { name: file.name, mimeType: file.type };
+            
+            // 1. Get Session URI
+            const res = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                method: 'POST',
+                headers: { 'Authorization': 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+                body: JSON.stringify(metadata)
+            });
+            const location = res.headers.get('Location');
+
+            // 2. Upload Chunks
+            const CHUNK_SIZE = CONFIG.app.chunkSize;
+            let offset = 0;
+            
+            while(offset < file.size) {
+                const chunk = file.slice(offset, offset + CHUNK_SIZE);
+                
+                await new Promise((resolve, reject) => {
+                    const xhr = new XMLHttpRequest();
+                    xhr.open('PUT', location, true);
+                    xhr.setRequestHeader('Content-Range', `bytes ${offset}-${offset + chunk.size - 1}/${file.size}`);
+                    
+                    xhr.upload.onprogress = (e) => {
+                        if(e.lengthComputable) onProgress(offset + e.loaded);
+                    };
+                    
+                    xhr.onload = () => {
+                        if(xhr.status === 308 || xhr.status === 200 || xhr.status === 201) resolve();
+                        else reject("Upload Error");
+                    };
+                    xhr.onerror = reject;
+                    xhr.send(chunk);
+                });
+                
+                offset += chunk.size;
+            }
+        }
+
+        // ============ 4. GALLERY & STORAGE ============
+        async function loadGallery() {
+            if(!accessToken) return;
+            const grid = document.getElementById('galleryGrid');
+            grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;">Loading Drive...</div>';
+            
+            // Query: Not trashed, and is image/video/audio
+            const q = "trashed=false and (mimeType contains 'image/' or mimeType contains 'video/' or mimeType contains 'audio/')";
+            const fields = "files(id, name, mimeType, thumbnailLink)";
+            
+            try {
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(fields)}&pageSize=50`, {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                const data = await res.json();
+                
+                grid.innerHTML = '';
+                if(!data.files || data.files.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;padding:20px;color:gray;">No Media Found</div>';
+                    return;
+                }
+
+                data.files.forEach(f => {
+                    const div = document.createElement('div');
+                    div.className = 'file-card';
+                    
+                    // High Res Thumbnail Logic
+                    const thumb = f.thumbnailLink ? f.thumbnailLink.replace('=s220', '=s600') : '';
+                    let typeBadge = f.mimeType.split('/')[0].toUpperCase();
+
+                    div.innerHTML = `
+                        <img src="${thumb}" class="thumb" loading="lazy" onerror="this.src='https://via.placeholder.com/150/000000/FFFFFF/?text=FILE'">
+                        <div class="file-type-badge">${typeBadge}</div>
+                        <div class="file-name-overlay">${f.name}</div>
+                    `;
+                    div.onclick = () => openPlayer(f);
+                    grid.appendChild(div);
+                });
+            } catch(e) {
+                grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:red;">Error loading files</div>';
+            }
+        }
+
+        async function fetchStorageQuota() {
+            if(!accessToken) return;
+            try {
+                const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+                    headers: { 'Authorization': 'Bearer ' + accessToken }
+                });
+                const data = await res.json();
+                const used = formatSize(data.storageQuota.usage);
+                const total = formatSize(data.storageQuota.limit);
+                document.getElementById('storageText').innerText = `${used} / ${total}`;
+            } catch(e) {}
+        }
+
+        // ============ 5. STREAMING & UTILS ============
+        async function openPlayer(file) {
+            currentFileViewer = file;
+            const container = document.getElementById('playerContainer');
+            document.getElementById('playerOverlay').style.display = 'flex';
+            container.innerHTML = '<div style="color:white">Loading Stream...</div>';
+
+            const url = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&access_token=${accessToken}`;
+            
+            container.innerHTML = '';
+            if(file.mimeType.startsWith('image')) {
+                const img = document.createElement('img');
+                img.src = url;
+                img.style.maxWidth = '100%';
+                img.style.maxHeight = '80vh';
+                img.style.boxShadow = '0 0 20px black';
+                container.appendChild(img);
+            } else if(file.mimeType.startsWith('video') || file.mimeType.startsWith('audio')) {
+                const vid = document.createElement('video');
+                vid.src = url;
+                vid.controls = true;
+                vid.autoplay = true;
+                vid.style.maxWidth = '100%';
+                vid.style.maxHeight = '80vh';
+                container.appendChild(vid);
+            }
+        }
+
+        function closePlayer() {
+            document.getElementById('playerOverlay').style.display = 'none';
+            document.getElementById('playerContainer').innerHTML = '';
+        }
+
+        function downloadCurrent() {
+            if(!currentFileViewer) return;
+            const url = `https://www.googleapis.com/drive/v3/files/${currentFileViewer.id}?alt=media&access_token=${accessToken}`;
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFileViewer.name;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+
+        function showSpeedManager(show) {
+            const el = document.getElementById('speedManager');
+            show ? el.classList.add('active') : el.classList.remove('active');
+        }
+        function updateStatus(msg) { document.getElementById('smStatus').innerText = msg; }
+        
+        function formatSize(bytes) {
+            if(bytes == 0) return '0 B';
+            const k = 1024, sizes = ['B','KB','MB','GB','TB'];
+            const i = Math.floor(Math.log(bytes)/Math.log(k));
+            return parseFloat((bytes/Math.pow(k,i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+    </script>
+</body>
+</html>
