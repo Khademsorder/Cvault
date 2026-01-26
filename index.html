@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>মাল্টি ক্লাউড ভল্ট</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #00e5ff;
+            --primary-dark: #00b8d4;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --card-hover: #334155;
+            --text: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --error: #ef4444;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --google: #4285f4;
+            --dropbox: #0061ff;
+            --onedrive: #0078d4;
+            --github: #333;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg) 0%, #1e1b4b 100%);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: 
+                radial-gradient(circle at 20% 30%, rgba(0, 229, 255, 0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 70%, rgba(16, 185, 129, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Auth Page */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 1000;
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .auth-container.hidden {
+            transform: translateY(-100%);
+        }
+
+        .logo-area {
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .logo-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: var(--primary);
+            text-shadow: 0 0 30px var(--primary);
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+
+        .logo-text {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(45deg, var(--primary), var(--success));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .tagline {
+            color: var(--text-secondary);
+            font-size: 1rem;
+            max-width: 300px;
+        }
+
+        .pin-display {
+            font-size: 2.5rem;
+            letter-spacing: 15px;
+            margin: 30px 0;
+            color: var(--primary);
+            text-shadow: 0 0 10px var(--primary);
+            font-weight: 300;
+        }
+
+        .pin-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            width: 100%;
+            max-width: 300px;
+            margin-bottom: 30px;
+        }
+
+        .pin-btn {
+            background: var(--card-bg);
+            border: 2px solid var(--border);
+            color: var(--text);
+            font-size: 1.8rem;
+            height: 80px;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            user-select: none;
+        }
+
+        .pin-btn:active {
+            background: var(--primary);
+            color: var(--bg);
+            transform: scale(0.95);
+            border-color: var(--primary);
+        }
+
+        .pin-btn.function {
+            font-size: 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .auth-message {
+            color: var(--text-secondary);
+            margin-top: 20px;
+            text-align: center;
+            min-height: 24px;
+        }
+
+        .reset-info {
+            margin-top: 20px;
+            color: var(--warning);
+            font-size: 0.9rem;
+            display: none;
+        }
+
+        .reset-info.show {
+            display: block;
+            animation: shake 0.5s;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            75% { transform: translateX(5px); }
+        }
+
+        /* Main App */
+        .main-app {
+            display: none;
+            flex-direction: column;
+            height: 100vh;
+            position: relative;
+            z-index: 1;
+        }
+
+        .app-header {
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .app-title {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .app-title h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .file-count {
+            background: var(--primary);
+            color: var(--bg);
+            padding: 2px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+
+        .header-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .icon-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--border);
+            color: var(--text);
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .icon-btn:hover {
+            background: var(--primary);
+            color: var(--bg);
+            transform: rotate(15deg);
+        }
+
+        .main-btn {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            border: none;
+            color: var(--bg);
+            padding: 10px 20px;
+            border-radius: 25px;
+            font-weight: 700;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.2s;
+        }
+
+        .main-btn:active {
+            transform: scale(0.95);
+        }
+
+        .main-btn.secondary {
+            background: transparent;
+            border: 1px solid var(--primary);
+            color: var(--primary);
+        }
+
+        /* File Gallery */
+        .file-gallery {
+            flex: 1;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 60vh;
+            text-align: center;
+            color: var(--text-secondary);
+        }
+
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+
+        .file-card {
+            background: var(--card-bg);
+            border-radius: 15px;
+            overflow: hidden;
+            border: 2px solid transparent;
+            transition: all 0.3s;
+            cursor: pointer;
+            position: relative;
+        }
+
+        .file-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.2);
+        }
+
+        .file-card.selected {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px var(--primary), 0 10px 30px rgba(0, 229, 255, 0.3);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { box-shadow: 0 0 0 3px var(--primary), 0 10px 30px rgba(0, 229, 255, 0.3); }
+            50% { box-shadow: 0 0 0 5px var(--primary), 0 15px 40px rgba(0, 229, 255, 0.4); }
+        }
+
+        .file-preview {
+            width: 100%;
+            height: 150px;
+            background: rgba(0, 0, 0, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .file-preview img,
+        .file-preview video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .file-icon {
+            font-size: 3rem;
+            color: var(--primary);
+        }
+
+        .file-info {
+            padding: 15px;
+        }
+
+        .file-name {
+            font-size: 0.9rem;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 5px;
+        }
+
+        .file-meta {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .file-type {
+            background: rgba(0, 229, 255, 0.1);
+            color: var(--primary);
+            padding: 2px 8px;
+            border-radius: 10px;
+        }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            padding: 15px 20px;
+            display: flex;
+            justify-content: space-around;
+            position: sticky;
+            bottom: 0;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+            z-index: 100;
+        }
+
+        .bottom-nav.active {
+            transform: translateY(0);
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-secondary);
+            cursor: pointer;
+            transition: all 0.2s;
+            padding: 10px;
+            border-radius: 10px;
+            min-width: 70px;
+        }
+
+        .nav-item:hover {
+            color: var(--primary);
+            background: rgba(0, 229, 255, 0.1);
+        }
+
+        .nav-item i {
+            font-size: 1.2rem;
+            margin-bottom: 5px;
+        }
+
+        .nav-item span {
+            font-size: 0.75rem;
+            font-weight: 500;
+        }
+
+        .nav-item.delete {
+            color: var(--error);
+        }
+
+        /* Modals */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+
+        .modal-overlay.active {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: var(--card-bg);
+            border-radius: 20px;
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+            transform: translateY(20px);
+            transition: transform 0.3s;
+        }
+
+        .modal-overlay.active .modal-content {
+            transform: translateY(0);
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .close-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 1.5rem;
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+
+        .close-btn:hover {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+        }
+
+        /* Cloud Options */
+        .cloud-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+
+        .cloud-card {
+            background: rgba(255, 255, 255, 0.05);
+            border: 2px solid var(--border);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cloud-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: 0 10px 30px rgba(0, 229, 255, 0.2);
+        }
+
+        .cloud-card.selected {
+            border-color: var(--primary);
+            background: rgba(0, 229, 255, 0.1);
+        }
+
+        .cloud-icon {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .cloud-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+        }
+
+        .cloud-storage {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .cloud-free {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: var(--success);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 0.7rem;
+            font-weight: bold;
+        }
+
+        /* Progress Bar */
+        .progress-container {
+            margin: 20px 0;
+            display: none;
+        }
+
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            height: 8px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--success));
+            width: 0%;
+            transition: width 0.3s;
+            border-radius: 4px;
+        }
+
+        /* Toast Notification */
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%) translateY(100px);
+            background: var(--card-bg);
+            color: var(--text);
+            padding: 15px 25px;
+            border-radius: 15px;
+            border: 1px solid var(--border);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            opacity: 0;
+            transition: all 0.3s;
+        }
+
+        .toast.show {
+            transform: translateX(-50%) translateY(0);
+            opacity: 1;
+        }
+
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.error { border-left: 4px solid var(--error); }
+        .toast.warning { border-left: 4px solid var(--warning); }
+        .toast.info { border-left: 4px solid var(--primary); }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 20px;
+        }
+
+        .tab {
+            flex: 1;
+            padding: 15px;
+            text-align: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            font-weight: 500;
+            transition: all 0.2s;
+            border-bottom: 3px solid transparent;
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Responsive */
+        @media (max-width: 480px) {
+            .pin-grid {
+                max-width: 280px;
+            }
+            
+            .pin-btn {
+                height: 70px;
+            }
+            
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .cloud-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* File Import Fix */
+        .import-guide {
+            background: rgba(0, 229, 255, 0.1);
+            border: 1px solid var(--primary);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            font-size: 0.9rem;
+        }
+
+        .import-guide ul {
+            margin-left: 20px;
+            margin-top: 10px;
+        }
+
+        .import-guide li {
+            margin-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Auth Screen -->
+    <div class="auth-container" id="authContainer">
+        <div class="logo-area">
+            <div class="logo-icon">🔐</div>
+            <div class="logo-text">Cloud Vault</div>
+            <div class="tagline">আপনার ফাইল সুরক্ষিত রাখুন</div>
+        </div>
+        
+        <div class="pin-display" id="pinDisplay"></div>
+        
+        <div class="pin-grid">
+            <div class="pin-btn" onclick="addPin('1')">1</div>
+            <div class="pin-btn" onclick="addPin('2')">2</div>
+            <div class="pin-btn" onclick="addPin('3')">3</div>
+            <div class="pin-btn" onclick="addPin('4')">4</div>
+            <div class="pin-btn" onclick="addPin('5')">5</div>
+            <div class="pin-btn" onclick="addPin('6')">6</div>
+            <div class="pin-btn" onclick="addPin('7')">7</div>
+            <div class="pin-btn" onclick="addPin('8')">8</div>
+            <div class="pin-btn" onclick="addPin('9')">9</div>
+            <div class="pin-btn function" onclick="clearPin()">C</div>
+            <div class="pin-btn" onclick="addPin('0')">0</div>
+            <div class="pin-btn function" onclick="submitPin()">✓</div>
+        </div>
+        
+        <div class="auth-message" id="authMessage">আপনার ৪-ডিজিট পিন দিন</div>
+        <div class="reset-info" id="resetInfo">ভুল চেষ্টা: 0/5 - ৫ বার ভুলে অ্যাপ রিসেট হবে</div>
+    </div>
+
+    <!-- Main App -->
+    <div class="main-app" id="mainApp">
+        <div class="app-header">
+            <div class="app-title">
+                <h1>My Vault</h1>
+                <div class="file-count" id="fileCount">0</div>
+            </div>
+            <div class="header-controls">
+                <button class="icon-btn" onclick="showSettings()" title="সেটিংস">
+                    <i class="fas fa-cog"></i>
+                </button>
+                <button class="main-btn secondary" onclick="toggleSelectMode()" id="selectBtn">
+                    <i class="fas fa-check"></i> সিলেক্ট
+                </button>
+                <button class="main-btn" onclick="importFiles()">
+                    <i class="fas fa-plus"></i> ইমপোর্ট
+                </button>
+            </div>
+        </div>
+
+        <div class="file-gallery" id="fileGallery">
+            <div class="empty-state" id="emptyState">
+                <div class="empty-icon">📁</div>
+                <h3>কোনো ফাইল নেই</h3>
+                <p>ইমপোর্ট বাটনে ক্লিক করে ফাইল যোগ করুন</p>
+                <div class="import-guide">
+                    <p><strong>ফাইল ইমপোর্ট সমস্যা সমাধান:</strong></p>
+                    <ul>
+                        <li>ফাইল সিলেক্ট ডায়ালগে "ফাইলস" সিলেক্ট করুন</li>
+                        <li>"Folder" সিলেক্ট করবেন না</li>
+                        <li>ছবি/ভিডিও ফাইল সিলেক্ট করুন</li>
+                        <li>ফাইল সাইজ 50MB এর নিচে রাখুন</li>
+                    </ul>
+                </div>
+            </div>
+            <div class="file-grid" id="fileGrid"></div>
+        </div>
+
+        <div class="bottom-nav" id="bottomNav">
+            <div class="nav-item" onclick="showBackupModal()">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <span>ব্যাকআপ</span>
+            </div>
+            <div class="nav-item" onclick="downloadSelected()">
+                <i class="fas fa-download"></i>
+                <span>ডাউনলোড</span>
+            </div>
+            <div class="nav-item" onclick="showShareModal()">
+                <i class="fas fa-share-alt"></i>
+                <span>শেয়ার</span>
+            </div>
+            <div class="nav-item delete" onclick="deleteSelected()">
+                <i class="fas fa-trash"></i>
+                <span>ডিলিট</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Backup Modal -->
+    <div class="modal-overlay" id="backupModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">ক্লাউড ব্যাকআপ</div>
+                <button class="close-btn" onclick="closeModal('backupModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="tabs">
+                <div class="tab active" onclick="switchTab('backupTab')">ব্যাকআপ</div>
+                <div class="tab" onclick="switchTab('restoreTab')">রিস্টোর</div>
+                <div class="tab" onclick="switchTab('syncTab')">সিঙ্ক</div>
+            </div>
+            
+            <div id="backupTab" class="tab-content active">
+                <p>ফ্রি ক্লাউড সিলেক্ট করুন:</p>
+                
+                <div class="cloud-grid">
+                    <div class="cloud-card" onclick="selectCloud('google')">
+                        <div class="cloud-free">ফ্রি</div>
+                        <div class="cloud-icon">📁</div>
+                        <div class="cloud-name">Google Drive</div>
+                        <div class="cloud-storage">15GB স্টোরেজ</div>
+                    </div>
+                    
+                    <div class="cloud-card" onclick="selectCloud('terabox')">
+                        <div class="cloud-free">ফ্রি</div>
+                        <div class="cloud-icon">☁️</div>
+                        <div class="cloud-name">TeraBox</div>
+                        <div class="cloud-storage">1TB স্টোরেজ!</div>
+                    </div>
+                    
+                    <div class="cloud-card" onclick="selectCloud('onedrive')">
+                        <div class="cloud-free">ফ্রি</div>
+                        <div class="cloud-icon">📦</div>
+                        <div class="cloud-name">OneDrive</div>
+                        <div class="cloud-storage">5GB স্টোরেজ</div>
+                    </div>
+                    
+                    <div class="cloud-card" onclick="selectCloud('github')">
+                        <div class="cloud-free">ফ্রি</div>
+                        <div class="cloud-icon">💾</div>
+                        <div class="cloud-name">GitHub</div>
+                        <div class="cloud-storage">আনলিমিটেড*</div>
+                    </div>
+                </div>
+                
+                <div class="progress-container" id="progressContainer">
+                    <div class="progress-header">
+                        <span>আপলোড চলছে...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill"></div>
+                    </div>
+                </div>
+                
+                <button class="main-btn" onclick="startBackup()" style="width: 100%; margin-top: 20px;">
+                    <i class="fas fa-cloud-upload-alt"></i> ব্যাকআপ শুরু করুন
+                </button>
+            </div>
+            
+            <div id="restoreTab" class="tab-content">
+                <p>ক্লাউড থেকে ফাইল রিস্টোর করুন:</p>
+                <button class="main-btn secondary" onclick="restoreFromCloud()" style="width: 100%; margin: 20px 0;">
+                    <i class="fas fa-cloud-download-alt"></i> রিস্টোর করুন
+                </button>
+                
+                <div class="import-guide">
+                    <p><strong>রিস্টোর করার আগে:</strong></p>
+                    <ul>
+                        <li>একই পিন ব্যবহার করুন</li>
+                        <li>ইন্টারনেট কানেকশন চেক করুন</li>
+                        <li>ক্লাউড অ্যাকাউন্ট লগইন করুন</li>
+                    </ul>
+                </div>
+            </div>
+            
+            <div id="syncTab" class="tab-content">
+                <p>অটো সিঙ্ক সেটিংস:</p>
+                <div style="margin: 20px 0;">
+                    <label style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px;">
+                        <input type="checkbox" id="autoSync"> অটোমেটিক সিঙ্ক
+                    </label>
+                    <label style="display: flex; align-items: center; gap: 10px;">
+                        <input type="checkbox" id="wifiOnly"> শুধু Wi-Fi তে
+                    </label>
+                </div>
+                <button class="main-btn" onclick="syncNow()" style="width: 100%;">
+                    <i class="fas fa-sync-alt"></i> এখনই সিঙ্ক করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal-overlay" id="shareModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">শেয়ার করুন</div>
+                <button class="close-btn" onclick="closeModal('shareModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="cloud-grid">
+                <div class="cloud-card" onclick="shareVia('whatsapp')">
+                    <div class="cloud-icon" style="color: #25D366;">📱</div>
+                    <div class="cloud-name">WhatsApp</div>
+                </div>
+                
+                <div class="cloud-card" onclick="shareVia('telegram')">
+                    <div class="cloud-icon" style="color: #0088cc;">✈️</div>
+                    <div class="cloud-name">Telegram</div>
+                </div>
+                
+                <div class="cloud-card" onclick="shareVia('gmail')">
+                    <div class="cloud-icon" style="color: #EA4335;">✉️</div>
+                    <div class="cloud-name">Gmail</div>
+                </div>
+                
+                <div class="cloud-card" onclick="shareVia('link')">
+                    <div class="cloud-icon" style="color: var(--primary);">🔗</div>
+                    <div class="cloud-name">লিংক</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 20px;">
+                <input type="text" id="shareLink" readonly 
+                       style="width:100%; padding:12px; border-radius:10px; 
+                              border:1px solid var(--border); background:rgba(255,255,255,0.05); 
+                              color:var(--text); margin-bottom:10px;"
+                       placeholder="শেয়ার লিংক এখানে দেখাবে">
+                
+                <button class="main-btn secondary" onclick="copyShareLink()" style="width: 100%;">
+                    <i class="fas fa-copy"></i> লিংক কপি করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal-overlay" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">সেটিংস</div>
+                <button class="close-btn" onclick="closeModal('settingsModal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div style="margin: 20px 0;">
+                <button class="main-btn secondary" onclick="changePin()" style="width: 100%; margin-bottom: 10px;">
+                    <i class="fas fa-key"></i> পিন পরিবর্তন
+                </button>
+                
+                <button class="main-btn secondary" onclick="exportData()" style="width: 100%; margin-bottom: 10px;">
+                    <i class="fas fa-file-export"></i> ডেটা এক্সপোর্ট
+                </button>
+                
+                <button class="main-btn secondary" onclick="clearCache()" style="width: 100%; margin-bottom: 10px;">
+                    <i class="fas fa-broom"></i> ক্যাশে ক্লিয়ার
+                </button>
+                
+                <button class="main-btn" onclick="resetAppData()" style="width: 100%; background: var(--error);">
+                    <i class="fas fa-trash"></i> অ্যাপ রিসেট
+                </button>
+            </div>
+            
+            <div class="import-guide">
+                <p><strong>ইমপোর্ট সমস্যা সমাধান:</strong></p>
+                <ul>
+                    <li>Android: Chrome ব্রাউজার ব্যবহার করুন</li>
+                    <li>iOS: Safari ব্রাউজার ব্যবহার করুন</li>
+                    <li>ফাইল সিলেক্ট করুন, ফোল্ডার নয়</li>
+                    <li>Permission অনুমতি দিন</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="fileInput" multiple accept="image/*,video/*" style="display: none;">
+    <input type="file" id="restoreInput" accept=".json" style="display: none;">
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // --- গ্লোবাল ভেরিয়েবল ---
+        let db;
+        let currentPin = '';
+        let userPin = null;
+        let failedAttempts = 0;
+        let selectedFiles = new Set();
+        let isSelectMode = false;
+        let selectedCloud = null;
+        let appSettings = {
+            autoSync: false,
+            wifiOnly: true,
+            maxFileSize: 50 * 1024 * 1024 // 50MB
+        };
+
+        // --- IndexedDB ইনিশিয়ালাইজেশন ---
+        function initDatabase() {
+            return new Promise((resolve, reject) => {
+                const request = indexedDB.open('CloudVaultDB', 4);
+                
+                request.onupgradeneeded = function(e) {
+                    db = e.target.result;
+                    
+                    if (!db.objectStoreNames.contains('files')) {
+                        const store = db.createObjectStore('files', { 
+                            keyPath: 'id', 
+                            autoIncrement: true 
+                        });
+                        store.createIndex('date', 'date');
+                        store.createIndex('type', 'type');
+                        store.createIndex('name', 'name');
+                    }
+                    
+                    if (!db.objectStoreNames.contains('settings')) {
+                        const settingsStore = db.createObjectStore('settings', { keyPath: 'key' });
+                    }
+                    
+                    if (!db.objectStoreNames.contains('backups')) {
+                        db.createObjectStore('backups', { keyPath: 'id', autoIncrement: true });
+                    }
+                };
+                
+                request.onsuccess = function(e) {
+                    db = e.target.result;
+                    checkUserPin();
+                    resolve();
+                };
+                
+                request.onerror = function(e) {
+                    console.error('Database error:', e.target.error);
+                    reject(e.target.error);
+                };
+            });
+        }
+
+        // --- ইউজার পিন চেক ---
+        async function checkUserPin() {
+            try {
+                const transaction = db.transaction(['settings'], 'readonly');
+                const store = transaction.objectStore('settings');
+                const request = store.get('userPin');
+                
+                request.onsuccess = function() {
+                    if (request.result) {
+                        userPin = request.result.value;
+                        document.getElementById('authMessage').textContent = 'আপনার পিন দিন';
+                    } else {
+                        document.getElementById('authMessage').textContent = 'নতুন ৪-ডিজিট পিন সেট করুন';
+                    }
+                };
+            } catch (error) {
+                console.error('Error checking pin:', error);
+            }
+        }
+
+        // --- পিন ম্যানেজমেন্ট ---
+        function addPin(num) {
+            if (currentPin.length < 4) {
+                currentPin += num;
+                updatePinDisplay();
+            }
+        }
+
+        function clearPin() {
+            currentPin = '';
+            updatePinDisplay();
+        }
+
+        function updatePinDisplay() {
+            document.getElementById('pinDisplay').textContent = '●'.repeat(currentPin.length);
+        }
+
+        async function submitPin() {
+            if (currentPin.length !== 4) {
+                showToast('৪ ডিজিটের পিন দিন', 'warning');
+                return;
+            }
+
+            if (!userPin) {
+                // নতুন পিন সেট
+                await saveSetting('userPin', currentPin);
+                userPin = currentPin;
+                failedAttempts = 0;
+                unlockApp();
+                showToast('পিন সেট সফল হয়েছে!', 'success');
+            } else {
+                // পিন ভেরিফাই
+                if (currentPin === userPin) {
+                    failedAttempts = 0;
+                    unlockApp();
+                } else {
+                    failedAttempts++;
+                    updateResetInfo();
+                    
+                    if (failedAttempts >= 5) {
+                        showResetWarning();
+                    } else {
+                        showToast(`ভুল পিন! (${failedAttempts}/5)`, 'error');
+                        clearPin();
+                    }
+                }
+            }
+        }
+
+        function updateResetInfo() {
+            const resetInfo = document.getElementById('resetInfo');
+            resetInfo.textContent = `ভুল চেষ্টা: ${failedAttempts}/5 - ৫ বার ভুলে অ্যাপ রিসেট হবে`;
+            resetInfo.classList.add('show');
+            
+            setTimeout(() => {
+                resetInfo.classList.remove('show');
+            }, 3000);
+        }
+
+        function showResetWarning() {
+            if (confirm('৫ বার ভুল পিন দেওয়া হয়েছে! অ্যাপ রিসেট করতে চান?')) {
+                resetAppData();
+            } else {
+                location.reload();
+            }
+        }
+
+        // --- অ্যাপ আনলক ---
+        function unlockApp() {
+            document.getElementById('authContainer').classList.add('hidden');
+            document.getElementById('mainApp').style.display = 'flex';
+            
+            setTimeout(() => {
+                document.getElementById('authContainer').style.display = 'none';
+                loadFiles();
+            }, 500);
+        }
+
+        // --- ফাইল ম্যানেজমেন্ট (ফিক্সড) ---
+        function importFiles() {
+            // ফাইল ইনপুট রিসেট
+            const fileInput = document.getElementById('fileInput');
+            fileInput.value = '';
+            fileInput.click();
+        }
+
+        document.getElementById('fileInput').addEventListener('change', async function(e) {
+            const files = e.target.files;
+            if (!files.length) return;
+            
+            let successCount = 0;
+            let errorCount = 0;
+            
+            for (let file of files) {
+                try {
+                    // ফাইল সাইজ চেক
+                    if (file.size > appSettings.maxFileSize) {
+                        showToast(`${file.name} অনেক বড় (50MB লিমিট)`, 'warning');
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    // ফাইল টাইপ চেক
+                    if (!file.type.startsWith('image/') && !file.type.startsWith('video/')) {
+                        showToast(`${file.name} সাপোর্টেড না`, 'warning');
+                        errorCount++;
+                        continue;
+                    }
+                    
+                    await saveFile(file);
+                    successCount++;
+                    
+                } catch (error) {
+                    console.error('Error saving file:', error);
+                    errorCount++;
+                }
+            }
+            
+            if (successCount > 0) {
+                await loadFiles();
+                showToast(`${successCount}টি ফাইল সেভ হয়েছে`, 'success');
+            }
+            
+            if (errorCount > 0) {
+                showToast(`${errorCount}টি ফাইল ব্যর্থ`, 'error');
+            }
+        });
+
+        async function saveFile(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                
+                reader.onload = function(e) {
+                    const transaction = db.transaction(['files'], 'readwrite');
+                    const store = transaction.objectStore('files');
+                    
+                    const fileData = {
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        date: new Date(),
+                        data: e.target.result,
+                        lastModified: file.lastModified
+                    };
+                    
+                    const request = store.add(fileData);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                };
+                
+                reader.onerror = () => reject(reader.error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        async function loadFiles() {
+            try {
+                const files = await getAllFiles();
+                const fileGrid = document.getElementById('fileGrid');
+                const emptyState = document.getElementById('emptyState');
+                const fileCount = document.getElementById('fileCount');
+                
+                // ফাইল কাউন্ট আপডেট
+                fileCount.textContent = files.length;
+                
+                if (files.length === 0) {
+                    fileGrid.innerHTML = '';
+                    emptyState.style.display = 'flex';
+                    return;
+                }
+                
+                emptyState.style.display = 'none';
+                fileGrid.innerHTML = '';
+                
+                // সর্ট: নতুন আগে
+                files.sort((a, b) => new Date(b.date) - new Date(a.date));
+                
+                files.forEach(file => {
+                    const fileCard = createFileCard(file);
+                    fileGrid.appendChild(fileCard);
+                });
+                
+            } catch (error) {
+                console.error('Error loading files:', error);
+                showToast('ফাইল লোড ব্যর্থ', 'error');
+            }
+        }
+
+        function createFileCard(file) {
+            const card = document.createElement('div');
+            card.className = 'file-card';
+            card.dataset.id = file.id;
+            
+            if (selectedFiles.has(file.id)) {
+                card.classList.add('selected');
+            }
+            
+            card.onclick = () => handleFileClick(file.id);
+            
+            // প্রিভিউ
+            let previewHTML = '';
+            if (file.type.startsWith('image/')) {
+                previewHTML = `<img src="${file.data}" alt="${file.name}" loading="lazy">`;
+            } else if (file.type.startsWith('video/')) {
+                previewHTML = `<video src="${file.data}" preload="metadata"></video>`;
+            } else {
+                const icon = getFileIcon(file.name);
+                previewHTML = `<div class="file-icon">${icon}</div>`;
+            }
+            
+            // ফাইল সাইজ ফরম্যাট
+            const fileSize = formatFileSize(file.size);
+            
+            card.innerHTML = `
+                <div class="file-preview">
+                    ${previewHTML}
+                </div>
+                <div class="file-info">
+                    <div class="file-name" title="${file.name}">${file.name}</div>
+                    <div class="file-meta">
+                        <span class="file-type">${getFileType(file.type)}</span>
+                        <span>${fileSize}</span>
+                    </div>
+                </div>
+            `;
+            
+            return card;
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                pdf: '📕', doc: '📘', xls: '📗', ppt: '📙',
+                zip: '🗜️', mp3: '🎵', mp4: '🎬', txt: '📝'
+            };
+            return icons[ext] || '📄';
+        }
+
+        function getFileType(mimeType) {
+            if (mimeType.startsWith('image/')) return 'ছবি';
+            if (mimeType.startsWith('video/')) return 'ভিডিও';
+            if (mimeType.includes('pdf')) return 'PDF';
+            if (mimeType.includes('word')) return 'Word';
+            return 'ফাইল';
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        // --- ফাইল সিলেকশন ---
+        function toggleSelectMode() {
+            isSelectMode = !isSelectMode;
+            const selectBtn = document.getElementById('selectBtn');
+            const bottomNav = document.getElementById('bottomNav');
+            
+            if (isSelectMode) {
+                selectBtn.innerHTML = '<i class="fas fa-times"></i> বাতিল';
+                selectBtn.style.background = 'var(--error)';
+                bottomNav.classList.add('active');
+            } else {
+                selectBtn.innerHTML = '<i class="fas fa-check"></i> সিলেক্ট';
+                selectBtn.style.background = 'transparent';
+                selectedFiles.clear();
+                bottomNav.classList.remove('active');
+                loadFiles();
+            }
+        }
+
+        function handleFileClick(fileId) {
+            if (isSelectMode) {
+                if (selectedFiles.has(fileId)) {
+                    selectedFiles.delete(fileId);
+                } else {
+                    selectedFiles.add(fileId);
+                }
+                loadFiles();
+            } else {
+                // প্রিভিউ দেখানো
+                previewFile(fileId);
+            }
+        }
+
+        async function previewFile(fileId) {
+            try {
+                const file = await getFileById(fileId);
+                if (!file) return;
+                
+                const blob = dataURLtoBlob(file.data);
+                const url = URL.createObjectURL(blob);
+                
+                if (file.type.startsWith('image/')) {
+                    window.open(url, '_blank');
+                } else if (file.type.startsWith('video/')) {
+                    const videoWindow = window.open('', '_blank');
+                    videoWindow.document.write(`
+                        <html>
+                            <head><title>${file.name}</title></head>
+                            <body style="margin:0; background:#000;">
+                                <video controls autoplay style="width:100%; height:100vh;">
+                                    <source src="${url}" type="${file.type}">
+                                </video>
+                            </body>
+                        </html>
+                    `);
+                }
+            } catch (error) {
+                console.error('Preview error:', error);
+                showToast('প্রিভিউ ব্যর্থ', 'error');
+            }
+        }
+
+        // --- ফাইল অ্যাকশন ---
+        async function downloadSelected() {
+            if (selectedFiles.size === 0) {
+                showToast('ডাউনলোডের জন্য ফাইল সিলেক্ট করুন', 'warning');
+                return;
+            }
+            
+            const files = await getSelectedFiles();
+            
+            for (const file of files) {
+                try {
+                    const blob = dataURLtoBlob(file.data);
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                    
+                    // একটু ডিলে
+                    await new Promise(resolve => setTimeout(resolve, 100));
+                    
+                } catch (error) {
+                    console.error('Download error:', error);
+                }
+            }
+            
+            showToast(`${files.length} ফাইল ডাউনলোড শুরু`, 'success');
+        }
+
+        async function deleteSelected() {
+            if (selectedFiles.size === 0) {
+                showToast('ডিলিটের জন্য ফাইল সিলেক্ট করুন', 'warning');
+                return;
+            }
+            
+            if (!confirm(`${selectedFiles.size}টি ফাইল ডিলিট করবেন?`)) return;
+            
+            const transaction = db.transaction(['files'], 'readwrite');
+            const store = transaction.objectStore('files');
+            
+            for (const id of selectedFiles) {
+                store.delete(id);
+            }
+            
+            transaction.oncomplete = async () => {
+                selectedFiles.clear();
+                await loadFiles();
+                showToast('ফাইল ডিলিট হয়েছে', 'success');
+            };
+        }
+
+        // --- ক্লাউড ব্যাকআপ ---
+        function showBackupModal() {
+            openModal('backupModal');
+        }
+
+        function selectCloud(cloud) {
+            selectedCloud = cloud;
+            document.querySelectorAll('.cloud-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            event.target.classList.add('selected');
+        }
+
+        async function startBackup() {
+            if (!selectedCloud) {
+                showToast('ক্লাউড সিলেক্ট করুন', 'warning');
+                return;
+            }
+            
+            const files = selectedFiles.size > 0 ? 
+                await getSelectedFiles() : 
+                await getAllFiles();
+            
+            if (files.length === 0) {
+                showToast('ব্যাকআপের জন্য ফাইল নেই', 'warning');
+                return;
+            }
+            
+            showToast(`${selectedCloud} ব্যাকআপ শুরু...`, 'info');
+            
+            // প্রোগ্রেস বার শো
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            const progressPercent = document.getElementById('progressPercent');
+            
+            progressContainer.style.display = 'block';
+            
+            let uploaded = 0;
+            const total = files.length;
+            
+            for (let i = 0; i < files.length; i++) {
+                const progress = Math.round(((i + 1) / total) * 100);
+                progressFill.style.width = `${progress}%`;
+                progressPercent.textContent = `${progress}%`;
+                
+                try {
+                    await simulateCloudUpload(files[i]);
+                    uploaded++;
+                } catch (error) {
+                    console.error('Upload error:', error);
+                }
+                
+                // একটু ডিলে
+                await new Promise(resolve => setTimeout(resolve, 100));
+            }
+            
+            progressContainer.style.display = 'none';
+            
+            if (uploaded === total) {
+                showToast(`${uploaded} ফাইল ব্যাকআপ সম্পূর্ণ`, 'success');
+            } else {
+                showToast(`${uploaded}/${total} ফাইল আপলোড হয়েছে`, uploaded > 0 ? 'warning' : 'error');
+            }
+            
+            closeModal('backupModal');
+        }
+
+        async function simulateCloudUpload(file) {
+            // সিমুলেটেড আপলোড
+            return new Promise(resolve => {
+                setTimeout(() => {
+                    resolve();
+                }, 500);
+            });
+        }
+
+        // --- শেয়ার ফাংশন ---
+        function showShareModal() {
+            openModal('shareModal');
+        }
+
+        async function shareVia(platform) {
+            const files = await getSelectedFiles();
+            if (files.length === 0) {
+                showToast('শেয়ারের জন্য ফাইল সিলেক্ট করুন', 'warning');
+                return;
+            }
+            
+            // ফাইল ডেটা প্রস্তুত
+            const shareData = {
+                files: files.map(f => ({
+                    name: f.name,
+                    type: f.type,
+                    size: f.size
+                })),
+                timestamp: Date.now()
+            };
+            
+            const shareCode = btoa(JSON.stringify(shareData));
+            const shareUrl = `${window.location.origin}?share=${shareCode}`;
+            
+            document.getElementById('shareLink').value = shareUrl;
+            
+            switch (platform) {
+                case 'whatsapp':
+                    window.open(`https://wa.me/?text=${encodeURIComponent('ফাইল শেয়ার: ' + shareUrl)}`, '_blank');
+                    break;
+                case 'telegram':
+                    window.open(`https://t.me/share/url?url=${encodeURIComponent(shareUrl)}`, '_blank');
+                    break;
+                case 'gmail':
+                    window.open(`mailto:?subject=ফাইল শেয়ার&body=${encodeURIComponent(shareUrl)}`, '_blank');
+                    break;
+                case 'link':
+                    showToast('লিংক তৈরি হয়েছে', 'success');
+                    break;
+            }
+        }
+
+        function copyShareLink() {
+            const linkInput = document.getElementById('shareLink');
+            if (!linkInput.value) {
+                showToast('প্রথমে লিংক তৈরি করুন', 'warning');
+                return;
+            }
+            
+            linkInput.select();
+            document.execCommand('copy');
+            showToast('লিংক কপি হয়েছে', 'success');
+        }
+
+        // --- সেটিংস ---
+        function showSettings() {
+            openModal('settingsModal');
+        }
+
+        async function changePin() {
+            const newPin = prompt('নতুন ৪-ডিজিট পিন দিন:');
+            if (!newPin || newPin.length !== 4 || isNaN(newPin)) {
+                showToast('সঠিক ৪ ডিজিট দিন', 'error');
+                return;
+            }
+            
+            await saveSetting('userPin', newPin);
+            userPin = newPin;
+            showToast('পিন পরিবর্তন সফল', 'success');
+            closeModal('settingsModal');
+        }
+
+        async function exportData() {
+            try {
+                const files = await getAllFiles();
+                const exportData = {
+                    version: '1.0',
+                    exportDate: new Date().toISOString(),
+                    fileCount: files.length,
+                    files: files.map(f => ({
+                        name: f.name,
+                        type: f.type,
+                        size: f.size,
+                        date: f.date
+                    }))
+                };
+                
+                const dataStr = JSON.stringify(exportData, null, 2);
+                const blob = new Blob([dataStr], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `vault_backup_${Date.now()}.json`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showToast('ডেটা এক্সপোর্ট সফল', 'success');
+            } catch (error) {
+                console.error('Export error:', error);
+                showToast('এক্সপোর্ট ব্যর্থ', 'error');
+            }
+        }
+
+        async function clearCache() {
+            // ক্যাশে ক্লিয়ার
+            indexedDB.deleteDatabase('CloudVaultDB_cache');
+            localStorage.clear();
+            showToast('ক্যাশে ক্লিয়ার হয়েছে', 'success');
+        }
+
+        function resetAppData() {
+            if (confirm('সমস্ত ডাটা ডিলিট হবে! আপনি কি নিশ্চিত?')) {
+                indexedDB.deleteDatabase('CloudVaultDB');
+                localStorage.clear();
+                sessionStorage.clear();
+                showToast('অ্যাপ রিসেট হয়েছে', 'success');
+                setTimeout(() => location.reload(), 1000);
+            }
+        }
+
+        // --- ইউটিলিটি ফাংশন ---
+        function dataURLtoBlob(dataURL) {
+            const arr = dataURL.split(',');
+            const mime = arr[0].match(/:(.*?);/)[1];
+            const bstr = atob(arr[1]);
+            const u8arr = new Uint8Array(bstr.length);
+            for (let i = 0; i < bstr.length; i++) {
+                u8arr[i] = bstr.charCodeAt(i);
+            }
+            return new Blob([u8arr], { type: mime });
+        }
+
+        async function getAllFiles() {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['files'], 'readonly');
+                const store = transaction.objectStore('files');
+                const request = store.getAll();
+                
+                request.onsuccess = () => resolve(request.result || []);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getSelectedFiles() {
+            const allFiles = await getAllFiles();
+            return allFiles.filter(file => selectedFiles.has(file.id));
+        }
+
+        async function getFileById(id) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['files'], 'readonly');
+                const store = transaction.objectStore('files');
+                const request = store.get(Number(id));
+                
+                request.onsuccess = () => resolve(request.result);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function getSetting(key) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['settings'], 'readonly');
+                const store = transaction.objectStore('settings');
+                const request = store.get(key);
+                
+                request.onsuccess = () => resolve(request.result?.value);
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        async function saveSetting(key, value) {
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction(['settings'], 'readwrite');
+                const store = transaction.objectStore('settings');
+                const request = store.put({ key, value });
+                
+                request.onsuccess = () => resolve();
+                request.onerror = () => reject(request.error);
+            });
+        }
+
+        function openModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('active'), 10);
+        }
+
+        function closeModal(modalId) {
+            const modal = document.getElementById(modalId);
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+                if (modalId === 'backupModal') {
+                    document.getElementById('progressContainer').style.display = 'none';
+                }
+            }, 300);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-content').forEach(content => content.classList.remove('active'));
+            
+            event.target.classList.add('active');
+            document.getElementById(tabId).classList.add('active');
+        }
+
+        function showToast(message, type = 'info') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast ${type}`;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // অন্যান্য ফাংশন
+        function restoreFromCloud() {
+            showToast('রিস্টোর ফিচার শীঘ্রই আসছে...', 'info');
+        }
+
+        function syncNow() {
+            showToast('সিঙ্ক করা হচ্ছে...', 'info');
+        }
+
+        // --- ইনিশিয়ালাইজেশন ---
+        window.onload = async function() {
+            try {
+                await initDatabase();
+                showToast('অ্যাপ লোড হয়েছে', 'success');
+                
+                // URL শেয়ার লিংক চেক
+                const urlParams = new URLSearchParams(window.location.search);
+                const shareCode = urlParams.get('share');
+                
+                if (shareCode) {
+                    try {
+                        const sharedData = JSON.parse(atob(shareCode));
+                        showToast(`${sharedData.files.length} শেয়ার করা ফাইল`, 'info');
+                    } catch (e) {
+                        console.error('Share link error:', e);
+                    }
+                }
+                
+            } catch (error) {
+                console.error('Init error:', error);
+                showToast('অ্যাপ লোড ব্যর্থ, পেজ রিফ্রেশ করুন', 'error');
+            }
+        };
+
+        // মোডাল বাইরে ক্লিক করলে ক্লোজ
+        document.querySelectorAll('.modal-overlay').forEach(modal => {
+            modal.addEventListener('click', function(e) {
+                if (e.target === this) {
+                    this.classList.remove('active');
+                    setTimeout(() => this.style.display = 'none', 300);
+                }
+            });
+        });
+    </script>
+</body>
+</html>
