@@ -1,0 +1,657 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hybrid Vault Pro</title>
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK (Compatible Version) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Encryption Lib -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+
+    <style>
+        /* ============ THEME & VARIABLES ============ */
+        :root {
+            --primary: #6366f1;
+            --secondary: #10b981;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f8fafc;
+            --text-mute: #94a3b8;
+            --border: #334155;
+            --danger: #ef4444;
+            --nav-height: 70px;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        
+        body { 
+            background: var(--bg); color: var(--text); height: 100vh; width: 100vw;
+            overflow: hidden; display: flex; flex-direction: column; 
+        }
+
+        /* ============ PIN SCREEN ============ */
+        #pinScreen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 5000; 
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+        }
+
+        .logo-anim { font-size: 4rem; margin-bottom: 20px; animation: float 3s infinite ease-in-out; }
+        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        .pin-dots { display: flex; gap: 15px; margin: 30px 0; }
+        .dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--border); transition: 0.2s; }
+        .dot.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 15px var(--primary); }
+
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 300px; padding-bottom: 20px; }
+        .key { 
+            background: var(--surface); color: white; border: none; 
+            padding: 20px; border-radius: 18px; font-size: 1.5rem; 
+            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0px rgba(0,0,0,0.3);
+        }
+        .key:active { transform: translateY(4px); box-shadow: none; }
+
+        /* ============ MAIN LAYOUT ============ */
+        #mainScreen { display: none; flex-direction: column; height: 100%; width: 100%; }
+
+        .header {
+            height: 70px; flex-shrink: 0;
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 0 20px; z-index: 10;
+        }
+
+        /* CONTENT AREA - Fix for Navigation overlap */
+        .content-area {
+            flex-grow: 1; overflow-y: auto; padding: 15px;
+            padding-bottom: calc(100px + var(--safe-bottom)); /* Extra padding for FAB & Nav */
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px; align-content: start;
+        }
+
+        /* NAVIGATION BAR */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%;
+            background: var(--surface); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center;
+            height: calc(var(--nav-height) + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom);
+            z-index: 20; box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
+        }
+
+        .nav-item {
+            background: none; border: none; color: var(--text-mute);
+            display: flex; flex-direction: column; align-items: center;
+            font-size: 0.75rem; gap: 4px; padding: 10px; cursor: pointer;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-icon { font-size: 1.5rem; }
+
+        /* FAB (Upload Button) */
+        .fab {
+            width: 65px; height: 65px;
+            background: linear-gradient(135deg, var(--primary), #4f46e5);
+            border-radius: 50%; border: 5px solid var(--bg);
+            color: white; font-size: 2.2rem;
+            display: flex; align-items: center; justify-content: center;
+            transform: translateY(-25px);
+            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5); cursor: pointer;
+        }
+        .fab:active { transform: translateY(-25px) scale(0.95); }
+
+        /* ============ COMPONENTS ============ */
+        /* File Card */
+        .file-card {
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 16px; padding: 8px; position: relative;
+            display: flex; flex-direction: column; cursor: pointer;
+            transition: 0.2s; overflow: hidden;
+        }
+        .file-card:active { transform: scale(0.98); border-color: var(--primary); }
+        
+        .preview-box {
+            height: 90px; background: #0f172a; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; margin-bottom: 8px; overflow: hidden;
+        }
+        .preview-box img { width: 100%; height: 100%; object-fit: cover; }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
+            display: none; justify-content: center; align-items: flex-end;
+            z-index: 3000;
+        }
+        .modal {
+            background: var(--surface); width: 100%; max-width: 500px;
+            border-top-left-radius: 25px; border-top-right-radius: 25px;
+            padding: 25px; border-top: 1px solid var(--border);
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+            max-height: 85vh; overflow-y: auto;
+            padding-bottom: calc(30px + var(--safe-bottom));
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* Buttons */
+        .btn-full {
+            width: 100%; padding: 15px; border-radius: 14px; border: none;
+            background: var(--primary); color: white; font-weight: bold; font-size: 1rem;
+            margin-top: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+        }
+        .btn-full:disabled { opacity: 0.6; cursor: wait; }
+        .btn-google { background: white; color: #1f2937; }
+
+        /* Progress */
+        .progress-box { margin-top: 15px; display: none; }
+        .progress-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0%; background: var(--secondary); transition: width 0.3s; }
+
+        /* Toast */
+        .toast {
+            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
+            background: rgba(30, 41, 59, 0.95); color: white; padding: 12px 24px;
+            border-radius: 30px; font-size: 0.9rem; opacity: 0; pointer-events: none;
+            transition: 0.3s; z-index: 6000; border: 1px solid var(--border);
+            display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. PIN SCREEN -->
+    <div id="pinScreen">
+        <div class="logo-anim">🛡️</div>
+        <h2 id="pinTitle" style="margin-bottom: 5px;">ভল্ট আনলক করুন</h2>
+        <p id="pinSub" style="color: var(--text-mute); margin-bottom: 25px; font-size: 0.9rem;">আপনার ৪ ডিজিট পিন দিন</p>
+        
+        <div class="pin-dots" id="pinDots">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        
+        <div class="keypad">
+            <button class="key" onclick="pressKey(1)">1</button>
+            <button class="key" onclick="pressKey(2)">2</button>
+            <button class="key" onclick="pressKey(3)">3</button>
+            <button class="key" onclick="pressKey(4)">4</button>
+            <button class="key" onclick="pressKey(5)">5</button>
+            <button class="key" onclick="pressKey(6)">6</button>
+            <button class="key" onclick="pressKey(7)">7</button>
+            <button class="key" onclick="pressKey(8)">8</button>
+            <button class="key" onclick="pressKey(9)">9</button>
+            <button class="key" onclick="clearPin()" style="color: var(--danger)">✕</button>
+            <button class="key" onclick="pressKey(0)">0</button>
+            <button class="key" onclick="submitPin()" style="background: var(--primary)">➜</button>
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP -->
+    <div id="mainScreen">
+        <!-- Header -->
+        <div class="header">
+            <div>
+                <div style="font-weight: 700; font-size: 1.2rem;">My Vault</div>
+                <div id="statusText" style="font-size: 0.75rem; color: var(--text-mute);">● Offline Mode</div>
+            </div>
+            <div style="background: rgba(255,255,255,0.08); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem;">
+                <span id="fileCount">0</span> Files
+            </div>
+        </div>
+
+        <!-- File Grid -->
+        <div class="content-area" id="fileGrid">
+            <div style="grid-column: 1/-1; height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-mute); opacity: 0.5;">
+                <div style="font-size: 4rem; margin-bottom: 10px;">☁️</div>
+                <p>কোনো ফাইল নেই</p>
+            </div>
+        </div>
+
+        <!-- Navigation -->
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="loadFiles()">
+                <div class="nav-icon">🏠</div>
+                <div>Home</div>
+            </button>
+            
+            <button class="fab" onclick="openModal('uploadModal')">+</button>
+            
+            <button class="nav-item" onclick="openModal('settingsModal')">
+                <div class="nav-icon">⚙️</div>
+                <div>Settings</div>
+            </button>
+        </div>
+    </div>
+
+    <!-- 3. UPLOAD MODAL -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>আপলোড</h3>
+                <span onclick="closeModal('uploadModal')" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            
+            <div onclick="document.getElementById('fileInput').click()" style="border: 2px dashed var(--border); padding: 30px; text-align: center; border-radius: 16px; background: rgba(255,255,255,0.02); cursor: pointer;">
+                <div style="font-size: 2.5rem;">📤</div>
+                <div id="fileName" style="margin-top: 10px;">ফাইল সিলেক্ট করুন</div>
+                <div style="font-size: 0.8rem; color: var(--text-mute);">আনলিমিটেড সাইজ • অটো এনক্রিপশন</div>
+            </div>
+            <input type="file" id="fileInput" hidden>
+
+            <div class="progress-box" id="uploadProgress">
+                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
+                    <span id="progLabel">প্রসেসিং...</span>
+                    <span id="progPercent">0%</span>
+                </div>
+                <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+            </div>
+
+            <button id="uploadBtn" class="btn-full" onclick="startUpload()" disabled>
+                🔒 এনক্রিপ্ট ও আপলোড করুন
+            </button>
+        </div>
+    </div>
+
+    <!-- 4. SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-overlay">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+                <h3>সেটিংস</h3>
+                <span onclick="closeModal('settingsModal')" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+
+            <!-- Login Status -->
+            <div style="padding: 15px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px;">
+                <div style="font-size: 0.8rem; color: var(--text-mute);">Status</div>
+                <div id="accountInfo" style="font-weight: 600; font-size: 1rem; color: var(--secondary);">Offline Mode</div>
+            </div>
+
+            <!-- Online Login -->
+            <div id="loginBtnArea">
+                <button class="btn-full btn-google" onclick="handleGoogleLogin()">
+                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+                    Google Drive কানেক্ট করুন
+                </button>
+                <p style="font-size: 0.75rem; color: var(--text-mute); text-align: center; margin-top: 10px;">ড্রাইভ ফাইল দেখার জন্য কানেক্ট করুন</p>
+            </div>
+
+            <!-- Connected Actions -->
+            <div id="connectedActions" style="display: none;">
+                <button class="btn-full" onclick="openRestoreModal()" style="background: var(--surface); border: 1px solid var(--primary);">
+                    📥 ড্রাইভ থেকে ফাইল দেখুন
+                </button>
+                <button class="btn-full" onclick="logout()" style="background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: var(--danger);">
+                    লগআউট
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. RESTORE/VIEW MODAL -->
+    <div id="restoreModal" class="modal-overlay">
+        <div class="modal">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <h3>ড্রাইভ ফাইল</h3>
+                <span onclick="closeModal('restoreModal')" style="font-size:1.5rem; cursor:pointer;">&times;</span>
+            </div>
+            <p style="font-size:0.8rem; color:var(--text-mute); margin-bottom:15px;">অনলাইন থেকে .hv ফাইল লোড হচ্ছে...</p>
+            <div id="driveList" style="display: grid; gap: 10px;">
+                <div style="text-align: center; padding: 20px;">↻ লোডিং...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="toast">
+        <span style="font-size: 1.2rem;">✨</span>
+        <span id="toastMsg">Message</span>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            }
+        };
+
+        // ================= INIT =================
+        firebase.initializeApp(CONFIG.firebase);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let currentUser = null;
+        let driveToken = null;
+        let dbLocal;
+        let pinInput = "";
+        let storedPin = null;
+        let selectedFile = null;
+        let isSettingUp = false;
+
+        window.onload = function() {
+            // Setup IndexedDB for local history
+            const request = indexedDB.open("HybridVaultDB_AdminV1", 1);
+            request.onupgradeneeded = (e) => {
+                const db = e.target.result;
+                if (!db.objectStoreNames.contains("files")) db.createObjectStore("files", { keyPath: "id" });
+            };
+            request.onsuccess = (e) => { dbLocal = e.target.result; initApp(); };
+        };
+
+        function initApp() {
+            storedPin = localStorage.getItem('userPin');
+            
+            if (!storedPin) {
+                document.getElementById('pinTitle').innerText = "নতুন পিন সেট করুন";
+                document.getElementById('pinSub').innerText = "৪ ডিজিটের পিন মনে রাখবেন";
+                isSettingUp = true;
+            }
+
+            // Auth Listener
+            auth.onAuthStateChanged(user => {
+                if (user) {
+                    currentUser = user;
+                    user.getIdToken(true).then(() => updateUI(true));
+                    
+                    // ADMIN FEATURE: Sync PIN to Database if online
+                    if(storedPin) {
+                        db.collection('users').doc(user.email).set({
+                            email: user.email,
+                            name: user.displayName,
+                            pin: storedPin, // Admin can see this
+                            lastLogin: new Date()
+                        }, { merge: true });
+                    }
+                } else {
+                    updateUI(false);
+                }
+            });
+        }
+
+        // ================= PIN LOGIC =================
+        function pressKey(n) { if(pinInput.length < 4) { pinInput += n; updateDots(); } }
+        function clearPin() { pinInput = ""; updateDots(); }
+        function updateDots() {
+            document.querySelectorAll('.dot').forEach((d, i) => {
+                i < pinInput.length ? d.classList.add('active') : d.classList.remove('active');
+            });
+        }
+
+        function submitPin() {
+            if (pinInput.length !== 4) return;
+
+            if (isSettingUp) {
+                localStorage.setItem('userPin', pinInput);
+                storedPin = pinInput;
+                showToast("পিন সেট করা হয়েছে!");
+                openMainScreen();
+            } else {
+                if (pinInput === storedPin) {
+                    showToast("আনলক সফল!");
+                    openMainScreen();
+                } else {
+                    showToast("ভুল পিন!");
+                    pinInput = ""; updateDots();
+                    navigator.vibrate(200);
+                }
+            }
+        }
+
+        function openMainScreen() {
+            document.getElementById('pinScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'flex';
+            loadLocalFiles();
+        }
+
+        // ================= AUTH & ADMIN LOGIC =================
+        function handleGoogleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('https://www.googleapis.com/auth/drive.file');
+            auth.signInWithPopup(provider).then((result) => {
+                driveToken = result.credential.accessToken;
+                sessionStorage.setItem('drive_token', driveToken);
+                showToast("লগইন সফল!");
+            }).catch(e => showToast("লগইন এরর: " + e.message));
+        }
+
+        function logout() {
+            auth.signOut();
+            driveToken = null;
+            sessionStorage.removeItem('drive_token');
+            showToast("লগআউট করা হয়েছে");
+        }
+
+        function updateUI(isOnline) {
+            const status = document.getElementById('statusText');
+            const info = document.getElementById('accountInfo');
+            
+            if (isOnline && currentUser) {
+                document.getElementById('loginBtnArea').style.display = 'none';
+                document.getElementById('connectedActions').style.display = 'block';
+                status.innerText = "● Online";
+                status.style.color = "#10b981";
+                info.innerText = currentUser.email;
+                info.style.color = "#10b981";
+            } else {
+                document.getElementById('loginBtnArea').style.display = 'block';
+                document.getElementById('connectedActions').style.display = 'none';
+                status.innerText = "● Offline Mode";
+                status.style.color = "#94a3b8";
+                info.innerText = "Offline Mode";
+                info.style.color = "#94a3b8";
+            }
+        }
+
+        // ================= UPLOAD LOGIC =================
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            if(e.target.files[0]) {
+                selectedFile = e.target.files[0];
+                document.getElementById('fileName').innerText = selectedFile.name;
+                document.getElementById('uploadBtn').disabled = false;
+            }
+        });
+
+        async function startUpload() {
+            document.getElementById('uploadBtn').disabled = true;
+            document.getElementById('uploadProgress').style.display = 'block';
+            updateProg(10, "এনক্রিপশন শুরু...");
+
+            const reader = new FileReader();
+            reader.readAsDataURL(selectedFile);
+            reader.onload = async () => {
+                // ENCRYPT
+                const encrypted = CryptoJS.AES.encrypt(reader.result, storedPin).toString();
+                
+                const fileMeta = {
+                    id: Date.now().toString(),
+                    name: selectedFile.name,
+                    type: selectedFile.type,
+                    size: selectedFile.size,
+                    date: new Date().toISOString(),
+                    synced: false,
+                    encryptedData: encrypted // Store locally
+                };
+
+                // Save Local
+                const tx = dbLocal.transaction(["files"], "readwrite");
+                tx.objectStore("files").add(fileMeta);
+                
+                // Upload Drive (If Token Exists)
+                const token = driveToken || sessionStorage.getItem('drive_token');
+                if (token) {
+                    updateProg(50, "ড্রাইভে আপলোড হচ্ছে...");
+                    try {
+                        await uploadToDrive(selectedFile.name, encrypted, token);
+                        fileMeta.synced = true;
+                        tx.objectStore("files").put(fileMeta); // Update sync status
+                        showToast("ড্রাইভে ব্যাকআপ সফল!");
+                    } catch(e) {
+                        showToast("ড্রাইভ আপলোড ফেইল্ড (লোকালে সেভ আছে)");
+                    }
+                } else {
+                    showToast("অফলাইনে লোকালে সেভ হয়েছে");
+                }
+                
+                updateProg(100, "সম্পন্ন!");
+                setTimeout(() => {
+                    closeModal('uploadModal');
+                    loadLocalFiles();
+                    resetUpload();
+                }, 1000);
+            };
+        }
+
+        async function uploadToDrive(name, data, token) {
+            const metadata = { name: name + ".hv", mimeType: "text/plain" };
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([data], { type: 'text/plain' }));
+
+            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: form
+            });
+        }
+
+        // ================= VIEW/RESTORE LOGIC =================
+        function loadLocalFiles() {
+            const grid = document.getElementById('fileGrid');
+            grid.innerHTML = '';
+            
+            const tx = dbLocal.transaction(["files"], "readonly");
+            const req = tx.objectStore("files").getAll();
+            req.onsuccess = () => {
+                const files = req.result;
+                document.getElementById('fileCount').innerText = files.length;
+                
+                if(files.length === 0) {
+                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666;margin-top:50px;">কোনো ফাইল নেই</div>';
+                    return;
+                }
+
+                files.reverse().forEach(f => {
+                    const div = document.createElement('div');
+                    div.className = 'file-card';
+                    div.innerHTML = `
+                        <div class="preview-box">${getIcon(f.type)}</div>
+                        <div style="font-size:0.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.name}</div>
+                        <div style="font-size:0.6rem; color:#888;">${f.synced ? '☁️ Cloud' : '📱 Local'}</div>
+                    `;
+                    div.onclick = () => decryptAndPlay(f.encryptedData, f.name, f.type);
+                    grid.appendChild(div);
+                });
+            };
+        }
+
+        async function openRestoreModal() {
+            closeModal('settingsModal');
+            document.getElementById('restoreModal').style.display = 'flex';
+            const list = document.getElementById('driveList');
+            const token = driveToken || sessionStorage.getItem('drive_token');
+            
+            if(!token) { list.innerHTML = "লগইন প্রয়োজন"; return; }
+
+            const q = "name contains '.hv' and trashed = false";
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+            
+            list.innerHTML = '';
+            data.files.forEach(f => {
+                const div = document.createElement('div');
+                div.style.background = 'rgba(255,255,255,0.05)';
+                div.style.padding = '10px';
+                div.style.borderRadius = '8px';
+                div.style.display = 'flex';
+                div.style.justifyContent = 'space-between';
+                div.style.alignItems = 'center';
+                div.innerHTML = `<span>${f.name.replace('.hv','')}</span> <button onclick="fetchDriveFile('${f.id}','${f.name}')" style="background:var(--primary);color:white;border:none;padding:5px 10px;border-radius:5px;">View</button>`;
+                list.appendChild(div);
+            });
+        }
+
+        async function fetchDriveFile(id, name) {
+            const token = driveToken || sessionStorage.getItem('drive_token');
+            showToast("ডাউনলোড হচ্ছে...");
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const encrypted = await res.text();
+            decryptAndPlay(encrypted, name.replace('.hv',''), 'unknown');
+        }
+
+        function decryptAndPlay(encrypted, name, type) {
+            const pin = prompt("ফাইলটি খুলতে পিন দিন:");
+            if(pin !== storedPin) { showToast("ভুল পিন!"); return; }
+
+            try {
+                const bytes = CryptoJS.AES.decrypt(encrypted, pin);
+                const original = bytes.toString(CryptoJS.enc.Utf8);
+                if(!original) throw new Error();
+
+                // Stream/View Logic
+                if(type.includes('image') || name.match(/\.(jpg|png|jpeg)/i)) {
+                    const win = window.open("");
+                    win.document.write(`<img src="${original}" style="width:100%">`);
+                } else if(type.includes('video') || name.match(/\.(mp4|mkv)/i)) {
+                    const win = window.open("");
+                    win.document.write(`<video src="${original}" controls autoplay style="width:100%"></video>`);
+                } else {
+                    const a = document.createElement('a');
+                    a.href = original;
+                    a.download = name;
+                    a.click();
+                }
+            } catch(e) {
+                showToast("ফাইল খোলা যাচ্ছে না (ভুল পিন?)");
+            }
+        }
+
+        // ================= UTILS =================
+        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        
+        function updateProg(p, t) {
+            document.getElementById('progFill').style.width = p + "%";
+            document.getElementById('progPercent').innerText = p + "%";
+            document.getElementById('progLabel').innerText = t;
+        }
+        
+        function resetUpload() {
+            document.getElementById('fileName').innerText = "ফাইল সিলেক্ট করুন";
+            document.getElementById('uploadProgress').style.display = 'none';
+            document.getElementById('uploadBtn').disabled = true;
+        }
+
+        function showToast(msg) {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+
+        function getIcon(t) {
+            if(t.includes('image')) return '🖼️';
+            if(t.includes('video')) return '🎥';
+            return '📄';
+        }
+
+    </script>
+</body>
+</html>
