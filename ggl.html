@@ -1,0 +1,642 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hybrid Vault - Drive Source Mode</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@24,400,0,0" rel="stylesheet">
+    
+    <!-- Firebase SDK (Auth Only) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    
+    <!-- Utils -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script> <!-- For basic hashing if needed, not used for storage anymore -->
+
+    <style>
+        /* ================= ANDROID UX THEME (FINAL) ================= */
+        :root {
+            --primary: #6366f1;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-2: #334155;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+            --radius: 16px;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body { 
+            font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); 
+            height: 100vh; width: 100vw; overflow: hidden; display: flex; flex-direction: column;
+        }
+
+        .icon { font-family: 'Material Symbols Rounded'; font-variation-settings: 'FILL' 0; font-size: 24px; }
+        .icon-filled { font-variation-settings: 'FILL' 1; }
+
+        /* Animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+
+        /* ================= SCREENS ================= */
+        .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 10; display: none; flex-direction: column; }
+        .screen.active { display: flex; animation: fadeIn 0.3s ease; }
+
+        /* --- PIN SCREEN --- */
+        #pinScreen { align-items: center; justify-content: center; z-index: 50; padding: 20px; text-align: center; }
+        .pin-dots { display: flex; gap: 15px; margin: 30px 0; }
+        .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--surface-2); transition: 0.2s; }
+        .dot.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 10px var(--primary); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 280px; }
+        .key { width: 70px; height: 70px; border-radius: 50%; background: var(--surface); color: white; border: none; font-size: 1.5rem; display: flex; align-items: center; justify-content: center; transition: 0.1s; }
+        .key:active { background: var(--surface-2); transform: scale(0.9); }
+
+        /* --- GOOGLE AUTH SCREEN --- */
+        #authScreen { align-items: center; justify-content: center; padding: 20px; text-align: center; }
+        .google-btn {
+            background: white; color: #333; padding: 12px 24px; border-radius: 30px;
+            display: flex; align-items: center; gap: 10px; font-weight: 600; border: none;
+            cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,0.3); margin-top: 20px;
+        }
+
+        /* --- MAIN DRIVE UI --- */
+        .app-header {
+            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
+            padding: 15px 20px; border-bottom: 1px solid var(--surface-2); z-index: 20;
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .top-bar { display: flex; justify-content: space-between; align-items: center; }
+        .session-badge { 
+            background: rgba(16, 185, 129, 0.15); color: var(--success); 
+            padding: 4px 10px; border-radius: 8px; font-size: 0.75rem; font-weight: 600;
+            display: flex; align-items: center; gap: 5px;
+        }
+        .breadcrumbs { 
+            display: flex; gap: 5px; overflow-x: auto; white-space: nowrap; 
+            font-size: 0.85rem; color: var(--text-muted); scrollbar-width: none;
+        }
+        .crumb { color: var(--text-muted); }
+        .crumb.active { color: var(--primary); font-weight: 600; }
+
+        .content-area { 
+            flex: 1; overflow-y: auto; padding: 15px; 
+            padding-bottom: 100px; display: flex; flex-direction: column; gap: 10px; 
+        }
+
+        .list-item {
+            background: var(--surface); padding: 15px; border-radius: 12px;
+            display: flex; align-items: center; gap: 15px; border: 1px solid transparent;
+            transition: 0.1s;
+        }
+        .list-item:active { background: var(--surface-2); transform: scale(0.99); }
+        .list-item:hover { border-color: var(--primary); }
+        
+        .item-icon { 
+            width: 40px; height: 40px; border-radius: 8px; 
+            background: var(--surface-2); display: flex; align-items: center; justify-content: center;
+            font-size: 1.5rem;
+        }
+        .item-info { flex: 1; overflow: hidden; }
+        .item-name { font-weight: 500; font-size: 0.95rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-meta { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; }
+
+        /* --- BOTTOM NAV --- */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%; height: 70px;
+            background: var(--surface); border-top: 1px solid var(--surface-2);
+            display: flex; justify-content: space-around; align-items: center;
+            padding-bottom: var(--safe-bottom); z-index: 20;
+        }
+        .nav-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-muted); font-size: 0.7rem; background: none; border: none; }
+        .fab { 
+            width: 56px; height: 56px; background: var(--primary); border-radius: 50%; 
+            border: none; color: white; font-size: 1.8rem; display: flex; 
+            align-items: center; justify-content: center; 
+            box-shadow: 0 4px 15px rgba(99,102,241,0.4); transition: 0.2s; 
+        }
+        .fab:active { transform: scale(0.9); }
+
+        /* --- SECURE PLAYER --- */
+        #securePlayer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 200; display: none; flex-direction: column;
+        }
+        .player-header {
+            padding: 20px; display: flex; justify-content: space-between; align-items: center;
+            background: rgba(0,0,0,0.5); backdrop-filter: blur(10px);
+        }
+        .secure-badge {
+            background: rgba(239, 68, 68, 0.2); color: var(--danger);
+            padding: 4px 10px; border-radius: 8px; font-size: 0.75rem;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .player-content { 
+            flex: 1; display: flex; align-items: center; justify-content: center; 
+            position: relative; overflow: hidden; 
+        }
+        canvas { max-width: 100%; max-height: 100%; }
+
+        /* --- TOAST --- */
+        .toast {
+            position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+            background: var(--surface-2); color: white; padding: 10px 20px;
+            border-radius: 30px; font-size: 0.85rem; display: flex; align-items: center; gap: 8px;
+            opacity: 0; pointer-events: none; transition: 0.3s; z-index: 300; border: 1px solid var(--surface);
+        }
+        .toast.show { opacity: 1; bottom: 100px; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. PIN SCREEN -->
+    <div id="pinScreen" class="screen active">
+        <div class="icon" style="font-size: 4rem; margin-bottom: 20px; color: var(--primary);">shield_lock</div>
+        <h2>Vault Access</h2>
+        <p style="color: var(--text-muted); font-size: 0.8rem; margin-bottom: 20px;">Enter Session PIN</p>
+        
+        <div class="pin-dots" id="pinDots">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        
+        <div class="keypad">
+            <button class="key" onclick="pressKey(1)">1</button>
+            <button class="key" onclick="pressKey(2)">2</button>
+            <button class="key" onclick="pressKey(3)">3</button>
+            <button class="key" onclick="pressKey(4)">4</button>
+            <button class="key" onclick="pressKey(5)">5</button>
+            <button class="key" onclick="pressKey(6)">6</button>
+            <button class="key" onclick="pressKey(7)">7</button>
+            <button class="key" onclick="pressKey(8)">8</button>
+            <button class="key" onclick="pressKey(9)">9</button>
+            <button class="key" onclick="clearPin()" style="color: var(--danger)">C</button>
+            <button class="key" onclick="pressKey(0)">0</button>
+            <button class="key" onclick="submitPin()" style="background: var(--primary)">OK</button>
+        </div>
+    </div>
+
+    <!-- 2. AUTH SCREEN -->
+    <div id="authScreen" class="screen">
+        <div class="icon" style="font-size: 4rem; margin-bottom: 20px;">cloud</div>
+        <h2>Connect Drive</h2>
+        <p style="color: var(--text-muted); max-width: 300px; line-height: 1.5; margin-bottom: 30px;">
+            Login to Google Drive to access the Admin Shared Vault. Files are streamed directly. No local storage used.
+        </p>
+        <button class="google-btn" onclick="handleGoogleLogin()">
+            <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
+            Sign in with Google
+        </button>
+    </div>
+
+    <!-- 3. MAIN DRIVE UI -->
+    <div id="driveScreen" class="screen">
+        <div class="app-header">
+            <div class="top-bar">
+                <div style="font-weight: 700; font-size: 1.1rem;">Hybrid Vault</div>
+                <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 4px;">
+                    <div class="session-badge">
+                        <span class="icon" style="font-size: 14px;">lock_open</span> Session Active
+                    </div>
+                    <div style="font-size: 0.7rem; color: var(--text-muted);">
+                        Expires in: <span id="sessionTimer" style="color: var(--warning)">23:59</span>
+                    </div>
+                </div>
+            </div>
+            <div class="breadcrumbs" id="breadcrumbs">
+                <!-- Breadcrumbs injected here -->
+            </div>
+        </div>
+
+        <div class="content-area" id="fileList">
+            <!-- Files/Folders injected here -->
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-item" onclick="goBack()">
+                <span class="icon">arrow_back</span>
+                <span>Back</span>
+            </button>
+            <button class="fab" onclick="triggerUpload()">
+                <span class="icon">add</span>
+            </button>
+            <button class="nav-item" onclick="logout()">
+                <span class="icon">logout</span>
+                <span>Lock</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- HIDDEN INPUT -->
+    <input type="file" id="fileInput" hidden multiple onchange="handleFiles(this.files)">
+    <input type="file" id="folderInput" hidden webkitdirectory directory onchange="handleFiles(this.files)">
+
+    <!-- SECURE PLAYER -->
+    <div id="securePlayer">
+        <div class="player-header">
+            <button class="icon-btn" style="background:rgba(255,255,255,0.1); border:none; color:white; width:40px; height:40px; border-radius:50%;" onclick="closePlayer()">
+                <span class="icon">close</span>
+            </button>
+            <div class="secure-badge">
+                <span class="icon" style="font-size:14px;">visibility_off</span> Secure View
+            </div>
+        </div>
+        <div class="player-content" id="playerContent">
+            <!-- Canvas/Video Element -->
+        </div>
+    </div>
+
+    <!-- TOAST -->
+    <div id="toast" class="toast">
+        <span class="icon" id="toastIcon">info</span>
+        <span id="toastMsg">Notification</span>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            sessionDuration: 24 * 60 * 60 * 1000, // 24 Hours
+            pin: localStorage.getItem('vault_pin_final') // Persistent PIN storage
+        };
+
+        // ================= STATE =================
+        firebase.initializeApp(CONFIG.firebase);
+        const auth = firebase.auth();
+        
+        let state = {
+            sessionStart: null,
+            currentFolderId: 'root', // Root is Admin view
+            folderStack: [], // Navigation history
+            accessToken: null,
+            timerInterval: null
+        };
+
+        // ================= SESSION MANAGEMENT =================
+        window.onload = () => {
+            const storedStart = sessionStorage.getItem('vault_session_start');
+            const now = Date.now();
+
+            // Check Session Validity
+            if (storedStart && (now - parseInt(storedStart) < CONFIG.sessionDuration)) {
+                // Valid Session
+                state.sessionStart = parseInt(storedStart);
+                startSessionTimer();
+                checkAuthState(); // Skip PIN, check Google Auth
+            } else {
+                // Invalid/No Session
+                if(!CONFIG.pin) {
+                    alert("First time setup: Enter a PIN to set.");
+                }
+                showScreen('pinScreen');
+            }
+        };
+
+        function createSession() {
+            const now = Date.now();
+            sessionStorage.setItem('vault_session_start', now);
+            state.sessionStart = now;
+            startSessionTimer();
+        }
+
+        function startSessionTimer() {
+            if(state.timerInterval) clearInterval(state.timerInterval);
+            
+            const updateTimer = () => {
+                const now = Date.now();
+                const elapsed = now - state.sessionStart;
+                const remaining = CONFIG.sessionDuration - elapsed;
+
+                if (remaining <= 0) {
+                    logout(true); // Force logout
+                    return;
+                }
+
+                const h = Math.floor(remaining / (1000 * 60 * 60));
+                const m = Math.floor((remaining % (1000 * 60 * 60)) / (1000 * 60));
+                document.getElementById('sessionTimer').innerText = `${h}h ${m}m`;
+            };
+
+            updateTimer();
+            state.timerInterval = setInterval(updateTimer, 60000); // Update every minute
+        }
+
+        // ================= PIN LOGIC =================
+        let pinInput = "";
+        function pressKey(n) {
+            if(pinInput.length < 4) { pinInput += n; updatePinDots(); if(navigator.vibrate) navigator.vibrate(10); }
+        }
+        function clearPin() { pinInput = ""; updatePinDots(); }
+        function updatePinDots() {
+            document.querySelectorAll('.dot').forEach((d, i) => {
+                i < pinInput.length ? d.classList.add('active') : d.classList.remove('active');
+            });
+        }
+
+        function submitPin() {
+            if(pinInput.length !== 4) return;
+
+            // Setup Mode
+            if(!CONFIG.pin) {
+                CONFIG.pin = pinInput;
+                localStorage.setItem('vault_pin_final', pinInput);
+                showToast("PIN Set", "check");
+                createSession();
+                checkAuthState();
+                return;
+            }
+
+            // Verify Mode
+            if(pinInput === CONFIG.pin) {
+                createSession();
+                checkAuthState();
+            } else {
+                showToast("Invalid PIN", "error");
+                pinInput = ""; updatePinDots();
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+            }
+        }
+
+        // ================= AUTH & NAVIGATION =================
+        function checkAuthState() {
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    // Logged in to Google
+                    user.getIdToken(true).then(token => {
+                        state.accessToken = token;
+                        showScreen('driveScreen');
+                        loadDriveContent();
+                    });
+                } else {
+                    // Not logged in
+                    showScreen('authScreen');
+                }
+            });
+        }
+
+        function handleGoogleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            // Full Drive Scope for Admin Shared Folder access
+            provider.addScope('https://www.googleapis.com/auth/drive'); 
+            auth.signInWithPopup(provider).then(() => {
+                showToast("Drive Connected", "cloud_done");
+            }).catch(e => {
+                console.error(e);
+                showToast("Login Failed", "error");
+            });
+        }
+
+        function showScreen(id) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(id).classList.add('active');
+        }
+
+        // ================= DRIVE API (SOURCE MODE) =================
+        async function loadDriveContent() {
+            const list = document.getElementById('fileList');
+            list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted)">Loading...</div>';
+            updateBreadcrumbs();
+
+            const query = `'${state.currentFolderId}' in parents and trashed = false`;
+            const fields = 'files(id,name,mimeType,size,modifiedTime,thumbnailLink)';
+            
+            try {
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=${fields}&orderBy=folder,name`, {
+                    headers: { 'Authorization': 'Bearer ' + state.accessToken }
+                });
+                const data = await res.json();
+                
+                renderFiles(data.files || []);
+            } catch(e) {
+                showToast("Connection Error", "error");
+                list.innerHTML = '<div style="text-align:center; color:var(--danger)">Failed to load files</div>';
+            }
+        }
+
+        function renderFiles(files) {
+            const list = document.getElementById('fileList');
+            list.innerHTML = '';
+            
+            if(files.length === 0) {
+                list.innerHTML = `<div style="text-align:center; margin-top:50px; color:var(--text-muted)">
+                    <span class="icon" style="font-size:3rem; opacity:0.5">folder_open</span><br>Folder is empty
+                </div>`;
+                return;
+            }
+
+            // Sort: Folders first
+            files.sort((a, b) => {
+                if(a.mimeType === 'application/vnd.google-apps.folder') return -1;
+                if(b.mimeType === 'application/vnd.google-apps.folder') return 1;
+                return a.name.localeCompare(b.name);
+            });
+
+            files.forEach(file => {
+                const div = document.createElement('div');
+                div.className = 'list-item';
+                div.onclick = () => handleItemClick(file);
+
+                const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                const icon = isFolder ? 'folder' : getIcon(file.mimeType);
+                const size = isFolder ? '' : formatSize(parseInt(file.size));
+
+                div.innerHTML = `
+                    <div class="item-icon" style="color: ${isFolder ? 'var(--primary)' : 'var(--text-muted)'}">
+                        <span class="icon">${icon}</span>
+                    </div>
+                    <div class="item-info">
+                        <div class="item-name">${file.name}</div>
+                        <div class="item-meta">${size}</div>
+                    </div>
+                    ${!isFolder ? `<span class="icon" style="color:var(--text-muted); font-size:18px;">more_vert</span>` : ''}
+                `;
+                list.appendChild(div);
+            });
+        }
+
+        function handleItemClick(file) {
+            if (file.mimeType === 'application/vnd.google-apps.folder') {
+                // Enter Folder
+                state.folderStack.push({id: state.currentFolderId, name: 'Previous'});
+                state.currentFolderId = file.id;
+                loadDriveContent();
+            } else {
+                // View File (Stream) - NO PIN CHECK
+                openFileViewer(file);
+            }
+        }
+
+        function goBack() {
+            if (state.folderStack.length > 0) {
+                const prev = state.folderStack.pop();
+                state.currentFolderId = prev.id;
+                loadDriveContent();
+            } else {
+                showToast("Already at Root", "info");
+            }
+        }
+
+        function updateBreadcrumbs() {
+            const bc = document.getElementById('breadcrumbs');
+            bc.innerHTML = '';
+            
+            // Always show Root
+            const root = document.createElement('span');
+            root.className = 'crumb ' + (state.currentFolderId === 'root' ? 'active' : '');
+            root.innerText = '🏠 Admin Vault';
+            root.onclick = () => { state.currentFolderId = 'root'; state.folderStack=[]; loadDriveContent(); };
+            bc.appendChild(root);
+
+            // Add separators if deep
+            if(state.folderStack.length > 0) {
+                const sep = document.createElement('span');
+                sep.innerText = ' > ';
+                sep.style.color = 'var(--surface-2)';
+                bc.appendChild(sep);
+                
+                const curr = document.createElement('span');
+                curr.className = 'crumb active';
+                curr.innerText = '...'; // Simple for now
+                bc.appendChild(curr);
+            }
+        }
+
+        // ================= UPLOAD (UNLIMITED) =================
+        function triggerUpload() {
+            // Simple prompt for file or folder
+            if(confirm("Upload Files or Folder? \nOK = Files \nCancel = Folder")) {
+                document.getElementById('fileInput').click();
+            } else {
+                document.getElementById('folderInput').click();
+            }
+        }
+
+        async function handleFiles(files) {
+            if(files.length === 0) return;
+            showToast(`Uploading ${files.length} items...`, "cloud_upload");
+
+            for(let i=0; i<files.length; i++) {
+                const file = files[i];
+                // We need webkitRelativePath for folders, otherwise just name
+                const path = file.webkitRelativePath || file.name;
+                const parts = path.split('/');
+                const name = parts[parts.length - 1];
+
+                // Simple implementation: Uploads flat to current folder.
+                // Real folder structure requires creating folders recursively.
+                // For this spec, we upload to current folder.
+                
+                const metadata = { name: name, parents: [state.currentFolderId] };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', file);
+
+                try {
+                    await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST', headers: { 'Authorization': 'Bearer ' + state.accessToken }, body: form
+                    });
+                } catch(e) { console.error("Upload fail", e); }
+            }
+            
+            showToast("Upload Complete", "check_circle");
+            loadDriveContent(); // Refresh list
+        }
+
+        // ================= VIEWER (STREAMING & CANVAS) =================
+        async function openFileViewer(file) {
+            const player = document.getElementById('securePlayer');
+            const content = document.getElementById('playerContent');
+            content.innerHTML = '';
+            player.style.display = 'flex';
+
+            // Direct Stream URL (No Local Download)
+            const streamUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media&token=${state.accessToken}`;
+
+            if(file.mimeType.startsWith('image')) {
+                // SECURE VIEW: Canvas Render (Prevents easy Save-As)
+                const img = new Image();
+                img.crossOrigin = "Anonymous"; // Important
+                img.src = streamUrl;
+                
+                showToast("Secure View Active", "lock");
+                
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = img.width;
+                    canvas.height = img.height;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0);
+                    content.appendChild(canvas);
+                };
+                img.onerror = () => {
+                    content.innerHTML = '<div style="color:white">Failed to load image</div>';
+                };
+
+            } else if(file.mimeType.startsWith('video')) {
+                const vid = document.createElement('video');
+                vid.src = streamUrl;
+                vid.controls = true;
+                vid.autoplay = true;
+                vid.style.width = '100%';
+                vid.style.maxHeight = '100%';
+                content.appendChild(vid);
+
+            } else {
+                // Fallback for PDF/Others: Embed/Download
+                content.innerHTML = `<a href="${streamUrl}" download="${file.name}" style="color:white; padding:20px;">Download ${file.name}</a>`;
+            }
+        }
+
+        function closePlayer() {
+            const player = document.getElementById('securePlayer');
+            player.style.display = 'none';
+            document.getElementById('playerContent').innerHTML = ''; // Clear memory
+        }
+
+        // ================= UTILS =================
+        function logout(expired = false) {
+            if(expired) alert("Session Expired");
+            sessionStorage.removeItem('vault_session_start');
+            auth.signOut();
+            location.reload();
+        }
+
+        function formatSize(bytes) {
+            if(bytes===0) return '0 B';
+            const k=1024, sizes=['B','KB','MB','GB'];
+            const i=Math.floor(Math.log(bytes)/Math.log(k));
+            return parseFloat((bytes/Math.pow(k,i)).toFixed(1))+' '+sizes[i];
+        }
+
+        function getIcon(mime) {
+            if(mime.includes('pdf')) return 'picture_as_pdf';
+            if(mime.includes('image')) return 'image';
+            if(mime.includes('video')) return 'movie';
+            if(mime.includes('audio')) return 'music_note';
+            if(mime.includes('text')) return 'description';
+            return 'insert_drive_file';
+        }
+
+        function showToast(msg, icon='info') {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            document.querySelector('#toast .icon').innerText = icon;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+    </script>
+</body>
+</html>
