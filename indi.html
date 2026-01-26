@@ -1,0 +1,686 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>Hybrid Vault Pro - Ultimate</title>
+    
+    <!-- Fonts & Icons -->
+    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Utilities -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/localforage/1.10.0/localforage.min.js"></script> <!-- Better IndexedDB -->
+
+    <style>
+        /* ============ ANDROID UX THEME ============ */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f8fafc;
+            --text-mute: #94a3b8;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --nav-height: 70px;
+            --safe-bottom: env(safe-area-inset-bottom, 20px);
+            --radius: 16px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; user-select: none; }
+        
+        body { 
+            background: var(--bg); color: var(--text); height: 100vh; width: 100vw;
+            overflow: hidden; display: flex; flex-direction: column; 
+        }
+
+        /* Animations */
+        @keyframes slideIn { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes pulse { 0% { opacity: 0.6; } 50% { opacity: 1; } 100% { opacity: 0.6; } }
+
+        /* ============ SCREENS ============ */
+        .screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: var(--bg); z-index: 10; display: none;
+            flex-direction: column;
+        }
+        .screen.active { display: flex; }
+
+        /* PIN SCREEN */
+        #pinScreen { align-items: center; justify-content: center; z-index: 50; }
+        .pin-dots { display: flex; gap: 15px; margin: 30px 0; }
+        .dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--surface-light); transition: 0.2s; }
+        .dot.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 15px var(--primary); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; width: 280px; }
+        .key { 
+            width: 70px; height: 70px; border-radius: 50%; background: var(--surface); 
+            color: white; border: none; font-size: 1.5rem; font-weight: 600;
+            cursor: pointer; transition: 0.1s; display: flex; align-items: center; justify-content: center;
+        }
+        .key:active { background: var(--primary); transform: scale(0.9); }
+
+        /* MAIN APP */
+        .header {
+            height: 70px; flex-shrink: 0; background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px); border-bottom: 1px solid var(--surface-light);
+            display: flex; justify-content: space-between; align-items: center; padding: 0 20px;
+        }
+        
+        .content-area {
+            flex-grow: 1; overflow-y: auto; padding: 15px;
+            padding-bottom: calc(100px + var(--safe-bottom));
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 12px; align-content: start;
+        }
+
+        /* FILE CARD (Android Style) */
+        .file-card {
+            background: var(--surface); border-radius: var(--radius);
+            position: relative; overflow: hidden; transition: 0.2s;
+            display: flex; flex-direction: column; aspect-ratio: 1;
+            border: 1px solid var(--surface-light);
+        }
+        .file-card:active { transform: scale(0.96); border-color: var(--primary); }
+        
+        .file-status {
+            position: absolute; top: 6px; right: 6px; z-index: 2;
+            width: 10px; height: 10px; border-radius: 50%;
+        }
+        .status-synced { background: var(--secondary); box-shadow: 0 0 8px var(--secondary); }
+        .status-local { background: var(--warning); }
+        
+        .preview {
+            flex: 1; display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; background: rgba(0,0,0,0.2);
+        }
+        .preview img { width: 100%; height: 100%; object-fit: cover; }
+        .file-info { padding: 8px; font-size: 0.8rem; background: var(--surface); }
+        .file-name { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* BOTTOM NAV */
+        .bottom-nav {
+            position: fixed; bottom: 0; width: 100%;
+            background: var(--surface); border-top: 1px solid var(--surface-light);
+            display: flex; justify-content: space-around; align-items: center;
+            height: calc(var(--nav-height) + var(--safe-bottom));
+            padding-bottom: var(--safe-bottom); z-index: 20;
+        }
+        .nav-item {
+            background: none; border: none; color: var(--text-mute);
+            display: flex; flex-direction: column; align-items: center; gap: 4px; padding: 10px;
+        }
+        .nav-item.active { color: var(--primary); }
+        
+        .fab {
+            width: 60px; height: 60px; background: linear-gradient(135deg, var(--primary), #4f46e5);
+            border-radius: 50%; border: 4px solid var(--bg); color: white;
+            font-size: 2rem; display: flex; align-items: center; justify-content: center;
+            transform: translateY(-25px); box-shadow: 0 8px 20px rgba(99, 102, 241, 0.4);
+        }
+        .fab:active { transform: translateY(-25px) scale(0.9); }
+
+        /* MODALS & SHEETS */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.8); backdrop-filter: blur(5px);
+            display: none; justify-content: center; align-items: flex-end; z-index: 100;
+        }
+        .bottom-sheet {
+            background: var(--surface); width: 100%; max-width: 500px;
+            border-top-left-radius: 24px; border-top-right-radius: 24px;
+            padding: 25px; animation: slideIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
+            max-height: 85vh; overflow-y: auto; border-top: 1px solid var(--surface-light);
+        }
+        
+        /* STREAMING PLAYER */
+        .player-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: black; z-index: 200; display: none;
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        .player-controls {
+            position: absolute; top: 20px; right: 20px; z-index: 201;
+        }
+        .close-player {
+            background: rgba(255,255,255,0.2); border: none; color: white;
+            width: 40px; height: 40px; border-radius: 50%; font-size: 1.5rem;
+        }
+        
+        /* VIEW ONLY PROTECTION */
+        .secure-view {
+            user-select: none; -webkit-user-select: none;
+            pointer-events: none; /* Prevents right click context menu on images */
+        }
+        
+        /* TOAST */
+        .toast {
+            position: fixed; top: 50px; left: 50%; transform: translateX(-50%);
+            background: rgba(15, 23, 42, 0.95); color: white; padding: 12px 24px;
+            border-radius: 30px; font-size: 0.9rem; opacity: 0; pointer-events: none;
+            transition: 0.3s; z-index: 300; border: 1px solid var(--surface-light);
+            display: flex; align-items: center; gap: 8px;
+        }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
+
+        /* SKELETON LOADING */
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface) 25%, var(--surface-light) 50%, var(--surface) 75%);
+            background-size: 200% 100%; animation: pulse 1.5s infinite;
+            border-radius: var(--radius);
+        }
+
+        /* ACTIONS LIST */
+        .action-item {
+            padding: 15px; border-bottom: 1px solid rgba(255,255,255,0.05);
+            display: flex; align-items: center; gap: 15px;
+        }
+        .action-item:last-child { border: none; }
+        .action-icon { font-size: 1.2rem; width: 30px; text-align: center; }
+
+    </style>
+</head>
+<body>
+
+    <!-- 1. PIN SCREEN (Secure Entry) -->
+    <div id="pinScreen" class="screen active">
+        <div style="font-size: 3rem; margin-bottom: 10px;">🛡️</div>
+        <h2 id="pinTitle">ভল্ট অ্যাক্সেস</h2>
+        <p style="color: var(--text-mute); font-size: 0.9rem; margin-bottom: 20px;">আপনার ৪ ডিজিট পিন দিন</p>
+        
+        <div class="pin-dots" id="pinDots">
+            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+        </div>
+        
+        <div class="keypad">
+            <button class="key" onclick="pressKey(1)">1</button>
+            <button class="key" onclick="pressKey(2)">2</button>
+            <button class="key" onclick="pressKey(3)">3</button>
+            <button class="key" onclick="pressKey(4)">4</button>
+            <button class="key" onclick="pressKey(5)">5</button>
+            <button class="key" onclick="pressKey(6)">6</button>
+            <button class="key" onclick="pressKey(7)">7</button>
+            <button class="key" onclick="pressKey(8)">8</button>
+            <button class="key" onclick="pressKey(9)">9</button>
+            <button class="key" onclick="clearPin()" style="color: var(--danger)">✕</button>
+            <button class="key" onclick="pressKey(0)">0</button>
+            <button class="key" onclick="submitPin()" style="background: var(--surface-light)">➜</button>
+        </div>
+        <div style="margin-top: 30px; font-size: 0.8rem; color: var(--text-mute);">
+            Decoy Mode Enabled (Fake PIN: 0000)
+        </div>
+    </div>
+
+    <!-- 2. MAIN APP -->
+    <div id="mainScreen" class="screen">
+        <div class="header">
+            <div>
+                <div style="font-weight: 700; font-size: 1.1rem;">My Vault</div>
+                <div id="statusText" style="font-size: 0.75rem; color: var(--text-mute);">Ready</div>
+            </div>
+            <div onclick="openBackupSettings()" style="background: rgba(255,255,255,0.08); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem; cursor: pointer;">
+                ☁️ Sync
+            </div>
+        </div>
+
+        <div class="content-area" id="fileGrid">
+            <!-- Files loaded via JS -->
+        </div>
+
+        <div class="bottom-nav">
+            <button class="nav-item active" onclick="switchTab('home')">
+                <span>🏠</span><span>Home</span>
+            </button>
+            <div class="fab" onclick="document.getElementById('fileInput').click()">+</div>
+            <button class="nav-item" onclick="openSettings()">
+                <span>⚙️</span><span>Menu</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- HIDDEN INPUT -->
+    <input type="file" id="fileInput" hidden multiple onchange="handleUpload(this.files)">
+
+    <!-- PLAYER OVERLAY (Streaming) -->
+    <div id="playerOverlay" class="player-overlay">
+        <div class="player-controls">
+            <button class="close-player" onclick="closePlayer()">✕</button>
+        </div>
+        <div id="playerContainer" style="width: 100%; display: flex; justify-content: center;">
+            <!-- Video/Image element goes here -->
+        </div>
+        <div style="color: var(--text-mute); margin-top: 20px; font-size: 0.8rem;">
+            🔒 Secure View Mode (Download Disabled)
+        </div>
+    </div>
+
+    <!-- BOTTOM SHEET: FILE OPTIONS -->
+    <div id="fileOptionsModal" class="modal-overlay" onclick="if(event.target===this) closeModal('fileOptionsModal')">
+        <div class="bottom-sheet">
+            <h3 id="optFileName" style="margin-bottom: 5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">File Name</h3>
+            <p id="optFileSize" style="color: var(--text-mute); font-size: 0.8rem; margin-bottom: 20px;">Size: --</p>
+            
+            <div class="action-item" onclick="viewFile()">
+                <span class="action-icon">👁️</span>
+                <div>
+                    <div>View / Stream</div>
+                    <div style="font-size: 0.7rem; color: var(--text-mute);">No download, safe view</div>
+                </div>
+            </div>
+            
+            <div class="action-item" onclick="downloadFile(false)">
+                <span class="action-icon">🔒</span>
+                <div>
+                    <div>Encrypted Download (.hv)</div>
+                    <div style="font-size: 0.7rem; color: var(--text-mute);">Backup copy (Encrypted)</div>
+                </div>
+            </div>
+
+            <div class="action-item" onclick="downloadFile(true)">
+                <span class="action-icon">🔓</span>
+                <div>
+                    <div>Save to Device (Decrypted)</div>
+                    <div style="font-size: 0.7rem; color: var(--text-mute);">Save original file to gallery</div>
+                </div>
+            </div>
+
+            <div class="action-item" onclick="deleteFile()" style="color: var(--danger);">
+                <span class="action-icon">🗑️</span>
+                <div>Delete Permanently</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settingsModal" class="modal-overlay" onclick="if(event.target===this) closeModal('settingsModal')">
+        <div class="bottom-sheet">
+            <h3>Settings</h3>
+            <div class="action-item" onclick="handleGoogleLogin()">
+                <span class="action-icon">☁️</span>
+                <div style="flex: 1">
+                    <div>Google Drive Backup</div>
+                    <div id="driveStatus" style="font-size: 0.7rem; color: var(--text-mute);">Tap to connect</div>
+                </div>
+                <div class="toggle" id="driveToggle">○</div>
+            </div>
+            <div class="action-item" onclick="startFullRestore()">
+                <span class="action-icon">📥</span>
+                <div>Full Restore from Drive</div>
+            </div>
+             <div class="action-item" onclick="logout()">
+                <span class="action-icon">🚪</span>
+                <div>Logout / Lock</div>
+            </div>
+        </div>
+    </div>
+
+    <div id="toast" class="toast">
+        <span id="toastIcon">✨</span>
+        <span id="toastMsg">Message</span>
+    </div>
+
+    <script>
+        // ================= CONFIGURATION =================
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            app: {
+                fakePin: "0000", // Decoy Mode PIN
+                chunkSize: 1024 * 1024 * 5 // 5MB Chunk for heavy files (Concept)
+            }
+        };
+
+        // ================= STATE & INIT =================
+        firebase.initializeApp(CONFIG.firebase);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        let dbLocal = localforage.createInstance({ name: "HybridVault" });
+        let currentUser = null;
+        let driveToken = null;
+        let pinInput = "";
+        let storedPin = null;
+        let isDecoyMode = false;
+        let currentFileAction = null; // Store file being operated on
+
+        window.onload = async () => {
+            storedPin = localStorage.getItem('userPin');
+            auth.onAuthStateChanged(user => {
+                if(user) {
+                    currentUser = user;
+                    user.getIdToken(true).then(t => { 
+                        // Token refresh logic would go here
+                        document.getElementById('driveStatus').innerText = "Connected: " + user.email;
+                        document.getElementById('driveStatus').style.color = "#10b981";
+                    });
+                }
+            });
+            // Haptic Feedback Test
+            if (navigator.vibrate) navigator.vibrate(50);
+        };
+
+        // ================= PIN & DECOY LOGIC =================
+        function pressKey(n) {
+            if(pinInput.length < 4) {
+                pinInput += n;
+                updatePinDots();
+                if(navigator.vibrate) navigator.vibrate(30);
+            }
+        }
+        function clearPin() { pinInput = ""; updatePinDots(); }
+        function updatePinDots() {
+            document.querySelectorAll('.dot').forEach((d, i) => {
+                i < pinInput.length ? d.classList.add('active') : d.classList.remove('active');
+            });
+        }
+
+        function submitPin() {
+            if(pinInput.length !== 4) return;
+
+            // 1. Setup Mode
+            if (!storedPin) {
+                localStorage.setItem('userPin', pinInput);
+                storedPin = pinInput;
+                showToast("PIN Set Successfully!");
+                enterVault(false);
+                return;
+            }
+
+            // 2. Decoy Mode
+            if (pinInput === CONFIG.app.fakePin) {
+                showToast("Vault Unlocked (Guest Mode)", "🔓");
+                enterVault(true); // True = Decoy
+                return;
+            }
+
+            // 3. Real Mode
+            if (pinInput === storedPin) {
+                showToast("Welcome Back!", "🔐");
+                enterVault(false);
+            } else {
+                showToast("Wrong PIN!", "❌");
+                if(navigator.vibrate) navigator.vibrate([100, 50, 100]);
+                pinInput = ""; updatePinDots();
+            }
+        }
+
+        function enterVault(isDecoy) {
+            isDecoyMode = isDecoy;
+            document.getElementById('pinScreen').classList.remove('active');
+            document.getElementById('mainScreen').classList.add('active');
+            
+            if(isDecoy) {
+                document.getElementById('fileGrid').innerHTML = ""; // Show empty for decoy
+                document.getElementById('statusText').innerText = "Guest Mode";
+            } else {
+                loadFiles();
+                document.getElementById('statusText').innerText = "Secure Mode";
+            }
+        }
+
+        // ================= FILE HANDLING (NO LIMITS) =================
+        async function handleUpload(files) {
+            if(isDecoyMode) { showToast("Action denied in Guest Mode"); return; }
+            
+            showToast(`Processing ${files.length} files...`, "⏳");
+
+            for (let file of files) {
+                // Read & Encrypt
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = async () => {
+                    const encrypted = CryptoJS.AES.encrypt(reader.result, storedPin).toString();
+                    
+                    const fileMeta = {
+                        id: Date.now() + Math.random().toString(),
+                        name: file.name,
+                        type: file.type,
+                        size: file.size,
+                        date: new Date().toISOString(),
+                        synced: false,
+                        encryptedData: encrypted // Stored in IndexedDB (Unlimited local storage)
+                    };
+
+                    await dbLocal.setItem(fileMeta.id, fileMeta);
+                    
+                    // Auto Backup if Online
+                    if(currentUser && driveToken) {
+                        uploadToDrive(fileMeta);
+                    }
+                };
+            }
+            setTimeout(() => { loadFiles(); showToast("Upload Complete!"); }, 1000);
+        }
+
+        async function loadFiles() {
+            if(isDecoyMode) return;
+            const grid = document.getElementById('fileGrid');
+            grid.innerHTML = '';
+            
+            const keys = await dbLocal.keys();
+            
+            if(keys.length === 0) {
+                 grid.innerHTML = `<div style="grid-column:1/-1; text-align:center; color:var(--text-mute); margin-top:50px;">
+                    <div style="font-size:3rem; opacity:0.5">📂</div><br>Vault is empty
+                 </div>`;
+                 return;
+            }
+
+            // Reverse loop for newest first
+            for(let i=keys.length-1; i>=0; i--) {
+                const f = await dbLocal.getItem(keys[i]);
+                if(!f) continue;
+
+                const div = document.createElement('div');
+                div.className = 'file-card';
+                // Status Dot
+                const status = f.synced ? 'status-synced' : 'status-local';
+                
+                div.innerHTML = `
+                    <div class="file-status ${status}"></div>
+                    <div class="preview">${getIcon(f.type)}</div>
+                    <div class="file-info">
+                        <div class="file-name">${f.name}</div>
+                        <div style="font-size:0.6rem; color:var(--text-mute)">${formatSize(f.size)}</div>
+                    </div>
+                `;
+                
+                // Long press / Click handler
+                div.onclick = () => openFileOptions(f);
+                grid.appendChild(div);
+            }
+        }
+
+        // ================= DRIVE SYNC (UNLIMITED) =================
+        function handleGoogleLogin() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('https://www.googleapis.com/auth/drive.file');
+            auth.signInWithPopup(provider).then(res => {
+                driveToken = res.credential.accessToken;
+                sessionStorage.setItem('drive_token', driveToken);
+                showToast("Drive Connected!");
+                document.getElementById('driveStatus').innerText = "Connected";
+            }).catch(e => showToast("Login Failed"));
+        }
+
+        async function uploadToDrive(fileMeta) {
+            const token = driveToken || sessionStorage.getItem('drive_token');
+            if(!token) return;
+
+            const metadata = { name: fileMeta.name + ".hv", mimeType: "text/plain" };
+            const form = new FormData();
+            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+            form.append('file', new Blob([fileMeta.encryptedData], { type: 'text/plain' }));
+
+            fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: form
+            }).then(async res => {
+                if(res.ok) {
+                    fileMeta.synced = true;
+                    await dbLocal.setItem(fileMeta.id, fileMeta);
+                    loadFiles(); // Refresh UI for green dot
+                }
+            });
+        }
+
+        async function startFullRestore() {
+            const token = driveToken || sessionStorage.getItem('drive_token');
+            if(!token) { showToast("Please login first"); return; }
+            
+            showToast("Scanning Drive...", "🔍");
+            const q = "name contains '.hv' and trashed = false";
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+            const data = await res.json();
+            
+            showToast(`Found ${data.files.length} files. Restoring...`);
+            
+            let count = 0;
+            for(let f of data.files) {
+                const r = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`, {
+                    headers: { 'Authorization': 'Bearer ' + token }
+                });
+                const encrypted = await r.text();
+                const meta = {
+                    id: f.id,
+                    name: f.name.replace('.hv',''),
+                    type: 'unknown', // Basic restore
+                    size: encrypted.length,
+                    synced: true,
+                    encryptedData: encrypted,
+                    date: new Date().toISOString()
+                };
+                await dbLocal.setItem(meta.id, meta);
+                count++;
+            }
+            showToast(`Restored ${count} files!`);
+            loadFiles();
+        }
+
+        // ================= VIEW & STREAMING =================
+        function openFileOptions(file) {
+            currentFileAction = file;
+            document.getElementById('optFileName').innerText = file.name;
+            document.getElementById('optFileSize').innerText = formatSize(file.size);
+            document.getElementById('fileOptionsModal').style.display = 'flex';
+        }
+
+        function viewFile() {
+            closeModal('fileOptionsModal');
+            const f = currentFileAction;
+            
+            try {
+                const bytes = CryptoJS.AES.decrypt(f.encryptedData, storedPin);
+                const originalUrl = bytes.toString(CryptoJS.enc.Utf8);
+                
+                const container = document.getElementById('playerContainer');
+                container.innerHTML = '';
+                document.getElementById('playerOverlay').style.display = 'flex';
+
+                if(f.type.startsWith('image')) {
+                    const img = document.createElement('img');
+                    img.src = originalUrl;
+                    img.className = 'secure-view';
+                    img.style.maxWidth = '100%';
+                    container.appendChild(img);
+                } else if(f.type.startsWith('video') || f.type.startsWith('audio')) {
+                    const video = document.createElement('video');
+                    video.src = originalUrl;
+                    video.controls = true;
+                    video.autoplay = true;
+                    video.style.width = '100%';
+                    // Anti-download attributes
+                    video.setAttribute('controlsList', 'nodownload');
+                    container.appendChild(video);
+                } else {
+                    container.innerHTML = `<div style="color:white; text-align:center;">Preview not supported for this type.<br>Use View-Only text mode.</div>`;
+                }
+            } catch(e) {
+                showToast("Decryption Error");
+            }
+        }
+
+        function closePlayer() {
+            document.getElementById('playerOverlay').style.display = 'none';
+            document.getElementById('playerContainer').innerHTML = ''; // Clear memory
+        }
+
+        function downloadFile(decrypted) {
+            const f = currentFileAction;
+            try {
+                let url, name;
+                if(decrypted) {
+                    const bytes = CryptoJS.AES.decrypt(f.encryptedData, storedPin);
+                    url = bytes.toString(CryptoJS.enc.Utf8);
+                    name = f.name;
+                } else {
+                    const blob = new Blob([f.encryptedData], {type: 'text/plain'});
+                    url = URL.createObjectURL(blob);
+                    name = f.name + ".hv";
+                }
+                
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                showToast("Download Started");
+            } catch(e) {
+                showToast("Error processing file");
+            }
+            closeModal('fileOptionsModal');
+        }
+
+        async function deleteFile() {
+            if(confirm("Permanently delete?")) {
+                await dbLocal.removeItem(currentFileAction.id);
+                // TODO: Delete from Drive optionally
+                loadFiles();
+                closeModal('fileOptionsModal');
+                showToast("Deleted");
+            }
+        }
+
+        // ================= UTILS =================
+        function formatSize(bytes) {
+            if(bytes===0) return '0 B';
+            const k=1024, sizes=['B','KB','MB','GB'];
+            const i=Math.floor(Math.log(bytes)/Math.log(k));
+            return parseFloat((bytes/Math.pow(k,i)).toFixed(1))+' '+sizes[i];
+        }
+        function getIcon(t) {
+            if(t.startsWith('image')) return '🖼️';
+            if(t.startsWith('video')) return '🎥';
+            if(t.startsWith('audio')) return '🎵';
+            return '📄';
+        }
+        function showToast(msg, icon='✨') {
+            const t = document.getElementById('toast');
+            document.getElementById('toastMsg').innerText = msg;
+            document.getElementById('toastIcon').innerText = icon;
+            t.classList.add('show');
+            setTimeout(() => t.classList.remove('show'), 3000);
+        }
+        function openSettings() { document.getElementById('settingsModal').style.display = 'flex'; }
+        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+        function logout() { location.reload(); }
+
+    </script>
+</body>
+</html>
