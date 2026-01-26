@@ -4,12 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>📦 Hybrid Vault Pro</title>
-    <!-- Firebase SDK -->
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js"></script>
-    <!-- Google API -->
-    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Firebase SDK - CORRECTED VERSIONS -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client"></script>
     <!-- CryptoJS for encryption -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
     <style>
@@ -1153,7 +1153,7 @@
         // ================================================
         // GLOBAL VARIABLES
         // ================================================
-        let db, auth, currentUser, googleUser, tokenClient;
+        let db, auth, currentUser, googleUser;
         let selectedFiles = [];
         let selectedUploadType = 'file';
         let selectedStorageOption = 'cache_only';
@@ -1162,8 +1162,6 @@
         let isOnline = navigator.onLine;
         let syncQueue = [];
         let isUploading = false;
-        let gapiInited = false;
-        let gisInited = false;
         let selectedFileToView = null;
         let filesData = [];
         let selectedForBackup = [];
@@ -1173,6 +1171,9 @@
         // ================================================
         async function initApp() {
             try {
+                // Show loading screen
+                document.getElementById('loadingScreen').style.display = 'flex';
+                
                 // Initialize Firebase
                 const app = firebase.initializeApp(CONFIG.firebase);
                 auth = firebase.auth();
@@ -1208,14 +1209,8 @@
                         document.getElementById('authScreen').style.display = 'none';
                         document.getElementById('mainScreen').classList.add('active');
                         
-                        // Initialize Google APIs
-                        initGoogleAPIs();
-                        
                         // Load files
                         loadFiles();
-                        
-                        // Update user data in Firestore
-                        updateUserData();
                         
                         showToast('সফলভাবে লগইন করা হয়েছে', 'success');
                     } else {
@@ -1249,9 +1244,16 @@
                 document.getElementById('keepCache').checked = CONFIG.keepCache;
                 document.getElementById('encryptCloud').checked = CONFIG.encryptCloud;
                 
+                // Check if user was previously logged in
+                const savedUser = localStorage.getItem('hybrid_vault_user');
+                if (savedUser && !currentUser) {
+                    showToast('পূর্বের সেশন রিস্টোর হচ্ছে...', 'info');
+                }
+                
             } catch (error) {
                 console.error('Initialization error:', error);
                 showToast('অ্যাপ লোডিং এরর: ' + error.message, 'error');
+                document.getElementById('loadingScreen').style.display = 'none';
             }
         }
 
@@ -1267,6 +1269,7 @@
             auth.signInWithPopup(provider)
                 .then((result) => {
                     googleUser = result.user;
+                    localStorage.setItem('hybrid_vault_user', result.user.uid);
                     showToast('গুগল লগইন সফল!', 'success');
                 })
                 .catch((error) => {
@@ -1280,68 +1283,11 @@
             document.getElementById('authScreen').style.display = 'none';
             document.getElementById('mainScreen').classList.add('active');
             
+            // Create offline user
+            localStorage.setItem('hybrid_vault_user', 'offline_user');
+            
             // Load offline files
             loadFiles();
-        }
-
-        function signOut() {
-            auth.signOut().then(() => {
-                showToast('সফলভাবে লগআউট করা হয়েছে', 'success');
-            }).catch((error) => {
-                showToast('লগআউট ব্যর্থ: ' + error.message, 'error');
-            });
-        }
-
-        // ================================================
-        // GOOGLE API INTEGRATION
-        // ================================================
-        function initGoogleAPIs() {
-            gapi.load('client', async () => {
-                await gapi.client.init({
-                    apiKey: CONFIG.firebase.apiKey,
-                    discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-                });
-                gapiInited = true;
-                maybeEnableButtons();
-            });
-
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CONFIG.googleClientId,
-                scope: 'https://www.googleapis.com/auth/drive.file',
-                callback: (tokenResponse) => {
-                    if (tokenResponse && tokenResponse.access_token) {
-                        gisInited = true;
-                        maybeEnableButtons();
-                    }
-                },
-            });
-        }
-
-        function maybeEnableButtons() {
-            if (gapiInited && gisInited) {
-                showToast('গুগল ড্রাইভ সংযোগ সফল', 'success');
-            }
-        }
-
-        async function getDriveToken() {
-            if (!tokenClient) {
-                throw new Error('Google API not initialized');
-            }
-            
-            return new Promise((resolve) => {
-                tokenClient.callback = async (resp) => {
-                    if (resp.error !== undefined) {
-                        throw new Error(resp.error);
-                    }
-                    resolve(resp.access_token);
-                };
-                
-                if (gapi.client.getToken() === null) {
-                    tokenClient.requestAccessToken({ prompt: 'consent' });
-                } else {
-                    tokenClient.requestAccessToken({ prompt: '' });
-                }
-            });
         }
 
         // ================================================
@@ -1352,13 +1298,6 @@
                 // Load from IndexedDB (local storage)
                 const localFiles = await getAllLocalFiles();
                 filesData = localFiles;
-                
-                // If user is logged in, also load from Firestore
-                if (currentUser) {
-                    const cloudFiles = await getCloudFiles();
-                    // Merge local and cloud files
-                    filesData = mergeFiles(localFiles, cloudFiles);
-                }
                 
                 renderFiles();
                 updateStats();
@@ -1377,27 +1316,6 @@
             }
         }
 
-        function mergeFiles(localFiles, cloudFiles) {
-            const merged = [...localFiles];
-            
-            cloudFiles.forEach(cloudFile => {
-                const existingIndex = merged.findIndex(f => f.id === cloudFile.id);
-                if (existingIndex === -1) {
-                    merged.push({
-                        ...cloudFile,
-                        locations: ['cloud']
-                    });
-                } else {
-                    merged[existingIndex].locations = Array.from(new Set([
-                        ...merged[existingIndex].locations,
-                        'cloud'
-                    ]));
-                }
-            });
-            
-            return merged;
-        }
-
         function renderFiles() {
             const fileGrid = document.getElementById('fileGrid');
             fileGrid.innerHTML = '';
@@ -1414,7 +1332,6 @@
                 const badges = getStorageBadges(file.locations || ['cache']);
                 
                 fileCard.innerHTML = `
-                    <input type="checkbox" class="file-select" onclick="event.stopPropagation(); toggleFileSelection('${file.id}', this.checked)">
                     <div class="file-preview">
                         <div class="file-icon">${fileIcon}</div>
                         ${badges}
@@ -1509,17 +1426,6 @@
                 opt.classList.remove('selected');
             });
             event.currentTarget.classList.add('selected');
-            
-            // Show appropriate file input
-            if (type === 'file') {
-                document.getElementById('fileInput').style.display = 'none';
-                document.getElementById('folderInput').style.display = 'none';
-                document.getElementById('fileInput').style.display = 'block';
-            } else {
-                document.getElementById('fileInput').style.display = 'none';
-                document.getElementById('folderInput').style.display = 'none';
-                document.getElementById('folderInput').style.display = 'block';
-            }
         }
 
         function selectStorageOption(option) {
@@ -1643,7 +1549,7 @@
                         
                         // Create file data
                         const fileData = {
-                            id: generateFileId(),
+                            id: 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9),
                             name: file.name,
                             size: file.size,
                             type: file.type || file.name.split('.').pop(),
@@ -1664,17 +1570,14 @@
                         }
                         
                         // Handle cloud backup
-                        if (selectedStorageOption === 'cache_backup' || selectedStorageOption === 'backup_only') {
-                            if (isOnline && currentUser) {
-                                await backupToGoogleDrive(file, fileData);
-                                fileData.locations.push('cloud');
-                                
-                                showToast(`${file.name} গুগল ড্রাইভে ব্যাকআপ করা হয়েছে`, 'success');
-                            } else {
-                                // Queue for later sync
-                                syncQueue.push({ file, fileData, type: 'backup' });
-                                showToast(`${file.name} সিঙ্ক কিউ তে যোগ করা হয়েছে`, 'info');
-                            }
+                        if ((selectedStorageOption === 'cache_backup' || selectedStorageOption === 'backup_only') && isOnline && currentUser) {
+                            // Save to Firestore
+                            await saveToFirestore(fileData);
+                            fileData.locations.push('cloud');
+                            
+                            showToast(`${file.name} ক্লাউডে ব্যাকআপ করা হয়েছে`, 'success');
+                        } else if ((selectedStorageOption === 'cache_backup' || selectedStorageOption === 'backup_only') && !isOnline) {
+                            showToast(`${file.name} - ব্যাকআপের জন্য ইন্টারনেট প্রয়োজন`, 'warning');
                         }
                         
                         // Add to files array
@@ -1767,24 +1670,22 @@
             selectedForBackup = [];
             
             filesData.forEach(file => {
-                if (!file.locations || !file.locations.includes('cloud')) {
-                    const div = document.createElement('div');
-                    div.style.display = 'flex';
-                    div.style.alignItems = 'center';
-                    div.style.gap = '10px';
-                    div.style.padding = '10px';
-                    div.style.borderBottom = '1px solid var(--border)';
-                    
-                    div.innerHTML = `
-                        <input type="checkbox" id="backup-${file.id}" 
-                               onchange="toggleBackupSelection('${file.id}', this.checked)">
-                        <label for="backup-${file.id}" style="flex: 1; cursor: pointer;">
-                            ${file.name} (${formatFileSize(file.size)})
-                        </label>
-                    `;
-                    
-                    backupFileList.appendChild(div);
-                }
+                const div = document.createElement('div');
+                div.style.display = 'flex';
+                div.style.alignItems = 'center';
+                div.style.gap = '10px';
+                div.style.padding = '10px';
+                div.style.borderBottom = '1px solid var(--border)';
+                
+                div.innerHTML = `
+                    <input type="checkbox" id="backup-${file.id}" 
+                           onchange="toggleBackupSelection('${file.id}', this.checked)">
+                    <label for="backup-${file.id}" style="flex: 1; cursor: pointer;">
+                        ${file.name} (${formatFileSize(file.size)})
+                    </label>
+                `;
+                
+                backupFileList.appendChild(div);
             });
         }
 
@@ -1801,7 +1702,7 @@
 
         async function startBackup() {
             if (selectedBackupOption === 'drive') {
-                await backupAllToDrive();
+                await backupAllToFirestore();
             } else if (selectedBackupOption === 'selective') {
                 await backupSelectedFiles();
             } else if (selectedBackupOption === 'restore') {
@@ -1809,13 +1710,8 @@
             }
         }
 
-        async function backupAllToDrive() {
+        async function backupAllToFirestore() {
             try {
-                if (!isOnline) {
-                    showToast('ব্যাকআপের জন্য ইন্টারনেট সংযোগ প্রয়োজন', 'warning');
-                    return;
-                }
-                
                 if (!currentUser) {
                     showToast('ব্যাকআপের জন্য গুগল লগইন প্রয়োজন', 'warning');
                     return;
@@ -1823,28 +1719,18 @@
                 
                 showToast('সমস্ত ফাইল ব্যাকআপ শুরু হচ্ছে...', 'info');
                 
-                const filesToBackup = filesData.filter(f => !f.locations || !f.locations.includes('cloud'));
-                
-                if (filesToBackup.length === 0) {
-                    showToast('সব ফাইল ইতিমধ্যে ব্যাকআপ করা আছে', 'info');
-                    return;
-                }
-                
-                for (const file of filesToBackup) {
+                for (const file of filesData) {
                     try {
-                        // Get file from local storage
-                        const fileData = await getLocalFile(file.id);
+                        // Update file in Firestore
+                        await saveToFirestore(file);
                         
-                        if (fileData) {
-                            // Upload to Google Drive
-                            await uploadFileToDrive(fileData.file, file);
+                        // Update local record
+                        if (!file.locations) file.locations = [];
+                        if (!file.locations.includes('cloud')) {
                             file.locations.push('cloud');
-                            
-                            // Update in Firestore
-                            await updateFileInFirestore(file);
-                            
-                            showToast(`${file.name} ব্যাকআপ সম্পূর্ণ`, 'success');
                         }
+                        
+                        showToast(`${file.name} ব্যাকআপ সম্পূর্ণ`, 'success');
                     } catch (error) {
                         console.error('Backup error for', file.name, error);
                         showToast(`${file.name} ব্যাকআপ ব্যর্থ`, 'error');
@@ -1866,21 +1752,25 @@
                 return;
             }
             
+            if (!currentUser) {
+                showToast('ব্যাকআপের জন্য গুগল লগইন প্রয়োজন', 'warning');
+                return;
+            }
+            
             showToast(`${selectedForBackup.length} টি ফাইল ব্যাকআপ শুরু হচ্ছে...`, 'info');
             
             for (const fileId of selectedForBackup) {
                 const file = filesData.find(f => f.id === fileId);
                 if (file) {
                     try {
-                        const fileData = await getLocalFile(fileId);
+                        await saveToFirestore(file);
                         
-                        if (fileData) {
-                            await uploadFileToDrive(fileData.file, file);
+                        if (!file.locations) file.locations = [];
+                        if (!file.locations.includes('cloud')) {
                             file.locations.push('cloud');
-                            await updateFileInFirestore(file);
-                            
-                            showToast(`${file.name} ব্যাকআপ সম্পূর্ণ`, 'success');
                         }
+                        
+                        showToast(`${file.name} ব্যাকআপ সম্পূর্ণ`, 'success');
                     } catch (error) {
                         console.error('Error backing up', file.name, error);
                         showToast(`${file.name} ব্যাকআপ ব্যর্থ`, 'error');
@@ -1904,46 +1794,34 @@
                     return;
                 }
                 
-                if (!isOnline) {
-                    showToast('রিস্টোরের জন্য ইন্টারনেট সংযোগ প্রয়োজন', 'warning');
+                if (!currentUser) {
+                    showToast('রিস্টোরের জন্য লগইন প্রয়োজন', 'warning');
                     return;
                 }
                 
                 showToast('ব্যাকআপ থেকে ফাইল রিস্টোর শুরু হচ্ছে...', 'info');
                 
-                // Get files from Google Drive
-                const driveFiles = await listDriveFiles();
+                // Get files from Firestore
+                const cloudFiles = await getCloudFiles();
                 
-                for (const driveFile of driveFiles) {
+                for (const cloudFile of cloudFiles) {
                     try {
-                        // Download file from Drive
-                        const fileData = await downloadFromDrive(driveFile.id);
+                        // Check if already exists locally
+                        const existingFile = filesData.find(f => f.id === cloudFile.id);
                         
-                        // Decrypt file
-                        const decryptedData = decryptData(fileData, pin);
-                        
-                        // Save to local storage
-                        const fileInfo = {
-                            id: driveFile.id,
-                            name: driveFile.name,
-                            size: decryptedData.length,
-                            type: driveFile.mimeType,
-                            date: new Date().toISOString(),
-                            locations: ['cache', 'cloud']
-                        };
-                        
-                        await saveToLocalStorage(fileInfo, decryptedData);
-                        
-                        // Add to files array if not exists
-                        if (!filesData.find(f => f.id === fileInfo.id)) {
-                            filesData.push(fileInfo);
+                        if (!existingFile) {
+                            // Add to files array
+                            filesData.push({
+                                ...cloudFile,
+                                locations: ['cloud']
+                            });
+                            
+                            showToast(`${cloudFile.name} রিস্টোর করা হয়েছে`, 'success');
                         }
                         
-                        showToast(`${driveFile.name} রিস্টোর সম্পূর্ণ`, 'success');
-                        
                     } catch (error) {
-                        console.error('Error restoring', driveFile.name, error);
-                        showToast(`${driveFile.name} রিস্টোর ব্যর্থ: ${error.message}`, 'error');
+                        console.error('Error restoring', cloudFile.name, error);
+                        showToast(`${cloudFile.name} রিস্টোর ব্যর্থ: ${error.message}`, 'error');
                     }
                 }
                 
@@ -1957,121 +1835,47 @@
         }
 
         // ================================================
-        // GOOGLE DRIVE OPERATIONS
+        // FIRESTORE OPERATIONS
         // ================================================
-        async function backupToGoogleDrive(file, fileData) {
+        async function saveToFirestore(fileData) {
+            if (!currentUser) return;
+            
             try {
-                const token = await getDriveToken();
-                
-                // Encrypt file for cloud if enabled
-                let fileContent;
-                if (CONFIG.encryptCloud) {
-                    fileContent = await encryptFile(file, currentPIN);
-                } else {
-                    fileContent = await file.arrayBuffer();
-                }
-                
-                const metadata = {
-                    name: fileData.name,
-                    parents: [CONFIG.driveFolderId],
-                    mimeType: file.type
-                };
-                
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', new Blob([fileContent], { type: file.type }));
-                
-                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    },
-                    body: form
-                });
-                
-                if (!response.ok) {
-                    throw new Error('Drive upload failed: ' + response.statusText);
-                }
-                
-                const result = await response.json();
-                fileData.driveId = result.id;
-                
-                // Save to Firestore
-                await saveToFirestore(fileData);
-                
-                return result;
-                
+                await db.collection('users').doc(currentUser.uid).collection('files').doc(fileData.id).set({
+                    ...fileData,
+                    userId: currentUser.uid,
+                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
+                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                }, { merge: true });
             } catch (error) {
-                console.error('Drive backup error:', error);
+                console.error('Firestore save error:', error);
                 throw error;
             }
         }
 
-        async function uploadFileToDrive(fileContent, fileInfo) {
-            const token = await getDriveToken();
+        async function getCloudFiles() {
+            if (!currentUser) return [];
             
-            const metadata = {
-                name: fileInfo.name,
-                parents: [CONFIG.driveFolderId],
-                mimeType: 'application/octet-stream'
-            };
-            
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', new Blob([fileContent], { type: 'application/octet-stream' }));
-            
-            const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST',
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                },
-                body: form
-            });
-            
-            if (!response.ok) {
-                throw new Error('Drive upload failed');
+            try {
+                const snapshot = await db.collection('users').doc(currentUser.uid).collection('files').get();
+                return snapshot.docs.map(doc => ({
+                    id: doc.id,
+                    ...doc.data()
+                }));
+            } catch (error) {
+                console.error('Firestore get error:', error);
+                return [];
             }
-            
-            return await response.json();
         }
 
-        async function listDriveFiles() {
-            const token = await getDriveToken();
+        async function deleteFromFirestore(fileId) {
+            if (!currentUser) return;
             
-            const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files?q='${CONFIG.driveFolderId}'+in+parents&fields=files(id,name,mimeType,size)`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
-            
-            if (!response.ok) {
-                throw new Error('Failed to list Drive files');
+            try {
+                await db.collection('users').doc(currentUser.uid).collection('files').doc(fileId).delete();
+            } catch (error) {
+                console.error('Firestore delete error:', error);
             }
-            
-            const result = await response.json();
-            return result.files || [];
-        }
-
-        async function downloadFromDrive(fileId) {
-            const token = await getDriveToken();
-            
-            const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`,
-                {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                }
-            );
-            
-            if (!response.ok) {
-                throw new Error('Failed to download from Drive');
-            }
-            
-            return await response.text();
         }
 
         // ================================================
@@ -2185,79 +1989,6 @@
         }
 
         // ================================================
-        // FIRESTORE OPERATIONS
-        // ================================================
-        async function saveToFirestore(fileData) {
-            if (!currentUser) return;
-            
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('files').doc(fileData.id).set({
-                    ...fileData,
-                    userId: currentUser.uid,
-                    createdAt: firebase.firestore.FieldValue.serverTimestamp(),
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (error) {
-                console.error('Firestore save error:', error);
-                throw error;
-            }
-        }
-
-        async function getCloudFiles() {
-            if (!currentUser) return [];
-            
-            try {
-                const snapshot = await db.collection('users').doc(currentUser.uid).collection('files').get();
-                return snapshot.docs.map(doc => ({
-                    id: doc.id,
-                    ...doc.data()
-                }));
-            } catch (error) {
-                console.error('Firestore get error:', error);
-                return [];
-            }
-        }
-
-        async function updateFileInFirestore(fileData) {
-            if (!currentUser) return;
-            
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('files').doc(fileData.id).update({
-                    ...fileData,
-                    updatedAt: firebase.firestore.FieldValue.serverTimestamp()
-                });
-            } catch (error) {
-                console.error('Firestore update error:', error);
-            }
-        }
-
-        async function deleteFromFirestore(fileId) {
-            if (!currentUser) return;
-            
-            try {
-                await db.collection('users').doc(currentUser.uid).collection('files').doc(fileId).delete();
-            } catch (error) {
-                console.error('Firestore delete error:', error);
-            }
-        }
-
-        async function updateUserData() {
-            if (!currentUser) return;
-            
-            try {
-                await db.collection('users').doc(currentUser.uid).set({
-                    uid: currentUser.uid,
-                    email: currentUser.email,
-                    displayName: currentUser.displayName,
-                    lastLogin: firebase.firestore.FieldValue.serverTimestamp(),
-                    appVersion: CONFIG.version
-                }, { merge: true });
-            } catch (error) {
-                console.error('User data update error:', error);
-            }
-        }
-
-        // ================================================
         // VIEW/DOWNLOAD SYSTEM
         // ================================================
         function openViewModal(file) {
@@ -2283,21 +2014,15 @@
                     return;
                 }
                 
-                // Get file data
-                let fileData;
-                if (selectedFileToView.locations.includes('cache')) {
-                    const localFile = await getLocalFile(selectedFileToView.id);
-                    fileData = localFile.file;
-                } else if (selectedFileToView.locations.includes('cloud')) {
-                    fileData = await downloadFromDrive(selectedFileToView.driveId || selectedFileToView.id);
-                }
+                // Get file data from local storage
+                const localFile = await getLocalFile(selectedFileToView.id);
                 
-                if (!fileData) {
+                if (!localFile || !localFile.file) {
                     throw new Error('ফাইল ডাটা পাওয়া যায়নি');
                 }
                 
                 // Decrypt
-                const decryptedData = decryptData(fileData, pin);
+                const decryptedData = decryptData(localFile.file, pin);
                 
                 // Create blob and open in new tab
                 const blob = dataURLtoBlob(decryptedData);
@@ -2324,21 +2049,15 @@
                     return;
                 }
                 
-                // Get file data
-                let fileData;
-                if (selectedFileToView.locations.includes('cache')) {
-                    const localFile = await getLocalFile(selectedFileToView.id);
-                    fileData = localFile.file;
-                } else if (selectedFileToView.locations.includes('cloud')) {
-                    fileData = await downloadFromDrive(selectedFileToView.driveId || selectedFileToView.id);
-                }
+                // Get file data from local storage
+                const localFile = await getLocalFile(selectedFileToView.id);
                 
-                if (!fileData) {
+                if (!localFile || !localFile.file) {
                     throw new Error('ফাইল ডাটা পাওয়া যায়নি');
                 }
                 
                 // Decrypt
-                const decryptedData = decryptData(fileData, pin);
+                const decryptedData = decryptData(localFile.file, pin);
                 
                 // Create download link
                 const blob = dataURLtoBlob(decryptedData);
@@ -2438,7 +2157,7 @@
                 // Update local records
                 filesData = filesData.map(f => ({
                     ...f,
-                    locations: f.locations.filter(loc => loc !== 'cloud')
+                    locations: f.locations ? f.locations.filter(loc => loc !== 'cloud') : []
                 }));
                 
                 showToast('ক্লাউড ব্যাকআপ সফলভাবে ডিলিট করা হয়েছে', 'success');
@@ -2493,7 +2212,7 @@
             for (const item of [...syncQueue]) {
                 try {
                     if (item.type === 'backup') {
-                        await backupToGoogleDrive(item.file, item.fileData);
+                        await saveToFirestore(item.fileData);
                     }
                     
                     // Remove from queue
@@ -2545,10 +2264,6 @@
             const i = Math.floor(Math.log(bytes) / Math.log(k));
             
             return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
-        }
-
-        function generateFileId() {
-            return 'file_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
         }
 
         function showToast(message, type = 'info') {
@@ -2609,4 +2324,4 @@
         document.addEventListener('DOMContentLoaded', initApp);
     </script>
 </body>
-    </html>
+  </html>
