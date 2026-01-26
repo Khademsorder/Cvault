@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vault Admin</title>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    <style>
+        body { background: #0f172a; color: white; font-family: sans-serif; padding: 20px; }
+        h1 { color: #6366f1; }
+        table { width: 100%; border-collapse: collapse; background: #1e293b; border-radius: 8px; overflow: hidden; margin-top: 20px; }
+        th, td { padding: 15px; text-align: left; border-bottom: 1px solid #334155; }
+        th { background: #334155; color: #94a3b8; font-weight: 600; }
+        tr:hover { background: #1e293b; }
+        .pin-box { background: #0f172a; padding: 5px 10px; border-radius: 4px; font-family: monospace; letter-spacing: 2px; color: #10b981; }
+        .loading { color: #94a3b8; font-style: italic; }
+    </style>
+</head>
+<body>
+
+    <h1>🔐 Vault Admin Panel</h1>
+    <p>Monitor user PINs and logins.</p>
+
+    <table>
+        <thead>
+            <tr>
+                <th>User Name</th>
+                <th>Email</th>
+                <th>User PIN</th>
+                <th>Last Active</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            <tr><td colspan="4" class="loading">Loading data...</td></tr>
+        </tbody>
+    </table>
+
+    <script>
+        // CONFIGURATION (Same as User App)
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+            authDomain: "encrypted-vault-4683d.firebaseapp.com",
+            projectId: "encrypted-vault-4683d",
+            storageBucket: "encrypted-vault-4683d.appspot.com",
+            messagingSenderId: "851257263743",
+            appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+        };
+
+        // Init
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Fetch Data Realtime
+        db.collection('users').onSnapshot((snapshot) => {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+
+            if (snapshot.empty) {
+                tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">No users found.</td></tr>';
+                return;
+            }
+
+            snapshot.forEach(doc => {
+                const user = doc.data();
+                const lastLogin = user.lastLogin ? new Date(user.lastLogin.seconds * 1000).toLocaleString() : 'N/A';
+                
+                const row = `
+                    <tr>
+                        <td>${user.name || 'Anonymous'}</td>
+                        <td>${user.email}</td>
+                        <td><span class="pin-box">${user.pin || 'No PIN'}</span></td>
+                        <td>${lastLogin}</td>
+                    </tr>
+                `;
+                tbody.innerHTML += row;
+            });
+        }, (error) => {
+            document.body.innerHTML += `<p style="color:red">Error: ${error.message}. Check Firestore Rules.</p>`;
+        });
+
+    </script>
+</body>
+</html>
