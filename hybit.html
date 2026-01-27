@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 Hybrid Vault - এনক্রিপ্টেড ফাইল ম্যানেজার v2.0</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Google APIs -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --info: #3b82f6;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --text: #f1f5f9;
+            --text-secondary: #cbd5e1;
+            --border: #475569;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        html, body { width: 100%; height: 100%; overflow: hidden; }
+        body {
+            background: linear-gradient(135deg, var(--bg) 0%, #1a2a4a 100%);
+            color: var(--text);
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { opacity: 0; transform: translateY(100px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes bounce { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
+
+        #loadingScreen {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, var(--bg) 0%, #1a2a4a 100%);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            z-index: 10000;
+        }
+
+        .spinner { width: 60px; height: 60px; border: 4px solid var(--surface); border-top-color: var(--primary); border-radius: 50%; animation: spin 1s linear infinite; }
+
+        #mainScreen { position: fixed; inset: 0; display: flex; flex-direction: column; z-index: 1000; }
+        #mainScreen.hidden { display: none; }
+
+        .header { padding: 15px 20px; background: rgba(30, 41, 59, 0.95); border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .title { font-size: 1.3rem; font-weight: 700; }
+
+        .content { flex: 1; overflow-y: auto; padding: 20px; }
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 15px; }
+
+        .file-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+
+        .file-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.3);
+        }
+
+        .file-preview { width: 100%; height: 120px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); display: flex; align-items: center; justify-content: center; font-size: 2.5rem; position: relative; }
+        .file-info { padding: 12px; }
+        .file-name { font-size: 0.85rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 6px; }
+        .file-meta { font-size: 0.75rem; color: var(--text-secondary); }
+
+        .fab {
+            position: fixed;
+            bottom: 90px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            cursor: pointer;
+            box-shadow: 0 8px 25px rgba(99, 102, 241, 0.4);
+            z-index: 99;
+            animation: bounce 2s ease-in-out infinite;
+        }
+
+        .nav { height: 70px; background: rgba(30, 41, 59, 0.95); border-top: 1px solid var(--border); display: flex; justify-content: space-around; }
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            color: var(--text-secondary);
+            transition: all 0.3s;
+        }
+        .nav-item.active { color: var(--primary); }
+
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.85); display: none; align-items: center; justify-content: center; z-index: 10000; }
+        .modal.active { display: flex; }
+        .modal-box { background: var(--surface); border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; animation: slideUp 0.4s ease; }
+        .modal-header { padding: 20px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+        .modal-body { padding: 25px; }
+        .modal-close { background: none; border: none; color: var(--text); font-size: 1.5rem; cursor: pointer; }
+
+        .btn {
+            padding: 12px 24px;
+            border-radius: 8px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; width: 100%; margin: 10px 0; }
+        .btn-secondary { background: var(--surface); color: var(--text); border: 1px solid var(--border); width: 100%; margin: 10px 0; }
+
+        .toast-container { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 10001; }
+        .toast {
+            background: var(--surface);
+            padding: 14px 18px;
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            margin: 8px 0;
+            animation: slideUp 0.4s ease;
+            max-width: 400px;
+        }
+
+        .empty { text-align: center; padding: 60px 20px; color: var(--text-secondary); }
+        .empty-icon { font-size: 4rem; margin-bottom: 20px; }
+
+        .d-none { display: none !important; }
+        .mb-3 { margin-bottom: 15px; }
+    </style>
+</head>
+<body>
+    <!-- Loading -->
+    <div id="loadingScreen">
+        <div class="spinner"></div>
+        <div style="margin-top: 20px; font-size: 1.3rem; font-weight: 700;">Hybrid Vault</div>
+        <div style="color: var(--text-secondary); margin-top: 10px;">লোড হচ্ছে...</div>
+    </div>
+
+    <!-- Main App -->
+    <div id="mainScreen" class="hidden">
+        <div class="header">
+            <div class="title">📦 Hybrid Vault</div>
+            <div style="display: flex; gap: 15px;">
+                <div style="background: var(--surface); padding: 6px 12px; border-radius: 6px; font-size: 0.9rem;">📁 <span id="fileCount">0</span></div>
+                <button onclick="openSettings()" style="background: none; border: none; color: var(--text); font-size: 1.2rem; cursor: pointer;">⚙️</button>
+            </div>
+        </div>
+
+        <div class="content">
+            <div id="emptyState" class="empty">
+                <div class="empty-icon">📁</div>
+                <h3>কোনো ফাইল নেই</h3>
+                <p style="margin-top: 10px; margin-bottom: 20px;">ফাইল আপলোড করুন শুরু করতে</p>
+                <button class="btn btn-primary" onclick="openUpload()">📤 আপলোড করুন</button>
+            </div>
+            <div id="fileGrid" class="file-grid d-none"></div>
+        </div>
+
+        <div class="fab" onclick="openUpload()">+</div>
+
+        <div class="nav">
+            <div class="nav-item active" onclick="switchTab('home')"><div style="font-size: 1.4rem;">📁</div> ফাইল</div>
+            <div class="nav-item" onclick="switchTab('cloud')"><div style="font-size: 1.4rem;">☁️</div> ড্রাইভ</div>
+            <div class="nav-item" onclick="switchTab('settings')"><div style="font-size: 1.4rem;">⚙️</div> সেটিংস</div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div style="font-weight: 700;">📤 ফাইল আপলোড</div>
+                <button class="modal-close" onclick="closeModal('uploadModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="dropZone" style="border: 2px dashed var(--border); padding: 40px 20px; text-align: center; border-radius: 8px; cursor: pointer; margin-bottom: 20px;">
+                    <div style="font-size: 2rem; margin-bottom: 10px;">📂</div>
+                    <div style="font-weight: 600;">ফাইল এখানে ড্রপ করুন</div>
+                    <div style="color: var(--text-secondary); font-size: 0.9rem; margin-top: 5px;">বা ক্লিক করে সিলেক্ট করুন</div>
+                    <input type="file" id="fileInput" multiple style="display: none;">
+                </div>
+
+                <label style="display: flex; align-items: center; gap: 8px; margin-bottom: 15px; cursor: pointer;">
+                    <input type="checkbox" id="encryptToggle" checked>
+                    <span>🔐 এনক্রিপশন সক্রিয় করুন</span>
+                </label>
+
+                <div id="selectedFiles" class="d-none mb-3">
+                    <div style="font-weight: 600; margin-bottom: 8px;">সিলেক্টেড ফাইল</div>
+                    <div id="fileList" style="font-size: 0.85rem; color: var(--text-secondary);"></div>
+                </div>
+
+                <div id="progressDiv" class="d-none mb-3">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
+                        <span id="progressText">প্রস্তুত...</span>
+                        <span id="progressPercent">0%</span>
+                    </div>
+                    <div style="height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden;">
+                        <div id="progressBar" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.5s;"></div>
+                    </div>
+                </div>
+
+                <button class="btn btn-primary" id="uploadBtn" onclick="startUpload()">🔒 আপলোড করুন</button>
+                <button class="btn btn-secondary" onclick="closeModal('uploadModal')">বাতিল করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Viewer Modal -->
+    <div id="viewerModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div style="font-weight: 700;" id="viewerTitle">ফাইল দেখুন</div>
+                <button class="modal-close" onclick="closeModal('viewerModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div id="fileDetails" style="background: var(--surface); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="font-size: 0.9rem; line-height: 1.8;">
+                        <div><strong>ফাইল:</strong> <span id="detailFile">-</span></div>
+                        <div><strong>আকার:</strong> <span id="detailSize">-</span></div>
+                        <div><strong>তারিখ:</strong> <span id="detailDate">-</span></div>
+                    </div>
+                </div>
+
+                <div id="decryptDiv" class="d-none mb-3">
+                    <div style="color: var(--warning); margin-bottom: 10px;">🔐 এই ফাইল এনক্রিপ্ট করা</div>
+                    <input type="password" id="viewPin" placeholder="PIN দিন" maxlength="4" style="width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); margin-bottom: 10px;">
+                    <button class="btn btn-primary" onclick="decryptFile()">🔓 ডিক্রিপ্ট করুন</button>
+                </div>
+
+                <div id="viewProgress" class="d-none mb-3">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.85rem;">
+                        <span id="decryptText">প্রক্রিয়াধীন...</span>
+                        <span id="decryptPercent">0%</span>
+                    </div>
+                    <div style="height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden;">
+                        <div id="decryptBar" style="height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%;"></div>
+                    </div>
+                </div>
+
+                <button class="btn btn-secondary" id="downloadBtn" onclick="downloadFile()" style="display: none;">📥 ডাউনলোড করুন</button>
+                <button class="btn btn-secondary" onclick="closeModal('viewerModal')">বন্ধ করুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settingsModal" class="modal">
+        <div class="modal-box">
+            <div class="modal-header">
+                <div style="font-weight: 700;">⚙️ সেটিংস</div>
+                <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <div style="background: var(--surface); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="font-weight: 600; margin-bottom: 12px;">📊 স্টোরেজ</div>
+                    <div style="font-size: 0.9rem; line-height: 1.8; color: var(--text-secondary);">
+                        <div>ফাইল: <strong id="settingFiles">0</strong></div>
+                        <div>স্থান: <strong id="settingSpace">0 MB</strong></div>
+                    </div>
+                </div>
+
+                <div style="background: var(--surface); padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <div style="font-weight: 600; margin-bottom: 12px;">🔧 অ্যাকাউন্ট</div>
+                    <div id="accountInfo" style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 15px;">লোড হচ্ছে...</div>
+                    <button class="btn btn-primary" id="logoutBtn" onclick="signOut()" style="display: none;">🚪 লগআউট করুন</button>
+                </div>
+
+                <button class="btn btn-secondary" onclick="clearData()" style="background: #ef4444; color: white; border: none;">🗑️ সব ডেটা মুছুন</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div id="toastContainer" class="toast-container"></div>
+
+    <script>
+        // =====================================================================
+        // CONFIG - আপনার সব API এবং তথ্য
+        // =====================================================================
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            googleAppsScript: "https://script.google.com/macros/s/AKfycbz_TPcGqyQDakoZ2S_oM8D_KJEWM9WB3KvxeRMeUTAXCeiLuBazIS1QWlvpD-EvHcaWfw/exec",
+            googleDriveFolderId: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn",
+            googleClientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com"
+        };
+
+        // =====================================================================
+        // GLOBAL STATE
+        // =====================================================================
+        let db, auth, currentUser = null;
+        let allFiles = [];
+        let uploadFiles = [];
+        let currentFile = null;
+
+        // =====================================================================
+        // INIT
+        // =====================================================================
+        async function init() {
+            try {
+                // Firebase
+                const app = firebase.initializeApp(CONFIG.firebase);
+                auth = firebase.auth();
+                db = firebase.firestore();
+
+                // Offline
+                await db.enablePersistence({ synchronizeTabs: true }).catch(() => {});
+
+                // Auth
+                auth.onAuthStateChanged(user => {
+                    currentUser = user;
+                    updateUI();
+                });
+
+                // Hide loading
+                setTimeout(() => {
+                    document.getElementById('loadingScreen').style.display = 'none';
+                    document.getElementById('mainScreen').classList.remove('hidden');
+                    loadFiles();
+                }, 800);
+
+            } catch(err) {
+                console.error('❌ Init failed:', err);
+                showToast('❌ লোড ব্যর্থ: ' + err.message, 'error');
+            }
+        }
+
+        // =====================================================================
+        // UI UPDATE
+        // =====================================================================
+        function updateUI() {
+            if (currentUser) {
+                document.getElementById('accountInfo').innerHTML = `
+                    <div>👤 ${currentUser.displayName || currentUser.email}</div>
+                    <div style="font-size: 0.8rem; margin-top: 5px;">UID: ${currentUser.uid.substring(0, 15)}...</div>
+                `;
+                document.getElementById('logoutBtn').style.display = 'block';
+            } else {
+                document.getElementById('accountInfo').innerHTML = '<div>📴 অফলাইন</div>';
+                document.getElementById('logoutBtn').style.display = 'none';
+            }
+        }
+
+        // =====================================================================
+        // FILE LOADING
+        // =====================================================================
+        async function loadFiles() {
+            try {
+                allFiles = [];
+
+                // Offline files
+                const offline = await getOfflineFiles();
+                allFiles.push(...offline);
+
+                // Online files
+                if (currentUser) {
+                    try {
+                        const snap = await db.collection('files')
+                            .where('ownerId', '==', currentUser.uid)
+                            .orderBy('createdAt', 'desc')
+                            .get();
+                        
+                        snap.forEach(doc => {
+                            allFiles.push({ ...doc.data(), id: doc.id });
+                        });
+                    } catch(e) {}
+                }
+
+                displayFiles();
+                updateStats();
+
+            } catch(err) {
+                console.error('❌ Load error:', err);
+                showToast('❌ ফাইল লোড ব্যর্থ', 'error');
+            }
+        }
+
+        async function getOfflineFiles() {
+            return new Promise(resolve => {
+                const req = indexedDB.open('HybridVault', 1);
+                req.onupgradeneeded = e => {
+                    if (!e.target.result.objectStoreNames.contains('files')) {
+                        e.target.result.createObjectStore('files', { keyPath: 'id' });
+                    }
+                };
+                req.onsuccess = e => {
+                    const tx = e.target.result.transaction('files', 'readonly');
+                    const store = tx.objectStore('files');
+                    const getAllReq = store.getAll();
+                    getAllReq.onsuccess = () => resolve(getAllReq.result || []);
+                    getAllReq.onerror = () => resolve([]);
+                };
+                req.onerror = () => resolve([]);
+            });
+        }
+
+        function displayFiles() {
+            const grid = document.getElementById('fileGrid');
+            const empty = document.getElementById('emptyState');
+
+            if (allFiles.length === 0) {
+                grid.classList.add('d-none');
+                empty.classList.remove('d-none');
+                return;
+            }
+
+            empty.classList.add('d-none');
+            grid.classList.remove('d-none');
+            grid.innerHTML = '';
+
+            allFiles.forEach(file => {
+                const icon = getIcon(file.metadata?.fileType);
+                const size = formatSize(file.metadata?.fileSize || 0);
+                const name = file.metadata?.fileName || 'File';
+
+                const card = document.createElement('div');
+                card.className = 'file-card';
+                card.onclick = () => openViewer(file);
+
+                const badge = file.encrypted ? '🔐' : '📄';
+
+                card.innerHTML = `
+                    <div class="file-preview">
+                        ${icon}
+                        <div style="position: absolute; top: 8px; right: 8px; background: rgba(0,0,0,0.6); color: white; padding: 3px 6px; border-radius: 3px; font-size: 0.65rem;">${badge}</div>
+                    </div>
+                    <div class="file-info">
+                        <div class="file-name">${name}</div>
+                        <div class="file-meta">${size}</div>
+                    </div>
+                `;
+
+                grid.appendChild(card);
+            });
+
+            showToast(`✅ ${allFiles.length}টি ফাইল লোড`, 'success');
+        }
+
+        function updateStats() {
+            const total = allFiles.length;
+            const space = allFiles.reduce((s, f) => s + (f.metadata?.fileSize || 0), 0);
+
+            document.getElementById('fileCount').textContent = total;
+            document.getElementById('settingFiles').textContent = total;
+            document.getElementById('settingSpace').textContent = formatSize(space);
+        }
+
+        // =====================================================================
+        // UPLOAD
+        // =====================================================================
+        function openUpload() {
+            uploadFiles = [];
+            document.getElementById('selectedFiles').classList.add('d-none');
+            document.getElementById('progressDiv').classList.add('d-none');
+            document.getElementById('uploadModal').classList.add('active');
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            // File input
+            const fileInput = document.getElementById('fileInput');
+            fileInput.addEventListener('change', e => {
+                uploadFiles = Array.from(e.target.files);
+                updateFileList();
+            });
+
+            // Drop zone
+            const dropZone = document.getElementById('dropZone');
+            dropZone.addEventListener('click', () => fileInput.click());
+            dropZone.addEventListener('dragover', e => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--primary)';
+                dropZone.style.background = 'rgba(99, 102, 241, 0.1)';
+            });
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'transparent';
+            });
+            dropZone.addEventListener('drop', e => {
+                e.preventDefault();
+                uploadFiles = Array.from(e.dataTransfer.files);
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'transparent';
+                updateFileList();
+            });
+        });
+
+        function updateFileList() {
+            if (uploadFiles.length === 0) {
+                document.getElementById('selectedFiles').classList.add('d-none');
+                return;
+            }
+
+            document.getElementById('selectedFiles').classList.remove('d-none');
+            const list = document.getElementById('fileList');
+
+            if (uploadFiles.length > 3) {
+                list.textContent = `${uploadFiles.length}টি ফাইল`;
+            } else {
+                list.innerHTML = uploadFiles.map(f => 
+                    `<div>• ${f.name}</div>`
+                ).join('');
+            }
+
+            showToast(`✅ ${uploadFiles.length}টি ফাইল সিলেক্ট`, 'success');
+        }
+
+        async function startUpload() {
+            if (uploadFiles.length === 0) {
+                showToast('❌ ফাইল সিলেক্ট করুন', 'error');
+                return;
+            }
+
+            const encrypt = document.getElementById('encryptToggle').checked;
+            const progress = document.getElementById('progressDiv');
+            const btn = document.getElementById('uploadBtn');
+
+            progress.classList.remove('d-none');
+            btn.disabled = true;
+
+            let success = 0;
+
+            for (let i = 0; i < uploadFiles.length; i++) {
+                try {
+                    const file = uploadFiles[i];
+                    const percent = Math.round((i / uploadFiles.length) * 100);
+
+                    document.getElementById('progressBar').style.width = percent + '%';
+                    document.getElementById('progressPercent').textContent = percent + '%';
+                    document.getElementById('progressText').textContent = file.name;
+
+                    if (encrypt) {
+                        await encryptAndSave(file);
+                    } else {
+                        await saveFile(file);
+                    }
+
+                    success++;
+                } catch(err) {
+                    console.error('❌ Upload error:', err);
+                    showToast(`❌ ${uploadFiles[i].name}: ব্যর্থ`, 'error');
+                }
+            }
+
+            document.getElementById('progressBar').style.width = '100%';
+            document.getElementById('progressPercent').textContent = '100%';
+            document.getElementById('progressText').textContent = 'সম্পন্ন!';
+
+            if (success > 0) {
+                showToast(`✅ ${success} ফাইল আপলোড সম্পন্ন`, 'success');
+                await loadFiles();
+                setTimeout(() => closeModal('uploadModal'), 1500);
+            }
+
+            btn.disabled = false;
+        }
+
+        async function encryptAndSave(file) {
+            const pin = localStorage.getItem('pin') || '1234';
+            const salt = crypto.getRandomValues(new Uint8Array(16));
+            const iv = crypto.getRandomValues(new Uint8Array(12));
+
+            const encoder = new TextEncoder();
+            const combined = new Uint8Array(encoder.encode(pin).length + salt.length);
+            combined.set(encoder.encode(pin));
+            combined.set(salt, encoder.encode(pin).length);
+
+            const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
+            const key = await crypto.subtle.importKey('raw', hashBuffer, { name: 'AES-GCM' }, false, ['encrypt']);
+
+            const fileBuffer = await file.arrayBuffer();
+            const encrypted = await crypto.subtle.encrypt({ name: 'AES-GCM', iv }, key, fileBuffer);
+
+            const result = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+            result.set(salt);
+            result.set(iv, salt.length);
+            result.set(new Uint8Array(encrypted), salt.length + iv.length);
+
+            await saveFile(file, { data: result.buffer, encrypted: true });
+        }
+
+        async function saveFile(file, encrypted = null) {
+            return new Promise((resolve, reject) => {
+                const req = indexedDB.open('HybridVault', 1);
+                req.onsuccess = e => {
+                    const tx = e.target.result.transaction('files', 'readwrite');
+                    const store = tx.objectStore('files');
+
+                    const record = {
+                        id: 'file_' + Date.now() + '_' + Math.random(),
+                        metadata: {
+                            fileName: file.name,
+                            fileType: file.type,
+                            fileSize: file.size,
+                            createdAt: new Date().toISOString()
+                        },
+                        encrypted: !!encrypted,
+                        data: encrypted?.data || new Uint8Array([]),
+                        createdAt: new Date(),
+                        source: 'offline'
+                    };
+
+                    store.add(record).onsuccess = () => resolve();
+                    store.add(record).onerror = () => reject('Save failed');
+                };
+            });
+        }
+
+        // =====================================================================
+        // VIEWER & DECRYPTION
+        // =====================================================================
+        function openViewer(file) {
+            currentFile = file;
+
+            document.getElementById('viewerTitle').textContent = file.metadata?.fileName || 'File';
+            document.getElementById('detailFile').textContent = file.metadata?.fileName || '-';
+            document.getElementById('detailSize').textContent = formatSize(file.metadata?.fileSize || 0);
+            document.getElementById('detailDate').textContent = new Date(file.createdAt).toLocaleDateString('bn-BD');
+
+            if (file.encrypted) {
+                document.getElementById('decryptDiv').classList.remove('d-none');
+                document.getElementById('downloadBtn').style.display = 'none';
+            } else {
+                document.getElementById('decryptDiv').classList.add('d-none');
+                document.getElementById('downloadBtn').style.display = 'block';
+            }
+
+            document.getElementById('viewerModal').classList.add('active');
+        }
+
+        async function decryptFile() {
+            const pin = document.getElementById('viewPin').value;
+
+            if (pin.length !== 4) {
+                showToast('❌ 4-অঙ্কের PIN দিন', 'error');
+                return;
+            }
+
+            try {
+                const progress = document.getElementById('viewProgress');
+                progress.classList.remove('d-none');
+
+                const encArray = new Uint8Array(currentFile.data);
+                const salt = encArray.slice(0, 16);
+                const iv = encArray.slice(16, 28);
+                const cipher = encArray.slice(28);
+
+                const encoder = new TextEncoder();
+                const combined = new Uint8Array(encoder.encode(pin).length + salt.length);
+                combined.set(encoder.encode(pin));
+                combined.set(salt, encoder.encode(pin).length);
+
+                const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
+                const key = await crypto.subtle.importKey('raw', hashBuffer, { name: 'AES-GCM' }, false, ['decrypt']);
+
+                const decrypted = await crypto.subtle.decrypt({ name: 'AES-GCM', iv }, key, cipher);
+
+                window.decryptedBlob = new Blob([decrypted], { type: currentFile.metadata?.fileType });
+
+                document.getElementById('decryptBar').style.width = '100%';
+                document.getElementById('decryptDiv').classList.add('d-none');
+                document.getElementById('downloadBtn').style.display = 'block';
+
+                showToast('✅ ডিক্রিপ্ট সম্পন্ন', 'success');
+
+            } catch(err) {
+                console.error('❌ Decrypt error:', err);
+                showToast('❌ ভুল PIN', 'error');
+            }
+        }
+
+        function downloadFile() {
+            if (!window.decryptedBlob) {
+                showToast('❌ প্রথমে ডিক্রিপ্ট করুন', 'error');
+                return;
+            }
+
+            const url = URL.createObjectURL(window.decryptedBlob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = currentFile.metadata?.fileName || 'file';
+            a.click();
+            URL.revokeObjectURL(url);
+            showToast('✅ ডাউনলোড শুরু', 'success');
+        }
+
+        // =====================================================================
+        // UTILS
+        // =====================================================================
+        function getIcon(type) {
+            if (!type) return '📄';
+            if (type.startsWith('image/')) return '🖼️';
+            if (type.startsWith('video/')) return '🎬';
+            if (type.startsWith('audio/')) return '🎵';
+            return '📄';
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return (bytes / Math.pow(k, i)).toFixed(1) + ' ' + sizes[i];
+        }
+
+        function showToast(msg, type) {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            toast.style.borderLeftColor = type === 'success' ? '#10b981' : type === 'error' ? '#ef4444' : '#f59e0b';
+            toast.textContent = msg;
+            container.appendChild(toast);
+
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        function openSettings() {
+            document.getElementById('settingsModal').classList.add('active');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        function switchTab(tab) {
+            if (tab === 'settings') openSettings();
+        }
+
+        async function signOut() {
+            if (confirm('লগআউট করবেন?')) {
+                await auth.signOut();
+                showToast('✅ লগআউট সম্পন্ন', 'success');
+                updateUI();
+            }
+        }
+
+        async function clearData() {
+            if (confirm('সব ডেটা মুছবেন?')) {
+                const req = indexedDB.deleteDatabase('HybridVault');
+                req.onsuccess = () => {
+                    location.reload();
+                };
+            }
+        }
+
+        // START
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
