@@ -1,0 +1,1482 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 Hybrid Vault - Secure File Storage</title>
+    
+    <!-- Firebase 8.10.0 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <style>
+        /* ===== RESET & VARIABLES ===== */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --border: #475569;
+            --radius: 16px;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: Arial, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* ===== AUTH SCREEN ===== */
+        #authScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+        
+        .auth-box {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+        }
+        
+        .app-icon {
+            font-size: 4rem;
+            margin-bottom: 15px;
+            animation: bounce 2s infinite;
+        }
+        
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        h1 {
+            background: linear-gradient(45deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-size: 2rem;
+            margin-bottom: 10px;
+            font-weight: 800;
+        }
+        
+        .subtitle {
+            color: #94a3b8;
+            margin-bottom: 30px;
+            line-height: 1.5;
+        }
+        
+        .pin-section {
+            margin: 30px 0;
+        }
+        
+        .pin-display {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 25px 0;
+        }
+        
+        .pin-dot {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background: var(--surface-light);
+            transition: all 0.3s;
+        }
+        
+        .pin-dot.filled {
+            background: var(--primary);
+            box-shadow: 0 0 15px rgba(99, 102, 241, 0.5);
+            transform: scale(1.2);
+        }
+        
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin: 30px 0;
+        }
+        
+        .key {
+            background: var(--surface-light);
+            border: none;
+            border-radius: 12px;
+            color: var(--text);
+            font-size: 1.5rem;
+            height: 70px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+            user-select: none;
+        }
+        
+        .key:hover {
+            background: var(--primary);
+            transform: scale(1.05);
+        }
+        
+        .key:active {
+            transform: scale(0.95);
+        }
+        
+        .key-backspace {
+            background: var(--danger);
+            font-size: 1.2rem;
+        }
+        
+        .key-clear {
+            background: var(--warning);
+            font-size: 1rem;
+        }
+        
+        .error-box {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid var(--danger);
+            border-radius: 10px;
+            padding: 15px;
+            margin: 20px 0;
+            color: #fca5a5;
+            display: none;
+        }
+        
+        .login-options {
+            margin-top: 30px;
+            display: none;
+        }
+        
+        .btn {
+            width: 100%;
+            padding: 18px;
+            margin: 10px 0;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            font-weight: 600;
+        }
+        
+        .btn-google {
+            background: white;
+            color: #333;
+        }
+        
+        .btn-offline {
+            background: var(--surface-light);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+        
+        .btn-offline:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .admin-info {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(245, 158, 11, 0.1);
+            border-radius: 10px;
+            border: 1px solid var(--warning);
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            margin: 20px 0;
+        }
+        
+        .loading span {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            background: var(--primary);
+            border-radius: 50%;
+            margin: 0 5px;
+            animation: loading 1.4s infinite;
+        }
+        
+        @keyframes loading {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        /* ===== MAIN APP ===== */
+        #mainScreen {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        .connection-banner {
+            padding: 12px 20px;
+            background: rgba(245, 158, 11, 0.1);
+            border-bottom: 1px solid var(--warning);
+            color: var(--warning);
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .connection-banner.online {
+            background: rgba(16, 185, 129, 0.1);
+            border-bottom-color: var(--secondary);
+            color: var(--secondary);
+        }
+        
+        .header {
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .header-icon {
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .tabs {
+            display: flex;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 82px;
+            z-index: 90;
+        }
+        
+        .tab {
+            flex: 1;
+            padding: 18px;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1rem;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+            background: rgba(99, 102, 241, 0.1);
+        }
+        
+        .content {
+            padding: 25px;
+            min-height: calc(100vh - 200px);
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .file-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            border: 2px solid transparent;
+        }
+        
+        .file-card:hover {
+            border-color: var(--primary);
+            transform: translateY(-5px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.3);
+        }
+        
+        .file-icon {
+            font-size: 3.5rem;
+            margin-bottom: 15px;
+        }
+        
+        .drive-box {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 25px;
+            border: 1px solid var(--border);
+        }
+        
+        .drive-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+        
+        .drive-icon {
+            font-size: 2.5rem;
+            color: var(--primary);
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+        }
+        
+        .btn-secondary {
+            background: var(--surface-light);
+            color: var(--text);
+            border: 2px solid var(--border);
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+            border: none;
+        }
+        
+        .upload-fab {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            width: 70px;
+            height: 70px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 10px 30px rgba(99, 102, 241, 0.5);
+            z-index: 100;
+            transition: all 0.3s;
+        }
+        
+        .upload-fab:hover {
+            transform: scale(1.1);
+            box-shadow: 0 15px 40px rgba(99, 102, 241, 0.7);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: #94a3b8;
+        }
+        
+        .empty-icon {
+            font-size: 5rem;
+            margin-bottom: 25px;
+            opacity: 0.5;
+        }
+        
+        .settings-section {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 25px;
+            margin-bottom: 25px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+        }
+        
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 30px;
+        }
+        
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: var(--border);
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 22px;
+            width: 22px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--primary);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(30px);
+        }
+        
+        /* ===== MODALS ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            padding: 20px;
+        }
+        
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius);
+            width: 100%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow-y: auto;
+            border: 1px solid var(--border);
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+        }
+        
+        .modal-header {
+            padding: 25px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(135deg, var(--surface), var(--surface-light));
+        }
+        
+        .modal-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+        }
+        
+        .modal-close {
+            background: none;
+            border: none;
+            font-size: 1.8rem;
+            color: var(--text);
+            cursor: pointer;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: 0.3s;
+        }
+        
+        .modal-close:hover {
+            background: var(--surface-light);
+        }
+        
+        .modal-body {
+            padding: 25px;
+        }
+        
+        .file-drop-area {
+            border: 3px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 50px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: 0.3s;
+            margin: 20px 0;
+        }
+        
+        .file-drop-area:hover {
+            border-color: var(--primary);
+            background: rgba(99, 102, 241, 0.05);
+        }
+        
+        /* ===== TOAST ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 30px;
+            left: 20px;
+            right: 20px;
+            z-index: 1001;
+        }
+        
+        .toast {
+            background: var(--surface);
+            color: var(--text);
+            padding: 18px 25px;
+            border-radius: var(--radius);
+            border-left: 5px solid var(--primary);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 10px;
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--border);
+            animation: slideIn 0.3s ease;
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(100px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        .toast.success {
+            border-left-color: var(--secondary);
+        }
+        
+        .toast.error {
+            border-left-color: var(--danger);
+        }
+        
+        .toast.warning {
+            border-left-color: var(--warning);
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .auth-box { padding: 30px 20px; }
+            .key { height: 60px; font-size: 1.3rem; }
+            .file-grid { grid-template-columns: repeat(2, 1fr); }
+            .tab { padding: 15px 10px; font-size: 0.9rem; }
+        }
+    </style>
+</head>
+<body>
+    <!-- ===== AUTH SCREEN ===== -->
+    <div id="authScreen">
+        <div class="auth-box">
+            <div class="app-icon">📦</div>
+            <h1>Hybrid Vault</h1>
+            <p class="subtitle">আপনার ফাইল সুরক্ষিতভাবে সংরক্ষণ করুন</p>
+            
+            <div class="pin-section">
+                <h3 style="margin-bottom: 20px;">🔒 সিকিউরিটি PIN দিন</h3>
+                
+                <div class="pin-display">
+                    <div class="pin-dot" id="pinDot1"></div>
+                    <div class="pin-dot" id="pinDot2"></div>
+                    <div class="pin-dot" id="pinDot3"></div>
+                    <div class="pin-dot" id="pinDot4"></div>
+                </div>
+                
+                <div class="keypad">
+                    <button class="key" data-key="1">1</button>
+                    <button class="key" data-key="2">2</button>
+                    <button class="key" data-key="3">3</button>
+                    <button class="key" data-key="4">4</button>
+                    <button class="key" data-key="5">5</button>
+                    <button class="key" data-key="6">6</button>
+                    <button class="key" data-key="7">7</button>
+                    <button class="key" data-key="8">8</button>
+                    <button class="key" data-key="9">9</button>
+                    <button class="key key-clear" data-key="clear">মুছুন</button>
+                    <button class="key" data-key="0">0</button>
+                    <button class="key key-backspace" data-key="backspace">⌫</button>
+                </div>
+                
+                <div class="error-box" id="errorBox">
+                    ❌ ভুল PIN। আবার চেষ্টা করুন।
+                </div>
+                
+                <div class="loading" id="loading">
+                    <span></span><span></span><span></span>
+                </div>
+            </div>
+            
+            <div class="login-options" id="loginOptions">
+                <button class="btn btn-google" onclick="loginWithGoogle()">
+                    <span>🔐</span> গুগল দিয়ে লগইন
+                </button>
+                <button class="btn btn-offline" onclick="startOfflineMode()">
+                    <span>📴</span> অফলাইন মোড শুরু করুন
+                </button>
+            </div>
+            
+            <div class="admin-info">
+                <strong>PIN জানেন না?</strong><br>
+                Admin এর সাথে যোগাযোগ করুন<br>
+                WhatsApp: 01611173634
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== MAIN APP ===== -->
+    <div id="mainScreen">
+        <!-- Connection Banner -->
+        <div id="connectionBanner" class="connection-banner">
+            <div class="connection-dot"></div>
+            <span id="connectionText">অফলাইন মোড</span>
+        </div>
+        
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <div class="header-icon">📦</div>
+                <div>
+                    <div style="font-weight: 800; font-size: 1.2rem;">Hybrid Vault</div>
+                    <div style="font-size: 0.85rem; color: #94a3b8;" id="userEmail">লোড হচ্ছে...</div>
+                </div>
+            </div>
+            <button onclick="logout()" class="btn btn-danger" style="padding: 10px 20px;">
+                লগআউট
+            </button>
+        </div>
+        
+        <!-- Tabs -->
+        <div class="tabs">
+            <button class="tab active" onclick="switchTab('gallery')">📁 গ্যালারি</button>
+            <button class="tab" onclick="switchTab('drive')">☁️ ড্রাইভ</button>
+            <button class="tab" onclick="switchTab('settings')">⚙️ সেটিংস</button>
+        </div>
+        
+        <!-- Content -->
+        <div class="content">
+            <!-- Gallery Tab -->
+            <div id="galleryTab" class="tab-content">
+                <h2 style="margin-bottom: 20px; font-size: 1.5rem;">আপনার ফাইল</h2>
+                
+                <div id="emptyGallery" class="empty-state">
+                    <div class="empty-icon">📁</div>
+                    <div style="font-size: 1.3rem; margin-bottom: 10px; color: var(--text);">কোনো ফাইল নেই</div>
+                    <div style="margin-bottom: 25px;">ফাইল আপলোড শুরু করুন</div>
+                    <button class="btn btn-primary" onclick="openUploadModal()" style="max-width: 200px; margin: 0 auto;">
+                        <span>📤</span> ফাইল আপলোড
+                    </button>
+                </div>
+                
+                <div id="fileGrid" class="file-grid" style="display: none;"></div>
+            </div>
+            
+            <!-- Drive Tab -->
+            <div id="driveTab" class="tab-content" style="display: none;">
+                <div class="drive-box">
+                    <div class="drive-header">
+                        <div class="drive-icon">☁️</div>
+                        <div>
+                            <h3 style="font-size: 1.3rem; margin-bottom: 5px;">গুগল ড্রাইভ</h3>
+                            <p id="driveStatus" style="color: #94a3b8;">লোড হচ্ছে...</p>
+                        </div>
+                    </div>
+                    
+                    <div id="driveOffline" style="display: none;">
+                        <div style="text-align: center; padding: 20px;">
+                            <div style="font-size: 3.5rem; margin-bottom: 20px;">📶</div>
+                            <div style="font-weight: 700; margin-bottom: 10px; font-size: 1.2rem;">ড্রাইভ অফলাইন</div>
+                            <div style="color: #94a3b8; margin-bottom: 25px;">ড্রাইভ দেখতে ইন্টারনেট সংযোগ প্রয়োজন</div>
+                        </div>
+                    </div>
+                    
+                    <div id="driveOnline" style="display: none;">
+                        <button class="btn btn-primary" onclick="connectGoogleDrive()" id="connectDriveBtn">
+                            <span>🔗</span> গুগল ড্রাইভ সংযোগ করুন
+                        </button>
+                        <button class="btn btn-secondary" onclick="syncWithDrive()" id="syncDriveBtn" style="display: none; margin-top: 15px;">
+                            <span>🔄</span> ড্রাইভ সিঙ্ক করুন
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Settings Tab -->
+            <div id="settingsTab" class="tab-content" style="display: none;">
+                <div class="settings-section">
+                    <h3 style="margin-bottom: 20px; font-size: 1.3rem;">⚙️ সাধারণ সেটিংস</h3>
+                    <div class="setting-item">
+                        <span>অটো সিঙ্ক</span>
+                        <label class="switch">
+                            <input type="checkbox" id="autoSync" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                    <div class="setting-item">
+                        <span>ফাইল এনক্রিপশন</span>
+                        <label class="switch">
+                            <input type="checkbox" id="encryptionToggle" checked>
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </div>
+                
+                <div class="settings-section">
+                    <h3 style="margin-bottom: 20px; font-size: 1.3rem;">ℹ️ তথ্য</h3>
+                    <div class="setting-item">
+                        <span>অ্যাপ ভার্সন</span>
+                        <span style="font-weight: 600;">v2.0</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>লগইন অবস্থা</span>
+                        <span id="loginStatusInfo" style="font-weight: 600;">অফলাইন</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>ফাইল সংখ্যা</span>
+                        <span id="fileCountInfo" style="font-weight: 600;">0</span>
+                    </div>
+                    <div class="setting-item">
+                        <span>আপলোড করা</span>
+                        <span id="totalUploads" style="font-weight: 600;">0</span>
+                    </div>
+                </div>
+                
+                <div style="text-align: center; margin-top: 30px;">
+                    <button class="btn btn-secondary" onclick="clearLocalData()" style="background: var(--warning); max-width: 200px;">
+                        <span>🗑️</span> ডাটা ক্লিয়ার
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Upload FAB -->
+        <div class="upload-fab" onclick="openUploadModal()">+</div>
+    </div>
+    
+    <!-- ===== UPLOAD MODAL ===== -->
+    <div id="uploadModal" class="modal-overlay">
+        <div class="modal">
+            <div class="modal-header">
+                <div class="modal-title">📤 ফাইল আপলোড</div>
+                <button class="modal-close" onclick="closeUploadModal()">×</button>
+            </div>
+            <div class="modal-body">
+                <div class="file-drop-area" onclick="triggerFileInput()" id="fileDropArea">
+                    <div style="font-size: 3.5rem; margin-bottom: 15px;">📁</div>
+                    <div style="font-weight: 700; margin-bottom: 10px; font-size: 1.2rem;">ফাইল সিলেক্ট করুন</div>
+                    <div style="color: #94a3b8;">ক্লিক করে ফাইল বাছাই করুন</div>
+                    <input type="file" id="fileInput" multiple style="display: none;">
+                </div>
+                
+                <div id="selectedFiles" style="display: none; margin: 20px 0;">
+                    <div style="font-weight: 700; margin-bottom: 15px;">সিলেক্টেড ফাইল</div>
+                    <div id="fileList" style="background: var(--surface-light); border-radius: 10px; padding: 15px; max-height: 200px; overflow-y: auto;"></div>
+                </div>
+                
+                <div style="display: flex; gap: 15px; margin-top: 25px;">
+                    <button class="btn btn-primary" onclick="uploadSelectedFiles()" id="uploadBtn" style="flex: 1;">
+                        <span>💾</span> আপলোড করুন
+                    </button>
+                    <button class="btn btn-secondary" onclick="closeUploadModal()" style="padding: 0 25px;">
+                        বাতিল
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== TOAST CONTAINER ===== -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ================================================
+        // CONFIGURATION
+        // ================================================
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            googleClientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+            googleScope: "https://www.googleapis.com/auth/drive"
+        };
+
+        // ================================================
+        // GLOBAL VARIABLES
+        // ================================================
+        let auth, db;
+        let currentPINDigits = [];
+        let adminPIN = "1171";
+        let tokenClient;
+        let driveConnected = false;
+        let selectedFiles = [];
+        let totalUploads = 0;
+
+        // ================================================
+        // INITIALIZATION
+        // ================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("🚀 Hybrid Vault Initializing...");
+            
+            try {
+                // Firebase initialization
+                const app = firebase.initializeApp(CONFIG.firebase);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                console.log("✅ Firebase initialized");
+                
+                // Check if user has already verified PIN
+                checkPreviousLogin();
+                
+                // Setup keypad
+                setupKeypad();
+                
+                // Setup event listeners
+                setupEventListeners();
+                
+                // Update connection status
+                updateConnectionStatus();
+                
+            } catch (error) {
+                console.error("❌ Initialization error:", error);
+                showToast("অ্যাপ লোড হতে সমস্যা হচ্ছে", "error");
+            }
+        });
+
+        // ================================================
+        // PIN MANAGEMENT
+        // ================================================
+        function setupKeypad() {
+            document.querySelectorAll('.key').forEach(key => {
+                key.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const keyValue = this.getAttribute('data-key');
+                    handleKeyPress(keyValue);
+                });
+                
+                key.addEventListener('touchstart', function(e) {
+                    e.preventDefault();
+                    const keyValue = this.getAttribute('data-key');
+                    handleKeyPress(keyValue);
+                });
+            });
+        }
+
+        function handleKeyPress(key) {
+            // Haptic feedback
+            if (navigator.vibrate) navigator.vibrate(30);
+            
+            if (key === 'backspace') {
+                if (currentPINDigits.length > 0) {
+                    currentPINDigits.pop();
+                    updatePinDisplay();
+                }
+            } else if (key === 'clear') {
+                currentPINDigits = [];
+                updatePinDisplay();
+                hideError();
+            } else if (currentPINDigits.length < 4) {
+                currentPINDigits.push(key);
+                updatePinDisplay();
+                hideError();
+                
+                if (currentPINDigits.length === 4) {
+                    verifyPIN();
+                }
+            }
+        }
+
+        function updatePinDisplay() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                if (index < currentPINDigits.length) {
+                    dot.classList.add('filled');
+                } else {
+                    dot.classList.remove('filled');
+                }
+            });
+        }
+
+        async function verifyPIN() {
+            const enteredPIN = currentPINDigits.join('');
+            showLoading(true);
+            
+            try {
+                // Fetch PIN from Firestore
+                const docRef = db.collection('settings').doc('security');
+                const doc = await docRef.get();
+                
+                if (doc.exists) {
+                    adminPIN = doc.data().pin || "1171";
+                }
+                
+                // Log attempt
+                await db.collection('logs').add({
+                    type: "PIN_ATTEMPT",
+                    enteredPIN: enteredPIN,
+                    success: enteredPIN === adminPIN,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userAgent: navigator.userAgent
+                });
+                
+                if (enteredPIN === adminPIN) {
+                    // PIN correct
+                    await db.collection('logs').add({
+                        type: "PIN_SUCCESS",
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    localStorage.setItem('pin_verified', 'true');
+                    localStorage.setItem('pin_verify_time', Date.now().toString());
+                    localStorage.setItem('admin_pin', adminPIN);
+                    
+                    showLoginOptions();
+                    showToast("PIN সঠিক ✅", "success");
+                    
+                } else {
+                    // PIN wrong
+                    await db.collection('logs').add({
+                        type: "PIN_FAIL",
+                        enteredPIN: enteredPIN,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                    
+                    showError("❌ ভুল PIN। আবার চেষ্টা করুন।");
+                    currentPINDigits = [];
+                    updatePinDisplay();
+                }
+                
+            } catch (error) {
+                console.error("PIN verification error:", error);
+                showError("PIN ভেরিফাই হতে সমস্যা।");
+            }
+            
+            showLoading(false);
+        }
+
+        function checkPreviousLogin() {
+            const verified = localStorage.getItem('pin_verified');
+            const verifyTime = localStorage.getItem('pin_verify_time');
+            
+            if (verified === 'true' && verifyTime) {
+                const now = Date.now();
+                const hoursPassed = (now - parseInt(verifyTime)) / (1000 * 60 * 60);
+                
+                if (hoursPassed < 24) {
+                    // Load admin PIN
+                    adminPIN = localStorage.getItem('admin_pin') || "1171";
+                    showLoginOptions();
+                } else {
+                    localStorage.removeItem('pin_verified');
+                    localStorage.removeItem('pin_verify_time');
+                }
+            }
+        }
+
+        // ================================================
+        // AUTHENTICATION
+        // ================================================
+        function showLoginOptions() {
+            document.getElementById('loginOptions').style.display = 'block';
+        }
+
+        async function loginWithGoogle() {
+            try {
+                showLoading(true);
+                
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope(CONFIG.googleScope);
+                provider.setCustomParameters({ prompt: 'select_account' });
+                
+                const result = await auth.signInWithPopup(provider);
+                const user = result.user;
+                
+                // Save user data
+                localStorage.setItem('user_email', user.email);
+                localStorage.setItem('user_name', user.displayName);
+                localStorage.setItem('user_photo', user.photoURL);
+                
+                // Log success
+                await db.collection('logs').add({
+                    type: "GOOGLE_LOGIN_SUCCESS",
+                    user: user.email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                });
+                
+                // Initialize Google Drive
+                initGoogleDrive();
+                
+                // Switch to main app
+                switchToMainApp();
+                
+                showToast(`${user.email} এ লগইন সফল ✅`, "success");
+                
+            } catch (error) {
+                console.error("Google login error:", error);
+                showLoading(false);
+                
+                if (error.code === 'auth/popup-blocked') {
+                    showError("পপআপ ব্লক করা আছে। ব্রাউজার সেটিংস চেক করুন।");
+                } else if (error.code === 'auth/popup-closed-by-user') {
+                    showError("লগইন বাতিল করা হয়েছে।");
+                } else {
+                    showError(`গুগল লগইন ব্যর্থ: ${error.message}`);
+                }
+            }
+        }
+
+        function startOfflineMode() {
+            localStorage.setItem('offline_mode', 'true');
+            switchToMainApp();
+            showToast("অফলাইন মোড শুরু হয়েছে", "warning");
+        }
+
+        function switchToMainApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            
+            // Update user info
+            updateUserInfo();
+            
+            // Load files
+            loadFiles();
+            
+            // Update stats
+            updateStats();
+        }
+
+        // ================================================
+        // GOOGLE DRIVE INTEGRATION
+        // ================================================
+        function initGoogleDrive() {
+            if (typeof google === 'undefined') {
+                console.warn("Google API not loaded");
+                return;
+            }
+            
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.googleClientId,
+                scope: CONFIG.googleScope,
+                callback: (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        localStorage.setItem('drive_token', tokenResponse.access_token);
+                        driveConnected = true;
+                        updateDriveUI();
+                        showToast("ড্রাইভ সংযুক্ত হয়েছে ✅", "success");
+                    }
+                }
+            });
+            
+            // Check existing token
+            checkDriveToken();
+        }
+
+        function checkDriveToken() {
+            const token = localStorage.getItem('drive_token');
+            if (token) {
+                driveConnected = true;
+                updateDriveUI();
+            }
+        }
+
+        function connectGoogleDrive() {
+            if (!tokenClient) {
+                showToast("গুগল API লোড হচ্ছে...", "info");
+                setTimeout(connectGoogleDrive, 1000);
+                return;
+            }
+            
+            tokenClient.requestAccessToken();
+        }
+
+        // ================================================
+        // FILE MANAGEMENT
+        // ================================================
+        function loadFiles() {
+            const files = JSON.parse(localStorage.getItem('files') || '[]');
+            totalUploads = files.length;
+            
+            if (files.length === 0) {
+                document.getElementById('emptyGallery').style.display = 'block';
+                document.getElementById('fileGrid').style.display = 'none';
+            } else {
+                document.getElementById('emptyGallery').style.display = 'none';
+                document.getElementById('fileGrid').style.display = 'grid';
+                
+                const fileGrid = document.getElementById('fileGrid');
+                fileGrid.innerHTML = '';
+                
+                files.forEach((file, index) => {
+                    const fileCard = document.createElement('div');
+                    fileCard.className = 'file-card';
+                    fileCard.innerHTML = `
+                        <div class="file-icon">${getFileIcon(file.name)}</div>
+                        <div style="font-weight: 700; font-size: 0.95rem; margin-bottom: 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                        <div style="font-size: 0.85rem; color: #94a3b8;">${formatFileSize(file.size)}</div>
+                    `;
+                    fileCard.onclick = () => openFilePreview(file, index);
+                    fileGrid.appendChild(fileCard);
+                });
+            }
+            
+            updateStats();
+        }
+
+        function openUploadModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+            selectedFiles = [];
+            updateSelectedFilesUI();
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
+
+        function triggerFileInput() {
+            document.getElementById('fileInput').click();
+        }
+
+        function uploadSelectedFiles() {
+            if (selectedFiles.length === 0) {
+                showToast("কোনো ফাইল সিলেক্ট করা হয়নি", "error");
+                return;
+            }
+            
+            // Get existing files
+            const existingFiles = JSON.parse(localStorage.getItem('files') || '[]');
+            
+            // Add new files
+            selectedFiles.forEach(file => {
+                existingFiles.push({
+                    id: Date.now() + Math.random(),
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    uploadedAt: new Date().toISOString(),
+                    data: null // In real app, you would store the file data
+                });
+            });
+            
+            // Save to localStorage
+            localStorage.setItem('files', JSON.stringify(existingFiles));
+            
+            // Update stats
+            totalUploads = existingFiles.length;
+            
+            // Show success
+            showToast(`${selectedFiles.length}টি ফাইল সেভ করা হয়েছে ✅`, "success");
+            
+            // Close modal and reload
+            closeUploadModal();
+            loadFiles();
+        }
+
+        // ================================================
+        // UI UPDATES
+        // ================================================
+        function updateUserInfo() {
+            const email = localStorage.getItem('user_email');
+            const offlineMode = localStorage.getItem('offline_mode');
+            
+            if (email) {
+                document.getElementById('userEmail').textContent = email;
+                document.getElementById('loginStatusInfo').textContent = email;
+            } else if (offlineMode === 'true') {
+                document.getElementById('userEmail').textContent = 'অফলাইন মোড';
+                document.getElementById('loginStatusInfo').textContent = 'অফলাইন';
+            }
+        }
+
+        function updateConnectionStatus() {
+            const banner = document.getElementById('connectionBanner');
+            const text = document.getElementById('connectionText');
+            
+            if (navigator.onLine) {
+                banner.classList.add('online');
+                text.textContent = 'অনলাইন মোড';
+            } else {
+                banner.classList.remove('online');
+                text.textContent = 'অফলাইন মোড';
+            }
+        }
+
+        function updateStats() {
+            const files = JSON.parse(localStorage.getItem('files') || '[]');
+            document.getElementById('fileCountInfo').textContent = files.length + 'টি';
+            document.getElementById('totalUploads').textContent = totalUploads + 'টি';
+        }
+
+        function updateDriveUI() {
+            const status = document.getElementById('driveStatus');
+            const connectBtn = document.getElementById('connectDriveBtn');
+            const syncBtn = document.getElementById('syncDriveBtn');
+            const driveOnline = document.getElementById('driveOnline');
+            const driveOffline = document.getElementById('driveOffline');
+            
+            if (navigator.onLine) {
+                driveOnline.style.display = 'block';
+                driveOffline.style.display = 'none';
+                
+                if (driveConnected) {
+                    status.textContent = 'সংযুক্ত ✅';
+                    connectBtn.innerHTML = '<span>✅</span> ড্রাইভ সংযুক্ত আছে';
+                    syncBtn.style.display = 'block';
+                } else {
+                    status.textContent = 'সংযোগ নেই';
+                    connectBtn.innerHTML = '<span>🔗</span> গুগল ড্রাইভ সংযোগ করুন';
+                    syncBtn.style.display = 'none';
+                }
+            } else {
+                driveOnline.style.display = 'none';
+                driveOffline.style.display = 'block';
+                status.textContent = 'অফলাইন';
+            }
+        }
+
+        function switchTab(tabName) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.style.display = 'none';
+            });
+            
+            // Remove active class
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'Tab').style.display = 'block';
+            event.currentTarget.classList.add('active');
+            
+            // Update tab content
+            if (tabName === 'drive') {
+                updateDriveUI();
+            }
+        }
+
+        // ================================================
+        // UTILITY FUNCTIONS
+        // ================================================
+        function setupEventListeners() {
+            // File input change
+            document.getElementById('fileInput').addEventListener('change', function(e) {
+                selectedFiles = Array.from(e.target.files);
+                updateSelectedFilesUI();
+            });
+            
+            // Network status
+            window.addEventListener('online', updateConnectionStatus);
+            window.addEventListener('offline', updateConnectionStatus);
+            
+            // Auto sync toggle
+            document.getElementById('autoSync').addEventListener('change', function() {
+                localStorage.setItem('auto_sync', this.checked);
+            });
+            
+            // Encryption toggle
+            document.getElementById('encryptionToggle').addEventListener('change', function() {
+                localStorage.setItem('encryption_enabled', this.checked);
+            });
+        }
+
+        function updateSelectedFilesUI() {
+            const container = document.getElementById('selectedFiles');
+            const fileList = document.getElementById('fileList');
+            
+            if (selectedFiles.length > 0) {
+                container.style.display = 'block';
+                fileList.innerHTML = '';
+                
+                selectedFiles.forEach(file => {
+                    const div = document.createElement('div');
+                    div.style.cssText = 'padding: 10px; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between;';
+                    div.innerHTML = `
+                        <div style="font-size: 0.9rem;">${file.name}</div>
+                        <div style="font-size: 0.85rem; color: #94a3b8;">${formatFileSize(file.size)}</div>
+                    `;
+                    fileList.appendChild(div);
+                });
+                
+                document.getElementById('uploadBtn').disabled = false;
+            } else {
+                container.style.display = 'none';
+                document.getElementById('uploadBtn').disabled = true;
+            }
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'webp': '🖼️',
+                'mp4': '🎬', 'avi': '🎬', 'mov': '🎬', 'mkv': '🎬',
+                'mp3': '🎵', 'wav': '🎵', 'm4a': '🎵',
+                'pdf': '📕', 'doc': '📝', 'docx': '📝', 'txt': '📄',
+                'xls': '📊', 'xlsx': '📊', 'csv': '📊',
+                'zip': '🗜️', 'rar': '🗜️', '7z': '🗜️',
+                'html': '🌐', 'css': '🎨', 'js': '⚡',
+                'default': '📄'
+            };
+            return icons[ext] || icons['default'];
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function showToast(message, type = 'info') {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div>${type === 'success' ? '✅' : type === 'error' ? '❌' : type === 'warning' ? '⚠️' : 'ℹ️'}</div>
+                <div style="flex: 1;">${message}</div>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text); font-size: 1.2rem; cursor: pointer;">×</button>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Remove after 4 seconds
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.animation = 'slideIn 0.3s ease reverse';
+                    setTimeout(() => {
+                        if (toast.parentNode) toast.remove();
+                    }, 300);
+                }
+            }, 4000);
+        }
+
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorBox').style.display = 'none';
+        }
+
+        // ================================================
+        // OTHER FUNCTIONS
+        // ================================================
+        function syncWithDrive() {
+            if (!driveConnected) {
+                showToast("প্রথমে ড্রাইভ সংযোগ করুন", "error");
+                return;
+            }
+            showToast("ড্রাইভ সিঙ্ক শুরু হয়েছে...", "info");
+        }
+
+        function clearLocalData() {
+            if (confirm("সকল লোকাল ডাটা মুছবেন? এটি পূর্ববর্তী হবে না।")) {
+                localStorage.removeItem('files');
+                totalUploads = 0;
+                loadFiles();
+                showToast("ডাটা ক্লিয়ার করা হয়েছে", "success");
+            }
+        }
+
+        function logout() {
+            if (confirm("লগআউট করবেন?")) {
+                // Firebase sign out
+                if (auth) {
+                    auth.signOut();
+                }
+                
+                // Clear local storage
+                localStorage.removeItem('pin_verified');
+                localStorage.removeItem('pin_verify_time');
+                localStorage.removeItem('user_email');
+                localStorage.removeItem('user_name');
+                localStorage.removeItem('drive_token');
+                localStorage.removeItem('offline_mode');
+                localStorage.removeItem('files');
+                
+                // Redirect to auth screen
+                location.reload();
+            }
+        }
+
+        function openFilePreview(file, index) {
+            showToast(`${file.name} দেখানো হচ্ছে...`, "info");
+            // Implement file preview
+        }
+
+        // Initialize auto sync setting
+        const autoSync = localStorage.getItem('auto_sync');
+        if (autoSync !== null) {
+            document.getElementById('autoSync').checked = autoSync === 'true';
+        }
+        
+        // Initialize encryption setting
+        const encryptionEnabled = localStorage.getItem('encryption_enabled');
+        if (encryptionEnabled !== null) {
+            document.getElementById('encryptionToggle').checked = encryptionEnabled === 'true';
+        }
+    </script>
+</body>
+</html>
