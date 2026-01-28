@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 Hybrid Vault - Main</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { 
+            background: #0f172a; 
+            color: white; 
+            font-family: Arial;
+            padding: 20px;
+        }
+        
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 0;
+            border-bottom: 1px solid #334155;
+        }
+        
+        .tabs {
+            display: flex;
+            gap: 10px;
+            margin: 20px 0;
+        }
+        .tab {
+            padding: 10px 20px;
+            background: #1e293b;
+            border: none;
+            color: white;
+            border-radius: 10px;
+            cursor: pointer;
+        }
+        .tab.active { background: #6366f1; }
+        
+        .content {
+            margin-top: 20px;
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        .file-card {
+            background: #1e293b;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+        }
+        
+        .upload-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 60px;
+            height: 60px;
+            background: #6366f1;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2rem;
+            cursor: pointer;
+            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.5);
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 50px 20px;
+            color: #94a3b8;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📦 Hybrid Vault</h1>
+        <div>
+            <span id="userEmail"></span>
+            <button onclick="logout()" style="margin-left: 15px; padding: 5px 15px; background: #ef4444; color: white; border: none; border-radius: 5px;">
+                লগআউট
+            </button>
+        </div>
+    </div>
+    
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('gallery')">📁 গ্যালারি</button>
+        <button class="tab" onclick="switchTab('drive')">☁️ ড্রাইভ</button>
+        <button class="tab" onclick="switchTab('upload')">📤 আপলোড</button>
+    </div>
+    
+    <div class="content" id="tabContent">
+        <!-- Content will be loaded here -->
+        <div class="empty-state">
+            <div style="font-size: 4rem; margin-bottom: 20px;">📁</div>
+            <h3>কোনো ফাইল নেই</h3>
+            <p>ফাইল আপলোড শুরু করুন</p>
+        </div>
+    </div>
+    
+    <div class="upload-btn" onclick="openUpload()">+</div>
+    
+    <script>
+        // Check authentication
+        if (!localStorage.getItem('pin_verified') && !localStorage.getItem('offline_mode')) {
+            window.location.href = "fix.html";
+        }
+        
+        // Show user email if available
+        const userEmail = localStorage.getItem('user_email');
+        if (userEmail) {
+            document.getElementById('userEmail').textContent = userEmail;
+        }
+        
+        function switchTab(tabName) {
+            document.querySelectorAll('.tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            // Update content based on tab
+            if (tabName === 'drive') {
+                loadDriveTab();
+            }
+        }
+        
+        function loadDriveTab() {
+            const content = document.getElementById('tabContent');
+            content.innerHTML = `
+                <div style="background: #1e293b; padding: 20px; border-radius: 10px; margin-bottom: 20px;">
+                    <h3>গুগল ড্রাইভ</h3>
+                    <p>গুগল ড্রাইভ সংযোগ করুন</p>
+                    <button onclick="connectDrive()" style="padding: 10px 20px; background: #10b981; color: white; border: none; border-radius: 5px; margin-top: 10px;">
+                        🔗 ড্রাইভ সংযোগ করুন
+                    </button>
+                </div>
+            `;
+        }
+        
+        function connectDrive() {
+            const token = localStorage.getItem('google_access_token');
+            if (token) {
+                alert('গুগল ড্রাইভ সংযুক্ত আছে');
+            } else {
+                alert('প্রথমে গুগল লগইন করুন');
+                window.location.href = "fix.html";
+            }
+        }
+        
+        function openUpload() {
+            alert('আপলোড সিস্টেম প্রস্তুত করা হচ্ছে...');
+        }
+        
+        function logout() {
+            if (confirm('লগআউট করবেন?')) {
+                localStorage.clear();
+                window.location.href = "fix.html";
+            }
+        }
+    </script>
+</body>
+</html>
