@@ -1,0 +1,2163 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📦 Hybrid Vault - Secure File Storage</title>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <style>
+        /* ===== ANDROID MATERIAL THEME ===== */
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc04;
+            --dark-bg: #121212;
+            --surface: #1e1e1e;
+            --surface-light: #2d2d2d;
+            --surface-hover: #3d3d3d;
+            --text: #ffffff;
+            --text-secondary: #9aa0a6;
+            --border: #444;
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --elevation-1: 0 2px 4px rgba(0,0,0,0.3);
+            --elevation-2: 0 4px 8px rgba(0,0,0,0.4);
+            --elevation-3: 0 8px 16px rgba(0,0,0,0.5);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        body {
+            background: var(--dark-bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 70px;
+        }
+        
+        /* ===== STATUS BAR (Android Style) ===== */
+        .status-bar {
+            height: 24px;
+            background: var(--dark-bg);
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* ===== BOTTOM NAVIGATION (Android Native) ===== */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--surface);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            height: 100%;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 11px;
+            gap: 6px;
+            position: relative;
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            width: 40px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .nav-icon {
+            font-size: 22px;
+            transition: transform 0.2s;
+        }
+        
+        .nav-item.active .nav-icon {
+            transform: translateY(-3px);
+        }
+        
+        /* ===== ACTION BAR (Android App Bar) ===== */
+        .action-bar {
+            background: var(--surface);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(30, 30, 30, 0.95);
+        }
+        
+        .action-title {
+            font-size: 20px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .search-container {
+            flex: 1;
+            max-width: 400px;
+            position: relative;
+        }
+        
+        .search-input {
+            width: 100%;
+            padding: 12px 16px 12px 48px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            color: var(--text);
+            font-size: 14px;
+        }
+        
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-secondary);
+        }
+        
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-light);
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: var(--surface-hover);
+        }
+        
+        /* ===== AUTH SCREEN ===== */
+        #authScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+        
+        .auth-container {
+            width: 100%;
+            max-width: 400px;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        /* ===== MAIN CONTENT AREAS ===== */
+        .main-content {
+            min-height: calc(100vh - 70px);
+            padding-bottom: 16px;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* ===== FILE CATEGORY CHIPS ===== */
+        .category-container {
+            padding: 16px;
+            position: sticky;
+            top: 73px;
+            z-index: 90;
+            background: rgba(18, 18, 18, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .category-chips {
+            display: flex;
+            gap: 8px;
+            overflow-x: auto;
+            white-space: nowrap;
+            -webkit-overflow-scrolling: touch;
+            padding-bottom: 8px;
+        }
+        
+        .category-chip {
+            padding: 8px 16px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            color: var(--text-secondary);
+            font-size: 14px;
+            cursor: pointer;
+            transition: all 0.2s;
+            flex-shrink: 0;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .category-chip.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* ===== FILE GRID (Gallery View) ===== */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 2px;
+            padding: 16px;
+        }
+        
+        @media (max-width: 480px) {
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+        }
+        
+        .file-card {
+            aspect-ratio: 1;
+            background: var(--surface);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .file-card:active {
+            transform: scale(0.98);
+        }
+        
+        .file-thumbnail {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .file-icon-container {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-light);
+        }
+        
+        .file-icon-large {
+            font-size: 48px;
+            color: var(--text-secondary);
+        }
+        
+        .file-overlay {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.9));
+            padding: 12px;
+            color: white;
+        }
+        
+        .file-name {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .file-info {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 2px;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        .file-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: rgba(0,0,0,0.7);
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .file-checkbox {
+            position: absolute;
+            top: 8px;
+            left: 8px;
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            background: rgba(0,0,0,0.5);
+            display: none;
+        }
+        
+        .file-card.selected .file-checkbox {
+            display: block;
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        .file-card.selected .file-checkbox::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 12px;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        /* ===== LIST VIEW ===== */
+        .file-list {
+            padding: 16px;
+        }
+        
+        .list-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 12px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.2s;
+            border: 1px solid transparent;
+        }
+        
+        .list-item:active {
+            background: var(--surface-hover);
+        }
+        
+        .list-item.selected {
+            border-color: var(--primary);
+            background: rgba(26, 115, 232, 0.1);
+        }
+        
+        .list-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+        
+        .list-content {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        .list-title {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .list-subtitle {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 12px;
+        }
+        
+        .list-checkbox {
+            width: 20px;
+            height: 20px;
+            border: 2px solid var(--border);
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .list-item.selected .list-checkbox {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        /* ===== PREVIEW MODAL (In-App) ===== */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            z-index: 2001;
+            display: none;
+        }
+        
+        .preview-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .preview-media {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .preview-document {
+            background: white;
+            color: black;
+            width: 90%;
+            height: 80%;
+            border-radius: 8px;
+            padding: 20px;
+            overflow: auto;
+        }
+        
+        .preview-audio {
+            background: var(--surface);
+            padding: 40px;
+            border-radius: 16px;
+            text-align: center;
+        }
+        
+        .preview-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .preview-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        
+        .preview-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preview-btn:active {
+            background: rgba(255,255,255,0.2);
+            transform: scale(0.95);
+        }
+        
+        /* ===== MULTI-SELECT TOOLBAR ===== */
+        .selection-toolbar {
+            position: fixed;
+            bottom: 70px;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            padding: 16px;
+            display: none;
+            justify-content: space-between;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            box-shadow: 0 -4px 12px rgba(0,0,0,0.3);
+            z-index: 999;
+        }
+        
+        .selection-count {
+            font-weight: 600;
+            color: var(--primary);
+        }
+        
+        .selection-actions {
+            display: flex;
+            gap: 8px;
+        }
+        
+        /* ===== STORAGE ANALYTICS ===== */
+        .storage-info {
+            padding: 16px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            margin: 16px;
+        }
+        
+        .storage-bar {
+            height: 8px;
+            background: var(--surface-light);
+            border-radius: 4px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+        
+        .storage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+        
+        /* ===== SETTINGS PANELS ===== */
+        .settings-panel {
+            padding: 16px;
+        }
+        
+        .setting-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+        }
+        
+        /* ===== TOAST NOTIFICATIONS ===== */
+        .toast-container {
+            position: fixed;
+            bottom: 80px;
+            left: 16px;
+            right: 16px;
+            z-index: 2002;
+        }
+        
+        .toast {
+            background: var(--surface);
+            color: var(--text);
+            padding: 14px 16px;
+            border-radius: var(--radius-md);
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            box-shadow: var(--elevation-3);
+            border-left: 4px solid var(--primary);
+            animation: toastSlideIn 0.3s ease;
+        }
+        
+        /* ===== LOADING SKELETONS ===== */
+        .skeleton {
+            background: linear-gradient(90deg, var(--surface-light) 25%, var(--surface) 50%, var(--surface-light) 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+            border-radius: 8px;
+        }
+        
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+        
+        /* ===== ANIMATIONS ===== */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(100px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* ===== RESPONSIVE ADJUSTMENTS ===== */
+        @media (max-width: 480px) {
+            .nav-text {
+                display: none;
+            }
+            
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .action-title {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .file-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .category-chip {
+                padding: 6px 12px;
+                font-size: 12px;
+            }
+        }
+        
+        /* ===== EMPTY STATES ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* ===== SCROLLBAR STYLING ===== */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--surface);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--surface-light);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--border);
+        }
+    </style>
+</head>
+<body>
+    <!-- Android Status Bar -->
+    <div class="status-bar">
+        <div id="currentTime">9:41</div>
+        <div id="connectionStatus">📶 🔋</div>
+    </div>
+
+    <!-- Auth Screen -->
+    <div id="authScreen">
+        <div class="auth-container">
+            <div style="text-align: center; margin-bottom: 40px;">
+                <div style="width: 80px; height: 80px; background: linear-gradient(135deg, var(--primary), var(--primary-dark)); border-radius: 20px; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px; font-size: 36px; box-shadow: var(--elevation-2);">
+                    📦
+                </div>
+                <h1 style="font-size: 24px; font-weight: 600; margin-bottom: 8px; background: linear-gradient(45deg, var(--primary), var(--secondary)); -webkit-background-clip: text; background-clip: text; color: transparent;">
+                    Hybrid Vault
+                </h1>
+                <p style="color: var(--text-secondary); font-size: 14px;">আপনার ফাইল সুরক্ষিতভাবে সংরক্ষণ করুন</p>
+            </div>
+            
+            <div style="background: var(--surface); border-radius: var(--radius-lg); padding: 24px; margin-bottom: 20px; box-shadow: var(--elevation-1);">
+                <div style="text-align: center; margin-bottom: 20px;">
+                    <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">🔒 সিকিউরিটি PIN</div>
+                    <div style="font-size: 14px; color: var(--text-secondary);">4 ডিজিটের PIN দিন</div>
+                </div>
+                
+                <div style="display: flex; justify-content: center; gap: 20px; margin: 24px 0 32px;">
+                    <div class="pin-circle" id="pin1"></div>
+                    <div class="pin-circle" id="pin2"></div>
+                    <div class="pin-circle" id="pin3"></div>
+                    <div class="pin-circle" id="pin4"></div>
+                </div>
+                
+                <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 24px 0;">
+                    <button class="keypad-btn" data-key="1">1</button>
+                    <button class="keypad-btn" data-key="2">2</button>
+                    <button class="keypad-btn" data-key="3">3</button>
+                    <button class="keypad-btn" data-key="4">4</button>
+                    <button class="keypad-btn" data-key="5">5</button>
+                    <button class="keypad-btn" data-key="6">6</button>
+                    <button class="keypad-btn" data-key="7">7</button>
+                    <button class="keypad-btn" data-key="8">8</button>
+                    <button class="keypad-btn" data-key="9">9</button>
+                    <button class="keypad-btn" style="background: var(--warning);" data-key="clear">C</button>
+                    <button class="keypad-btn" data-key="0">0</button>
+                    <button class="keypad-btn" style="background: var(--danger);" data-key="backspace">⌫</button>
+                </div>
+                
+                <div id="pinError" style="color: var(--danger); text-align: center; margin-top: 20px; display: none;">
+                    ❌ ভুল PIN। আবার চেষ্টা করুন।
+                </div>
+            </div>
+            
+            <div style="text-align: center; margin-top: 20px; padding: 16px; background: rgba(251, 188, 4, 0.1); border-radius: 12px; border: 1px solid rgba(251, 188, 4, 0.3);">
+                <div style="font-weight: 500; margin-bottom: 4px;">PIN জানেন না?</div>
+                <div style="font-size: 14px; color: var(--text-secondary);">
+                    Admin: <span id="adminWhatsApp">01611173634</span>
+                    <button onclick="copyAdminNumber()" style="background: none; border: none; color: var(--primary); margin-left: 8px; cursor: pointer;">📋</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App (Hidden until auth) -->
+    <div id="mainApp" style="display: none;">
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <button class="action-btn" onclick="toggleViewMode()" id="viewModeBtn">
+                <span id="viewIcon">☰</span>
+            </button>
+            
+            <div class="action-title" id="pageTitle">গ্যালারি</div>
+            
+            <div class="search-container" style="display: none;" id="searchContainer">
+                <input type="text" class="search-input" placeholder="ফাইল খুঁজুন..." id="searchInput">
+                <span class="search-icon">🔍</span>
+            </div>
+            
+            <button class="action-btn" onclick="toggleSelectionMode()" id="selectBtn">
+                <span>✓</span>
+            </button>
+            
+            <button class="action-btn" onclick="openUploadModal()">
+                <span>+</span>
+            </button>
+        </div>
+
+        <!-- Category Selection -->
+        <div class="category-container" id="categoryContainer">
+            <div class="category-chips">
+                <div class="category-chip active" data-category="all" onclick="filterCategory('all')">
+                    <span>📁</span> সব ফাইল
+                </div>
+                <div class="category-chip" data-category="photos" onclick="filterCategory('photos')">
+                    <span>🖼️</span> ছবি
+                </div>
+                <div class="category-chip" data-category="videos" onclick="filterCategory('videos')">
+                    <span>🎬</span> ভিডিও
+                </div>
+                <div class="category-chip" data-category="audio" onclick="filterCategory('audio')">
+                    <span>🎵</span> অডিও
+                </div>
+                <div class="category-chip" data-category="documents" onclick="filterCategory('documents')">
+                    <span>📄</span> ডকুমেন্ট
+                </div>
+                <div class="category-chip" data-category="apps" onclick="filterCategory('apps')">
+                    <span>📱</span> অ্যাপস
+                </div>
+                <div class="category-chip" data-category="archives" onclick="filterCategory('archives')">
+                    <span>🗜️</span> জিপ ফাইল
+                </div>
+                <div class="category-chip" data-category="drive" onclick="filterCategory('drive')">
+                    <span>☁️</span> ড্রাইভ
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Content Areas -->
+        <div class="main-content">
+            <!-- Gallery View -->
+            <div id="galleryView" class="tab-content active">
+                <!-- Storage Info -->
+                <div class="storage-info">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                        <span>স্টোরেজ ব্যবহার</span>
+                        <span id="storagePercent">0%</span>
+                    </div>
+                    <div class="storage-bar">
+                        <div class="storage-fill" id="storageFill" style="width: 0%"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        <span id="usedSpace">0 MB ব্যবহৃত</span>
+                        <span id="totalSpace">2 TB মোট</span>
+                    </div>
+                </div>
+
+                <!-- File Grid/List -->
+                <div id="fileGrid" class="file-grid"></div>
+                <div id="fileList" class="file-list" style="display: none;"></div>
+
+                <!-- Empty State -->
+                <div id="emptyState" class="empty-state" style="display: none;">
+                    <div class="empty-icon">📁</div>
+                    <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">কোনো ফাইল নেই</div>
+                    <div style="color: var(--text-secondary); margin-bottom: 24px;">ফাইল আপলোড শুরু করুন</div>
+                    <button onclick="openUploadModal()" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 24px; font-size: 16px; cursor: pointer;">
+                        📤 আপলোড করুন
+                    </button>
+                </div>
+            </div>
+
+            <!-- Drive View -->
+            <div id="driveView" class="tab-content">
+                <div style="padding: 16px;">
+                    <div style="background: var(--surface); border-radius: var(--radius-md); padding: 24px; text-align: center; margin-bottom: 24px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">☁️</div>
+                        <div style="font-size: 20px; font-weight: 500; margin-bottom: 8px;">গুগল ড্রাইভ (2TB)</div>
+                        <div style="color: var(--text-secondary); margin-bottom: 24px;">আপনার প্রিমিয়াম ড্রাইভ স্টোরেজ</div>
+                        <button onclick="connectGoogleDrive()" id="driveConnectBtn" style="background: var(--primary); color: white; border: none; padding: 14px 28px; border-radius: 24px; font-size: 16px; cursor: pointer; width: 100%;">
+                            🔗 ড্রাইভ সংযোগ করুন
+                        </button>
+                    </div>
+                    
+                    <div id="driveFiles" style="display: none;">
+                        <div style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">ড্রাইভ ফাইল</div>
+                        <div id="driveFileList"></div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" class="tab-content">
+                <div class="settings-panel">
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">সুরক্ষা ও প্রাইভেসি</div>
+                        
+                        <div class="setting-item" onclick="changePIN()">
+                            <div>
+                                <div style="font-weight: 500; margin-bottom: 4px;">PIN পরিবর্তন</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">নতুন সিকিউরিটি PIN সেট করুন</div>
+                            </div>
+                            <div style="color: var(--text-secondary);">→</div>
+                        </div>
+                        
+                        <div class="setting-item" onclick="clearCache()">
+                            <div>
+                                <div style="font-weight: 500; margin-bottom: 4px;">ক্যাশে ক্লিয়ার</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">লোকাল ডাটা মুছুন</div>
+                            </div>
+                            <div style="color: var(--text-secondary);">→</div>
+                        </div>
+                        
+                        <div class="setting-item" onclick="viewActivityLog()">
+                            <div>
+                                <div style="font-weight: 500; margin-bottom: 4px;">অ্যাক্টিভিটি লগ</div>
+                                <div style="font-size: 12px; color: var(--text-secondary);">সকল এক্সেস রেকর্ড দেখুন</div>
+                            </div>
+                            <div style="color: var(--text-secondary);">→</div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">ব্যবহার তথ্য</div>
+                        
+                        <div style="background: var(--surface); border-radius: var(--radius-md); padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="color: var(--text-secondary);">মোট ফাইল</span>
+                                <span style="font-weight: 500;" id="totalFilesCount">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="color: var(--text-secondary);">ড্রাইভ ফাইল</span>
+                                <span style="font-weight: 500;" id="driveFilesCount">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="color: var(--text-secondary);">লোকাল ফাইল</span>
+                                <span style="font-weight: 500;" id="localFilesCount">0</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="color: var(--text-secondary);">সর্বশেষ ব্যাকআপ</span>
+                                <span style="font-weight: 500;" id="lastBackup">কখনো না</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 24px;">
+                        <div style="font-size: 18px; font-weight: 500; margin-bottom: 16px;">ব্যবহারকারী</div>
+                        
+                        <div style="background: var(--surface); border-radius: var(--radius-md); padding: 16px;">
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="color: var(--text-secondary);">সেশন মেয়াদ</span>
+                                <span style="font-weight: 500;" id="sessionExpiry">24 ঘন্টা</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between; margin-bottom: 12px;">
+                                <span style="color: var(--text-secondary);">ডিভাইস</span>
+                                <span style="font-weight: 500;" id="deviceInfo">Android</span>
+                            </div>
+                            <div style="display: flex; justify-content: space-between;">
+                                <span style="color: var(--text-secondary);">অ্যাপ ভার্সন</span>
+                                <span style="font-weight: 500;">v3.0</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <button onclick="logout()" style="background: var(--danger); color: white; border: none; padding: 16px; border-radius: var(--radius-md); font-size: 16px; cursor: pointer; width: 100%;">
+                        লগআউট করুন
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Multi-Select Toolbar -->
+        <div class="selection-toolbar" id="selectionToolbar">
+            <div class="selection-count" id="selectedCount">0টি সিলেক্ট</div>
+            <div class="selection-actions">
+                <button class="action-btn" onclick="downloadSelected()">
+                    ⬇️
+                </button>
+                <button class="action-btn" onclick="shareSelected()">
+                    ↗️
+                </button>
+                <button class="action-btn" style="background: var(--danger);" onclick="deleteSelected()">
+                    🗑️
+                </button>
+            </div>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav">
+            <a href="#" class="nav-item active" onclick="switchTab('gallery')">
+                <span class="nav-icon">📁</span>
+                <span class="nav-text">গ্যালারি</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab('drive')">
+                <span class="nav-icon">☁️</span>
+                <span class="nav-text">ড্রাইভ</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab('settings')">
+                <span class="nav-icon">⚙️</span>
+                <span class="nav-text">সেটিংস</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="preview-modal" style="display: none;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--dark-bg); display: flex; flex-direction: column;">
+            <div style="padding: 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border);">
+                <button onclick="closeUploadModal()" style="background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer;">←</button>
+                <div style="font-size: 18px; font-weight: 500; flex: 1;">ফাইল আপলোড</div>
+            </div>
+            
+            <div style="flex: 1; padding: 20px; overflow-y: auto;">
+                <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 20px;">
+                    <button onclick="selectUploadDestination('local')" id="localUploadBtn" style="background: var(--surface-light); border: 2px solid var(--primary); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">📱</div>
+                        <div style="font-weight: 500;">লোকাল</div>
+                    </button>
+                    <button onclick="selectUploadDestination('drive')" id="driveUploadBtn" style="background: var(--surface-light); border: 2px solid var(--border); border-radius: 12px; padding: 16px; text-align: center; cursor: pointer;">
+                        <div style="font-size: 32px; margin-bottom: 8px;">☁️</div>
+                        <div style="font-weight: 500;">ড্রাইভ (2TB)</div>
+                    </button>
+                </div>
+                
+                <div id="fileDropZone" style="border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; margin-bottom: 20px;">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
+                    <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">ফাইল এখানে ড্রপ করুন</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">অথবা ক্লিক করে সিলেক্ট করুন</div>
+                    <input type="file" id="fileInput" multiple style="display: none;">
+                </div>
+                
+                <div id="selectedFilesPreview" style="display: none;"></div>
+                
+                <div id="uploadProgress" style="display: none;">
+                    <div style="margin-bottom: 8px; font-weight: 500;">আপলোড চলছে...</div>
+                    <div style="height: 6px; background: var(--surface-light); border-radius: 3px; overflow: hidden;">
+                        <div id="progressBar" style="height: 100%; background: var(--primary); width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        <span id="progressText">0%</span>
+                        <span id="fileCounter">0/0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 20px; border-top: 1px solid var(--border);">
+                <button onclick="startUpload()" id="uploadButton" style="background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; cursor: pointer; width: 100%;">
+                    আপলোড শুরু করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Preview Modal -->
+    <div id="previewModal" class="preview-modal" style="display: none;">
+        <div class="preview-header">
+            <button onclick="closePreview()" style="background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                ←
+            </button>
+            <div style="flex: 1; color: white; font-weight: 500; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="previewTitle"></div>
+        </div>
+        
+        <div class="preview-content">
+            <img id="previewImage" class="preview-media" style="display: none;">
+            <video id="previewVideo" class="preview-media" controls style="display: none;"></video>
+            <div id="previewDocument" style="display: none; background: white; color: black; padding: 20px; border-radius: 8px; max-width: 100%; max-height: 100%; overflow: auto;">
+                <div id="docContent"></div>
+            </div>
+            <audio id="previewAudio" controls style="display: none;"></audio>
+            <div id="previewOther" style="display: none; text-align: center; color: white; padding: 40px;">
+                <div style="font-size: 64px; margin-bottom: 20px;" id="otherIcon">📄</div>
+                <div style="font-size: 18px; font-weight: 500; margin-bottom: 10px;" id="otherName"></div>
+                <div style="margin-top: 20px; color: #ccc; font-size: 14px;" id="otherInfo"></div>
+            </div>
+        </div>
+        
+        <div class="preview-footer">
+            <button class="preview-btn" onclick="downloadCurrentFile()">
+                ⬇️
+            </button>
+            <button class="preview-btn" onclick="shareCurrentFile()">
+                ↗️
+            </button>
+            <button class="preview-btn" onclick="showFileProperties()">
+                ⓘ
+            </button>
+            <button class="preview-btn" onclick="deleteCurrentFile()" style="background: rgba(234, 67, 53, 0.3);">
+                🗑️
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ================================================
+        // CONFIGURATION - FINAL v3.0
+        // ================================================
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            googleClientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+            googleScope: "https://www.googleapis.com/auth/drive.file",
+            adminPIN: "1171",
+            sessionHours: 24,
+            maxFileSize: 5 * 1024 * 1024 * 1024, // 5GB for Drive
+            categories: {
+                photos: ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic'],
+                videos: ['mp4', 'avi', 'mov', 'mkv', 'webm', '3gp', 'm4v'],
+                audio: ['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'],
+                documents: ['pdf', 'doc', 'docx', 'txt', 'rtf', 'odt', 'xls', 'xlsx', 'ppt', 'pptx'],
+                apps: ['apk', 'exe', 'ipa', 'app'],
+                archives: ['zip', 'rar', '7z', 'tar', 'gz', 'bz2']
+            }
+        };
+
+        // ================================================
+        // GLOBAL STATE MANAGEMENT
+        // ================================================
+        let appState = {
+            // Authentication
+            isAuthenticated: false,
+            currentPIN: [],
+            sessionExpiry: null,
+            
+            // File Management
+            allFiles: [],
+            categorizedFiles: {
+                all: [],
+                photos: [],
+                videos: [],
+                audio: [],
+                documents: [],
+                apps: [],
+                archives: [],
+                drive: []
+            },
+            selectedFiles: new Set(),
+            isSelectMode: false,
+            
+            // UI State
+            currentView: 'grid', // 'grid' or 'list'
+            currentCategory: 'all',
+            currentTab: 'gallery',
+            searchQuery: '',
+            
+            // Drive Integration
+            tokenClient: null,
+            driveAccessToken: null,
+            isDriveConnected: false,
+            driveFiles: [],
+            
+            // Upload State
+            uploadQueue: [],
+            isUploading: false,
+            uploadProgress: 0,
+            
+            // Preview State
+            previewFile: null,
+            
+            // Storage Stats
+            totalStorageUsed: 0,
+            localFilesCount: 0,
+            driveFilesCount: 0
+        };
+
+        // ================================================
+        // INITIALIZATION
+        // ================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Hybrid Vault v3.0 Initializing...');
+            
+            try {
+                // Initialize Firebase
+                const app = firebase.initializeApp(CONFIG.firebase);
+                window.auth = firebase.auth();
+                window.db = firebase.firestore();
+                
+                console.log('✅ Firebase initialized');
+                
+                // Setup UI Components
+                setupKeypad();
+                setupEventListeners();
+                updateTime();
+                setInterval(updateTime, 60000);
+                
+                // Check existing session
+                checkExistingSession();
+                
+                // Initialize Google Drive
+                initGoogleDrive();
+                
+                // Update device info
+                updateDeviceInfo();
+                
+            } catch (error) {
+                console.error('❌ Initialization error:', error);
+                showToast('অ্যাপ লোড হতে সমস্যা হচ্ছে', 'error');
+            }
+        });
+
+        // ================================================
+        // AUTHENTICATION SYSTEM
+        // ================================================
+        function setupKeypad() {
+            document.querySelectorAll('.keypad-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const key = e.target.getAttribute('data-key');
+                    handleKeyPress(key);
+                    if (navigator.vibrate) navigator.vibrate(30);
+                });
+            });
+        }
+
+        function handleKeyPress(key) {
+            if (key === 'backspace') {
+                if (appState.currentPIN.length > 0) {
+                    appState.currentPIN.pop();
+                    updatePINDots();
+                }
+            } else if (key === 'clear') {
+                appState.currentPIN = [];
+                updatePINDots();
+                hideError();
+            } else if (appState.currentPIN.length < 4) {
+                appState.currentPIN.push(key);
+                updatePINDots();
+                hideError();
+                
+                if (appState.currentPIN.length === 4) {
+                    verifyPIN();
+                }
+            }
+        }
+
+        function updatePINDots() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`pin${i}`);
+                dot.style.width = '20px';
+                dot.style.height = '20px';
+                dot.style.borderRadius = '50%';
+                dot.style.border = '2px solid var(--border)';
+                dot.style.transition = 'all 0.3s';
+                
+                if (i <= appState.currentPIN.length) {
+                    dot.style.background = 'var(--primary)';
+                    dot.style.borderColor = 'var(--primary)';
+                    dot.style.boxShadow = '0 0 10px rgba(26, 115, 232, 0.3)';
+                } else {
+                    dot.style.background = 'transparent';
+                    dot.style.borderColor = 'var(--border)';
+                    dot.style.boxShadow = 'none';
+                }
+            }
+        }
+
+        async function verifyPIN() {
+            const enteredPIN = appState.currentPIN.join('');
+            
+            try {
+                // Get PIN from Firestore
+                const docRef = db.collection('settings').doc('security');
+                const doc = await docRef.get();
+                
+                let correctPIN = CONFIG.adminPIN;
+                if (doc.exists) {
+                    correctPIN = doc.data().pin || CONFIG.adminPIN;
+                }
+                
+                // Log attempt
+                await logActivity('PIN_ATTEMPT', {
+                    enteredPIN: enteredPIN,
+                    success: enteredPIN === correctPIN
+                });
+                
+                if (enteredPIN === correctPIN) {
+                    // Success
+                    appState.isAuthenticated = true;
+                    appState.sessionExpiry = Date.now() + (CONFIG.sessionHours * 60 * 60 * 1000);
+                    
+                    localStorage.setItem('session_active', 'true');
+                    localStorage.setItem('session_expiry', appState.sessionExpiry);
+                    
+                    showMainApp();
+                    showToast('PIN সঠিক ✅', 'success');
+                    
+                    // Load files
+                    loadAllFiles();
+                    
+                } else {
+                    // Wrong PIN
+                    showError('❌ ভুল PIN। আবার চেষ্টা করুন।');
+                    appState.currentPIN = [];
+                    updatePINDots();
+                    
+                    // Shake animation
+                    const display = document.querySelector('.pin-display');
+                    display.style.animation = 'shake 0.5s';
+                    setTimeout(() => display.style.animation = '', 500);
+                }
+                
+            } catch (error) {
+                console.error('PIN verification error:', error);
+                showToast('নেটওয়ার্ক সমস্যা', 'error');
+            }
+        }
+
+        function checkExistingSession() {
+            const sessionActive = localStorage.getItem('session_active');
+            const expiry = localStorage.getItem('session_expiry');
+            
+            if (sessionActive === 'true' && expiry && Date.now() < parseInt(expiry)) {
+                appState.isAuthenticated = true;
+                appState.sessionExpiry = parseInt(expiry);
+                showMainApp();
+                loadAllFiles();
+            } else {
+                localStorage.removeItem('session_active');
+                localStorage.removeItem('session_expiry');
+            }
+        }
+
+        // ================================================
+        // FILE MANAGEMENT SYSTEM
+        // ================================================
+        function loadAllFiles() {
+            try {
+                // Load local files
+                const savedFiles = localStorage.getItem('vault_files');
+                appState.allFiles = savedFiles ? JSON.parse(savedFiles) : [];
+                
+                // Categorize files
+                categorizeFiles();
+                
+                // Update UI
+                renderFiles();
+                updateStats();
+                
+                // Show/hide empty state
+                const hasFiles = appState.allFiles.length > 0 || appState.driveFiles.length > 0;
+                document.getElementById('emptyState').style.display = hasFiles ? 'none' : 'block';
+                document.getElementById('fileGrid').style.display = hasFiles ? 'grid' : 'none';
+                
+            } catch (error) {
+                console.error('Error loading files:', error);
+            }
+        }
+
+        function categorizeFiles() {
+            // Reset categories
+            Object.keys(appState.categorizedFiles).forEach(key => {
+                appState.categorizedFiles[key] = [];
+            });
+            
+            // Categorize local files
+            appState.allFiles.forEach(file => {
+                const category = getFileCategory(file);
+                appState.categorizedFiles[category].push(file);
+                appState.categorizedFiles.all.push(file);
+            });
+            
+            // Categorize drive files
+            appState.driveFiles.forEach(file => {
+                file.source = 'drive';
+                const category = getFileCategory(file);
+                appState.categorizedFiles[category].push(file);
+                appState.categorizedFiles.all.push(file);
+                appState.categorizedFiles.drive.push(file);
+            });
+        }
+
+        function getFileCategory(file) {
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            for (const [category, extensions] of Object.entries(CONFIG.categories)) {
+                if (extensions.includes(ext)) {
+                    return category;
+                }
+            }
+            
+            return 'documents';
+        }
+
+        function getFileIcon(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            const icons = {
+                'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'webp': '🖼️',
+                'mp4': '🎬', 'avi': '🎬', 'mov': '🎬', 'mkv': '🎬', 'webm': '🎬',
+                'mp3': '🎵', 'wav': '🎵', 'm4a': '🎵', 'aac': '🎵', 'flac': '🎵',
+                'pdf': '📕', 'doc': '📝', 'docx': '📝', 'txt': '📄', 'rtf': '📄',
+                'xls': '📊', 'xlsx': '📊', 'ppt': '📊', 'pptx': '📊',
+                'zip': '🗜️', 'rar': '🗜️', '7z': '🗜️', 'tar': '🗜️',
+                'apk': '📱', 'exe': '💻', 'ipa': '📱',
+                'default': '📄'
+            };
+            return icons[ext] || icons['default'];
+        }
+
+        // ================================================
+        // UI RENDERING SYSTEM
+        // ================================================
+        function renderFiles() {
+            const files = appState.categorizedFiles[appState.currentCategory] || [];
+            const filteredFiles = filterFilesBySearch(files);
+            
+            if (appState.currentView === 'grid') {
+                renderGridView(filteredFiles);
+            } else {
+                renderListView(filteredFiles);
+            }
+        }
+
+        function renderGridView(files) {
+            const grid = document.getElementById('fileGrid');
+            if (files.length === 0) {
+                grid.innerHTML = '<div style="grid-column: 1 / -1; padding: 40px; text-align: center; color: var(--text-secondary);"><div style="font-size: 48px; margin-bottom: 16px;">📁</div><div>কোনো ফাইল নেই</div></div>';
+                return;
+            }
+            
+            let html = '';
+            files.forEach((file, index) => {
+                const isSelected = appState.selectedFiles.has(file.id);
+                const icon = getFileIcon(file.name);
+                const size = formatFileSize(file.size);
+                
+                html += `
+                    <div class="file-card ${isSelected ? 'selected' : ''}" onclick="handleFileClick('${file.id}', event)">
+                        ${file.thumbnail ? 
+                            `<img src="${file.thumbnail}" class="file-thumbnail" alt="${file.name}">` : 
+                            `<div class="file-icon-container"><div class="file-icon-large">${icon}</div></div>`
+                        }
+                        <div class="file-checkbox"></div>
+                        <div class="file-overlay">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-info">
+                                <span>${size}</span>
+                                <span>${file.source === 'drive' ? '☁️' : '📱'}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        function renderListView(files) {
+            const list = document.getElementById('fileList');
+            if (files.length === 0) {
+                list.innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-secondary);"><div style="font-size: 48px; margin-bottom: 16px;">📁</div><div>কোনো ফাইল নেই</div></div>';
+                return;
+            }
+            
+            let html = '';
+            files.forEach((file, index) => {
+                const isSelected = appState.selectedFiles.has(file.id);
+                const icon = getFileIcon(file.name);
+                const size = formatFileSize(file.size);
+                const date = new Date(file.date || file.createdTime).toLocaleDateString('bn-BD');
+                
+                html += `
+                    <div class="list-item ${isSelected ? 'selected' : ''}" onclick="handleFileClick('${file.id}', event)">
+                        <div class="list-icon">${icon}</div>
+                        <div class="list-content">
+                            <div class="list-title">${file.name}</div>
+                            <div class="list-subtitle">
+                                <span>${size}</span>
+                                <span>${date}</span>
+                                <span>${file.source === 'drive' ? '☁️ ড্রাইভ' : '📱 লোকাল'}</span>
+                            </div>
+                        </div>
+                        <div class="list-checkbox"></div>
+                    </div>
+                `;
+            });
+            
+            list.innerHTML = html;
+        }
+
+        // ================================================
+        // GOOGLE DRIVE INTEGRATION
+        // ================================================
+        function initGoogleDrive() {
+            if (typeof google === 'undefined') {
+                setTimeout(initGoogleDrive, 1000);
+                return;
+            }
+            
+            appState.tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.googleClientId,
+                scope: CONFIG.googleScope,
+                callback: async (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        appState.driveAccessToken = tokenResponse.access_token;
+                        appState.isDriveConnected = true;
+                        
+                        localStorage.setItem('drive_token', appState.driveAccessToken);
+                        localStorage.setItem('drive_token_expiry', Date.now() + 3500000);
+                        
+                        showToast('ড্রাইভ সংযুক্ত হয়েছে ✅', 'success');
+                        await logActivity('DRIVE_CONNECTED');
+                        
+                        loadDriveFiles();
+                    }
+                }
+            });
+            
+            checkExistingDriveToken();
+        }
+
+        function checkExistingDriveToken() {
+            const savedToken = localStorage.getItem('drive_token');
+            const expiry = localStorage.getItem('drive_token_expiry');
+            
+            if (savedToken && expiry && Date.now() < parseInt(expiry)) {
+                appState.driveAccessToken = savedToken;
+                appState.isDriveConnected = true;
+                loadDriveFiles();
+            }
+        }
+
+        async function loadDriveFiles() {
+            if (!appState.driveAccessToken) return;
+            
+            try {
+                const response = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=100&fields=files(id,name,size,mimeType,createdTime,webContentLink,thumbnailLink)', {
+                    headers: {
+                        'Authorization': `Bearer ${appState.driveAccessToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    appState.driveFiles = data.files.map(file => ({
+                        id: `drive_${file.id}`,
+                        name: file.name,
+                        size: parseInt(file.size) || 0,
+                        type: file.mimeType,
+                        date: file.createdTime,
+                        source: 'drive',
+                        driveId: file.id,
+                        url: file.webContentLink,
+                        thumbnail: file.thumbnailLink
+                    }));
+                    
+                    categorizeFiles();
+                    renderFiles();
+                    updateStats();
+                    
+                    showToast(`${appState.driveFiles.length}টি ড্রাইভ ফাইল লোড করা হয়েছে`, 'success');
+                }
+            } catch (error) {
+                console.error('Drive load error:', error);
+            }
+        }
+
+        // ================================================
+        // FILE PREVIEW SYSTEM
+        // ================================================
+        function openFilePreview(fileId) {
+            const file = [...appState.allFiles, ...appState.driveFiles].find(f => f.id === fileId);
+            if (!file) return;
+            
+            appState.previewFile = file;
+            const modal = document.getElementById('previewModal');
+            const title = document.getElementById('previewTitle');
+            
+            modal.style.display = 'block';
+            title.textContent = file.name;
+            
+            // Hide all preview types
+            document.getElementById('previewImage').style.display = 'none';
+            document.getElementById('previewVideo').style.display = 'none';
+            document.getElementById('previewDocument').style.display = 'none';
+            document.getElementById('previewAudio').style.display = 'none';
+            document.getElementById('previewOther').style.display = 'none';
+            
+            // Show appropriate preview
+            if (file.type && file.type.startsWith('image/')) {
+                const img = document.getElementById('previewImage');
+                img.src = file.url || file.thumbnail || '';
+                img.style.display = 'block';
+            } else if (file.type && file.type.startsWith('video/')) {
+                const video = document.getElementById('previewVideo');
+                video.src = file.url || '';
+                video.style.display = 'block';
+            } else if (file.type && file.type.startsWith('audio/')) {
+                const audio = document.getElementById('previewAudio');
+                audio.src = file.url || '';
+                audio.style.display = 'block';
+            } else if (file.name.endsWith('.pdf')) {
+                const doc = document.getElementById('previewDocument');
+                doc.innerHTML = `
+                    <div style="text-align: center; padding: 40px;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">📕</div>
+                        <div style="font-size: 20px; font-weight: bold; margin-bottom: 10px;">${file.name}</div>
+                        <div style="color: #666; margin-bottom: 20px;">${formatFileSize(file.size)}</div>
+                        <div style="color: #999; margin-bottom: 20px;">PDF প্রিভিউ শীঘ্রই আসছে</div>
+                        <button onclick="downloadCurrentFile()" style="background: var(--primary); color: white; border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer;">
+                            ডাউনলোড করুন
+                        </button>
+                    </div>
+                `;
+                doc.style.display = 'block';
+            } else {
+                const other = document.getElementById('previewOther');
+                document.getElementById('otherIcon').textContent = getFileIcon(file.name);
+                document.getElementById('otherName').textContent = file.name;
+                document.getElementById('otherInfo').innerHTML = `
+                    <div>সাইজ: ${formatFileSize(file.size)}</div>
+                    <div>টাইপ: ${file.type || 'Unknown'}</div>
+                    <div>তারিখ: ${new Date(file.date).toLocaleDateString('bn-BD')}</div>
+                    <div>সোর্স: ${file.source === 'drive' ? 'গুগল ড্রাইভ' : 'লোকাল স্টোরেজ'}</div>
+                `;
+                other.style.display = 'block';
+            }
+            
+            await logActivity('FILE_PREVIEW', { fileName: file.name });
+        }
+
+        // ================================================
+        // UPLOAD SYSTEM
+        // ================================================
+        async function uploadFiles(files, destination) {
+            if (destination === 'local') {
+                await uploadToLocal(files);
+            } else if (destination === 'drive') {
+                await uploadToDrive(files);
+            }
+        }
+
+        async function uploadToLocal(files) {
+            for (const file of files) {
+                // Create thumbnail for images
+                let thumbnail = null;
+                if (file.type.startsWith('image/')) {
+                    thumbnail = await createThumbnail(file);
+                }
+                
+                // Add to files array
+                const newFile = {
+                    id: `local_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    date: new Date().toISOString(),
+                    source: 'local',
+                    thumbnail: thumbnail
+                };
+                
+                appState.allFiles.push(newFile);
+                
+                // Update progress
+                updateUploadProgress();
+            }
+            
+            // Save to localStorage
+            localStorage.setItem('vault_files', JSON.stringify(appState.allFiles));
+            localStorage.setItem('last_backup', new Date().toISOString());
+            
+            // Update UI
+            categorizeFiles();
+            renderFiles();
+            updateStats();
+            
+            showToast(`${files.length}টি ফাইল সেভ করা হয়েছে ✅`, 'success');
+            await logActivity('UPLOAD_LOCAL', { count: files.length });
+        }
+
+        // ================================================
+        // UTILITY FUNCTIONS
+        // ================================================
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = 'toast';
+            
+            const colors = {
+                success: '#34a853',
+                error: '#ea4335',
+                warning: '#fbbc04',
+                info: '#1a73e8'
+            };
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.style.borderLeftColor = colors[type];
+            toast.innerHTML = `
+                <div style="font-size: 20px;">${icons[type]}</div>
+                <div style="flex: 1;">${message}</div>
+                <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text); font-size: 20px; cursor: pointer;">×</button>
+            `;
+            
+            container.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentNode) {
+                    toast.style.opacity = '0';
+                    toast.style.transform = 'translateY(-10px)';
+                    setTimeout(() => {
+                        if (toast.parentNode) toast.remove();
+                    }, 300);
+                }
+            }, 3000);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+            document.getElementById('currentTime').textContent = time;
+            
+            // Update session expiry display
+            if (appState.sessionExpiry) {
+                const hoursLeft = Math.max(0, Math.floor((appState.sessionExpiry - Date.now()) / (1000 * 60 * 60)));
+                document.getElementById('sessionExpiry').textContent = `${hoursLeft} ঘন্টা`;
+            }
+        }
+
+        function updateStats() {
+            // Calculate total storage
+            const localSize = appState.allFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+            const driveSize = appState.driveFiles.reduce((sum, file) => sum + (file.size || 0), 0);
+            appState.totalStorageUsed = localSize + driveSize;
+            
+            // Update UI
+            document.getElementById('totalFilesCount').textContent = appState.allFiles.length + appState.driveFiles.length;
+            document.getElementById('localFilesCount').textContent = appState.allFiles.length;
+            document.getElementById('driveFilesCount').textContent = appState.driveFiles.length;
+            
+            // Storage bar
+            const percent = Math.min(100, (appState.totalStorageUsed / (2 * 1024 * 1024 * 1024 * 1024)) * 100); // 2TB total
+            document.getElementById('storagePercent').textContent = percent.toFixed(1) + '%';
+            document.getElementById('storageFill').style.width = percent + '%';
+            document.getElementById('usedSpace').textContent = formatFileSize(appState.totalStorageUsed);
+            
+            // Last backup
+            const lastBackup = localStorage.getItem('last_backup');
+            if (lastBackup) {
+                document.getElementById('lastBackup').textContent = new Date(lastBackup).toLocaleDateString('bn-BD');
+            }
+        }
+
+        function updateDeviceInfo() {
+            const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+            document.getElementById('deviceInfo').textContent = isMobile ? 'Android Mobile' : 'Desktop';
+        }
+
+        // ================================================
+        // EVENT HANDLERS & UI CONTROLS
+        // ================================================
+        function setupEventListeners() {
+            // File input
+            document.getElementById('fileInput').addEventListener('change', (e) => {
+                appState.uploadQueue = Array.from(e.target.files);
+                showSelectedFiles();
+            });
+            
+            // Drag and drop
+            const dropZone = document.getElementById('fileDropZone');
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--primary)';
+                dropZone.style.background = 'rgba(26, 115, 232, 0.1)';
+            });
+            
+            dropZone.addEventListener('dragleave', () => {
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'transparent';
+            });
+            
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.style.borderColor = 'var(--border)';
+                dropZone.style.background = 'transparent';
+                
+                appState.uploadQueue = Array.from(e.dataTransfer.files);
+                showSelectedFiles();
+            });
+            
+            // Search input
+            document.getElementById('searchInput').addEventListener('input', (e) => {
+                appState.searchQuery = e.target.value;
+                renderFiles();
+            });
+        }
+
+        function switchTab(tabName) {
+            appState.currentTab = tabName;
+            appState.selectedFiles.clear();
+            
+            // Update navigation
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Update title
+            document.getElementById('pageTitle').textContent = 
+                tabName === 'gallery' ? 'গ্যালারি' : 
+                tabName === 'drive' ? 'ড্রাইভ' : 'সেটিংস';
+            
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            
+            // Show selected tab
+            document.getElementById(tabName + 'View').classList.add('active');
+            
+            // Update UI
+            updateSelectionUI();
+            
+            if (tabName === 'drive' && !appState.isDriveConnected) {
+                connectGoogleDrive();
+            }
+        }
+
+        function filterCategory(category) {
+            appState.currentCategory = category;
+            appState.selectedFiles.clear();
+            
+            // Update chips
+            document.querySelectorAll('.category-chip').forEach(chip => {
+                chip.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Render files
+            renderFiles();
+            updateSelectionUI();
+        }
+
+        function toggleViewMode() {
+            appState.currentView = appState.currentView === 'grid' ? 'list' : 'grid';
+            const btn = document.getElementById('viewModeBtn');
+            const icon = document.getElementById('viewIcon');
+            
+            if (appState.currentView === 'grid') {
+                icon.textContent = '☰';
+                document.getElementById('fileGrid').style.display = 'grid';
+                document.getElementById('fileList').style.display = 'none';
+            } else {
+                icon.textContent = '⬜';
+                document.getElementById('fileGrid').style.display = 'none';
+                document.getElementById('fileList').style.display = 'block';
+            }
+            
+            renderFiles();
+        }
+
+        function toggleSelectionMode() {
+            appState.isSelectMode = !appState.isSelectMode;
+            appState.selectedFiles.clear();
+            
+            const toolbar = document.getElementById('selectionToolbar');
+            toolbar.style.display = appState.isSelectMode ? 'flex' : 'none';
+            
+            updateSelectionUI();
+            renderFiles();
+        }
+
+        function handleFileClick(fileId, event) {
+            if (appState.isSelectMode) {
+                event.stopPropagation();
+                if (appState.selectedFiles.has(fileId)) {
+                    appState.selectedFiles.delete(fileId);
+                } else {
+                    appState.selectedFiles.add(fileId);
+                }
+                updateSelectionUI();
+                renderFiles();
+            } else {
+                openFilePreview(fileId);
+            }
+        }
+
+        function updateSelectionUI() {
+            const count = appState.selectedFiles.size;
+            document.getElementById('selectedCount').textContent = count + 'টি সিলেক্ট';
+            
+            if (count > 0) {
+                document.getElementById('selectionToolbar').style.display = 'flex';
+            } else if (!appState.isSelectMode) {
+                document.getElementById('selectionToolbar').style.display = 'none';
+            }
+        }
+
+        // ================================================
+        // MODAL CONTROLS
+        // ================================================
+        function openUploadModal() {
+            appState.uploadQueue = [];
+            document.getElementById('uploadModal').style.display = 'block';
+            document.getElementById('selectedFilesPreview').style.display = 'none';
+            document.getElementById('uploadProgress').style.display = 'none';
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+        }
+
+        function selectUploadDestination(destination) {
+            const localBtn = document.getElementById('localUploadBtn');
+            const driveBtn = document.getElementById('driveUploadBtn');
+            
+            if (destination === 'drive' && !appState.isDriveConnected) {
+                showToast('প্রথমে ড্রাইভ সংযোগ করুন', 'error');
+                return;
+            }
+            
+            appState.uploadDestination = destination;
+            localBtn.style.borderColor = destination === 'local' ? 'var(--primary)' : 'var(--border)';
+            driveBtn.style.borderColor = destination === 'drive' ? 'var(--primary)' : 'var(--border)';
+        }
+
+        // ================================================
+        // ADMIN & SECURITY FUNCTIONS
+        // ================================================
+        async function logActivity(type, data = {}) {
+            try {
+                await db.collection('activity_logs').add({
+                    type: type,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    userAgent: navigator.userAgent,
+                    data: data
+                });
+            } catch (error) {
+                console.error('Logging error:', error);
+            }
+        }
+
+        function copyAdminNumber() {
+            const number = document.getElementById('adminWhatsApp').textContent;
+            navigator.clipboard.writeText(number).then(() => {
+                showToast('নম্বর কপি করা হয়েছে', 'success');
+            });
+        }
+
+        function logout() {
+            if (confirm('লগআউট করবেন? পুনরায় PIN দিতে হবে।')) {
+                localStorage.clear();
+                location.reload();
+            }
+        }
+
+        // ================================================
+        // ANIMATION CSS
+        // ================================================
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes shake {
+                0%, 100% { transform: translateX(0); }
+                25% { transform: translateX(-10px); }
+                75% { transform: translateX(10px); }
+            }
+            
+            .keypad-btn {
+                aspect-ratio: 1;
+                background: var(--surface-light);
+                border: none;
+                border-radius: 50%;
+                color: var(--text);
+                font-size: 24px;
+                font-weight: 400;
+                cursor: pointer;
+                transition: all 0.2s;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+            }
+            
+            .keypad-btn:active {
+                background: var(--surface-hover);
+                transform: scale(0.95);
+            }
+        `;
+        document.head.appendChild(style);
+
+        // ================================================
+        // PUBLIC API FUNCTIONS
+        // ================================================
+        window.showMainApp = function() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainApp').style.display = 'block';
+        };
+
+        window.showError = function(message) {
+            document.getElementById('pinError').textContent = message;
+            document.getElementById('pinError').style.display = 'block';
+        };
+
+        window.hideError = function() {
+            document.getElementById('pinError').style.display = 'none';
+        };
+
+        window.connectGoogleDrive = function() {
+            if (!appState.tokenClient) {
+                initGoogleDrive();
+                setTimeout(() => {
+                    if (appState.tokenClient) {
+                        appState.tokenClient.requestAccessToken({ prompt: 'consent' });
+                    }
+                }, 1000);
+            } else {
+                appState.tokenClient.requestAccessToken({ prompt: 'consent' });
+            }
+        };
+
+        window.closePreview = function() {
+            document.getElementById('previewModal').style.display = 'none';
+            appState.previewFile = null;
+        };
+
+        window.downloadCurrentFile = function() {
+            if (!appState.previewFile) return;
+            showToast('ডাউনলোড শুরু হয়েছে...', 'info');
+        };
+
+        window.shareCurrentFile = function() {
+            if (!appState.previewFile) return;
+            showToast('শেয়ার অপশন শীঘ্রই আসছে', 'info');
+        };
+
+        window.showFileProperties = function() {
+            if (!appState.previewFile) return;
+            const file = appState.previewFile;
+            alert(`
+                ফাইল বিবরণ:
+                নাম: ${file.name}
+                সাইজ: ${formatFileSize(file.size)}
+                টাইপ: ${file.type || 'Unknown'}
+                তারিখ: ${new Date(file.date).toLocaleString('bn-BD')}
+                সোর্স: ${file.source === 'drive' ? 'গুগল ড্রাইভ' : 'লোকাল স্টোরেজ'}
+            `);
+        };
+
+        window.deleteCurrentFile = function() {
+            if (!appState.previewFile) return;
+            if (confirm(`"${appState.previewFile.name}" মুছবেন?`)) {
+                showToast('ফাইল মুছে ফেলা হয়েছে', 'success');
+                closePreview();
+            }
+        };
+
+        window.downloadSelected = function() {
+            showToast(`${appState.selectedFiles.size}টি ফাইল ডাউনলোড শুরু হয়েছে`, 'info');
+        };
+
+        window.shareSelected = function() {
+            showToast('বহু ফাইল শেয়ার শীঘ্রই আসছে', 'info');
+        };
+
+        window.deleteSelected = function() {
+            if (confirm(`${appState.selectedFiles.size}টি ফাইল মুছবেন?`)) {
+                showToast('ফাইলগুলি মুছে ফেলা হয়েছে', 'success');
+                appState.selectedFiles.clear();
+                toggleSelectionMode();
+            }
+        };
+
+        window.changePIN = function() {
+            showToast('PIN পরিবর্তন শীঘ্রই আসছে', 'info');
+        };
+
+        window.clearCache = function() {
+            if (confirm('সকল লোকাল ডাটা মুছবেন? এটি পূর্ববর্তী হবে না।')) {
+                localStorage.removeItem('vault_files');
+                appState.allFiles = [];
+                loadAllFiles();
+                showToast('ক্যাশে ক্লিয়ার করা হয়েছে', 'success');
+                logActivity('CACHE_CLEARED');
+            }
+        };
+
+        window.viewActivityLog = function() {
+            showToast('অ্যাক্টিভিটি লগ শীঘ্রই আসছে', 'info');
+        };
+
+        window.filterFilesBySearch = function(files) {
+            if (!appState.searchQuery) return files;
+            const query = appState.searchQuery.toLowerCase();
+            return files.filter(file => 
+                file.name.toLowerCase().includes(query) ||
+                file.type?.toLowerCase().includes(query)
+            );
+        };
+
+        window.updateUploadProgress = function() {
+            // Progress update logic
+        };
+
+        window.createThumbnail = function(file) {
+            return new Promise((resolve) => {
+                if (!file.type.startsWith('image/')) {
+                    resolve(null);
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        const ctx = canvas.getContext('2d');
+                        const maxSize = 200;
+                        let width = img.width;
+                        let height = img.height;
+                        
+                        if (width > height) {
+                            if (width > maxSize) {
+                                height *= maxSize / width;
+                                width = maxSize;
+                            }
+                        } else {
+                            if (height > maxSize) {
+                                width *= maxSize / height;
+                                height = maxSize;
+                            }
+                        }
+                        
+                        canvas.width = width;
+                        canvas.height = height;
+                        ctx.drawImage(img, 0, 0, width, height);
+                        resolve(canvas.toDataURL('image/jpeg', 0.7));
+                    };
+                    img.src = e.target.result;
+                };
+                reader.readAsDataURL(file);
+            });
+        };
+
+        // Initialize
+        setTimeout(() => {
+            if (!appState.isAuthenticated) {
+                document.getElementById('authScreen').style.display = 'flex';
+            }
+        }, 100);
+    </script>
+</body>
+</html>
