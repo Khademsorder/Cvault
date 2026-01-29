@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vault OS Ultimate</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <style>
+        :root {
+            --bg: #0f172a; --surface: rgba(15, 23, 42, 0.95); --primary: #3b82f6; 
+            --text: #f8fafc; --text-sub: #94a3b8; --danger: #ef4444; --success: #22c55e;
+            --border: rgba(255, 255, 255, 0.1); --header-h: 60px; --dock-h: 80px;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; }
+        body { margin: 0; background: var(--bg); color: var(--text); font-family: 'Segoe UI', sans-serif; height: 100vh; overflow: hidden; display: flex; flex-direction: column; background-size: cover; background-position: center; transition: background 0.5s; }
+        
+        .hidden { display: none !important; }
+        .flex { display: flex; } .center { display: flex; align-items: center; justify-content: center; } .col { flex-direction: column; }
+
+        /* BOOT SCREEN */
+        #boot-screen { position: fixed; inset: 0; background: #000; z-index: 9999; color: white; }
+        .boot-logo { font-size: 4rem; animation: pulse 2s infinite; color: var(--primary); }
+        .loader-line { width: 180px; height: 4px; background: #333; margin-top: 30px; border-radius: 2px; overflow: hidden; }
+        .loader-progress { width: 0%; height: 100%; background: var(--primary); animation: loadBar 2.5s forwards ease-in-out; }
+        @keyframes loadBar { 0%{width:0%} 100%{width:100%} }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
+
+        /* STATUS BAR */
+        #status-bar { height: 28px; background: rgba(0,0,0,0.6); display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-size: 0.8rem; color: #fff; z-index: 100; backdrop-filter: blur(5px); }
+
+        /* AUTH LAYER */
+        #auth-layer { position: fixed; inset: 0; z-index: 900; background: var(--bg); }
+        .pin-dots { display: flex; gap: 15px; margin: 20px 0; }
+        .pin-dot { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--text-sub); transition: 0.2s; }
+        .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+        .pin-dot.error { border-color: var(--danger); animation: shake 0.3s; }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .btn { width: 75px; height: 75px; border-radius: 50%; background: rgba(255,255,255,0.05); font-size: 1.6rem; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: 0.1s; }
+        .btn:active { background: rgba(255,255,255,0.2); transform: scale(0.95); }
+        @keyframes shake { 0%,100%{transform:translateX(0)} 25%{transform:translateX(-10px)} 75%{transform:translateX(10px)} }
+
+        /* MAIN UI */
+        header { height: var(--header-h); background: var(--surface); display: flex; align-items: center; padding: 0 15px; gap: 15px; box-shadow: 0 2px 10px rgba(0,0,0,0.2); z-index: 80; backdrop-filter: blur(10px); }
+        .back-btn { font-size: 1.2rem; padding: 10px; opacity: 0; pointer-events: none; transition: 0.2s; }
+        .back-btn.show { opacity: 1; pointer-events: all; }
+        
+        #main-content { flex: 1; overflow-y: auto; padding: 15px; padding-bottom: 100px; scroll-behavior: smooth; }
+
+        /* WIDGETS */
+        .widget { background: var(--surface); padding: 15px; border-radius: 18px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1); position: relative; overflow: hidden; border: 1px solid var(--border); }
+        .analysis-bar { height: 6px; background: rgba(255,255,255,0.1); border-radius: 3px; overflow: hidden; margin-top: 5px; width: 100%; }
+        .analysis-fill { height: 100%; background: var(--primary); width: 0%; transition: 1s; }
+
+        /* GRID/LIST */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; }
+        .grid.list-view { grid-template-columns: 1fr; gap: 8px; }
+        
+        .card { background: rgba(255,255,255,0.05); border-radius: 12px; overflow: hidden; position: relative; transition: 0.2s; border: 2px solid transparent; }
+        .list-view .card { display: flex; align-items: center; height: 65px; padding: 0 10px; }
+        .card.selected { border-color: var(--primary); background: rgba(59,130,246,0.15); transform: scale(0.95); }
+        .card.selected::after { content:'\f00c'; font-family:'Font Awesome 5 Free'; font-weight:900; position:absolute; top:5px; right:5px; background:var(--primary); color:white; border-radius:50%; width:20px; height:20px; display:flex; align-items:center; justify-content:center; font-size:0.7rem; }
+
+        .thumb { height: 100px; background: #000; display: flex; align-items: center; justify-content: center; }
+        .list-view .thumb { height: 45px; width: 45px; border-radius: 8px; margin-right: 15px; }
+        .thumb img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .info { padding: 8px; font-size: 0.8rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .list-view .info { padding: 0; flex: 1; }
+
+        /* DOCK */
+        .dock { position: fixed; bottom: 0; width: 100%; height: var(--dock-h); background: var(--surface); backdrop-filter: blur(10px); display: flex; justify-content: space-around; align-items: center; z-index: 90; border-top: 1px solid var(--border); }
+        .dock-item { display: flex; flex-direction: column; align-items: center; gap: 4px; color: var(--text-sub); font-size: 0.75rem; width: 60px; padding: 5px; border-radius: 8px; transition: 0.2s; }
+        .dock-item i { font-size: 1.4rem; }
+        .dock-item.active { color: var(--primary); transform: translateY(-5px); }
+
+        /* FAB & PLAYER */
+        .fab { position: fixed; bottom: 95px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; display: flex; center; justify-content: center; align-items: center; font-size: 1.5rem; color: white; box-shadow: 0 4px 15px rgba(59,130,246,0.5); z-index: 85; transition: 0.2s; cursor: pointer; }
+        .fab:active { transform: scale(0.9); }
+
+        #mini-player { position: fixed; bottom: 95px; left: 15px; width: 50px; height: 50px; background: rgba(0,0,0,0.8); border-radius: 50%; z-index: 85; display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); overflow: hidden; transition: 0.3s; }
+        #mini-player.expanded { width: 220px; border-radius: 25px; padding: 0 15px; justify-content: space-between; }
+
+        /* BATCH ACTION BAR */
+        #batch-bar { position: fixed; bottom: 0; width: 100%; height: var(--dock-h); background: var(--surface); display: flex; justify-content: space-around; align-items: center; z-index: 95; border-top: 2px solid var(--primary); transform: translateY(100%); transition: 0.3s; }
+        #batch-bar.active { transform: translateY(0); }
+        .batch-btn { text-align:center; color: var(--text); cursor: pointer; }
+        .batch-btn.danger { color: var(--danger); }
+
+        /* WINDOWS */
+        .window { position: fixed; top: 5%; left: 5%; width: 90%; height: 85%; background: #1e293b; border-radius: 15px; z-index: 1500; display: flex; flex-direction: column; border: 1px solid var(--border); box-shadow: 0 10px 40px rgba(0,0,0,0.5); animation: zoomIn 0.2s; }
+        .win-head { padding: 12px 15px; background: rgba(255,255,255,0.05); display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); }
+        @keyframes zoomIn { from{transform:scale(0.9);opacity:0} to{transform:scale(1);opacity:1} }
+
+        #ctx-menu { position: fixed; background: var(--surface); border-radius: 8px; z-index: 2000; min-width: 160px; border: 1px solid var(--border); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
+        .ctx-item { padding: 12px 15px; font-size: 0.9rem; border-bottom: 1px solid rgba(255,255,255,0.05); display: flex; gap: 10px; align-items: center; cursor: pointer; }
+        .ctx-item:active { background: var(--primary); }
+
+        .toast { position: fixed; top: 40px; left: 50%; transform: translateX(-50%); background: #111; padding: 10px 20px; border-radius: 30px; z-index: 5000; border: 1px solid var(--border); display: flex; gap: 10px; align-items: center; animation: slideDown 0.3s; }
+        @keyframes slideDown { from{top:-50px} to{top:40px} }
+        
+        .btn-chip { padding:5px 12px; background:rgba(255,255,255,0.1); border-radius:20px; font-size:0.8rem; cursor:pointer; white-space:nowrap; border:1px solid transparent; }
+        .btn-chip.active { background:var(--primary); border-color:var(--primary); }
+    </style>
+</head>
+<body>
+
+    <div id="boot-screen" class="center col">
+        <div class="boot-logo"><i class="fas fa-fingerprint"></i></div>
+        <div style="margin-top:15px; letter-spacing:2px">VAULT OS</div>
+        <div class="loader-line"><div class="loader-progress"></div></div>
+    </div>
+
+    <div id="status-bar">
+        <div id="clock">12:00</div>
+        <div style="display:flex; gap:10px">
+            <i class="fas fa-wifi"></i>
+            <span id="battery">--%</span>
+            <i class="fas fa-battery-half"></i>
+        </div>
+    </div>
+
+    <div id="auth-layer" class="center col hidden">
+        <div id="pin-view" class="center col">
+            <h2 style="margin-bottom:5px">Security Check</h2>
+            <div id="auth-msg" style="font-size:0.8rem; color:var(--text-sub); margin-bottom:20px">Syncing PIN...</div>
+            <div class="pin-dots"><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div></div>
+            <div class="numpad">
+                <div class="btn" onclick="sys.pin(1)">1</div><div class="btn" onclick="sys.pin(2)">2</div><div class="btn" onclick="sys.pin(3)">3</div>
+                <div class="btn" onclick="sys.pin(4)">4</div><div class="btn" onclick="sys.pin(5)">5</div><div class="btn" onclick="sys.pin(6)">6</div>
+                <div class="btn" onclick="sys.pin(7)">7</div><div class="btn" onclick="sys.pin(8)">8</div><div class="btn" onclick="sys.pin(9)">9</div>
+                <div class="btn" style="opacity:0"></div><div class="btn" onclick="sys.pin(0)">0</div><div class="btn" onclick="sys.pin('del')"><i class="fas fa-backspace"></i></div>
+            </div>
+        </div>
+        <div id="login-view" class="hidden center col">
+            <i class="fab fa-google-drive fa-4x" style="color:var(--primary); margin-bottom:20px"></i>
+            <h3>Authenticate</h3>
+            
+            <div id="g_id_onload" 
+                 data-client_id="YOUR_CLIENT_ID_HERE.apps.googleusercontent.com" 
+                 data-callback="handleAuth" 
+                 data-auto_select="true">
+            </div>
+            <div class="g_id_signin" data-type="standard" data-theme="filled_black"></div>
+        </div>
+    </div>
+
+    <div id="app-ui" class="hidden">
+        <header>
+            <i class="fas fa-arrow-left back-btn" id="back-btn" onclick="sys.back()"></i>
+            <h3 style="flex:1" id="page-title">Home</h3>
+            <div style="width:10px; height:10px; border-radius:50%; background:var(--text-sub)" id="sync-dot"></div>
+            <img id="u-img" style="width:35px; height:35px; border-radius:50%; border:2px solid var(--primary); margin-left:10px">
+        </header>
+
+        <div id="main-content">
+            <div id="view-home">
+                <div class="widget" style="background:linear-gradient(135deg, var(--primary), #6366f1); color:white; display:block">
+                    <h1 id="dash-time" style="margin:0; font-size:2.5rem; font-weight:300">12:00</h1>
+                    <div id="dash-date" style="opacity:0.8">Sunday, Jan 1</div>
+                </div>
+                <div class="widget">
+                    <div style="flex:1">
+                        <div style="display:flex; justify-content:space-between"><span>Storage</span><span id="store-txt">0 MB</span></div>
+                        <div class="analysis-bar"><div class="analysis-fill" id="store-bar"></div></div>
+                    </div>
+                </div>
+                <div style="display:flex; gap:10px; margin-bottom:15px">
+                    <div class="widget" style="flex:1; justify-content:center; flex-direction:column; margin:0" onclick="sys.openWin('win-bin')">
+                        <i class="fas fa-trash-alt fa-2x" style="color:var(--danger)"></i><span style="font-size:0.8rem; margin-top:5px">Recycle Bin</span>
+                    </div>
+                    <div class="widget" style="flex:1; justify-content:center; flex-direction:column; margin:0" onclick="sys.toggleFull()">
+                        <i class="fas fa-expand fa-2x"></i><span style="font-size:0.8rem; margin-top:5px">Fullscreen</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="view-files" class="hidden">
+                <div style="display:flex; gap:10px; margin-bottom:15px; overflow-x:auto; padding-bottom:5px">
+                    <button onclick="app.sort()" style="padding:6px 12px; background:var(--surface); border:none; color:white; border-radius:20px; white-space:nowrap"><i class="fas fa-sort"></i> Sort</button>
+                    <button onclick="app.viewToggle()" style="padding:6px 12px; background:var(--surface); border:none; color:white; border-radius:20px; white-space:nowrap"><i class="fas fa-list"></i> View</button>
+                    <div style="flex:1"></div>
+                    <input type="text" placeholder="Search..." oninput="app.search(this.value)" style="background:rgba(255,255,255,0.1); border:none; color:white; padding:6px 10px; border-radius:20px; width:100px; outline:none">
+                </div>
+                <div style="display:flex; gap:8px; margin-bottom:10px; overflow-x:auto">
+                    <span class="btn-chip active" onclick="app.filter('all',this)">All</span>
+                    <span class="btn-chip" onclick="app.filter('image',this)">Img</span>
+                    <span class="btn-chip" onclick="app.filter('video',this)">Vid</span>
+                    <span class="btn-chip" onclick="app.filter('doc',this)">Doc</span>
+                </div>
+                <div id="file-list" class="grid" oncontextmenu="return false;"></div>
+            </div>
+
+            <div id="view-settings" class="hidden">
+                <div class="widget" onclick="sys.bgChange()"><span><i class="fas fa-image"></i> Change Wallpaper</span></div>
+                <div class="widget" onclick="sys.showIntruder()"><span style="color:var(--danger)"><i class="fas fa-user-secret"></i> Intruder Logs</span></div>
+                <div class="widget" onclick="sys.logout()"><span><i class="fas fa-sign-out-alt"></i> Logout</span></div>
+                <div style="text-align:center; font-size:0.8rem; color:var(--text-sub)">Vault OS Ultimate v7.0</div>
+            </div>
+        </div>
+
+        <label class="fab"><i class="fas fa-plus"></i><input type="file" multiple hidden onchange="app.upload(this)"></label>
+
+        <div id="mini-player" onclick="this.classList.toggle('expanded')">
+            <i class="fas fa-music"></i>
+            <div style="flex:1; margin:0 10px; overflow:hidden; white-space:nowrap; font-size:0.8rem" id="mp-title"></div>
+            <i class="fas fa-play" onclick="event.stopPropagation(); player.toggle()" id="mp-icon"></i>
+        </div>
+
+        <div class="dock">
+            <div class="dock-item active" onclick="sys.nav('home', this)"><i class="fas fa-home"></i><span>Home</span></div>
+            <div class="dock-item" onclick="sys.nav('files', this)"><i class="fas fa-folder"></i><span>Files</span></div>
+            <div class="dock-item" onclick="sys.nav('settings', this)"><i class="fas fa-cog"></i><span>Settings</span></div>
+        </div>
+
+        <div id="batch-bar">
+            <div class="batch-btn" onclick="app.cancelSel()"><i class="fas fa-times fa-lg"></i><div>Cancel</div></div>
+            <div class="batch-btn" onclick="app.batchFav()"><i class="fas fa-star fa-lg"></i><div>Fav</div></div>
+            <div class="batch-btn danger" onclick="app.batchDel()"><i class="fas fa-trash fa-lg"></i><div>Delete</div></div>
+        </div>
+    </div>
+
+    <div id="ctx-menu" class="hidden">
+        <div class="ctx-item" onclick="app.ctxAct('open')"><i class="fas fa-external-link-alt"></i> Open</div>
+        <div class="ctx-item" onclick="app.ctxAct('select')"><i class="fas fa-check-circle"></i> Select Item</div>
+        <div class="ctx-item" onclick="app.ctxAct('rename')"><i class="fas fa-pen"></i> Rename</div>
+        <div class="ctx-item" onclick="app.ctxAct('fav')"><i class="fas fa-star"></i> Favorite</div>
+        <div class="ctx-item" style="color:var(--danger)" onclick="app.ctxAct('trash')"><i class="fas fa-trash"></i> Trash</div>
+    </div>
+
+    <div id="win-bin" class="window hidden">
+        <div class="win-head"><span>Recycle Bin</span><i class="fas fa-times" onclick="sys.closeWin('win-bin')"></i></div>
+        <div id="bin-list" style="flex:1; overflow-y:auto; padding:15px"></div>
+        <div style="padding:15px; text-align:right"><button onclick="sys.emptyBin()" style="background:var(--danger); color:white; border:none; padding:8px 15px; border-radius:5px">Empty All</button></div>
+    </div>
+
+    <div id="win-viewer" class="window hidden" style="background:black">
+        <div class="win-head" style="background:rgba(0,0,0,0.5); color:white"><span id="v-title">Viewer</span><i class="fas fa-times" onclick="sys.closeWin('win-viewer')"></i></div>
+        <div id="v-body" class="center" style="flex:1; position:relative; overflow:auto"></div>
+        <div style="position:absolute; top:50%; width:100%; display:flex; justify-content:space-between; padding:0 10px; pointer-events:none">
+            <i class="fas fa-chevron-left fa-2x hidden" id="prev-btn" onclick="app.slide(-1)" style="cursor:pointer; pointer-events:all; text-shadow:0 0 5px black"></i>
+            <i class="fas fa-chevron-right fa-2x hidden" id="next-btn" onclick="app.slide(1)" style="cursor:pointer; pointer-events:all; text-shadow:0 0 5px black"></i>
+        </div>
+    </div>
+
+    <div id="win-editor" class="window hidden">
+        <div class="win-head"><span id="e-title">Editor</span><i class="fas fa-times" onclick="sys.closeWin('win-editor')"></i></div>
+        <textarea id="e-content" style="flex:1; background:#111; color:#0f0; border:none; padding:15px; font-family:monospace" readonly></textarea>
+    </div>
+
+    <audio id="audio-el"></audio>
+
+    <script>
+        const CFG = {
+            fb: { apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4", authDomain: "encrypted-vault-4683d.firebaseapp.com", projectId: "encrypted-vault-4683d", storageBucket: "encrypted-vault-4683d.appspot.com", messagingSenderId: "851257263743", appId: "1:851257263743:web:e0d16606bd06f692f5e14a" },
+            api: "https://script.google.com/macros/s/AKfycbxItLlQHW0NEhhgGedLOxQQFPIdVEqYlGILa2Pd6Rei_kGzpSm67l5mAO3oIJhKvdzEjQ/exec",
+            folder: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn"
+        };
+
+        const sys = {
+            pinVal: [], realPin: '1171', db: null, history: ['home'],
+            intruder: JSON.parse(localStorage.getItem('v_intruder')||'[]'),
+            bin: JSON.parse(localStorage.getItem('v_bin')||'[]'),
+
+            init: async () => {
+                firebase.initializeApp(CFG.fb);
+                sys.db = firebase.firestore();
+                setTimeout(() => { document.getElementById('boot-screen').classList.add('hidden'); document.getElementById('auth-layer').classList.remove('hidden'); }, 2500);
+                setInterval(() => {
+                    const d = new Date();
+                    document.getElementById('clock').innerText = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                    document.getElementById('dash-time').innerText = d.toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});
+                    document.getElementById('dash-date').innerText = d.toLocaleDateString([],{weekday:'short',day:'numeric',month:'short'});
+                }, 1000);
+                if(navigator.getBattery) navigator.getBattery().then(b => document.getElementById('battery').innerText = Math.round(b.level*100)+'%');
+                
+                const sess = localStorage.getItem('v_sess');
+                if(sess && (Date.now() - sess < 86400000)) app.unlock(false);
+                else sys.fetchPin();
+
+                window.onpopstate = () => sys.back(true);
+                history.pushState(null, null, location.href);
+                if(localStorage.getItem('v_bg')) document.body.style.backgroundImage = `url('${localStorage.getItem('v_bg')}')`;
+            },
+
+            fetchPin: async () => {
+                try {
+                    const d = await sys.db.collection('settings').doc('security').get();
+                    if(d.exists) sys.realPin = d.data().pin || '1171';
+                    document.getElementById('auth-msg').innerText = "System Secure"; document.getElementById('auth-msg').style.color = "var(--success)";
+                } catch(e) { document.getElementById('auth-msg').innerText = "Offline Mode"; }
+            },
+
+            pin: (n) => {
+                if(n==='del') { sys.pinVal.pop(); sys.renderPin(); return; }
+                if(sys.pinVal.length < 4) { sys.pinVal.push(n); sys.renderPin(); if(sys.pinVal.length === 4) setTimeout(sys.check, 200); }
+            },
+            renderPin: () => document.querySelectorAll('.pin-dot').forEach((d,i)=>d.className=`pin-dot ${i<sys.pinVal.length?'filled':''}`),
+            check: () => {
+                const s = sys.pinVal.join('');
+                if(s === sys.realPin) { localStorage.setItem('v_sess', Date.now()); app.unlock(false); }
+                else if(s === '0000') app.unlock(true);
+                else {
+                    document.querySelectorAll('.pin-dot').forEach(d=>d.classList.add('error'));
+                    sys.intruder.push(new Date().toLocaleString()); localStorage.setItem('v_intruder', JSON.stringify(sys.intruder));
+                    setTimeout(()=>{ sys.pinVal=[]; sys.renderPin(); document.querySelectorAll('.pin-dot').forEach(d=>d.classList.remove('error')); }, 400);
+                }
+            },
+
+            nav: (t, el) => {
+                sys.history.push(t);
+                document.querySelectorAll('.hidden').forEach(e=>{if(e.id.startsWith('view-')) e.classList.add('hidden')});
+                document.getElementById('view-home').classList.add('hidden'); document.getElementById('view-files').classList.add('hidden'); document.getElementById('view-settings').classList.add('hidden');
+                document.querySelectorAll('.dock-item').forEach(e=>e.classList.remove('active'));
+                
+                document.getElementById(`view-${t}`).classList.remove('hidden');
+                if(el) el.classList.add('active');
+                document.getElementById('back-btn').classList.toggle('show', t!=='home');
+                document.getElementById('page-title').innerText = t.charAt(0).toUpperCase() + t.slice(1);
+            },
+            back: (hw) => {
+                if(!document.getElementById('win-viewer').classList.contains('hidden')) { sys.closeWin('win-viewer'); return; }
+                if(!document.getElementById('win-bin').classList.contains('hidden')) { sys.closeWin('win-bin'); return; }
+                if(sys.history.length > 1) { sys.history.pop(); const p = sys.history[sys.history.length-1]; const idx = ['home','files','settings'].indexOf(p); document.querySelectorAll('.dock-item')[idx].click(); }
+                if(!hw) history.pushState(null,null,location.href);
+            },
+
+            openWin: (id) => {
+                document.getElementById(id).classList.remove('hidden');
+                if(id==='win-bin') sys.renderBin();
+            },
+            closeWin: (id) => document.getElementById(id).classList.add('hidden'),
+            
+            trash: (id) => {
+                const f = app.data.find(x => x.id === id); sys.bin.push(f); localStorage.setItem('v_bin', JSON.stringify(sys.bin));
+                app.data = app.data.filter(x => x.id !== id); app.render(); app.toast("Moved to Bin");
+            },
+            renderBin: () => {
+                const b = document.getElementById('bin-list');
+                if(!sys.bin.length) b.innerHTML = "<div class='center' style='height:100%; opacity:0.5'>Empty</div>";
+                else b.innerHTML = sys.bin.map((f,i)=>`<div style='padding:10px; border-bottom:1px solid #333; display:flex; justify-content:space-between'><span>${f.name}</span><div style='gap:10px; display:flex'><i class='fas fa-undo' onclick='sys.res(${i})'></i><i class='fas fa-times' style='color:red' onclick='sys.pdel(${i})'></i></div></div>`).join('');
+            },
+            res: (i) => { app.data.push(sys.bin[i]); sys.bin.splice(i,1); localStorage.setItem('v_bin', JSON.stringify(sys.bin)); app.render(); sys.renderBin(); },
+            pdel: async (i) => { if(!confirm('Delete Forever?')) return; await fetch(CFG.api, {method:'POST', mode:'no-cors', body:JSON.stringify({action:'delete', id:sys.bin[i].id})}); sys.bin.splice(i,1); localStorage.setItem('v_bin', JSON.stringify(sys.bin)); sys.renderBin(); },
+            emptyBin: () => { sys.bin=[]; localStorage.setItem('v_bin', '[]'); sys.renderBin(); },
+
+            bgChange: () => { const u=prompt("URL:"); if(u) { document.body.style.backgroundImage=`url(${u})`; localStorage.setItem('v_bg', u); } },
+            showIntruder: () => alert("Intruder Logs:\n"+(sys.intruder.length?sys.intruder.join('\n'):"None")),
+            toggleFull: () => document.fullscreenElement?document.exitFullscreen():document.documentElement.requestFullscreen(),
+            logout: () => { localStorage.removeItem('v_sess'); location.reload(); }
+        };
+
+        const app = {
+            data: [], fake: false, list: false, sortMode: 'date', favs: JSON.parse(localStorage.getItem('v_favs')||'[]'), ctxId: null, sel: [],
+
+            unlock: (fake) => {
+                app.fake = fake; document.getElementById('pin-view').classList.add('hidden');
+                if(localStorage.getItem('v_user')) app.login(JSON.parse(localStorage.getItem('v_user')));
+                else document.getElementById('login-view').classList.remove('hidden');
+            },
+            login: (u) => {
+                localStorage.setItem('v_user', JSON.stringify(u));
+                document.getElementById('auth-layer').classList.add('hidden'); document.getElementById('app-ui').classList.remove('hidden');
+                document.getElementById('u-img').src = u.picture;
+                if(!app.fake) app.fetch(); else app.render();
+            },
+            fetch: async () => {
+                document.getElementById('sync-dot').className = 'sync-dot';
+                try {
+                    const r = await fetch(`${CFG.api}?action=list`); const d = await r.json();
+                    if(Array.isArray(d)) { app.data = d.map(f => ({...f, size:parseInt(f.size||0), date:new Date(f.date)})); app.render(); app.analyze(); document.getElementById('sync-dot').classList.add('online'); }
+                } catch(e) { app.toast("Sync Failed"); }
+            },
+            render: () => {
+                const g = document.getElementById('file-list'); g.className = `grid ${app.list?'list-view':''}`;
+                if(!app.data.length) { g.innerHTML = "<div style='grid-column:1/-1; text-align:center; padding:50px; opacity:0.5'>No Files</div>"; return; }
+                
+                let d = [...app.data];
+                if(app.sortMode === 'name') d.sort((a,b)=>a.name.localeCompare(b.name)); else d.sort((a,b)=>b.date-a.date);
+                if(app.filterType === 'fav') d = d.filter(f => app.favs.includes(f.id));
+                else if(app.filterType && app.filterType !== 'all') { const m={'doc':['pdf','text'],'video':['video'],'image':['image']}; d = d.filter(f => m[app.filterType]?m[app.filterType].some(k=>f.mimeType.includes(k)):f.mimeType.includes(app.filterType)); }
+                if(app.searchQ) d = d.filter(f => f.name.toLowerCase().includes(app.searchQ));
+
+                g.innerHTML = d.map(f => {
+                    const icon = f.mimeType.includes('image')?'image':f.mimeType.includes('video')?'video':'file';
+                    const thumb = f.thumbnail ? `<img src="${f.thumbnail}" loading="lazy">` : `<div class="center" style="height:100%"><i class="fas fa-${icon} fa-2x" style="opacity:0.5"></i></div>`;
+                    const isFav = app.favs.includes(f.id);
+                    const isSel = app.sel.includes(f.id);
+                    return `
+                    <div class="card ${isSel?'selected':''}" onclick="app.click('${f.id}')" oncontextmenu="app.ctx(event,'${f.id}');return false">
+                        <div class="thumb">${thumb}</div>
+                        <div class="info">${f.name}</div>
+                        ${isFav?`<i class="fas fa-star" style="position:absolute; top:5px; right:5px; color:#fbbf24"></i>`:''}
+                    </div>`;
+                }).join('');
+            },
+
+            click: (id) => {
+                if(app.sel.length) {
+                    if(app.sel.includes(id)) app.sel = app.sel.filter(x=>x!==id); else app.sel.push(id);
+                    if(!app.sel.length) document.getElementById('batch-bar').classList.remove('active');
+                    app.render();
+                } else app.view(id);
+            },
+            startSel: (id) => { app.sel = [id]; document.getElementById('batch-bar').classList.add('active'); app.render(); },
+            cancelSel: () => { app.sel = []; document.getElementById('batch-bar').classList.remove('active'); app.render(); },
+            batchFav: () => { app.sel.forEach(id=>{ if(!app.favs.includes(id)) app.favs.push(id); }); localStorage.setItem('v_favs', JSON.stringify(app.favs)); app.cancelSel(); },
+            batchDel: async () => { if(!confirm('Delete Selected?')) return; app.sel.forEach(id=>sys.trash(id)); app.cancelSel(); },
+
+            view: (id) => {
+                const f = app.data.find(x => x.id === id);
+                if(f.mimeType.includes('audio')) { player.play(f); return; }
+                if(f.mimeType.match(/text|javascript|html/)) { app.editor(id); return; }
+                
+                app.currId = id;
+                sys.openWin('win-viewer');
+                document.getElementById('v-title').innerText = f.name;
+                const b = document.getElementById('v-body');
+                b.innerHTML = '<div class="center" style="height:100%"><i class="fas fa-spinner fa-spin"></i></div>';
+                
+                const url = `https://drive.google.com/uc?id=${id}&export=download`;
+                const isImg = f.mimeType.includes('image');
+                document.getElementById('prev-btn').classList.toggle('hidden', !isImg); document.getElementById('next-btn').classList.toggle('hidden', !isImg);
+
+                if(isImg) b.innerHTML = `<img src="${url}" style="max-width:100%; max-height:100%; object-fit:contain">`;
+                else if(f.mimeType.includes('video')) b.innerHTML = `<video src="${url}" controls style="max-width:100%"></video>`;
+                else if(f.mimeType.includes('zip')) {
+                    fetch(url).then(r=>r.blob()).then(JSZip.loadAsync).then(z => {
+                        let h = '<div style="padding:20px; color:white">';
+                        h += '<h3>ZIP Contents:</h3><ul style="list-style:none; padding:0">';
+                        z.forEach(p => h += `<li style="padding:8px; border-bottom:1px solid #333"><i class="fas fa-file"></i> ${p}</li>`);
+                        h += '</ul></div>';
+                        b.innerHTML = h;
+                    }).catch(e=> b.innerHTML='<div class="center">CORS Restricted. Download to view.</div>');
+                }
+                else b.innerHTML = `<iframe src="https://drive.google.com/file/d/${id}/preview" width="100%" height="100%" frameborder="0">`;
+            },
+            slide: (d) => {
+                const i = app.data.filter(x => x.mimeType.includes('image'));
+                let idx = i.findIndex(x => x.id === app.currId) + d;
+                if(idx < 0) idx = i.length-1; if(idx >= i.length) idx = 0;
+                app.view(i[idx].id);
+            },
+            editor: async (id) => {
+                sys.openWin('win-editor'); document.getElementById('e-content').value = "Loading...";
+                const r = await fetch(`https://drive.google.com/uc?id=${id}&export=download`);
+                document.getElementById('e-content').value = await r.text();
+            },
+
+            ctx: (e, id) => {
+                e.preventDefault();
+                if(app.sel.length) return; 
+                app.ctxId = id;
+                const m = document.getElementById('ctx-menu');
+                m.classList.remove('hidden');
+                let x=e.clientX, y=e.clientY;
+                if(x+150>window.innerWidth) x-=150; if(y+200>window.innerHeight) y-=200;
+                m.style.left = x+'px'; m.style.top = y+'px';
+                const c = () => { m.classList.add('hidden'); document.removeEventListener('click', c); };
+                setTimeout(() => document.addEventListener('click', c), 100);
+            },
+            ctxAct: (a) => {
+                const id = app.ctxId;
+                if(a==='open') app.view(id);
+                if(a==='select') app.startSel(id); // NEW: Trigger Selection
+                if(a==='fav') {
+                    if(app.favs.includes(id)) app.favs = app.favs.filter(x=>x!==id); else app.favs.push(id);
+                    localStorage.setItem('v_favs', JSON.stringify(app.favs)); app.render();
+                }
+                if(a==='trash') sys.trash(id);
+                if(a==='rename') {
+                    const n = prompt("New Name:");
+                    if(n) {
+                        app.data.find(x=>x.id===id).name = n; app.render();
+                        fetch(CFG.api, {method:'POST', mode:'no-cors', body:JSON.stringify({action:'rename', id, newName:n})});
+                    }
+                }
+            },
+
+            upload: async (inp) => {
+                if(!inp.files.length) return;
+                app.toast(`Uploading ${inp.files.length} files...`);
+                for(let f of inp.files) {
+                    const r = new FileReader();
+                    r.onload = async (e) => {
+                        await fetch(CFG.api, {method:'POST', mode:'no-cors', body:JSON.stringify({
+                            action:'upload', filename:f.name, mimeType:f.type, data:e.target.result.split(',')[1]
+                        })});
+                        app.toast("Upload Complete"); app.fetch();
+                    };
+                    r.readAsDataURL(f);
+                }
+            },
+
+            analyze: () => {
+                const t = app.data.reduce((a,b)=>a+b.size,0);
+                document.getElementById('store-txt').innerText = (t/1024/1024).toFixed(1) + " MB";
+                document.getElementById('store-bar').style.width = Math.min((t/50000000)*100, 100)+"%";
+            },
+            viewToggle: () => { app.list = !app.list; app.render(); },
+            sort: () => { app.sortMode = app.sortMode==='date'?'name':'date'; app.render(); },
+            filter: (t, el) => { app.filterType = t; document.querySelectorAll('.btn-chip').forEach(c=>c.classList.remove('active')); el.classList.add('active'); app.render(); },
+            search: (v) => { app.searchQ = v.toLowerCase(); app.render(); },
+            toast: (m) => { const t = document.createElement('div'); t.className='toast'; t.innerHTML=m; document.body.appendChild(t); setTimeout(()=>t.remove(), 2500); }
+        };
+
+        const player = {
+            el: document.getElementById('audio-el'),
+            play: (f) => {
+                player.el.src = `https://drive.google.com/uc?id=${f.id}&export=download`;
+                player.el.play();
+                document.getElementById('mini-player').classList.add('expanded');
+                document.getElementById('mp-title').innerText = f.name;
+            },
+            toggle: () => player.el.paused ? player.el.play() : player.el.pause()
+        };
+
+        function handleAuth(r) {
+            const p = JSON.parse(atob(r.credential.split('.')[1]));
+            app.login({name:p.name, picture:p.picture});
+        }
+
+        window.onload = sys.init;
+    </script>
+</body>
+</html>
