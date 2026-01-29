@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📦 Mega Vault Pro v5</title>
+    
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0f172a; --surface: #1e293b; --primary: #6366f1; 
+            --text: #f8fafc; --text-dim: #94a3b8; --danger: #ef4444; 
+            --success: #10b981; --nav-height: 70px;
+        }
+        
+        [data-theme="light"] {
+            --bg: #f1f5f9; --surface: #ffffff; --primary: #4f46e5;
+            --text: #0f172a; --text-dim: #64748b;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Inter', sans-serif; -webkit-tap-highlight-color: transparent; }
+        body { background: var(--bg); color: var(--text); height: 100vh; overflow: hidden; user-select: none; }
+
+        /* --- 1. AUTH SCREEN --- */
+        #authLayer { position: fixed; inset: 0; background: var(--bg); z-index: 20000; display: flex; flex-direction: column; align-items: center; justify-content: center; transition: 0.3s; }
+        .pin-circles { display: flex; gap: 15px; margin-bottom: 40px; }
+        .circle { width: 16px; height: 16px; border: 2px solid var(--text-dim); border-radius: 50%; transition: 0.2s; }
+        .circle.active { background: var(--primary); border-color: var(--primary); transform: scale(1.2); }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .num-btn { width: 75px; height: 75px; border-radius: 50%; background: var(--surface); border: 1px solid var(--text-dim); font-size: 1.5rem; color: var(--text); display: flex; align-items: center; justify-content: center; cursor: pointer; box-shadow: 0 4px 6px rgba(0,0,0,0.1); }
+        .num-btn:active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* --- 2. MAIN LAYOUT --- */
+        #appLayer { height: 100%; display: flex; flex-direction: column; padding-bottom: calc(var(--nav-height) + env(safe-area-inset-bottom)); display: none; }
+        
+        .top-bar { padding: 15px; background: var(--surface); display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(128,128,128,0.2); z-index: 1000; }
+        .search-wrap { flex: 1; margin: 0 15px; position: relative; }
+        .search-inp { width: 100%; background: var(--bg); border: none; padding: 10px 15px; border-radius: 12px; color: var(--text); outline: none; }
+        
+        /* --- 3. CONTENT AREA --- */
+        .main-content { flex: 1; overflow-y: auto; padding: 15px; }
+        
+        /* Chips */
+        .filter-chips { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 10px; margin-bottom: 10px; scrollbar-width: none; }
+        .chip { padding: 8px 16px; background: var(--surface); border-radius: 20px; font-size: 0.85rem; border: 1px solid rgba(128,128,128,0.2); white-space: nowrap; cursor: pointer; color: var(--text-dim); }
+        .chip.active { background: var(--primary); color: white; border-color: var(--primary); }
+
+        /* Breadcrumb */
+        .path-bar { display: flex; align-items: center; gap: 5px; margin-bottom: 15px; overflow-x: auto; white-space: nowrap; font-size: 0.8rem; color: var(--text-dim); }
+        .path-node { color: var(--primary); font-weight: bold; cursor: pointer; }
+
+        /* File Grid */
+        .file-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 12px; }
+        .file-card { background: var(--surface); border-radius: 12px; padding: 10px; position: relative; cursor: pointer; border: 1px solid rgba(128,128,128,0.1); text-align: center; transition: transform 0.1s; }
+        .file-card:active { transform: scale(0.98); }
+        .f-thumb { height: 80px; width: 100%; object-fit: cover; border-radius: 8px; margin-bottom: 8px; background: rgba(0,0,0,0.2); display: flex; align-items: center; justify-content: center; font-size: 2rem; }
+        .f-name { font-size: 0.75rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text); }
+        .f-tag { position: absolute; top: 5px; right: 5px; background: rgba(0,0,0,0.6); color: white; font-size: 0.6rem; padding: 2px 4px; border-radius: 4px; }
+
+        /* --- 4. PREVIEW MODAL --- */
+        #previewLayer { position: fixed; inset: 0; background: #000; z-index: 15000; display: none; flex-direction: column; }
+        .pv-top { padding: 15px; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.8); }
+        .pv-content { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+        .pv-content img { transition: transform 0.2s; max-width: 100%; max-height: 100%; }
+        .pv-content video { width: 100%; max-height: 100%; }
+        #pdfCanvas { max-width: 100%; height: auto; }
+        
+        .vid-controls { position: absolute; bottom: 30px; display: flex; gap: 20px; background: rgba(0,0,0,0.5); padding: 10px 20px; border-radius: 30px; }
+        .vc-btn { background: none; border: none; color: white; font-size: 1.5rem; cursor: pointer; }
+
+        /* ZIP Viewer */
+        .zip-box { width: 90%; height: 80%; background: var(--surface); border-radius: 10px; overflow-y: auto; padding: 15px; }
+        .zip-row { padding: 10px; border-bottom: 1px solid rgba(128,128,128,0.2); display: flex; gap: 10px; align-items: center; }
+
+        /* --- 5. BOTTOM SHEET & NAV --- */
+        #actionSheet { position: fixed; bottom: 0; left: 0; width: 100%; background: var(--surface); border-radius: 20px 20px 0 0; padding: 20px; z-index: 16000; transform: translateY(100%); transition: 0.3s; box-shadow: 0 -5px 20px rgba(0,0,0,0.3); }
+        #actionSheet.show { transform: translateY(0); }
+        .sheet-btn { width: 100%; padding: 15px; text-align: left; background: none; border: none; color: var(--text); border-bottom: 1px solid rgba(128,128,128,0.1); font-size: 1rem; display: flex; gap: 15px; align-items: center; cursor: pointer; }
+        .sheet-btn:last-child { border: none; }
+
+        .nav-bar { position: fixed; bottom: 0; width: 100%; height: var(--nav-height); background: var(--surface); border-top: 1px solid rgba(128,128,128,0.1); display: flex; justify-content: space-around; align-items: center; z-index: 5000; padding-bottom: env(safe-area-inset-bottom); }
+        .nav-link { display: flex; flex-direction: column; align-items: center; color: var(--text-dim); font-size: 0.7rem; cursor: pointer; transition: 0.2s; }
+        .nav-link.active { color: var(--primary); transform: translateY(-2px); }
+        .nav-icon { font-size: 1.4rem; margin-bottom: 3px; }
+
+        /* FAB & Upload Bar */
+        .fab { position: fixed; bottom: 85px; right: 20px; width: 55px; height: 55px; background: var(--primary); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 2rem; color: white; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4); z-index: 4000; cursor: pointer; }
+        .upload-status { position: fixed; bottom: 80px; left: 20px; right: 20px; background: var(--surface); padding: 12px; border-radius: 10px; border: 1px solid var(--primary); display: none; z-index: 4500; }
+        .progress-line { height: 4px; background: rgba(128,128,128,0.2); margin-top: 8px; border-radius: 2px; overflow: hidden; }
+        .progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 0.3s; }
+
+        /* Dropdown Menu */
+        .dropdown { position: absolute; top: 60px; right: 10px; background: var(--surface); width: 200px; border-radius: 10px; box-shadow: 0 5px 20px rgba(0,0,0,0.3); display: none; z-index: 6000; border: 1px solid rgba(128,128,128,0.1); }
+    </style>
+</head>
+<body>
+
+    <div id="authLayer">
+        <h2 style="margin-bottom: 20px;">🔒 মেগা ভল্ট প্রো</h2>
+        <div class="pin-circles">
+            <div class="circle" id="c1"></div><div class="circle" id="c2"></div>
+            <div class="circle" id="c3"></div><div class="circle" id="c4"></div>
+        </div>
+        <div class="numpad">
+            <div class="num-btn" onclick="inputPin(1)">1</div><div class="num-btn" onclick="inputPin(2)">2</div><div class="num-btn" onclick="inputPin(3)">3</div>
+            <div class="num-btn" onclick="inputPin(4)">4</div><div class="num-btn" onclick="inputPin(5)">5</div><div class="num-btn" onclick="inputPin(6)">6</div>
+            <div class="num-btn" onclick="inputPin(7)">7</div><div class="num-btn" onclick="inputPin(8)">8</div><div class="num-btn" onclick="inputPin(9)">9</div>
+            <div class="num-btn" onclick="inputPin('clr')" style="color:var(--danger)">C</div>
+            <div class="num-btn" onclick="inputPin(0)">0</div>
+            <div class="num-btn" onclick="inputPin('del')">⌫</div>
+        </div>
+    </div>
+
+    <div id="appLayer">
+        <div class="top-bar">
+            <button onclick="navigateBack()" style="background:none;border:none;color:var(--text);font-size:1.5rem;">←</button>
+            <div class="search-wrap">
+                <input type="text" class="search-inp" id="searchBox" placeholder="ফাইল খুঁজুন..." oninput="performSearch()">
+            </div>
+            <div onclick="toggleMenu()" style="font-size:1.5rem; cursor:pointer;">⋮</div>
+        </div>
+
+        <div class="dropdown" id="mainMenu">
+            <div class="sheet-btn" onclick="connectDrive()">🔄 ড্রাইভ কানেক্ট</div>
+            <div class="sheet-btn" onclick="createFolder()">📁 ফোল্ডার তৈরি</div>
+            <div class="sheet-btn" onclick="toggleTheme()">🌓 থিম পরিবর্তন</div>
+            <div class="sheet-btn" onclick="logout()" style="color:var(--danger)">🚪 লগআউট</div>
+        </div>
+
+        <div class="main-content" id="scrollContainer">
+            <div class="filter-chips">
+                <div class="chip active" onclick="setFilter('drive', this)">ড্রাইভ</div>
+                <div class="chip" onclick="setFilter('starred', this)">⭐ ফেভারিট</div>
+                <div class="chip" onclick="setFilter('image', this)">ছবি</div>
+                <div class="chip" onclick="setFilter('video', this)">ভিডিও</div>
+                <div class="chip" onclick="setFilter('audio', this)">অডিও</div>
+                <div class="chip" onclick="setFilter('application/zip', this)">ZIP</div>
+                <div class="chip" onclick="setFilter('application/pdf', this)">PDF</div>
+            </div>
+
+            <div class="path-bar" id="breadCrumb">Home</div>
+
+            <div class="file-grid" id="fileContainer"></div>
+            
+            <div id="loadingState" style="text-align:center; padding:20px; color:var(--text-dim);">ফাইল লোড হচ্ছে...</div>
+        </div>
+
+        <div class="fab" onclick="document.getElementById('fileUpload').click()">+</div>
+
+        <div class="upload-status" id="upStatus">
+            <div style="display:flex; justify-content:space-between; font-size:0.8rem;">
+                <span id="upName">আপলোড হচ্ছে...</span>
+                <span id="upPercent">0%</span>
+            </div>
+            <div class="progress-line"><div class="progress-fill" id="upBar"></div></div>
+        </div>
+
+        <div class="nav-bar">
+            <div class="nav-link active" onclick="goHome()"><span class="nav-icon">🏠</span>হোম</div>
+            <div class="nav-link" onclick="setFilter('image', document.querySelectorAll('.chip')[2])"><span class="nav-icon">🖼️</span>গ্যালারি</div>
+            <div class="nav-link" onclick="setFilter('video', document.querySelectorAll('.chip')[3])"><span class="nav-icon">🎬</span>ভিডিও</div>
+            <div class="nav-link" onclick="showStats()"><span class="nav-icon">📊</span>স্টোরেজ</div>
+        </div>
+    </div>
+
+    <div id="previewLayer">
+        <div class="pv-top">
+            <span id="pvTitle" style="color:white; max-width:80%; overflow:hidden; white-space:nowrap;">Preview</span>
+            <button onclick="closePreview()" style="background:none;border:none;color:white;font-size:1.5rem;">✕</button>
+        </div>
+        <div class="pv-content" id="pvContent"></div>
+        
+        <div class="vid-controls" id="vidTools" style="display:none;">
+            <button class="vc-btn" onclick="seekVid(-10)">⏪</button>
+            <button class="vc-btn" onclick="toggleVid()">⏯️</button>
+            <button class="vc-btn" onclick="seekVid(10)">⏩</button>
+        </div>
+    </div>
+
+    <div id="actionSheet">
+        <div class="sheet-btn" onclick="viewFile(currentFile)">👁️ দেখুন</div>
+        <div class="sheet-btn" onclick="downloadFile()">⬇️ ডাউনলোড</div>
+        <div class="sheet-btn" onclick="shareFile()">🔗 শেয়ার</div>
+        <div class="sheet-btn" onclick="fileInfo()">ℹ️ ডিটেইলস</div>
+        <div class="sheet-btn" onclick="deleteFile()" style="color:var(--danger)">🗑️ ডিলিট</div>
+        <div class="sheet-btn" onclick="closeSheet()" style="justify-content:center;">Cancel</div>
+    </div>
+
+    <input type="file" id="fileUpload" multiple style="display:none" onchange="uploadFiles(event)">
+
+    <script>
+        // --- কনফিগারেশন ---
+        const CONFIG = {
+            fb: { apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4", projectId: "encrypted-vault-4683d" },
+            gId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+            scope: "https://www.googleapis.com/auth/drive", // Root Access
+            pin: "1171"
+        };
+
+        // --- অ্যাপ স্টেট ---
+        let state = {
+            pin: [], tok: null, folder: 'root', 
+            path: [{id:'root', name:'Home'}], 
+            files: [], view: 'drive', theme: 'dark'
+        };
+        let currentFile = null;
+
+        // --- ১. ইনিশিয়ালাইজেশন ---
+        firebase.initializeApp(CONFIG.fb);
+        const db = firebase.firestore();
+        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+
+        // পিন ম্যানেজমেন্ট
+        async function fetchPin() {
+            try {
+                const d = await db.collection('settings').doc('security').get();
+                if(d.exists) CONFIG.pin = d.data().pin;
+            } catch(e) {}
+        }
+        fetchPin();
+
+        function inputPin(n) {
+            if(n==='clr') state.pin=[]; else if(n==='del') state.pin.pop(); else if(state.pin.length<4) state.pin.push(n);
+            [1,2,3,4].forEach(i => document.getElementById('c'+i).className = i<=state.pin.length ? 'circle active':'circle');
+            
+            if(state.pin.length===4) {
+                if(state.pin.join('') === CONFIG.pin) {
+                    document.getElementById('authLayer').style.display = 'none';
+                    document.getElementById('appLayer').style.display = 'flex';
+                    initDrive();
+                } else {
+                    state.pin=[]; alert("ভুল পিন!");
+                    [1,2,3,4].forEach(i => document.getElementById('c'+i).className = 'circle');
+                }
+            }
+        }
+
+        // --- ২. ড্রাইভ কানেকশন ---
+        function initDrive() {
+            const t = localStorage.getItem('g_token');
+            if(t) { state.tok = t; loadFiles(); } else connectDrive();
+        }
+
+        function connectDrive() {
+            const c = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.gId, scope: CONFIG.scope,
+                callback: (r) => { 
+                    state.tok = r.access_token; 
+                    localStorage.setItem('g_token', state.tok);
+                    loadFiles();
+                }
+            });
+            c.requestAccessToken();
+        }
+
+        // --- ৩. ফাইল লোডিং সিস্টেম ---
+        async function loadFiles(fId = state.folder) {
+            document.getElementById('loadingState').style.display='block';
+            document.getElementById('fileContainer').innerHTML='';
+            
+            let q = "";
+            if (state.view === 'drive') q = `'${fId}' in parents and trashed=false`;
+            else if(state.view === 'starred') q = "starred=true and trashed=false";
+            else q = `mimeType contains '${state.view}' and trashed=false`;
+
+            try {
+                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,thumbnailLink,size,webContentLink,createdTime)&orderBy=folder,createdTime desc&pageSize=100`;
+                const res = await fetch(url, { headers: { Authorization: `Bearer ${state.tok}` } });
+                const d = await res.json();
+                state.files = d.files || [];
+                renderGrid(state.files);
+                updateBreadcrumb();
+                document.getElementById('loadingState').style.display='none';
+            } catch(e) {
+                console.error(e);
+                // alert("টোকেন এক্সপায়ার্ড। রিকানেক্ট করুন।");
+            }
+        }
+
+        function renderGrid(list) {
+            const grid = document.getElementById('fileContainer');
+            grid.innerHTML = "";
+            list.forEach(f => {
+                const isDir = f.mimeType.includes('folder');
+                const div = document.createElement('div');
+                div.className = 'file-card';
+                div.onclick = () => isDir ? openFolder(f.id, f.name) : openActionSheet(f);
+                
+                let icon = '📄';
+                if(isDir) icon = '📁';
+                else if(f.mimeType.includes('image')) icon = '🖼️';
+                else if(f.mimeType.includes('video')) icon = '🎬';
+                else if(f.mimeType.includes('pdf')) icon = '📕';
+                else if(f.mimeType.includes('zip')) icon = '🗜️';
+
+                div.innerHTML = `
+                    <div class="f-thumb">${f.thumbnailLink ? `<img src="${f.thumbnailLink}" style="width:100%;height:100%;object-fit:cover;border-radius:8px;">` : icon}</div>
+                    <div class="f-name">${f.name}</div>
+                    ${isDir ? '<span class="f-tag">DIR</span>' : ''}
+                `;
+                grid.appendChild(div);
+            });
+        }
+
+        // --- ৪. নেভিগেশন লজিক ---
+        function openFolder(id, name) {
+            state.folder = id;
+            state.path.push({id:id, name:name});
+            loadFiles(id);
+        }
+
+        function navigateBack() {
+            if(document.getElementById('previewLayer').style.display==='flex') { closePreview(); return; }
+            if(state.path.length > 1) {
+                state.path.pop();
+                state.folder = state.path[state.path.length-1].id;
+                loadFiles(state.folder);
+            }
+        }
+
+        function goHome() { state.view='drive'; state.folder='root'; state.path=[{id:'root', name:'Home'}]; loadFiles(); }
+        
+        function setFilter(type, el) {
+            document.querySelectorAll('.chip').forEach(c => c.classList.remove('active'));
+            if(el) el.classList.add('active');
+            state.view = type;
+            loadFiles(state.folder);
+        }
+
+        function updateBreadcrumb() {
+            const b = document.getElementById('breadCrumb');
+            b.innerHTML = state.path.map((p,i) => `<span class="path-node" onclick="jumpTo(${i})">${p.name}</span>`).join(' > ');
+        }
+
+        function jumpTo(idx) {
+            state.path = state.path.slice(0, idx+1);
+            state.folder = state.path[idx].id;
+            loadFiles(state.folder);
+        }
+
+        // --- ৫. অ্যাডভান্সড প্রিভিউ ---
+        async function viewFile(f) {
+            closeSheet();
+            const pv = document.getElementById('previewLayer');
+            const box = document.getElementById('pvContent');
+            const vTool = document.getElementById('vidTools');
+            document.getElementById('pvTitle').innerText = f.name;
+            vTool.style.display='none';
+            pv.style.display='flex';
+            box.innerHTML = '<div style="color:white">লোডিং...</div>';
+            
+            history.pushState({pv:true}, ""); 
+
+            const url = `https://www.googleapis.com/drive/v3/files/${f.id}?alt=media`;
+            const header = { Authorization: `Bearer ${state.tok}` };
+
+            if(f.mimeType.includes('image')) {
+                box.innerHTML = `<img src="${f.thumbnailLink.replace('s220','s1600')}" id="zoomImg">`;
+                initZoom('zoomImg');
+            }
+            else if(f.mimeType.includes('video')) {
+                box.innerHTML = `<video id="mainVid" src="${url}" headers='${JSON.stringify(header)}' controls autoplay></video>`;
+                vTool.style.display='flex';
+            }
+            else if(f.mimeType.includes('pdf')) {
+                box.innerHTML = '<canvas id="pdfCanvas"></canvas>';
+                renderPDF(f.id);
+            }
+            else if(f.mimeType.includes('zip')) {
+                box.innerHTML = '<div class="zip-box" id="zipData">ZIP এক্সট্রাক্ট হচ্ছে...</div>';
+                readZip(f.id);
+            }
+            else {
+                box.innerHTML = '<div style="color:white;text-align:center">প্রিভিউ নেই<br><button onclick="downloadFile()">ডাউনলোড</button></div>';
+            }
+        }
+
+        function initZoom(id) {
+            const img = document.getElementById(id); let s=1;
+            img.onclick = () => { s=s===1?2:1; img.style.transform=`scale(${s})`; };
+        }
+
+        async function readZip(id) {
+            try {
+                const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, { headers: { Authorization: `Bearer ${state.tok}` } });
+                const blob = await res.blob();
+                const zip = await JSZip.loadAsync(blob);
+                const list = document.getElementById('zipData');
+                list.innerHTML = '<h4>ZIP কন্টেন্ট:</h4>';
+                Object.keys(zip.files).forEach(n => list.innerHTML+=`<div class="zip-row">📦 ${n}</div>`);
+            } catch(e) { document.getElementById('zipData').innerText="ZIP রিড এরর"; }
+        }
+
+        async function renderPDF(id) {
+            const url = `https://www.googleapis.com/drive/v3/files/${id}?alt=media`;
+            const loading = pdfjsLib.getDocument({ url: url, httpHeaders: { Authorization: `Bearer ${state.tok}` }});
+            const pdf = await loading.promise;
+            const page = await pdf.getPage(1);
+            const viewport = page.getViewport({scale: 1.5});
+            const canvas = document.getElementById('pdfCanvas');
+            const ctx = canvas.getContext('2d');
+            canvas.height = viewport.height; canvas.width = viewport.width;
+            await page.render({canvasContext: ctx, viewport: viewport}).promise;
+        }
+
+        // ভিডিও কন্ট্রোলস
+        function toggleVid() { const v = document.getElementById('mainVid'); v.paused ? v.play() : v.pause(); }
+        function seekVid(s) { document.getElementById('mainVid').currentTime += s; }
+
+        function closePreview() {
+            document.getElementById('previewLayer').style.display='none';
+            document.getElementById('pvContent').innerHTML='';
+            if(history.state) history.back();
+        }
+
+        // --- ৬. অ্যাকশন হ্যান্ডলার ---
+        function openActionSheet(f) { currentFile = f; document.getElementById('actionSheet').classList.add('show'); }
+        function closeSheet() { document.getElementById('actionSheet').classList.remove('show'); }
+        function downloadFile() { window.open(currentFile.webContentLink); closeSheet(); }
+        function shareFile() { navigator.share({title: currentFile.name, url: currentFile.webContentLink}); closeSheet(); }
+        function fileInfo() { alert(`নাম: ${currentFile.name}\nসাইজ: ${(currentFile.size/1024/1024).toFixed(2)} MB\nতৈরি: ${currentFile.createdTime}`); closeSheet(); }
+        
+        async function deleteFile() {
+            if(!confirm("মুছবেন?")) return;
+            await fetch(`https://www.googleapis.com/drive/v3/files/${currentFile.id}`, {
+                method: 'DELETE', headers: { Authorization: `Bearer ${state.tok}` }
+            });
+            closeSheet(); loadFiles();
+        }
+
+        async function uploadFiles(e) {
+            const files = e.target.files;
+            if(!files.length) return;
+            document.getElementById('upStatus').style.display='block';
+            
+            for(let i=0; i<files.length; i++) {
+                const f = files[i];
+                document.getElementById('upName').innerText = f.name;
+                const meta = { name: f.name, parents: [state.folder] };
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(meta)], {type:'application/json'}));
+                form.append('file', f);
+                
+                await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST', headers: { Authorization: `Bearer ${state.tok}` }, body: form
+                });
+                document.getElementById('upBar').style.width = ((i+1)/files.length*100)+'%';
+                document.getElementById('upPercent').innerText = Math.round(((i+1)/files.length*100))+'%';
+            }
+            setTimeout(() => { document.getElementById('upStatus').style.display='none'; loadFiles(); }, 1000);
+        }
+
+        async function createFolder() {
+            const n = prompt("ফোল্ডারের নাম:");
+            if(!n) return;
+            await fetch('https://www.googleapis.com/drive/v3/files', {
+                method: 'POST',
+                headers: { Authorization: `Bearer ${state.tok}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: n, mimeType: 'application/vnd.google-apps.folder', parents: [state.folder] })
+            });
+            loadFiles();
+        }
+
+        // --- ৭. ইউটিলিটি ---
+        function toggleMenu() { const m = document.getElementById('mainMenu'); m.style.display = m.style.display==='block'?'none':'block'; }
+        function toggleTheme() {
+            state.theme = state.theme==='dark'?'light':'dark';
+            document.body.setAttribute('data-theme', state.theme);
+            toggleMenu();
+        }
+        function showStats() { alert("স্টোরেজ এনালাইসিস শীঘ্রই আসছে!"); }
+        function logout() { localStorage.clear(); location.reload(); }
+        function performSearch() {
+            const q = document.getElementById('searchBox').value.toLowerCase();
+            const f = state.files.filter(x => x.name.toLowerCase().includes(q));
+            renderGrid(f);
+        }
+
+        // ব্যাক বাটন হ্যান্ডলার
+        window.onpopstate = () => {
+            if(document.getElementById('previewLayer').style.display==='flex') closePreview();
+            else if(state.path.length > 1) navigateBack();
+        };
+        window.onclick = e => { if(!e.target.matches('.menu-item') && !e.target.closest('.top-bar')) document.getElementById('mainMenu').style.display='none'; };
+    </script>
+</body>
+</html>
