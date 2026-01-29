@@ -1,0 +1,1686 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>📦 Secure Drive - Cloud File Manager</title>
+    
+    <!-- Firebase 8.10.0 -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <!-- PDF.js for PDF preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    
+    <style>
+        /* ===== RESET & VARIABLES ===== */
+        :root {
+            --primary: #6366f1;
+            --primary-dark: #4f46e5;
+            --secondary: #10b981;
+            --danger: #ef4444;
+            --warning: #f59e0b;
+            --bg: #0f172a;
+            --surface: #1e293b;
+            --surface-light: #334155;
+            --text: #f1f5f9;
+            --border: #475569;
+            --radius: 16px;
+            --safe-top: env(safe-area-inset-top, 0px);
+            --safe-bottom: env(safe-area-inset-bottom, 0px);
+        }
+        
+        * { 
+            margin: 0; 
+            padding: 0; 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        
+        body { 
+            background: var(--bg); 
+            color: var(--text); 
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-top: var(--safe-top);
+            padding-bottom: var(--safe-bottom);
+        }
+        
+        /* ===== AUTH SCREEN (SAME) ===== */
+        #authScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 1000;
+        }
+        
+        .auth-box {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 40px;
+            width: 100%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+            border: 1px solid var(--border);
+            animation: fadeIn 0.8s ease;
+        }
+        
+        /* Keep existing auth styles... */
+        
+        /* ===== NEW NAVIGATION ===== */
+        .main-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(15, 23, 42, 0.95);
+            backdrop-filter: blur(20px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            padding: 10px 20px;
+            padding-bottom: max(10px, var(--safe-bottom));
+            z-index: 1000;
+        }
+        
+        .nav-item {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            background: none;
+            border: none;
+            color: var(--text);
+            padding: 8px 5px;
+            font-size: 0.8rem;
+            cursor: pointer;
+            opacity: 0.7;
+            transition: all 0.3s;
+        }
+        
+        .nav-item.active {
+            opacity: 1;
+            color: var(--primary);
+        }
+        
+        .nav-item .icon {
+            font-size: 1.4rem;
+            margin-bottom: 4px;
+        }
+        
+        /* ===== MAIN CONTENT AREA ===== */
+        #mainScreen {
+            display: none;
+            min-height: 100vh;
+            padding-bottom: 70px; /* Space for nav */
+        }
+        
+        .content-area {
+            padding: 15px;
+        }
+        
+        /* ===== SEARCH BAR ===== */
+        .search-container {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: var(--bg);
+            padding: 15px;
+            padding-top: 20px;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 15px;
+        }
+        
+        .search-box {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 12px 15px;
+            border: 1px solid var(--border);
+        }
+        
+        .search-box input {
+            flex: 1;
+            background: none;
+            border: none;
+            color: var(--text);
+            font-size: 1rem;
+            margin-left: 10px;
+            outline: none;
+        }
+        
+        /* ===== CATEGORY TABS ===== */
+        .category-tabs {
+            display: flex;
+            overflow-x: auto;
+            gap: 10px;
+            padding: 15px;
+            padding-top: 0;
+            margin-bottom: 10px;
+            -webkit-overflow-scrolling: touch;
+        }
+        
+        .category-tabs::-webkit-scrollbar {
+            display: none;
+        }
+        
+        .cat-tab {
+            white-space: nowrap;
+            padding: 10px 20px;
+            background: var(--surface);
+            border-radius: 20px;
+            border: 1px solid var(--border);
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .cat-tab.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        /* ===== VIEW TOGGLE ===== */
+        .view-toggle {
+            display: flex;
+            justify-content: flex-end;
+            padding: 0 15px 10px;
+        }
+        
+        .view-btn {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 8px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            margin-left: 10px;
+        }
+        
+        .view-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+        }
+        
+        /* ===== FILE GRID VIEW ===== */
+        .file-grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 15px;
+            padding: 15px;
+        }
+        
+        .file-list-view {
+            display: none;
+            flex-direction: column;
+            gap: 10px;
+            padding: 15px;
+        }
+        
+        /* Grid Item */
+        .file-grid-item {
+            background: var(--surface);
+            border-radius: 12px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.3s;
+            border: 1px solid var(--border);
+        }
+        
+        .file-grid-item:hover {
+            transform: translateY(-5px);
+        }
+        
+        .file-thumbnail {
+            width: 100%;
+            height: 120px;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .file-thumbnail img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        
+        .file-info {
+            padding: 12px;
+        }
+        
+        .file-name {
+            font-size: 0.85rem;
+            font-weight: 600;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 5px;
+        }
+        
+        .file-meta {
+            font-size: 0.75rem;
+            color: #94a3b8;
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* List Item */
+        .file-list-item {
+            display: flex;
+            align-items: center;
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 12px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            gap: 15px;
+        }
+        
+        .list-thumbnail {
+            width: 50px;
+            height: 50px;
+            background: var(--surface-light);
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+        
+        .list-info {
+            flex: 1;
+            min-width: 0;
+        }
+        
+        /* ===== FILE PREVIEW MODAL ===== */
+        .preview-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+        }
+        
+        .preview-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+        
+        .preview-content {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .preview-actions {
+            display: flex;
+            justify-content: space-around;
+            padding: 20px;
+            background: rgba(15, 23, 42, 0.95);
+            border-top: 1px solid var(--border);
+            gap: 10px;
+        }
+        
+        .preview-btn {
+            flex: 1;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            color: var(--text);
+            padding: 15px;
+            border-radius: 12px;
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 5px;
+            transition: 0.3s;
+        }
+        
+        .preview-btn:hover {
+            background: var(--surface-light);
+        }
+        
+        .preview-btn.delete {
+            color: var(--danger);
+            border-color: var(--danger);
+        }
+        
+        /* Image Preview */
+        .image-preview {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+            position: relative;
+        }
+        
+        .image-preview img {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+            transition: transform 0.3s;
+        }
+        
+        /* Video Preview */
+        .video-preview video {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 8px;
+        }
+        
+        /* PDF Preview */
+        .pdf-preview {
+            width: 100%;
+            height: 100%;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        
+        .pdf-viewer {
+            width: 100%;
+            height: 100%;
+        }
+        
+        /* ===== UPLOAD QUEUE ===== */
+        .upload-queue {
+            padding: 15px;
+        }
+        
+        .queue-item {
+            background: var(--surface);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border: 1px solid var(--border);
+        }
+        
+        .queue-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        
+        .queue-progress {
+            height: 6px;
+            background: var(--surface-light);
+            border-radius: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+        }
+        
+        .queue-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        /* ===== FOLDER VIEW ===== */
+        .folder-view {
+            padding: 15px;
+        }
+        
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .breadcrumb-item {
+            color: var(--text);
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        
+        .breadcrumb-item:hover {
+            opacity: 1;
+        }
+        
+        .breadcrumb-item.current {
+            opacity: 1;
+            font-weight: 600;
+        }
+        
+        /* ===== EMPTY STATE ===== */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #94a3b8;
+        }
+        
+        .empty-icon {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* ===== LOADING ===== */
+        .loading-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 3000;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid var(--surface-light);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ===== RESPONSIVE ===== */
+        @media (max-width: 480px) {
+            .file-grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+                gap: 12px;
+            }
+            
+            .file-thumbnail {
+                height: 100px;
+            }
+            
+            .nav-item .icon {
+                font-size: 1.2rem;
+            }
+            
+            .nav-item span {
+                font-size: 0.7rem;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .file-grid-view {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        /* Keep existing toast, modal, button styles... */
+    </style>
+</head>
+<body>
+    <!-- ===== AUTH SCREEN (UNCHANGED) ===== -->
+    <div id="authScreen">
+        <!-- Same auth screen content -->
+    </div>
+    
+    <!-- ===== LOADING SCREEN ===== -->
+    <div id="loadingScreen" class="loading-screen">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- ===== MAIN APP ===== -->
+    <div id="mainScreen">
+        <!-- Search Bar -->
+        <div class="search-container">
+            <div class="search-box">
+                <span>🔍</span>
+                <input type="text" id="searchInput" placeholder="ফাইল বা ফোল্ডার খুঁজুন..." onkeyup="searchFiles()">
+            </div>
+        </div>
+        
+        <!-- Category Tabs -->
+        <div class="category-tabs">
+            <button class="cat-tab active" onclick="filterFiles('all')">সব ফাইল</button>
+            <button class="cat-tab" onclick="filterFiles('image')">ছবি</button>
+            <button class="cat-tab" onclick="filterFiles('video')">ভিডিও</button>
+            <button class="cat-tab" onclick="filterFiles('document')">ডকুমেন্ট</button>
+            <button class="cat-tab" onclick="filterFiles('audio')">অডিও</button>
+            <button class="cat-tab" onclick="filterFiles('folder')">ফোল্ডার</button>
+        </div>
+        
+        <!-- View Toggle -->
+        <div class="view-toggle">
+            <button class="view-btn active" onclick="switchView('grid')">📊 গ্রিড</button>
+            <button class="view-btn" onclick="switchView('list')">📋 লিস্ট</button>
+        </div>
+        
+        <!-- Content Area -->
+        <div class="content-area">
+            <!-- Grid View -->
+            <div id="gridView" class="file-grid-view"></div>
+            
+            <!-- List View -->
+            <div id="listView" class="file-list-view"></div>
+            
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state" style="display: none;">
+                <div class="empty-icon">📁</div>
+                <div style="font-size: 1.2rem; margin-bottom: 10px;">কোনো ফাইল নেই</div>
+                <div>ফাইল আপলোড করতে উপরের + বাটনে ক্লিক করুন</div>
+            </div>
+        </div>
+        
+        <!-- Navigation -->
+        <div class="main-nav">
+            <button class="nav-item active" onclick="switchNav('home')">
+                <span class="icon">🏠</span>
+                <span>হোম</span>
+            </button>
+            <button class="nav-item" onclick="switchNav('drive')">
+                <span class="icon">☁️</span>
+                <span>ড্রাইভ</span>
+            </button>
+            <button class="nav-item" onclick="openUploadModal()">
+                <span class="icon" style="background: var(--primary); width: 50px; height: 50px; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin-top: -20px; font-size: 1.8rem;">+</span>
+            </button>
+            <button class="nav-item" onclick="switchNav('uploads')">
+                <span class="icon">📤</span>
+                <span>আপলোড</span>
+            </button>
+            <button class="nav-item" onclick="switchNav('settings')">
+                <span class="icon">⚙️</span>
+                <span>সেটিংস</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- ===== FILE PREVIEW MODAL ===== -->
+    <div id="previewModal" class="preview-overlay">
+        <div class="preview-header">
+            <button onclick="closePreview()" style="background: none; border: none; color: var(--text); font-size: 1.5rem; padding: 10px;">×</button>
+            <div id="previewFileName" style="font-weight: 600; font-size: 1rem; text-align: center; flex: 1;"></div>
+            <div style="width: 40px;"></div>
+        </div>
+        
+        <div class="preview-content" id="previewContent">
+            <!-- Content loaded dynamically -->
+        </div>
+        
+        <div class="preview-actions">
+            <button class="preview-btn" onclick="shareFile()">
+                <span>📤</span>
+                <span style="font-size: 0.8rem;">শেয়ার</span>
+            </button>
+            <button class="preview-btn" onclick="showFileInfo()">
+                <span>ℹ️</span>
+                <span style="font-size: 0.8rem;">তথ্য</span>
+            </button>
+            <button class="preview-btn delete" onclick="deleteFile()">
+                <span>🗑️</span>
+                <span style="font-size: 0.8rem;">মুছুন</span>
+            </button>
+        </div>
+    </div>
+    
+    <!-- ===== UPLOAD MODAL ===== -->
+    <div id="uploadModal" class="modal-overlay">
+        <!-- Upload modal content -->
+    </div>
+    
+    <!-- ===== FILE INFO MODAL ===== -->
+    <div id="infoModal" class="modal-overlay">
+        <!-- File info content -->
+    </div>
+
+    <script>
+        // ================================================
+        // CONFIGURATION
+        // ================================================
+        const CONFIG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            googleClientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+            googleScope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly",
+            appFolderName: "SecureDrive_Files"
+        };
+
+        // ================================================
+        // GLOBAL VARIABLES
+        // ================================================
+        let auth, db;
+        let currentPINDigits = [];
+        let adminPIN = "1171";
+        let tokenClient = null;
+        let driveAccessToken = null;
+        let currentFolderId = 'root';
+        let folderStack = ['root'];
+        let allFiles = [];
+        let filteredFiles = [];
+        let currentCategory = 'all';
+        let currentView = 'grid';
+        let currentFile = null;
+        let uploadQueue = [];
+        let appFolderId = null;
+        let isProcessing = false;
+
+        // ================================================
+        // INITIALIZATION
+        // ================================================
+        document.addEventListener('DOMContentLoaded', async function() {
+            console.log("🚀 Secure Drive Initializing...");
+            
+            try {
+                // Show loading
+                document.getElementById('loadingScreen').style.display = 'flex';
+                
+                // Initialize Firebase
+                const app = firebase.initializeApp(CONFIG.firebase);
+                auth = firebase.auth();
+                db = firebase.firestore();
+                
+                console.log("✅ Firebase initialized");
+                
+                // Setup event listeners
+                setupEventListeners();
+                setupKeypad();
+                updateConnectionStatus();
+                checkPreviousVerification();
+                
+            } catch (error) {
+                console.error("❌ Initialization error:", error);
+                showToast("অ্যাপ লোড হতে সমস্যা হচ্ছে", "error");
+                document.getElementById('loadingScreen').style.display = 'none';
+            }
+        });
+
+        // ================================================
+        // PIN MANAGEMENT (UNCHANGED)
+        // ================================================
+        function setupKeypad() {
+            document.querySelectorAll('.key').forEach(key => {
+                key.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const keyValue = this.getAttribute('data-key');
+                    handleKeyPress(keyValue);
+                });
+            });
+        }
+
+        function handleKeyPress(key) {
+            if (navigator.vibrate) navigator.vibrate(30);
+            
+            if (key === 'backspace') {
+                if (currentPINDigits.length > 0) {
+                    currentPINDigits.pop();
+                    updatePinDisplay();
+                }
+            } else if (key === 'clear') {
+                currentPINDigits = [];
+                updatePinDisplay();
+                hideError();
+            } else if (currentPINDigits.length < 4) {
+                currentPINDigits.push(key);
+                updatePinDisplay();
+                hideError();
+                
+                if (currentPINDigits.length === 4) {
+                    verifyPIN();
+                }
+            }
+        }
+
+        function updatePinDisplay() {
+            const dots = document.querySelectorAll('.pin-dot');
+            dots.forEach((dot, index) => {
+                dot.classList.toggle('filled', index < currentPINDigits.length);
+            });
+        }
+
+        async function verifyPIN() {
+            const enteredPIN = currentPINDigits.join('');
+            showLoading(true);
+            
+            try {
+                const docRef = db.collection('settings').doc('security');
+                const doc = await docRef.get();
+                
+                if (doc.exists) {
+                    adminPIN = doc.data().pin || "1171";
+                } else {
+                    await docRef.set({
+                        pin: "1171",
+                        pinEnabled: true,
+                        updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                }
+                
+                if (enteredPIN === adminPIN) {
+                    localStorage.setItem('pin_verified', 'true');
+                    localStorage.setItem('pin_verify_time', Date.now().toString());
+                    
+                    showMainApp();
+                    showToast("PIN সঠিক ✅", "success");
+                    
+                } else {
+                    showError("❌ ভুল PIN। আবার চেষ্টা করুন।");
+                    currentPINDigits = [];
+                    updatePinDisplay();
+                }
+                
+            } catch (error) {
+                console.error("PIN verification error:", error);
+                showError("PIN ভেরিফাই হতে সমস্যা।");
+            }
+            
+            showLoading(false);
+        }
+
+        function checkPreviousVerification() {
+            const verified = localStorage.getItem('pin_verified');
+            const verifyTime = localStorage.getItem('pin_verify_time');
+            
+            if (verified === 'true' && verifyTime) {
+                const now = Date.now();
+                const hoursPassed = (now - parseInt(verifyTime)) / (1000 * 60 * 60);
+                
+                if (hoursPassed < 24) {
+                    showMainApp();
+                } else {
+                    localStorage.removeItem('pin_verified');
+                    localStorage.removeItem('pin_verify_time');
+                }
+            }
+        }
+
+        // ================================================
+        // MAIN APP
+        // ================================================
+        function showMainApp() {
+            document.getElementById('authScreen').style.display = 'none';
+            document.getElementById('mainScreen').style.display = 'block';
+            document.getElementById('loadingScreen').style.display = 'flex';
+            
+            // Initialize Google Drive
+            initGoogleDrive();
+        }
+
+        // ================================================
+        // GOOGLE DRIVE INTEGRATION
+        // ================================================
+        function initGoogleDrive() {
+            console.log("🔧 Initializing Google Drive...");
+            
+            if (typeof google === 'undefined') {
+                setTimeout(initGoogleDrive, 1000);
+                return;
+            }
+            
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.googleClientId,
+                scope: CONFIG.googleScope,
+                callback: async (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        driveAccessToken = tokenResponse.access_token;
+                        localStorage.setItem('drive_token', driveAccessToken);
+                        localStorage.setItem('drive_token_expiry', Date.now() + 3500000);
+                        
+                        showToast("ড্রাইভ সংযুক্ত হয়েছে ✅", "success");
+                        
+                        // Find or create app folder
+                        await findOrCreateAppFolder();
+                        
+                        // Load files
+                        loadDriveFiles();
+                        
+                        document.getElementById('loadingScreen').style.display = 'none';
+                    }
+                }
+            });
+            
+            checkExistingDriveToken();
+        }
+
+        async function findOrCreateAppFolder() {
+            try {
+                // Search for existing folder
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=name='${CONFIG.appFolderName}' and mimeType='application/vnd.google-apps.folder' and trashed=false`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${driveAccessToken}`
+                        }
+                    }
+                );
+                
+                const data = await response.json();
+                
+                if (data.files && data.files.length > 0) {
+                    appFolderId = data.files[0].id;
+                    console.log("✅ Found existing app folder:", appFolderId);
+                } else {
+                    // Create new folder
+                    const folderMetadata = {
+                        name: CONFIG.appFolderName,
+                        mimeType: 'application/vnd.google-apps.folder'
+                    };
+                    
+                    const createResponse = await fetch('https://www.googleapis.com/drive/v3/files', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${driveAccessToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(folderMetadata)
+                    });
+                    
+                    const folderData = await createResponse.json();
+                    appFolderId = folderData.id;
+                    console.log("✅ Created new app folder:", appFolderId);
+                }
+                
+                // Set current folder to app folder
+                currentFolderId = appFolderId;
+                folderStack = [appFolderId];
+                
+            } catch (error) {
+                console.error("Error creating app folder:", error);
+                showToast("ফোল্ডার তৈরি করতে সমস্যা", "error");
+            }
+        }
+
+        async function loadDriveFiles(folderId = currentFolderId) {
+            try {
+                document.getElementById('loadingScreen').style.display = 'flex';
+                
+                // Build query
+                let query = `'${folderId}' in parents and trashed=false`;
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,size,mimeType,createdTime,modifiedTime,thumbnailLink,webContentLink)&pageSize=100`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${driveAccessToken}`
+                        }
+                    }
+                );
+                
+                if (!response.ok) {
+                    throw new Error('Drive API error');
+                }
+                
+                const data = await response.json();
+                
+                // Process files
+                allFiles = data.files.map(file => ({
+                    id: file.id,
+                    name: file.name,
+                    size: parseInt(file.size) || 0,
+                    type: file.mimeType,
+                    createdTime: file.createdTime,
+                    modifiedTime: file.modifiedTime,
+                    thumbnail: file.thumbnailLink,
+                    downloadUrl: file.webContentLink,
+                    isFolder: file.mimeType === 'application/vnd.google-apps.folder'
+                }));
+                
+                // Render files
+                renderFiles();
+                
+                document.getElementById('loadingScreen').style.display = 'none';
+                
+            } catch (error) {
+                console.error("Error loading files:", error);
+                showToast("ফাইল লোড করতে সমস্যা", "error");
+                document.getElementById('loadingScreen').style.display = 'none';
+            }
+        }
+
+        // ================================================
+        // FILE RENDERING
+        // ================================================
+        function renderFiles() {
+            const gridView = document.getElementById('gridView');
+            const listView = document.getElementById('listView');
+            const emptyState = document.getElementById('emptyState');
+            
+            // Filter files based on current category
+            filteredFiles = allFiles.filter(file => {
+                if (currentCategory === 'all') return true;
+                if (currentCategory === 'folder') return file.isFolder;
+                
+                const fileType = getFileCategory(file);
+                return fileType === currentCategory;
+            });
+            
+            // Check if empty
+            if (filteredFiles.length === 0) {
+                gridView.innerHTML = '';
+                listView.innerHTML = '';
+                emptyState.style.display = 'block';
+                return;
+            }
+            
+            emptyState.style.display = 'none';
+            
+            // Render grid view
+            gridView.innerHTML = '';
+            filteredFiles.forEach(file => {
+                const item = createGridItem(file);
+                gridView.appendChild(item);
+            });
+            
+            // Render list view
+            listView.innerHTML = '';
+            filteredFiles.forEach(file => {
+                const item = createListItem(file);
+                listView.appendChild(item);
+            });
+            
+            // Show current view
+            updateView();
+        }
+
+        function createGridItem(file) {
+            const div = document.createElement('div');
+            div.className = 'file-grid-item';
+            div.onclick = () => file.isFolder ? openFolder(file) : openFilePreview(file);
+            
+            let thumbnail = '';
+            if (file.isFolder) {
+                thumbnail = '<div style="font-size: 3rem;">📁</div>';
+            } else if (file.thumbnail) {
+                thumbnail = `<img src="${file.thumbnail}" alt="${file.name}" onerror="this.onerror=null; this.parentElement.innerHTML='<div style=\'font-size:3rem;\'>${getFileIcon(file.name)}</div>'">`;
+            } else {
+                thumbnail = `<div style="font-size: 3rem;">${getFileIcon(file.name)}</div>`;
+            }
+            
+            div.innerHTML = `
+                <div class="file-thumbnail">
+                    ${thumbnail}
+                </div>
+                <div class="file-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-meta">
+                        <span>${formatFileSize(file.size)}</span>
+                        <span>${formatDate(file.modifiedTime)}</span>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        function createListItem(file) {
+            const div = document.createElement('div');
+            div.className = 'file-list-item';
+            div.onclick = () => file.isFolder ? openFolder(file) : openFilePreview(file);
+            
+            let icon = file.isFolder ? '📁' : getFileIcon(file.name);
+            
+            div.innerHTML = `
+                <div class="list-thumbnail">
+                    <span style="font-size: 1.5rem;">${icon}</span>
+                </div>
+                <div class="list-info">
+                    <div class="file-name">${file.name}</div>
+                    <div class="file-meta">
+                        <span>${formatFileSize(file.size)}</span>
+                        <span>${formatDate(file.modifiedTime)}</span>
+                    </div>
+                </div>
+            `;
+            
+            return div;
+        }
+
+        // ================================================
+        // FILE PREVIEW
+        // ================================================
+        async function openFilePreview(file) {
+            currentFile = file;
+            document.getElementById('previewFileName').textContent = file.name;
+            
+            const content = document.getElementById('previewContent');
+            content.innerHTML = '<div class="spinner"></div>';
+            
+            document.getElementById('previewModal').style.display = 'flex';
+            
+            // Prevent back button from closing app
+            history.pushState({ preview: true }, '');
+            
+            // Load preview based on file type
+            const category = getFileCategory(file);
+            
+            switch(category) {
+                case 'image':
+                    await previewImage(file);
+                    break;
+                case 'video':
+                    previewVideo(file);
+                    break;
+                case 'document':
+                    if (file.name.toLowerCase().endsWith('.pdf')) {
+                        await previewPDF(file);
+                    } else {
+                        showUnsupportedPreview(file);
+                    }
+                    break;
+                default:
+                    showUnsupportedPreview(file);
+            }
+            
+            // Add pinch zoom for images
+            if (category === 'image') {
+                setTimeout(() => addImageZoom(), 500);
+            }
+        }
+
+        async function previewImage(file) {
+            const content = document.getElementById('previewContent');
+            
+            // Get download URL
+            const downloadUrl = await getFileDownloadUrl(file.id);
+            
+            content.innerHTML = `
+                <div class="image-preview">
+                    <img src="${downloadUrl}" alt="${file.name}" id="previewImage">
+                </div>
+            `;
+        }
+
+        function previewVideo(file) {
+            const content = document.getElementById('previewContent');
+            
+            content.innerHTML = `
+                <div class="video-preview">
+                    <video controls autoplay id="previewVideo">
+                        <source src="${file.downloadUrl}" type="${file.type}">
+                        আপনার ব্রাউজার ভিডিও সমর্থন করে না।
+                    </video>
+                </div>
+            `;
+            
+            const video = document.getElementById('previewVideo');
+            video.addEventListener('fullscreenchange', () => {
+                if (!document.fullscreenElement) {
+                    video.controls = true;
+                }
+            });
+        }
+
+        async function previewPDF(file) {
+            const content = document.getElementById('previewContent');
+            
+            // Get download URL
+            const downloadUrl = await getFileDownloadUrl(file.id);
+            
+            content.innerHTML = `
+                <div class="pdf-preview">
+                    <iframe src="${downloadUrl}" class="pdf-viewer"></iframe>
+                </div>
+            `;
+        }
+
+        function showUnsupportedPreview(file) {
+            const content = document.getElementById('previewContent');
+            content.innerHTML = `
+                <div style="text-align: center; padding: 40px;">
+                    <div style="font-size: 4rem; margin-bottom: 20px;">${getFileIcon(file.name)}</div>
+                    <div style="font-size: 1.2rem; margin-bottom: 10px;">${file.name}</div>
+                    <div style="color: #94a3b8;">এই ফাইলটি প্রিভিউ সমর্থন করে না</div>
+                    <button onclick="downloadFile()" class="btn btn-primary" style="margin-top: 20px;">
+                        <span>⬇️</span> ডাউনলোড করুন
+                    </button>
+                </div>
+            `;
+        }
+
+        function addImageZoom() {
+            const img = document.getElementById('previewImage');
+            if (!img) return;
+            
+            let scale = 1;
+            let startX, startY, offsetX = 0, offsetY = 0;
+            
+            img.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                
+                const rect = img.getBoundingClientRect();
+                const mouseX = e.clientX - rect.left;
+                const mouseY = e.clientY - rect.top;
+                
+                const delta = e.deltaY > 0 ? -0.1 : 0.1;
+                const newScale = Math.min(Math.max(0.5, scale + delta), 3);
+                
+                const scaleChange = newScale - scale;
+                
+                offsetX -= (mouseX - offsetX) * scaleChange / scale;
+                offsetY -= (mouseY - offsetY) * scaleChange / scale;
+                
+                scale = newScale;
+                updateImageTransform();
+            });
+            
+            let isDragging = false;
+            
+            img.addEventListener('mousedown', (e) => {
+                if (scale > 1) {
+                    isDragging = true;
+                    startX = e.clientX - offsetX;
+                    startY = e.clientY - offsetY;
+                    img.style.cursor = 'grabbing';
+                }
+            });
+            
+            img.addEventListener('mousemove', (e) => {
+                if (!isDragging) return;
+                offsetX = e.clientX - startX;
+                offsetY = e.clientY - startY;
+                updateImageTransform();
+            });
+            
+            img.addEventListener('mouseup', () => {
+                isDragging = false;
+                img.style.cursor = scale > 1 ? 'grab' : 'default';
+            });
+            
+            img.addEventListener('mouseleave', () => {
+                isDragging = false;
+            });
+            
+            function updateImageTransform() {
+                img.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+            }
+            
+            // Touch events for mobile
+            img.addEventListener('touchstart', (e) => {
+                if (scale > 1 && e.touches.length === 1) {
+                    isDragging = true;
+                    startX = e.touches[0].clientX - offsetX;
+                    startY = e.touches[0].clientY - offsetY;
+                }
+            }, { passive: false });
+            
+            img.addEventListener('touchmove', (e) => {
+                if (!isDragging || e.touches.length !== 1) return;
+                e.preventDefault();
+                offsetX = e.touches[0].clientX - startX;
+                offsetY = e.touches[0].clientY - startY;
+                updateImageTransform();
+            }, { passive: false });
+            
+            img.addEventListener('touchend', () => {
+                isDragging = false;
+            });
+        }
+
+        function closePreview() {
+            document.getElementById('previewModal').style.display = 'none';
+            currentFile = null;
+            
+            // Remove history state
+            history.back();
+        }
+
+        // ================================================
+        // FILE OPERATIONS
+        // ================================================
+        async function shareFile() {
+            if (!currentFile) return;
+            
+            try {
+                const downloadUrl = await getFileDownloadUrl(currentFile.id);
+                
+                if (navigator.share) {
+                    await navigator.share({
+                        title: currentFile.name,
+                        url: downloadUrl
+                    });
+                } else {
+                    // Fallback: copy to clipboard
+                    await navigator.clipboard.writeText(downloadUrl);
+                    showToast("লিংক কপি করা হয়েছে", "success");
+                }
+            } catch (error) {
+                console.error("Share error:", error);
+                showToast("শেয়ার করতে সমস্যা", "error");
+            }
+        }
+
+        async function showFileInfo() {
+            if (!currentFile) return;
+            
+            const infoModal = document.getElementById('infoModal');
+            const downloadUrl = await getFileDownloadUrl(currentFile.id);
+            
+            infoModal.innerHTML = `
+                <div class="modal">
+                    <div class="modal-header">
+                        <div class="modal-title">ℹ️ ফাইল তথ্য</div>
+                        <button class="modal-close" onclick="closeInfoModal()">×</button>
+                    </div>
+                    <div class="modal-body">
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; margin-bottom: 5px;">নাম:</div>
+                            <div>${currentFile.name}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; margin-bottom: 5px;">আকার:</div>
+                            <div>${formatFileSize(currentFile.size)}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; margin-bottom: 5px;">টাইপ:</div>
+                            <div>${currentFile.type}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; margin-bottom: 5px;">তৈরি:</div>
+                            <div>${formatDate(currentFile.createdTime)}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; margin-bottom: 5px;">সংশোধন:</div>
+                            <div>${formatDate(currentFile.modifiedTime)}</div>
+                        </div>
+                        <div style="margin-bottom: 20px;">
+                            <div style="font-weight: 700; margin-bottom: 5px;">ফাইল ID:</div>
+                            <div style="font-size: 0.8rem; word-break: break-all;">${currentFile.id}</div>
+                        </div>
+                        <div style="margin-top: 25px;">
+                            <button onclick="copyLink('${downloadUrl}')" class="btn btn-secondary" style="width: 100%;">
+                                <span>🔗</span> লিংক কপি করুন
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            infoModal.style.display = 'flex';
+        }
+
+        function closeInfoModal() {
+            document.getElementById('infoModal').style.display = 'none';
+        }
+
+        async function deleteFile() {
+            if (!currentFile || !confirm(`"${currentFile.name}" মুছবেন?`)) return;
+            
+            try {
+                const response = await fetch(`https://www.googleapis.com/drive/v3/files/${currentFile.id}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${driveAccessToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    showToast("ফাইল মুছে ফেলা হয়েছে ✅", "success");
+                    closePreview();
+                    loadDriveFiles();
+                    
+                    // Log deletion
+                    await db.collection('logs').add({
+                        type: "FILE_DELETED",
+                        fileName: currentFile.name,
+                        timestamp: firebase.firestore.FieldValue.serverTimestamp()
+                    });
+                } else {
+                    throw new Error('Delete failed');
+                }
+            } catch (error) {
+                console.error("Delete error:", error);
+                showToast("ফাইল মুছতে সমস্যা", "error");
+            }
+        }
+
+        // ================================================
+        // FOLDER NAVIGATION
+        // ================================================
+        function openFolder(folder) {
+            currentFolderId = folder.id;
+            folderStack.push(folder.id);
+            loadDriveFiles();
+            updateBreadcrumb();
+        }
+
+        function goBack() {
+            if (folderStack.length > 1) {
+                folderStack.pop();
+                currentFolderId = folderStack[folderStack.length - 1];
+                loadDriveFiles();
+                updateBreadcrumb();
+            }
+        }
+
+        function updateBreadcrumb() {
+            // Implement breadcrumb navigation
+            // This would require storing folder names
+        }
+
+        // ================================================
+        // UPLOAD SYSTEM
+        // ================================================
+        async function uploadFile(file, folderId = currentFolderId) {
+            return new Promise(async (resolve, reject) => {
+                try {
+                    const metadata = {
+                        name: file.name,
+                        mimeType: file.type,
+                        parents: [folderId]
+                    };
+                    
+                    const form = new FormData();
+                    form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                    form.append('file', file);
+                    
+                    const xhr = new XMLHttpRequest();
+                    
+                    xhr.upload.addEventListener('progress', (e) => {
+                        if (e.lengthComputable) {
+                            const percent = Math.round((e.loaded / e.total) * 100);
+                            updateUploadProgress(file.name, percent);
+                        }
+                    });
+                    
+                    xhr.onload = () => {
+                        if (xhr.status === 200) {
+                            resolve(JSON.parse(xhr.responseText));
+                        } else {
+                            reject(new Error('Upload failed'));
+                        }
+                    };
+                    
+                    xhr.onerror = () => reject(new Error('Upload error'));
+                    
+                    xhr.open('POST', 'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart');
+                    xhr.setRequestHeader('Authorization', `Bearer ${driveAccessToken}`);
+                    xhr.send(form);
+                    
+                } catch (error) {
+                    reject(error);
+                }
+            });
+        }
+
+        async function createFolder(folderName, parentId = currentFolderId) {
+            try {
+                const folderMetadata = {
+                    name: folderName,
+                    mimeType: 'application/vnd.google-apps.folder',
+                    parents: [parentId]
+                };
+                
+                const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${driveAccessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(folderMetadata)
+                });
+                
+                return await response.json();
+            } catch (error) {
+                console.error("Create folder error:", error);
+                throw error;
+            }
+        }
+
+        // ================================================
+        // SEARCH FUNCTIONALITY
+        // ================================================
+        async function searchFiles() {
+            const query = document.getElementById('searchInput').value.trim();
+            
+            if (!query) {
+                loadDriveFiles();
+                return;
+            }
+            
+            try {
+                const searchQuery = `name contains '${query}' and '${currentFolderId}' in parents and trashed=false`;
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(searchQuery)}&fields=files(id,name,size,mimeType,createdTime,modifiedTime,thumbnailLink,webContentLink)&pageSize=100`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${driveAccessToken}`
+                        }
+                    }
+                );
+                
+                const data = await response.json();
+                
+                // Process and display results
+                allFiles = data.files.map(file => ({
+                    id: file.id,
+                    name: file.name,
+                    size: parseInt(file.size) || 0,
+                    type: file.mimeType,
+                    createdTime: file.createdTime,
+                    modifiedTime: file.modifiedTime,
+                    thumbnail: file.thumbnailLink,
+                    downloadUrl: file.webContentLink,
+                    isFolder: file.mimeType === 'application/vnd.google-apps.folder'
+                }));
+                
+                renderFiles();
+                
+            } catch (error) {
+                console.error("Search error:", error);
+                showToast("সার্চ করতে সমস্যা", "error");
+            }
+        }
+
+        // ================================================
+        // UI HELPERS
+        // ================================================
+        function switchView(view) {
+            currentView = view;
+            
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            updateView();
+        }
+
+        function updateView() {
+            document.getElementById('gridView').style.display = currentView === 'grid' ? 'grid' : 'none';
+            document.getElementById('listView').style.display = currentView === 'list' ? 'flex' : 'none';
+        }
+
+        function filterFiles(category) {
+            currentCategory = category;
+            
+            document.querySelectorAll('.cat-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            renderFiles();
+        }
+
+        function switchNav(section) {
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // Handle different sections
+            switch(section) {
+                case 'home':
+                    // Show home (filtered files)
+                    break;
+                case 'drive':
+                    // Show drive structure
+                    break;
+                case 'uploads':
+                    // Show upload queue
+                    break;
+                case 'settings':
+                    // Show settings
+                    break;
+            }
+        }
+
+        // ================================================
+        // UTILITY FUNCTIONS
+        // ================================================
+        function getFileCategory(file) {
+            const mime = file.type || '';
+            const name = file.name.toLowerCase();
+            
+            if (file.isFolder) return 'folder';
+            
+            if (mime.startsWith('image/') || name.match(/\.(jpg|jpeg|png|gif|webp|bmp)$/)) {
+                return 'image';
+            } else if (mime.startsWith('video/') || name.match(/\.(mp4|avi|mov|mkv|webm)$/)) {
+                return 'video';
+            } else if (mime.startsWith('audio/') || name.match(/\.(mp3|wav|m4a|ogg)$/)) {
+                return 'audio';
+            } else if (mime.startsWith('application/pdf') || name.match(/\.(pdf|doc|docx|txt|rtf)$/)) {
+                return 'document';
+            }
+            
+            return 'other';
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            const icons = {
+                'jpg': '🖼️', 'jpeg': '🖼️', 'png': '🖼️', 'gif': '🖼️', 'webp': '🖼️', 'bmp': '🖼️',
+                'mp4': '🎬', 'avi': '🎬', 'mov': '🎬', 'mkv': '🎬', 'webm': '🎬',
+                'mp3': '🎵', 'wav': '🎵', 'm4a': '🎵', 'ogg': '🎵',
+                'pdf': '📕', 'doc': '📝', 'docx': '📝', 'txt': '📄', 'rtf': '📄',
+                'xls': '📊', 'xlsx': '📊', 'csv': '📊',
+                'zip': '🗜️', 'rar': '🗜️', '7z': '🗜️',
+                'html': '🌐', 'css': '🎨', 'js': '⚡',
+                'default': '📄'
+            };
+            return icons[ext] || icons['default'];
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return '-';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('bn-BD');
+        }
+
+        async function getFileDownloadUrl(fileId) {
+            try {
+                const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?fields=webContentLink`, {
+                    headers: {
+                        'Authorization': `Bearer ${driveAccessToken}`
+                    }
+                });
+                
+                const data = await response.json();
+                return data.webContentLink;
+            } catch (error) {
+                console.error("Get download URL error:", error);
+                return '#';
+            }
+        }
+
+        function copyLink(link) {
+            navigator.clipboard.writeText(link)
+                .then(() => showToast("লিংক কপি করা হয়েছে ✅", "success"))
+                .catch(() => showToast("কপি করতে সমস্যা", "error"));
+        }
+
+        // ================================================
+        // BACK BUTTON HANDLING
+        // ================================================
+        window.addEventListener('popstate', (e) => {
+            const previewModal = document.getElementById('previewModal');
+            
+            if (previewModal.style.display === 'flex') {
+                closePreview();
+                e.preventDefault();
+            }
+        });
+
+        // ================================================
+        // ERROR HANDLING
+        // ================================================
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('Global error:', msg, url, lineNo, error);
+            return false;
+        };
+
+        // ================================================
+        // INITIALIZATION COMPLETE
+        // ================================================
+        function showLoading(show) {
+            document.getElementById('loading').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorBox = document.getElementById('errorBox');
+            errorBox.textContent = message;
+            errorBox.style.display = 'block';
+        }
+
+        function hideError() {
+            document.getElementById('errorBox').style.display = 'none';
+        }
+
+        function showToast(message, type = 'info') {
+            // Keep existing toast function
+        }
+
+        // Keep existing functions for auth, connection status, etc.
+
+        // Initialize when ready
+        setTimeout(() => {
+            document.getElementById('loadingScreen').style.display = 'none';
+        }, 2000);
+    </script>
+</body>
+</html>
