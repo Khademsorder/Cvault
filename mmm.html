@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>📦 Google Drive Manager</title>
+    
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <!-- PDF.js for PDF preview -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <style>
+        /* ===== ANDROID MATERIAL THEME ===== */
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #34a853;
+            --danger: #ea4335;
+            --warning: #fbbc04;
+            --dark-bg: #121212;
+            --surface: #1e1e1e;
+            --surface-light: #2d2d2d;
+            --surface-hover: #3d3d3d;
+            --text: #ffffff;
+            --text-secondary: #9aa0a6;
+            --border: #444;
+            --radius-sm: 12px;
+            --radius-md: 16px;
+            --radius-lg: 20px;
+            --elevation-1: 0 2px 4px rgba(0,0,0,0.3);
+            --elevation-2: 0 4px 8px rgba(0,0,0,0.4);
+            --elevation-3: 0 8px 16px rgba(0,0,0,0.5);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            -webkit-font-smoothing: antialiased;
+        }
+        
+        body {
+            background: var(--dark-bg);
+            color: var(--text);
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            padding-bottom: 70px;
+        }
+        
+        /* ===== LOADING SCREEN ===== */
+        #loadingScreen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            z-index: 2000;
+        }
+        
+        .app-logo {
+            width: 100px;
+            height: 100px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            border-radius: 25px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px;
+            font-size: 48px;
+            box-shadow: var(--elevation-3);
+            animation: logoPulse 2s infinite;
+        }
+        
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        .app-title {
+            font-size: 32px;
+            font-weight: 700;
+            margin-bottom: 8px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            letter-spacing: 1px;
+        }
+        
+        .loading-dots {
+            display: flex;
+            gap: 8px;
+            margin-top: 30px;
+        }
+        
+        .loading-dot {
+            width: 12px;
+            height: 12px;
+            background: var(--primary);
+            border-radius: 50%;
+            animation: loading 1.4s infinite;
+        }
+        
+        .loading-dot:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+        
+        .loading-dot:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+        
+        @keyframes loading {
+            0%, 100% { opacity: 0.3; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        /* ===== MAIN APP UI ===== */
+        .status-bar {
+            height: 24px;
+            background: var(--dark-bg);
+            padding: 0 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 12px;
+            color: var(--text-secondary);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        /* Action Bar (Android App Bar) */
+        .action-bar {
+            background: var(--surface);
+            padding: 16px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            border-bottom: 1px solid var(--border);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(30, 30, 30, 0.95);
+        }
+        
+        .action-title {
+            font-size: 20px;
+            font-weight: 600;
+            flex: 1;
+        }
+        
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-light);
+            border: none;
+            color: var(--text);
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .action-btn:hover {
+            background: var(--surface-hover);
+        }
+        
+        /* File Grid (Gallery View) */
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 12px;
+            padding: 16px;
+        }
+        
+        @media (max-width: 480px) {
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+                gap: 8px;
+            }
+        }
+        
+        .file-card {
+            aspect-ratio: 1;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid var(--border);
+        }
+        
+        .file-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--elevation-2);
+        }
+        
+        .file-card:active {
+            transform: scale(0.98);
+        }
+        
+        .file-thumbnail {
+            width: 100%;
+            height: 70%;
+            object-fit: cover;
+            background: var(--surface-light);
+        }
+        
+        .file-info-container {
+            padding: 12px;
+            height: 30%;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+        
+        .file-name {
+            font-size: 12px;
+            font-weight: 500;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+        
+        .file-type {
+            font-size: 10px;
+            color: var(--text-secondary);
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        
+        .file-size {
+            font-size: 10px;
+            color: var(--text-secondary);
+        }
+        
+        /* Folder icon styling */
+        .folder-icon {
+            width: 100%;
+            height: 70%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #ff9800, #ff5722);
+        }
+        
+        .file-icon-large {
+            font-size: 48px;
+            color: white;
+        }
+        
+        /* Bottom Navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            height: 70px;
+            background: var(--surface);
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            border-top: 1px solid var(--border);
+            z-index: 1000;
+            padding-bottom: env(safe-area-inset-bottom);
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.3);
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transform: translateY(0);
+        }
+        
+        .bottom-nav.hidden {
+            transform: translateY(100%);
+        }
+        
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 1;
+            height: 100%;
+            color: var(--text-secondary);
+            text-decoration: none;
+            transition: all 0.2s;
+            font-size: 11px;
+            gap: 6px;
+            position: relative;
+        }
+        
+        .nav-item.active {
+            color: var(--primary);
+        }
+        
+        .nav-item.active::before {
+            content: '';
+            position: absolute;
+            top: -10px;
+            width: 40px;
+            height: 3px;
+            background: var(--primary);
+            border-radius: 3px;
+        }
+        
+        .nav-icon {
+            font-size: 22px;
+            transition: transform 0.2s;
+        }
+        
+        .nav-item.active .nav-icon {
+            transform: translateY(-3px);
+        }
+        
+        /* Toast System */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            right: 20px;
+            z-index: 2002;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+        }
+        
+        .toast {
+            background: var(--surface);
+            color: var(--text);
+            padding: 18px 24px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--elevation-3);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            backdrop-filter: blur(10px);
+            border-left: 5px solid var(--primary);
+            animation: toastSlideIn 0.3s ease;
+            pointer-events: auto;
+            border: 1px solid var(--border);
+        }
+        
+        .toast.success {
+            border-left-color: var(--secondary);
+            background: rgba(52, 168, 83, 0.1);
+        }
+        
+        .toast.error {
+            border-left-color: var(--danger);
+            background: rgba(234, 67, 53, 0.1);
+        }
+        
+        .toast.warning {
+            border-left-color: var(--warning);
+            background: rgba(251, 188, 4, 0.1);
+        }
+        
+        .toast.info {
+            border-left-color: var(--primary);
+            background: rgba(26, 115, 232, 0.1);
+        }
+        
+        .toast-icon {
+            font-size: 24px;
+            flex-shrink: 0;
+        }
+        
+        .toast-content {
+            flex: 1;
+            font-size: 14px;
+            line-height: 1.5;
+        }
+        
+        .toast-close {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            font-size: 20px;
+            cursor: pointer;
+            padding: 4px;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        
+        .toast-close:hover {
+            background: var(--surface-light);
+        }
+        
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px) scale(0.95);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+        
+        /* Preview Modal */
+        .preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.9);
+            z-index: 2001;
+            display: none;
+        }
+        
+        .preview-content {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .preview-media {
+            max-width: 100%;
+            max-height: 80%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .preview-header {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        
+        .preview-footer {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            padding: 16px;
+            background: linear-gradient(to top, rgba(0,0,0,0.8), transparent);
+            display: flex;
+            justify-content: center;
+            gap: 16px;
+        }
+        
+        .preview-btn {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.2);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .preview-btn:active {
+            background: rgba(255,255,255,0.2);
+            transform: scale(0.95);
+        }
+        
+        /* Upload Modal */
+        .upload-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            z-index: 2001;
+            display: none;
+        }
+        
+        /* Storage Info */
+        .storage-info {
+            padding: 16px;
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            margin: 16px;
+            border: 1px solid var(--border);
+        }
+        
+        .storage-bar {
+            height: 8px;
+            background: var(--surface-light);
+            border-radius: 4px;
+            margin: 12px 0;
+            overflow: hidden;
+        }
+        
+        .storage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.5s;
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+        }
+        
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+        
+        /* Responsive */
+        @media (max-width: 480px) {
+            .app-logo {
+                width: 80px;
+                height: 80px;
+                font-size: 40px;
+            }
+            
+            .app-title {
+                font-size: 28px;
+            }
+            
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            
+            .action-title {
+                font-size: 18px;
+            }
+        }
+        
+        @media (max-width: 360px) {
+            .app-logo {
+                width: 70px;
+                height: 70px;
+                font-size: 36px;
+            }
+            
+            .app-title {
+                font-size: 24px;
+            }
+            
+            .file-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen">
+        <div class="app-logo">📁</div>
+        <h1 class="app-title">Google Drive</h1>
+        <p style="color: var(--text-secondary); margin-bottom: 30px;">লোড হচ্ছে...</p>
+        <div class="loading-dots">
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+            <div class="loading-dot"></div>
+        </div>
+    </div>
+
+    <!-- Main App (Hidden until auth) -->
+    <div id="mainApp" style="display: none;">
+        <!-- Android Status Bar -->
+        <div class="status-bar">
+            <div id="currentTime">9:41</div>
+            <div>📶 🔋</div>
+        </div>
+
+        <!-- Action Bar -->
+        <div class="action-bar">
+            <button class="action-btn" onclick="handleBack()" id="backButton" style="display: none;">
+                ←
+            </button>
+            
+            <div class="action-title" id="pageTitle">Google Drive</div>
+            
+            <button class="action-btn" onclick="createNewFolder()" title="নতুন ফোল্ডার">
+                📁
+            </button>
+            
+            <button class="action-btn" onclick="openUploadModal()" title="আপলোড">
+                +
+            </button>
+        </div>
+
+        <!-- Storage Info -->
+        <div class="storage-info" id="storageInfo">
+            <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                <span>স্টোরেজ ব্যবহার</span>
+                <span id="storagePercent">0%</span>
+            </div>
+            <div class="storage-bar">
+                <div class="storage-fill" id="storageFill" style="width: 0%"></div>
+            </div>
+            <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                <span id="usedSpace">0 MB ব্যবহৃত</span>
+                <span id="totalSpace">লোড হচ্ছে...</span>
+            </div>
+        </div>
+
+        <!-- File Grid -->
+        <div id="fileGrid" class="file-grid"></div>
+
+        <!-- Empty State -->
+        <div id="emptyState" class="empty-state" style="display: none;">
+            <div class="empty-icon">📁</div>
+            <div style="font-size: 18px; font-weight: 500; margin-bottom: 8px;">কোনো ফাইল নেই</div>
+            <div style="color: var(--text-secondary); margin-bottom: 24px;">ফাইল আপলোড শুরু করুন</div>
+            <button onclick="openUploadModal()" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 24px; font-size: 16px; cursor: pointer;">
+                📤 আপলোড করুন
+            </button>
+        </div>
+
+        <!-- Bottom Navigation -->
+        <div class="bottom-nav" id="bottomNav">
+            <a href="#" class="nav-item active" onclick="switchTab('home')">
+                <span class="nav-icon">📁</span>
+                <span class="nav-text">ফাইল</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab('storage')">
+                <span class="nav-icon">📊</span>
+                <span class="nav-text">স্টোরেজ</span>
+            </a>
+            <a href="#" class="nav-item" onclick="switchTab('account')">
+                <span class="nav-icon">👤</span>
+                <span class="nav-text">অ্যাকাউন্ট</span>
+            </a>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div id="uploadModal" class="upload-modal" style="display: none;">
+        <div style="position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: var(--dark-bg); display: flex; flex-direction: column;">
+            <div style="padding: 16px; display: flex; align-items: center; gap: 16px; border-bottom: 1px solid var(--border);">
+                <button onclick="closeUploadModal()" style="background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer;">←</button>
+                <div style="font-size: 18px; font-weight: 500; flex: 1;">ফাইল আপলোড</div>
+            </div>
+            
+            <div style="flex: 1; padding: 20px; overflow-y: auto;">
+                <div id="fileDropZone" style="border: 2px dashed var(--border); border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; margin-bottom: 20px;" onclick="document.getElementById('fileInput').click()">
+                    <div style="font-size: 48px; margin-bottom: 16px;">📁</div>
+                    <div style="font-size: 16px; font-weight: 500; margin-bottom: 8px;">ফাইল এখানে ড্রপ করুন</div>
+                    <div style="color: var(--text-secondary); font-size: 14px;">অথবা ক্লিক করে সিলেক্ট করুন</div>
+                    <input type="file" id="fileInput" multiple style="display: none;" onchange="handleFileSelect(event)">
+                </div>
+                
+                <div id="selectedFilesPreview" style="display: none;"></div>
+                
+                <div id="uploadProgress" style="display: none;">
+                    <div style="margin-bottom: 8px; font-weight: 500;">আপলোড চলছে...</div>
+                    <div style="height: 6px; background: var(--surface-light); border-radius: 3px; overflow: hidden;">
+                        <div id="progressBar" style="height: 100%; background: var(--primary); width: 0%; transition: width 0.3s;"></div>
+                    </div>
+                    <div style="display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--text-secondary);">
+                        <span id="progressText">0%</span>
+                        <span id="fileCounter">0/0</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="padding: 20px; border-top: 1px solid var(--border);">
+                <button onclick="startUpload()" id="uploadButton" style="background: var(--primary); color: white; border: none; padding: 16px; border-radius: 12px; font-size: 16px; cursor: pointer; width: 100%;">
+                    ড্রাইভে আপলোড করুন
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Preview Modal -->
+    <div id="previewModal" class="preview-modal" style="display: none;">
+        <div class="preview-header">
+            <button onclick="closePreview()" style="background: rgba(0,0,0,0.5); border: none; color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer;">
+                ←
+            </button>
+            <div style="flex: 1; color: white; font-weight: 500; text-align: center; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;" id="previewTitle"></div>
+        </div>
+        
+        <div class="preview-content">
+            <img id="previewImage" class="preview-media" style="display: none;">
+            <video id="previewVideo" class="preview-media" controls style="display: none;"></video>
+            <iframe id="previewPdf" style="display: none; width: 100%; height: 100%; border: none;"></iframe>
+            <div id="previewInfo" style="display: none; text-align: center; color: white; padding: 40px;">
+                <div style="font-size: 64px; margin-bottom: 20px;" id="infoIcon">📄</div>
+                <div style="font-size: 18px; font-weight: 500; margin-bottom: 10px;" id="infoName"></div>
+                <div style="margin-top: 20px; color: #ccc; font-size: 14px;" id="infoDetails"></div>
+                <button onclick="downloadCurrentFile()" style="background: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 20px; font-size: 16px; cursor: pointer; margin-top: 20px;">
+                    ⬇️ ডাউনলোড করুন
+                </button>
+            </div>
+        </div>
+        
+        <div class="preview-footer">
+            <button class="preview-btn" onclick="downloadCurrentFile()" title="ডাউনলোড">
+                ⬇️
+            </button>
+            <button class="preview-btn" onclick="shareCurrentFile()" title="শেয়ার করুন">
+                ↗️
+            </button>
+            <button class="preview-btn" onclick="deleteCurrentFile()" style="background: rgba(234, 67, 53, 0.3);" title="মুছুন">
+                🗑️
+            </button>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ================================================
+        // CONFIGURATION
+        // ================================================
+        const CONFIG = {
+            googleClientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+            googleScope: "https://www.googleapis.com/auth/drive",
+            maxFileSize: 5 * 1024 * 1024 * 1024 // 5GB
+        };
+
+        // ================================================
+        // GLOBAL STATE
+        // ================================================
+        let appState = {
+            isAuthenticated: false,
+            accessToken: null,
+            tokenClient: null,
+            currentFolderId: 'root',
+            folderStack: ['root'],
+            files: [],
+            storageQuota: null,
+            uploadQueue: [],
+            previewFile: null,
+            currentTab: 'home'
+        };
+
+        // ================================================
+        // PHASE 1: STABLE INITIALIZATION
+        // ================================================
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Google Drive Manager Initializing...');
+            
+            // Wait for Google Identity Services to load
+            if (typeof google === 'undefined') {
+                showToast('Google API লোড হচ্ছে...', 'info');
+                setTimeout(initGoogleDrive, 1000);
+                return;
+            }
+            
+            initGoogleDrive();
+        });
+
+        function initGoogleDrive() {
+            try {
+                appState.tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CONFIG.googleClientId,
+                    scope: CONFIG.googleScope,
+                    callback: async (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            appState.accessToken = tokenResponse.access_token;
+                            appState.isAuthenticated = true;
+                            
+                            // Store token with expiry
+                            localStorage.setItem('drive_token', appState.accessToken);
+                            localStorage.setItem('drive_token_expiry', Date.now() + 3500000);
+                            
+                            showToast('ড্রাইভ সংযুক্ত হয়েছে ✅', 'success');
+                            
+                            // PHASE 2: Load Drive files
+                            await loadDriveFiles();
+                            await loadStorageInfo();
+                            
+                            // Show main app
+                            showMainApp();
+                        } else {
+                            showToast('অনুমোদন ব্যর্থ হয়েছে', 'error');
+                        }
+                    }
+                });
+                
+                // Check for existing valid token
+                checkExistingToken();
+                
+            } catch (error) {
+                console.error('Google Drive init error:', error);
+                showToast('ড্রাইভ লোড করতে সমস্যা হয়েছে', 'error');
+            }
+        }
+
+        function checkExistingToken() {
+            const savedToken = localStorage.getItem('drive_token');
+            const expiry = localStorage.getItem('drive_token_expiry');
+            
+            if (savedToken && expiry && Date.now() < parseInt(expiry)) {
+                appState.accessToken = savedToken;
+                appState.isAuthenticated = true;
+                
+                // Immediately load files
+                loadDriveFiles().then(() => {
+                    loadStorageInfo();
+                    showMainApp();
+                }).catch(() => {
+                    // Token expired or invalid, request new one
+                    requestNewToken();
+                });
+            } else {
+                // No valid token, request new one
+                requestNewToken();
+            }
+        }
+
+        function requestNewToken() {
+            setTimeout(() => {
+                if (appState.tokenClient) {
+                    appState.tokenClient.requestAccessToken({ prompt: 'consent' });
+                } else {
+                    showToast('Google API লোড হতে সমস্যা হয়েছে', 'error');
+                }
+            }, 1000);
+        }
+
+        // ================================================
+        // PHASE 2: DRIVE FILE LIST (GRID)
+        // ================================================
+        async function loadDriveFiles(folderId = 'root') {
+            try {
+                showToast('ফাইল লোড হচ্ছে...', 'info');
+                
+                const query = folderId === 'root' 
+                    ? "'root' in parents and trashed = false"
+                    : `'${folderId}' in parents and trashed = false`;
+                
+                const response = await fetch(
+                    `https://www.googleapis.com/drive/v3/files?` +
+                    `q=${encodeURIComponent(query)}&` +
+                    `fields=files(id,name,mimeType,size,createdTime,modifiedTime,thumbnailLink,iconLink,webContentLink)&` +
+                    `orderBy=folder,name&` +
+                    `pageSize=100`,
+                    {
+                        headers: {
+                            'Authorization': `Bearer ${appState.accessToken}`
+                        }
+                    }
+                );
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    appState.files = data.files || [];
+                    
+                    // Update folder name in title
+                    const folderName = folderId === 'root' ? 'Google Drive' : 
+                                     appState.files.find(f => f.id === folderId)?.name || 'ফোল্ডার';
+                    document.getElementById('pageTitle').textContent = folderName;
+                    
+                    renderFileGrid();
+                    
+                    if (appState.files.length === 0) {
+                        document.getElementById('emptyState').style.display = 'block';
+                        document.getElementById('fileGrid').style.display = 'none';
+                    } else {
+                        document.getElementById('emptyState').style.display = 'none';
+                        document.getElementById('fileGrid').style.display = 'grid';
+                    }
+                    
+                    showToast(`${appState.files.length}টি আইটেম লোড হয়েছে`, 'success');
+                } else {
+                    throw new Error('Failed to load files');
+                }
+            } catch (error) {
+                console.error('Load files error:', error);
+                showToast('ফাইল লোড করতে সমস্যা হয়েছে', 'error');
+                document.getElementById('emptyState').style.display = 'block';
+                document.getElementById('fileGrid').style.display = 'none';
+            }
+        }
+
+        function renderFileGrid() {
+            const grid = document.getElementById('fileGrid');
+            if (!grid) return;
+            
+            if (appState.files.length === 0) {
+                grid.innerHTML = '';
+                return;
+            }
+            
+            let html = '';
+            
+            // Sort: folders first, then files
+            const sortedFiles = [...appState.files].sort((a, b) => {
+                const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
+                const bIsFolder = b.mimeType === 'application/vnd.google-apps.folder';
+                
+                if (aIsFolder && !bIsFolder) return -1;
+                if (!aIsFolder && bIsFolder) return 1;
+                return a.name.localeCompare(b.name);
+            });
+            
+            sortedFiles.forEach(file => {
+                const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                const size = file.size ? formatFileSize(parseInt(file.size)) : '';
+                const date = new Date(file.modifiedTime || file.createdTime).toLocaleDateString('bn-BD');
+                
+                // PHASE 4: Use real thumbnails/icons
+                let thumbnailHtml = '';
+                
+                if (isFolder) {
+                    thumbnailHtml = `
+                        <div class="folder-icon">
+                            <div class="file-icon-large">📁</div>
+                        </div>
+                    `;
+                } else if (file.thumbnailLink) {
+                    // Use Drive thumbnail with access token
+                    thumbnailHtml = `
+                        <img class="file-thumbnail" 
+                             src="${file.thumbnailLink}&access_token=${encodeURIComponent(appState.accessToken)}" 
+                             alt="${file.name}"
+                             onerror="this.onerror=null; this.src='data:image/svg+xml,<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 100 100\"><rect width=\"100\" height=\"100\" fill=\"%231a73e8\"/><text x=\"50\" y=\"60\" font-size=\"40\" text-anchor=\"middle\" fill=\"white\">${getFileIcon(file.name)}</text></svg>'">
+                    `;
+                } else if (file.iconLink) {
+                    // Use Drive icon
+                    thumbnailHtml = `
+                        <img class="file-thumbnail" 
+                             src="${file.iconLink}" 
+                             alt="${file.name}">
+                    `;
+                } else {
+                    // Fallback icon based on file type
+                    const icon = getFileIcon(file.name);
+                    const bgColor = getFileColor(file.mimeType);
+                    thumbnailHtml = `
+                        <div class="file-icon-container" style="background: ${bgColor};">
+                            <div class="file-icon-large">${icon}</div>
+                        </div>
+                    `;
+                }
+                
+                html += `
+                    <div class="file-card" onclick="handleFileClick('${file.id}', ${isFolder})">
+                        ${thumbnailHtml}
+                        <div class="file-info-container">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-type">
+                                ${isFolder ? '📁 ফোল্ডার' : getFileTypeText(file.mimeType)}
+                            </div>
+                            ${!isFolder ? `<div class="file-size">${size}</div>` : ''}
+                        </div>
+                    </div>
+                `;
+            });
+            
+            grid.innerHTML = html;
+        }
+
+        // ================================================
+        // PHASE 3: REAL DRIVE PREVIEW
+        // ================================================
+        async function handleFileClick(fileId, isFolder) {
+            if (isFolder) {
+                // Navigate into folder
+                appState.folderStack.push(fileId);
+                appState.currentFolderId = fileId;
+                updateBackButton();
+                await loadDriveFiles(fileId);
+                return;
+            }
+            
+            const file = appState.files.find(f => f.id === fileId);
+            if (!file) return;
+            
+            appState.previewFile = file;
+            openFilePreview(file);
+        }
+
+        async function openFilePreview(file) {
+            const modal = document.getElementById('previewModal');
+            const title = document.getElementById('previewTitle');
+            
+            if (modal) modal.style.display = 'block';
+            if (title) title.textContent = file.name;
+            
+            // Hide all preview elements
+            ['previewImage', 'previewVideo', 'previewPdf', 'previewInfo'].forEach(id => {
+                document.getElementById(id).style.display = 'none';
+            });
+            
+            const mimeType = file.mimeType.toLowerCase();
+            
+            // Image preview
+            if (mimeType.startsWith('image/')) {
+                await previewImage(file);
+            }
+            // Video preview
+            else if (mimeType.startsWith('video/')) {
+                await previewVideo(file);
+            }
+            // PDF preview
+            else if (mimeType === 'application/pdf') {
+                await previewPdf(file);
+            }
+            // Google Docs/Sheets/Slides
+            else if (mimeType.includes('google-apps')) {
+                previewGoogleDoc(file);
+            }
+            // Other files
+            else {
+                previewOtherFile(file);
+            }
+        }
+
+        async function previewImage(file) {
+            const img = document.getElementById('previewImage');
+            if (!img) return;
+            
+            try {
+                if (file.thumbnailLink) {
+                    // Use thumbnail for faster loading, then try full image
+                    img.src = `${file.thumbnailLink}&access_token=${encodeURIComponent(appState.accessToken)}`;
+                    
+                    // Try to load full image
+                    const contentUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
+                    const fullImage = new Image();
+                    fullImage.onload = () => {
+                        img.src = fullImage.src;
+                    };
+                    fullImage.src = contentUrl + '&access_token=' + appState.accessToken;
+                } else {
+                    const contentUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
+                    img.src = contentUrl + '&access_token=' + appState.accessToken;
+                }
+                
+                img.style.display = 'block';
+            } catch (error) {
+                console.error('Image preview error:', error);
+                previewOtherFile(file);
+            }
+        }
+
+        async function previewVideo(file) {
+            const video = document.getElementById('previewVideo');
+            if (!video) return;
+            
+            try {
+                const contentUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
+                video.src = contentUrl + '&access_token=' + appState.accessToken;
+                video.style.display = 'block';
+                video.load();
+                
+                // Set poster from thumbnail if available
+                if (file.thumbnailLink) {
+                    video.poster = `${file.thumbnailLink}&access_token=${encodeURIComponent(appState.accessToken)}`;
+                }
+            } catch (error) {
+                console.error('Video preview error:', error);
+                previewOtherFile(file);
+            }
+        }
+
+        async function previewPdf(file) {
+            const iframe = document.getElementById('previewPdf');
+            if (!iframe) return;
+            
+            try {
+                const contentUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
+                iframe.src = contentUrl + '&access_token=' + appState.accessToken;
+                iframe.style.display = 'block';
+            } catch (error) {
+                console.error('PDF preview error:', error);
+                previewOtherFile(file);
+            }
+        }
+
+        function previewGoogleDoc(file) {
+            const info = document.getElementById('previewInfo');
+            const icon = document.getElementById('infoIcon');
+            const name = document.getElementById('infoName');
+            const details = document.getElementById('infoDetails');
+            
+            if (!info || !icon || !name || !details) return;
+            
+            let docType = 'ডকুমেন্ট';
+            if (file.mimeType.includes('spreadsheet')) docType = 'স্প্রেডশিট';
+            if (file.mimeType.includes('presentation')) docType = 'প্রেজেন্টেশন';
+            if (file.mimeType.includes('form')) docType = 'ফর্ম';
+            
+            icon.textContent = getFileIcon(file.name);
+            name.textContent = file.name;
+            details.innerHTML = `
+                <div>টাইপ: Google ${docType}</div>
+                <div>সাইজ: ${file.size ? formatFileSize(parseInt(file.size)) : 'Unknown'}</div>
+                <div>আপডেট: ${new Date(file.modifiedTime).toLocaleDateString('bn-BD')}</div>
+            `;
+            
+            info.style.display = 'block';
+        }
+
+        function previewOtherFile(file) {
+            const info = document.getElementById('previewInfo');
+            const icon = document.getElementById('infoIcon');
+            const name = document.getElementById('infoName');
+            const details = document.getElementById('infoDetails');
+            
+            if (!info || !icon || !name || !details) return;
+            
+            icon.textContent = getFileIcon(file.name);
+            name.textContent = file.name;
+            details.innerHTML = `
+                <div>টাইপ: ${getFileTypeText(file.mimeType)}</div>
+                <div>সাইজ: ${file.size ? formatFileSize(parseInt(file.size)) : 'Unknown'}</div>
+                <div>আপডেট: ${new Date(file.modifiedTime).toLocaleDateString('bn-BD')}</div>
+                <div>ডাউনলোড লিঙ্ক উপলব্ধ</div>
+            `;
+            
+            info.style.display = 'block';
+        }
+
+        // ================================================
+        // PHASE 5: DELETE (REAL)
+        // ================================================
+        async function deleteCurrentFile() {
+            if (!appState.previewFile) return;
+            
+            const file = appState.previewFile;
+            
+            if (confirm(`"${file.name}" মুছবেন?`)) {
+                try {
+                    const response = await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
+                        method: 'DELETE',
+                        headers: {
+                            'Authorization': `Bearer ${appState.accessToken}`
+                        }
+                    });
+                    
+                    if (response.ok) {
+                        showToast('ফাইল মুছে ফেলা হয়েছে', 'success');
+                        closePreview();
+                        
+                        // Remove from current view
+                        appState.files = appState.files.filter(f => f.id !== file.id);
+                        renderFileGrid();
+                        
+                        // Refresh storage info
+                        await loadStorageInfo();
+                    } else {
+                        throw new Error('Delete failed');
+                    }
+                } catch (error) {
+                    console.error('Delete error:', error);
+                    showToast('ফাইল মুছতে ব্যর্থ হয়েছে', 'error');
+                }
+            }
+        }
+
+        // ================================================
+        // PHASE 6: UPLOAD + NEW FOLDER
+        // ================================================
+        async function createNewFolder() {
+            const folderName = prompt('নতুন ফোল্ডারের নাম দিন:');
+            if (!folderName) return;
+            
+            try {
+                const metadata = {
+                    name: folderName,
+                    mimeType: 'application/vnd.google-apps.folder',
+                    parents: [appState.currentFolderId]
+                };
+                
+                const response = await fetch('https://www.googleapis.com/drive/v3/files', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${appState.accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(metadata)
+                });
+                
+                if (response.ok) {
+                    showToast('ফোল্ডার তৈরি করা হয়েছে ✅', 'success');
+                    await loadDriveFiles(appState.currentFolderId);
+                } else {
+                    throw new Error('Folder creation failed');
+                }
+            } catch (error) {
+                console.error('Create folder error:', error);
+                showToast('ফোল্ডার তৈরি করতে সমস্যা হয়েছে', 'error');
+            }
+        }
+
+        window.handleFileSelect = function(event) {
+            const files = Array.from(event.target.files);
+            appState.uploadQueue = files;
+            showSelectedFiles();
+        };
+
+        function showSelectedFiles() {
+            const preview = document.getElementById('selectedFilesPreview');
+            const uploadButton = document.getElementById('uploadButton');
+            
+            if (!preview || appState.uploadQueue.length === 0) {
+                if (preview) preview.style.display = 'none';
+                if (uploadButton) uploadButton.disabled = true;
+                return;
+            }
+            
+            let html = '<div style="font-weight: 500; margin-bottom: 12px;">সিলেক্টেড ফাইল:</div>';
+            appState.uploadQueue.forEach((file, index) => {
+                html += `
+                    <div style="display: flex; align-items: center; gap: 12px; padding: 12px; background: var(--surface); border-radius: 8px; margin-bottom: 8px;">
+                        <div style="font-size: 24px;">${getFileIcon(file.name)}</div>
+                        <div style="flex: 1; min-width: 0;">
+                            <div style="font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${file.name}</div>
+                            <div style="font-size: 12px; color: var(--text-secondary);">${formatFileSize(file.size)}</div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            preview.innerHTML = html;
+            preview.style.display = 'block';
+            if (uploadButton) uploadButton.disabled = false;
+        }
+
+        window.startUpload = async function() {
+            if (appState.uploadQueue.length === 0) {
+                showToast('কোনো ফাইল সিলেক্ট করা হয়নি', 'error');
+                return;
+            }
+            
+            const selectedPreview = document.getElementById('selectedFilesPreview');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadButton = document.getElementById('uploadButton');
+            
+            if (selectedPreview) selectedPreview.style.display = 'none';
+            if (uploadProgress) uploadProgress.style.display = 'block';
+            if (uploadButton) uploadButton.disabled = true;
+            
+            updateUploadProgress(0, appState.uploadQueue.length);
+            
+            try {
+                await uploadFiles(appState.uploadQueue);
+                appState.uploadQueue = [];
+                closeUploadModal();
+                await loadDriveFiles(appState.currentFolderId);
+                await loadStorageInfo();
+            } catch (error) {
+                console.error('Upload error:', error);
+                showToast('আপলোডে সমস্যা হয়েছে', 'error');
+                if (uploadButton) uploadButton.disabled = false;
+                if (uploadProgress) uploadProgress.style.display = 'none';
+            }
+        };
+
+        async function uploadFiles(files) {
+            showToast('ড্রাইভে আপলোড শুরু হচ্ছে...', 'info');
+            
+            let successfulUploads = 0;
+            
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                
+                if (file.size > CONFIG.maxFileSize) {
+                    showToast(`${file.name} খুব বড় (5GB সীমা)`, 'error');
+                    continue;
+                }
+                
+                const metadata = {
+                    name: file.name,
+                    parents: [appState.currentFolderId]
+                };
+                
+                const formData = new FormData();
+                formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                formData.append('file', file);
+                
+                try {
+                    const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${appState.accessToken}`
+                        },
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        successfulUploads++;
+                    } else {
+                        showToast(`${file.name} আপলোডে সমস্যা`, 'warning');
+                    }
+                } catch (error) {
+                    console.error(`Upload error for ${file.name}:`, error);
+                    showToast(`${file.name} আপলোডে সমস্যা হয়েছে`, 'error');
+                }
+                
+                updateUploadProgress(i + 1, files.length);
+            }
+            
+            showToast(`${successfulUploads}টি ফাইল আপলোড করা হয়েছে ✅`, 'success');
+        }
+
+        function updateUploadProgress(current, total) {
+            const progress = Math.round((current / total) * 100);
+            const progressBar = document.getElementById('progressBar');
+            const progressText = document.getElementById('progressText');
+            const fileCounter = document.getElementById('fileCounter');
+            
+            if (progressBar) progressBar.style.width = `${progress}%`;
+            if (progressText) progressText.textContent = `${progress}%`;
+            if (fileCounter) fileCounter.textContent = `${current}/${total}`;
+        }
+
+        // ================================================
+        // PHASE 7: STORAGE ANALYZER
+        // ================================================
+        async function loadStorageInfo() {
+            try {
+                const response = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+                    headers: {
+                        'Authorization': `Bearer ${appState.accessToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    appState.storageQuota = data.storageQuota;
+                    updateStorageUI();
+                }
+            } catch (error) {
+                console.error('Storage info error:', error);
+            }
+        }
+
+        function updateStorageUI() {
+            if (!appState.storageQuota) return;
+            
+            const limit = parseInt(appState.storageQuota.limit || 0);
+            const usage = parseInt(appState.storageQuota.usage || 0);
+            const percent = limit > 0 ? (usage / limit) * 100 : 0;
+            
+            document.getElementById('storagePercent').textContent = percent.toFixed(1) + '%';
+            document.getElementById('storageFill').style.width = percent.toFixed(1) + '%';
+            document.getElementById('usedSpace').textContent = formatFileSize(usage) + ' ব্যবহৃত';
+            document.getElementById('totalSpace').textContent = formatFileSize(limit) + ' মোট';
+        }
+
+        // ================================================
+        // PHASE 9: UX FIXES
+        // ================================================
+        function updateBackButton() {
+            const backButton = document.getElementById('backButton');
+            if (backButton) {
+                backButton.style.display = appState.folderStack.length > 1 ? 'block' : 'none';
+            }
+        }
+
+        window.handleBack = function() {
+            const previewModal = document.getElementById('previewModal');
+            const uploadModal = document.getElementById('uploadModal');
+            
+            if (previewModal && previewModal.style.display !== 'none') {
+                closePreview();
+                return;
+            }
+            
+            if (uploadModal && uploadModal.style.display !== 'none') {
+                closeUploadModal();
+                return;
+            }
+            
+            if (appState.folderStack.length > 1) {
+                // Go up one folder level
+                appState.folderStack.pop();
+                const previousFolder = appState.folderStack[appState.folderStack.length - 1];
+                appState.currentFolderId = previousFolder;
+                updateBackButton();
+                loadDriveFiles(previousFolder);
+                return;
+            }
+            
+            // If at root, ask to sign out
+            if (confirm('ড্রাইভ থেকে লগআউট করবেন?')) {
+                signOut();
+            }
+        };
+
+        function setupScrollHandling() {
+            const mainContent = document.querySelector('.file-grid-container') || document.body;
+            const bottomNav = document.getElementById('bottomNav');
+            
+            if (!bottomNav) return;
+            
+            let lastScrollTop = 0;
+            let scrollTimeout;
+            
+            window.addEventListener('scroll', function() {
+                const scrollTop = window.scrollY || document.documentElement.scrollTop;
+                
+                if (scrollTop > lastScrollTop && scrollTop > 100) {
+                    bottomNav.classList.add('hidden');
+                } else {
+                    bottomNav.classList.remove('hidden');
+                }
+                
+                lastScrollTop = scrollTop;
+                
+                clearTimeout(scrollTimeout);
+                scrollTimeout = setTimeout(() => {
+                    bottomNav.classList.remove('hidden');
+                }, 2000);
+            });
+            
+            document.addEventListener('touchstart', function() {
+                bottomNav.classList.remove('hidden');
+                clearTimeout(scrollTimeout);
+            });
+        }
+
+        // ================================================
+        // UTILITY FUNCTIONS
+        // ================================================
+        function formatFileSize(bytes) {
+            if (!bytes || bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i];
+        }
+
+        function getFileIcon(fileName) {
+            const ext = fileName.split('.').pop().toLowerCase();
+            
+            if (['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'heic'].includes(ext)) {
+                return '🖼️';
+            } else if (['mp4', 'avi', 'mov', 'mkv', 'webm', '3gp', 'm4v'].includes(ext)) {
+                return '🎬';
+            } else if (['mp3', 'wav', 'm4a', 'aac', 'ogg', 'flac'].includes(ext)) {
+                return '🎵';
+            } else if (['pdf'].includes(ext)) {
+                return '📕';
+            } else if (['doc', 'docx'].includes(ext)) {
+                return '📝';
+            } else if (['xls', 'xlsx'].includes(ext)) {
+                return '📊';
+            } else if (['ppt', 'pptx'].includes(ext)) {
+                return '📽️';
+            } else if (['txt', 'rtf', 'odt'].includes(ext)) {
+                return '📄';
+            } else if (['zip', 'rar', '7z', 'tar', 'gz', 'bz2'].includes(ext)) {
+                return '🗜️';
+            } else {
+                return '📄';
+            }
+        }
+
+        function getFileColor(mimeType) {
+            if (mimeType.includes('image')) return 'linear-gradient(135deg, #4285f4, #34a853)';
+            if (mimeType.includes('video')) return 'linear-gradient(135deg, #ea4335, #fbbc04)';
+            if (mimeType.includes('audio')) return 'linear-gradient(135deg, #9c27b0, #673ab7)';
+            if (mimeType.includes('pdf')) return 'linear-gradient(135deg, #ff9800, #ff5722)';
+            if (mimeType.includes('document')) return 'linear-gradient(135deg, #2196f3, #03a9f4)';
+            if (mimeType.includes('spreadsheet')) return 'linear-gradient(135deg, #4caf50, #009688)';
+            if (mimeType.includes('presentation')) return 'linear-gradient(135deg, #ff5722, #f44336)';
+            if (mimeType.includes('zip') || mimeType.includes('compressed')) {
+                return 'linear-gradient(135deg, #795548, #607d8b)';
+            }
+            return 'linear-gradient(135deg, var(--primary), var(--primary-dark))';
+        }
+
+        function getFileTypeText(mimeType) {
+            if (mimeType === 'application/vnd.google-apps.folder') return '📁 ফোল্ডার';
+            if (mimeType.includes('image')) return '🖼️ ছবি';
+            if (mimeType.includes('video')) return '🎬 ভিডিও';
+            if (mimeType.includes('audio')) return '🎵 অডিও';
+            if (mimeType === 'application/pdf') return '📕 PDF';
+            if (mimeType.includes('document')) return '📝 ডকুমেন্ট';
+            if (mimeType.includes('spreadsheet')) return '📊 স্প্রেডশিট';
+            if (mimeType.includes('presentation')) return '📽️ প্রেজেন্টেশন';
+            if (mimeType.includes('zip') || mimeType.includes('compressed')) {
+                return '🗜️ আর্কাইভ';
+            }
+            return '📄 ফাইল';
+        }
+
+        function showMainApp() {
+            const loadingScreen = document.getElementById('loadingScreen');
+            const mainApp = document.getElementById('mainApp');
+            
+            loadingScreen.style.opacity = '0';
+            loadingScreen.style.transform = 'scale(0.95)';
+            loadingScreen.style.transition = 'all 0.5s ease';
+            
+            setTimeout(() => {
+                loadingScreen.style.display = 'none';
+                mainApp.style.display = 'block';
+                mainApp.style.opacity = '0';
+                mainApp.style.transform = 'scale(1.05)';
+                
+                setTimeout(() => {
+                    mainApp.style.opacity = '1';
+                    mainApp.style.transform = 'scale(1)';
+                    mainApp.style.transition = 'all 0.5s ease';
+                    
+                    // Setup scroll handling
+                    setupScrollHandling();
+                    updateTime();
+                    setInterval(updateTime, 60000);
+                }, 100);
+            }, 500);
+        }
+
+        function updateTime() {
+            const now = new Date();
+            const time = now.toLocaleTimeString('bn-BD', { hour: '2-digit', minute: '2-digit' });
+            const timeElement = document.getElementById('currentTime');
+            if (timeElement) timeElement.textContent = time;
+        }
+
+        // ================================================
+        // MODAL CONTROLS
+        // ================================================
+        window.openUploadModal = function() {
+            appState.uploadQueue = [];
+            const uploadModal = document.getElementById('uploadModal');
+            if (uploadModal) {
+                uploadModal.style.display = 'block';
+            }
+            
+            const selectedPreview = document.getElementById('selectedFilesPreview');
+            const uploadProgress = document.getElementById('uploadProgress');
+            const uploadButton = document.getElementById('uploadButton');
+            
+            if (selectedPreview) selectedPreview.style.display = 'none';
+            if (uploadProgress) uploadProgress.style.display = 'none';
+            if (uploadButton) uploadButton.disabled = false;
+        };
+
+        window.closeUploadModal = function() {
+            const uploadModal = document.getElementById('uploadModal');
+            if (uploadModal) {
+                uploadModal.style.display = 'none';
+            }
+        };
+
+        window.closePreview = function() {
+            const previewModal = document.getElementById('previewModal');
+            if (previewModal) {
+                previewModal.style.display = 'none';
+            }
+            appState.previewFile = null;
+        };
+
+        window.downloadCurrentFile = function() {
+            if (!appState.previewFile) return;
+            
+            const file = appState.previewFile;
+            const downloadUrl = `https://www.googleapis.com/drive/v3/files/${file.id}?alt=media`;
+            
+            const a = document.createElement('a');
+            a.href = downloadUrl + '&access_token=' + appState.accessToken;
+            a.download = file.name;
+            a.click();
+            
+            showToast('ডাউনলোড শুরু হয়েছে...', 'info');
+        };
+
+        window.shareCurrentFile = function() {
+            if (!appState.previewFile) return;
+            
+            const file = appState.previewFile;
+            const shareUrl = file.webContentLink || `https://drive.google.com/file/d/${file.id}/view`;
+            
+            if (navigator.share) {
+                navigator.share({
+                    title: file.name,
+                    text: 'Google Drive থেকে ফাইল শেয়ার করা হচ্ছে',
+                    url: shareUrl
+                });
+            } else {
+                navigator.clipboard.writeText(shareUrl).then(() => {
+                    showToast('শেয়ার লিঙ্ক কপি করা হয়েছে', 'success');
+                });
+            }
+        };
+
+        // ================================================
+        // TAB NAVIGATION
+        // ================================================
+        window.switchTab = function(tabName) {
+            appState.currentTab = tabName;
+            
+            document.querySelectorAll('.nav-item').forEach(item => {
+                item.classList.remove('active');
+            });
+            event.currentTarget.classList.add('active');
+            
+            // In a real app, you would load different content for each tab
+            // For now, we just update the title
+            const titles = {
+                'home': 'Google Drive',
+                'storage': 'স্টোরেজ বিশ্লেষণ',
+                'account': 'অ্যাকাউন্ট'
+            };
+            
+            document.getElementById('pageTitle').textContent = titles[tabName] || tabName;
+            
+            if (tabName === 'storage') {
+                // Refresh storage info
+                loadStorageInfo();
+            }
+        };
+
+        // ================================================
+        // TOAST SYSTEM
+        // ================================================
+        function showToast(message, type = 'info') {
+            try {
+                const container = document.getElementById('toastContainer');
+                if (!container) return;
+                
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.style.animation = 'toastSlideIn 0.3s ease';
+                
+                const icons = {
+                    success: '✅',
+                    error: '❌',
+                    warning: '⚠️',
+                    info: 'ℹ️'
+                };
+                
+                const toastId = 'toast_' + Date.now();
+                
+                toast.innerHTML = `
+                    <div class="toast-icon">${icons[type] || icons.info}</div>
+                    <div class="toast-content">${message}</div>
+                    <button class="toast-close" onclick="removeToast('${toastId}')">×</button>
+                `;
+                
+                toast.id = toastId;
+                container.appendChild(toast);
+                
+                const duration = type === 'error' ? 5000 : 3000;
+                setTimeout(() => {
+                    removeToast(toastId);
+                }, duration);
+            } catch (error) {
+                console.error('Show toast error:', error);
+            }
+        }
+
+        window.removeToast = function(id) {
+            const toast = document.getElementById(id);
+            if (toast) {
+                toast.style.animation = 'toastSlideIn 0.3s ease reverse';
+                setTimeout(() => {
+                    if (toast.parentNode) {
+                        toast.remove();
+                    }
+                }, 300);
+            }
+        };
+
+        // ================================================
+        // SIGN OUT
+        // ================================================
+        function signOut() {
+            localStorage.removeItem('drive_token');
+            localStorage.removeItem('drive_token_expiry');
+            
+            google.accounts.oauth2.revoke(appState.accessToken, () => {
+                location.reload();
+            });
+        }
+
+        // ================================================
+        // INITIALIZE
+        // ================================================
+        // Setup drag and drop
+        document.addEventListener('DOMContentLoaded', function() {
+            const dropZone = document.getElementById('fileDropZone');
+            if (dropZone) {
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--primary)';
+                    dropZone.style.background = 'rgba(26, 115, 232, 0.1)';
+                });
+                
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.style.borderColor = 'var(--border)';
+                    dropZone.style.background = 'transparent';
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.style.borderColor = 'var(--border)';
+                    dropZone.style.background = 'transparent';
+                    appState.uploadQueue = Array.from(e.dataTransfer.files);
+                    showSelectedFiles();
+                });
+            }
+        });
+    </script>
+</body>
+</html>
