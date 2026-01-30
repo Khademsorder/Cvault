@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vault OS Ultimate</title>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="styles.css"> <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-firestore.js"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+</head>
+<body>
+
+    <div id="pin-screen" class="screen-layer">
+        <div class="auth-box">
+            <i class="fas fa-shield-alt logo-icon"></i>
+            <h2>Vault Locked</h2>
+            <p>Enter 4-Digit Security PIN</p>
+            <input type="password" id="pin-input" class="pin-input" maxlength="4" placeholder="••••">
+            <div class="num-pad"> <button onclick="Auth.addPin('1')">1</button><button onclick="Auth.addPin('2')">2</button><button onclick="Auth.addPin('3')">3</button>
+                <button onclick="Auth.addPin('4')">4</button><button onclick="Auth.addPin('5')">5</button><button onclick="Auth.addPin('6')">6</button>
+                <button onclick="Auth.addPin('7')">7</button><button onclick="Auth.addPin('8')">8</button><button onclick="Auth.addPin('9')">9</button>
+                <button onclick="Auth.clearPin()" style="color:red">C</button><button onclick="Auth.addPin('0')">0</button><button onclick="Auth.validatePin()" style="background:var(--accent)">Go</button>
+            </div>
+            <p id="pin-error" class="hidden error-text">Wrong PIN!</p>
+        </div>
+    </div>
+
+    <div id="login-screen" class="screen-layer hidden">
+        <div class="login-card">
+            <div class="server-status">
+                <span><i class="fas fa-wifi"></i> Online</span>
+                <span><i class="fas fa-lock"></i> Encrypted</span>
+            </div>
+            <h1>Vault OS</h1>
+            <p>Secure Cloud Storage & Media OS</p>
+            <button onclick="Auth.login()" class="btn-google">
+                <i class="fab fa-google"></i> Connect Google Drive
+            </button>
+        </div>
+    </div>
+
+    <div id="app-interface" class="hidden">
+        
+        <header>
+            <div class="brand"><i class="fas fa-fingerprint"></i> Vault</div>
+            <div class="search-box"> <i class="fas fa-search"></i>
+                <input type="text" id="search-input" placeholder="Search...">
+            </div>
+            <div class="header-right">
+                <img id="user-avatar" src="" alt="User">
+            </div>
+        </header>
+
+        <nav class="sidebar">
+            <a onclick="UI.switchTab('home')" class="active"><i class="fas fa-home"></i> Home</a>
+            <a onclick="UI.switchTab('gallery')"><i class="fas fa-images"></i> Gallery</a>
+            <a onclick="UI.switchTab('recent')"><i class="fas fa-clock"></i> Recent</a>
+            <a onclick="UI.switchTab('settings')"><i class="fas fa-cog"></i> Settings</a>
+            <div class="storage-info">
+                <div class="bar"><div class="fill" style="width: 70%"></div></div>
+                <span>Storage Used</span>
+            </div>
+        </nav>
+
+        <main id="main-content">
+            <div id="breadcrumbs"></div>
+
+            <div id="main-loader" class="hidden"><div class="spinner"></div></div>
+
+            <div id="file-grid" class="grid-view"></div>
+
+            <div id="gallery-view" class="hidden">
+                <div class="gallery-cats">
+                    <div class="g-card" onclick="Gallery.filter('image')"><i class="fas fa-image" style="color:#ff6b6b"></i> Photos</div>
+                    <div class="g-card" onclick="Gallery.filter('video')"><i class="fas fa-video" style="color:#4ecdc4"></i> Videos</div>
+                    <div class="g-card" onclick="Gallery.filter('audio')"><i class="fas fa-music" style="color:#ffe66d"></i> Audio</div>
+                    <div class="g-card" onclick="Gallery.filter('application/pdf')"><i class="fas fa-file-pdf" style="color:#ff9f43"></i> Docs</div>
+                </div>
+                <div id="gallery-grid"></div>
+            </div>
+
+            <div id="empty-state" class="hidden">
+                <i class="fas fa-box-open"></i>
+                <p>No items found</p>
+            </div>
+        </main>
+
+        <div class="fab-wrapper">
+            <button class="fab-main" onclick="UI.toggleFab()"><i class="fas fa-plus"></i></button>
+            <div class="fab-menu hidden" id="fab-menu">
+                <button onclick="document.getElementById('file-upload').click()"><i class="fas fa-file-upload"></i> Upload File</button>
+                <button onclick="document.getElementById('folder-upload').click()"><i class="fas fa-folder-plus"></i> Upload Folder</button>
+                <button onclick="Drive.createFolder()"><i class="fas fa-folder"></i> New Folder</button>
+                <button onclick="Tools.openTextEditor()"><i class="fas fa-edit"></i> Note</button>
+            </div>
+        </div>
+
+        <input type="file" id="file-upload" multiple hidden>
+        <input type="file" id="folder-upload" webkitdirectory hidden>
+
+        <nav class="bottom-nav">
+            <a onclick="UI.switchTab('home')" class="nav-item active"><i class="fas fa-folder"></i><span>Files</span></a>
+            <a onclick="UI.switchTab('gallery')" class="nav-item"><i class="fas fa-photo-video"></i><span>Gallery</span></a>
+            <a onclick="UI.switchTab('recent')" class="nav-item"><i class="fas fa-history"></i><span>Recent</span></a>
+            <a onclick="UI.switchTab('settings')" class="nav-item"><i class="fas fa-user-cog"></i><span>Settings</span></a>
+        </nav>
+    </div>
+
+    <div id="media-modal" class="modal hidden">
+        <div class="modal-content glass">
+            <button class="close-btn" onclick="Viewer.close()">&times;</button>
+            
+            <div id="video-box" class="media-box hidden">
+                <video id="player" playsinline controls></video>
+                <div class="controls-row">
+                    <label class="btn-sm"><i class="fas fa-closed-captioning"></i> Subtitle <input type="file" hidden onchange="Viewer.loadSub(this)"></label>
+                </div>
+            </div>
+
+            <div id="image-box" class="media-box hidden">
+                <img id="image-view" src="">
+                <div class="editor-tools">
+                    <button onclick="Viewer.rotate()"><i class="fas fa-undo"></i></button>
+                    <button onclick="Viewer.filter('grayscale(100%)')">B&W</button>
+                    <button onclick="Viewer.filter('sepia(100%)')">Sepia</button>
+                    <button onclick="Viewer.resetImg()">Reset</button>
+                </div>
+            </div>
+
+            <div id="file-box" class="media-box hidden">
+                <h3 id="file-title">Filename</h3>
+                <div id="file-body"></div> </div>
+        </div>
+    </div>
+
+    <div id="editor-modal" class="modal hidden">
+        <div class="modal-content glass" style="height: 80vh;">
+            <div class="editor-header">
+                <input type="text" id="note-title" placeholder="Untitled.txt">
+                <div>
+                    <button onclick="Tools.saveNote()" class="btn-save">Save</button>
+                    <button onclick="document.getElementById('editor-modal').classList.add('hidden')" class="btn-close">X</button>
+                </div>
+            </div>
+            <textarea id="note-body" placeholder="Write something..."></textarea>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content glass settings-box">
+            <h2>Settings</h2>
+            <div class="setting-item">
+                <span><i class="fas fa-moon"></i> Dark Mode</span>
+                <input type="checkbox" checked disabled> </div>
+            <div class="setting-item" onclick="Auth.changePin()">
+                <span><i class="fas fa-key"></i> Change PIN</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <div class="setting-item" onclick="PWA.install()">
+                <span><i class="fas fa-download"></i> Install App</span>
+                <i class="fas fa-chevron-right"></i>
+            </div>
+            <button onclick="Auth.logout()" class="btn-logout">Log Out</button>
+            <button onclick="UI.closeSettings()" class="btn-close-btm">Close</button>
+        </div>
+    </div>
+
+    <div id="batch-bar" class="hidden">
+        <span id="select-count">0 Selected</span>
+        <button onclick="Batch.download()"><i class="fas fa-download"></i> Zip</button>
+        <button onclick="Drive.trashFiles()" class="btn-danger"><i class="fas fa-trash"></i></button>
+        <button onclick="UI.clearSelect()"><i class="fas fa-times"></i></button>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
