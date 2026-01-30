@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Vault OS Ultimate</title>
+    
+    <meta name="theme-color" content="#0f172a">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-firestore-compat.js"></script>
+
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="auth-screen">
+        <div class="auth-card">
+            <div style="font-size: 3rem; color: var(--primary); margin-bottom: 10px;">
+                <i class="fas fa-fingerprint"></i>
+            </div>
+            <h2 style="margin: 0; font-weight: 600;">Vault OS</h2>
+            <p style="color: var(--text-muted); font-size: 0.9rem;">Secure Cloud Storage</p>
+
+            <div class="pin-display">
+                <div class="pin-dot" id="dot-1"></div>
+                <div class="pin-dot" id="dot-2"></div>
+                <div class="pin-dot" id="dot-3"></div>
+                <div class="pin-dot" id="dot-4"></div>
+            </div>
+
+            <div class="numpad">
+                <div class="num-btn" onclick="handlePinInput(1)">1</div>
+                <div class="num-btn" onclick="handlePinInput(2)">2</div>
+                <div class="num-btn" onclick="handlePinInput(3)">3</div>
+                <div class="num-btn" onclick="handlePinInput(4)">4</div>
+                <div class="num-btn" onclick="handlePinInput(5)">5</div>
+                <div class="num-btn" onclick="handlePinInput(6)">6</div>
+                <div class="num-btn" onclick="handlePinInput(7)">7</div>
+                <div class="num-btn" onclick="handlePinInput(8)">8</div>
+                <div class="num-btn" onclick="handlePinInput(9)">9</div>
+                <div class="num-btn" style="opacity: 0; pointer-events: none;"></div>
+                <div class="num-btn" onclick="handlePinInput(0)">0</div>
+                <div class="num-btn" onclick="handlePinInput('del')" style="color: var(--danger);">
+                    <i class="fas fa-backspace"></i>
+                </div>
+            </div>
+
+            <button class="btn-google" onclick="Auth.login()">
+                <img src="https://www.google.com/favicon.ico" width="18" alt="G">
+                Sign in with Google
+            </button>
+        </div>
+    </div>
+
+    <div id="app-interface" class="hidden">
+        
+        <header>
+            <div class="user-profile" onclick="toggleProfileMenu()">
+                <img src="" alt="User" id="user-avatar" class="avatar">
+                <div style="line-height: 1.2;">
+                    <div id="user-name" style="font-size: 0.9rem; font-weight: 600;">User</div>
+                    <div id="session-timer" class="session-indicator" style="display: inline-flex; margin-top: 2px;">
+                        <div class="session-dot"></div>
+                        <span>Active</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button id="install-btn" class="install-btn hidden">
+                    <i class="fas fa-download"></i> Install
+                </button>
+                <i class="fas fa-search" style="font-size: 1.2rem; padding: 10px;" onclick="document.getElementById('search-input').focus()"></i>
+            </div>
+        </header>
+
+        <div id="profile-menu" class="hidden">
+            <div class="profile-info">
+                <div class="profile-name" id="menu-name">User Name</div>
+                <div class="profile-email" id="user-email">user@gmail.com</div>
+            </div>
+            <div class="ctx-item" onclick="toggleSettings()"><i class="fas fa-cog"></i> Settings</div>
+            <div class="ctx-item danger" onclick="Auth.logout()"><i class="fas fa-sign-out-alt"></i> Logout</div>
+        </div>
+
+        <div id="main-content">
+            <div style="padding: 10px 0;">
+                <input type="text" id="search-input" class="search-box" placeholder="Search Drive...">
+            </div>
+
+            <div class="breadcrumbs" id="breadcrumbs">
+                </div>
+
+            <div id="main-loader" class="loader hidden"></div>
+
+            <div id="file-grid" class="file-grid">
+                </div>
+
+            <div id="empty-state" class="empty-state hidden">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <h3>No files found</h3>
+                <p>Upload files or try searching</p>
+            </div>
+        </div>
+
+        <div class="dock-container">
+            <div class="dock-item active" onclick="Navigation.goHome()">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </div>
+            <div class="dock-item" onclick="document.getElementById('file-upload').click()">
+                <i class="fas fa-plus-circle" style="color: var(--primary); font-size: 1.8rem;"></i>
+                <span>Upload</span>
+            </div>
+            <div class="dock-item" onclick="toggleViewMode()">
+                <i class="fas fa-th-large" id="view-icon"></i>
+                <span>View</span>
+            </div>
+        </div>
+
+        <input type="file" id="file-upload" multiple hidden>
+
+        <div id="upload-widget" class="hidden">
+            <div class="progress-header">
+                <span>Uploading...</span>
+                <i class="fas fa-times" style="cursor: pointer;" onclick="UI.showUploadProgress(false)"></i>
+            </div>
+            <div class="progress-track">
+                <div class="progress-fill"></div>
+            </div>
+        </div>
+
+        <div id="batch-bar">
+            <div class="batch-btn" onclick="UI.clearSelection()">
+                <i class="fas fa-times"></i>
+                <span>Cancel</span>
+            </div>
+            <div style="font-weight: 600;" id="selected-count">0</div>
+            <div class="batch-btn" onclick="Drive.deleteFiles(Array.from(state.selectedFiles))">
+                <i class="fas fa-trash"></i>
+                <span>Delete</span>
+            </div>
+        </div>
+
+    </div>
+
+    <script src="app.js"></script>
+
+    <script>
+        // --- PIN PAD LOGIC ---
+        let pinBuffer = [];
+        
+        function handlePinInput(val) {
+            if (val === 'del') {
+                pinBuffer.pop();
+            } else if (pinBuffer.length < 4) {
+                pinBuffer.push(val);
+            }
+            
+            updatePinUI();
+
+            if (pinBuffer.length === 4) {
+                setTimeout(async () => {
+                    const success = await Auth.verifyPin(pinBuffer.join(''));
+                    if (!success) {
+                        // Error Animation
+                        document.querySelectorAll('.pin-dot').forEach(el => el.classList.add('error'));
+                        setTimeout(() => {
+                            pinBuffer = [];
+                            updatePinUI();
+                            document.querySelectorAll('.pin-dot').forEach(el => el.classList.remove('error'));
+                        }, 500);
+                    }
+                }, 100);
+            }
+        }
+
+        function updatePinUI() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`dot-${i}`);
+                if (i <= pinBuffer.length) dot.classList.add('active');
+                else dot.classList.remove('active');
+            }
+        }
+
+        // --- UI TOGGLES ---
+        function toggleProfileMenu() {
+            const menu = document.getElementById('profile-menu');
+            menu.classList.toggle('hidden');
+        }
+
+        function toggleViewMode() {
+            state.viewMode = state.viewMode === 'grid' ? 'list' : 'grid';
+            document.getElementById('view-icon').className = state.viewMode === 'grid' ? 'fas fa-th-large' : 'fas fa-list';
+            localStorage.setItem('vault_view', state.viewMode);
+            UI.renderFiles(state.files); // Re-render
+        }
+
+        // Close menus when clicking outside
+        document.addEventListener('click', (e) => {
+            const menu = document.getElementById('profile-menu');
+            const avatar = document.getElementById('user-avatar');
+            if (!menu.classList.contains('hidden') && !menu.contains(e.target) && e.target !== avatar) {
+                menu.classList.add('hidden');
+            }
+        });
+    </script>
+</body>
+</html>
