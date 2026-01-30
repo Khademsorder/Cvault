@@ -1,30 +1,27 @@
-/* =========================================
-   VAULT OS ULTIMATE - APP.JS
-   (Modular Logic: Part 1 of 3)
-   ========================================= */
+// 1. GLOBAL AUTHORIZATION CONFIG (এইগুলো সবার উপরে থাকবে)
+const CLIENT_ID = '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo';
+const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+const SCOPES = "https://www.googleapis.com/auth/drive.file";
 
-// 1. CONFIGURATION & STATE
+// 2. APP CONFIGURATION OBJECT
 const CONFIG = {
-    // API Keys (From your original code)
-    firebase: {
-        apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
-        authDomain: "encrypted-vault-4683d.firebaseapp.com",
-        projectId: "encrypted-vault-4683d",
-        storageBucket: "encrypted-vault-4683d.appspot.com",
-        messagingSenderId: "851257263743",
-        appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
-    },
-    google: {
-        clientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
-        // CRITICAL FIX: Added drive.readonly and drive.file scopes
-        scope: "https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/userinfo.profile",
-        discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
-    },
-    app: {
-        rootFolder: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn", // Your Vault Folder ID
-        pin: "1171", // Default/Fallback PIN
-        sessionDuration: 24 * 60 * 60 * 1000 // 24 Hours
-    }
+  // Firebase Configuration
+  firebase: {
+    apiKey: "AIzaSyB3Iy1MIBfmJ7h5rv9N1sT23ysedCwUZt4", // আপনার আগের কোড থেকে নেওয়া
+    authDomain: "encrypted-vault-4683d.firebaseapp.com",
+    projectId: "encrypted-vault-4683d",
+    storageBucket: "encrypted-vault-4683d.appspot.com",
+    messagingSenderId: "851257263743",
+    appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+  },
+  
+  // App Settings
+  app: {
+    rootFolder: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn", // আপনার ভল্ট ফোল্ডার আইডি
+    pin: "1171",
+    sessionDuration: 24 * 60 * 60 * 1000 // 24 Hours
+  }
 };
 
 // Global State
@@ -291,7 +288,31 @@ const Drive = {
             xhr.upload.onprogress = (e) => {
                 if (e.lengthComputable) {
                     const percent = (e.loaded / e.total) * 100;
-                    UI.updateUploadProgress(percent);
+     // 1. GLOBAL AUTHORIZATION CONFIG (এইগুলো সবার উপরে থাকবে)
+const CLIENT_ID = '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com';
+const API_KEY = 'AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo';
+const DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
+const SCOPES = "https://www.googleapis.com/auth/drive.file";
+
+// 2. APP CONFIGURATION OBJECT
+const CONFIG = {
+  // Firebase Configuration
+  firebase: {
+    apiKey: "AIzaSyB3Iy1MIBfmJ7h5rv9N1sT23ysedCwUZt4", // আপনার আগের কোড থেকে নেওয়া
+    authDomain: "encrypted-vault-4683d.firebaseapp.com",
+    projectId: "encrypted-vault-4683d",
+    storageBucket: "encrypted-vault-4683d.appspot.com",
+    messagingSenderId: "851257263743",
+    appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+  },
+  
+  // App Settings
+  app: {
+    rootFolder: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn", // আপনার ভল্ট ফোল্ডার আইডি
+    pin: "1171",
+    sessionDuration: 24 * 60 * 60 * 1000 // 24 Hours
+  }
+};               UI.updateUploadProgress(percent);
                 }
             };
 
