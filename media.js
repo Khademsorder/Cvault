@@ -1,6 +1,7 @@
 /* =========================================
    VAULT OS - MEDIA VIEWER MODULE
    Advanced Video, Image, PDF, ZIP Viewers
+   Updated with Google Script Proxy Support
    ========================================= */
 
 class MediaViewer {
@@ -22,6 +23,9 @@ class MediaViewer {
         this.zipArchive = null;
         this.isFullscreen = false;
         this.originalBodyOverflow = '';
+        
+        // Google Script Proxy URL
+        this.PROXY_URL = 'https://script.google.com/macros/s/AKfycbxuLPLWzAA8DathQonYo1S3x0kscG2tray0HidaN2vJuz66aQ4_swuKR-ZpE_ZtbkkWbQ/exec';
         
         // Initialize
         this.init();
@@ -310,9 +314,39 @@ class MediaViewer {
     
     initPDFJS() {
         // PDF.js is loaded via CDN
-        // We'll use the global pdfjsLib object
         if (typeof pdfjsLib !== 'undefined') {
             pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+        }
+    }
+    
+    async getFileUrlViaProxy(fileId) {
+        try {
+            // Use Google Script proxy to get authenticated URL
+            const response = await fetch(`${this.PROXY_URL}?id=${fileId}`);
+            
+            if (!response.ok) {
+                throw new Error('Failed to get file URL via proxy');
+            }
+            
+            const data = await response.json();
+            
+            if (data.error) {
+                throw new Error(data.error);
+            }
+            
+            return data.url;
+            
+        } catch (error) {
+            console.error('Get file URL via proxy error:', error);
+            
+            // Fallback to direct API call with auth token
+            try {
+                const token = Auth.getAccessToken();
+                return `${VAULT_CONFIG.api.drive.files}/${fileId}?alt=media&access_token=${token}`;
+            } catch (fallbackError) {
+                console.error('Fallback also failed:', fallbackError);
+                throw error;
+            }
         }
     }
     
@@ -333,8 +367,8 @@ class MediaViewer {
             // Update file info
             this.updateFileInfo(file);
             
-            // Get video URL
-            const videoUrl = await this.getFileUrl(file.id);
+            // Get video URL via proxy
+            const videoUrl = await this.getFileUrlViaProxy(file.id);
             
             // Initialize player
             this.initVideoPlayer(videoUrl);
@@ -365,8 +399,8 @@ class MediaViewer {
             // Update file info
             this.updateFileInfo(file);
             
-            // Get image URL
-            const imageUrl = await this.getFileUrl(file.id);
+            // Get image URL via proxy
+            const imageUrl = await this.getFileUrlViaProxy(file.id);
             
             // Load image
             await this.loadImage(imageUrl);
@@ -401,8 +435,8 @@ class MediaViewer {
             // Update file info
             this.updateFileInfo(file);
             
-            // Get PDF URL
-            const pdfUrl = await this.getFileUrl(file.id);
+            // Get PDF URL via proxy
+            const pdfUrl = await this.getFileUrlViaProxy(file.id);
             
             // Load PDF
             await this.loadPDF(pdfUrl);
@@ -433,7 +467,7 @@ class MediaViewer {
             // Update file info
             this.updateFileInfo(file);
             
-            // Load ZIP contents
+            // Load ZIP contents via proxy
             await this.loadZIPContents(file.id);
             
             // Update title
@@ -510,30 +544,8 @@ class MediaViewer {
     }
     
     async getFileUrl(fileId) {
-        try {
-            const token = Auth.getAccessToken();
-            
-            // For images and videos, we might want to use webContentLink for better compatibility
-            const response = await fetch(`${VAULT_CONFIG.api.drive.files}/${fileId}?fields=webContentLink,webViewLink`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
-            
-            if (!response.ok) {
-                throw new Error('Failed to get file URL');
-            }
-            
-            const data = await response.json();
-            
-            // Use webContentLink for direct download, or fallback to alt=media
-            return data.webContentLink || `${VAULT_CONFIG.api.drive.files}/${fileId}?alt=media`;
-            
-        } catch (error) {
-            console.error('Get file URL error:', error);
-            // Fallback to direct download URL
-            return `${VAULT_CONFIG.api.drive.files}/${fileId}?alt=media`;
-        }
+        // Use proxy method instead
+        return await this.getFileUrlViaProxy(fileId);
     }
     
     initVideoPlayer(videoUrl) {
@@ -548,6 +560,9 @@ class MediaViewer {
         
         // Set source
         videoElement.src = videoUrl;
+        
+        // Add CORS headers for proxy URL
+        videoElement.setAttribute('crossorigin', 'anonymous');
         
         // Reinitialize Plyr
         this.player = new Plyr(videoElement, {
@@ -593,7 +608,8 @@ class MediaViewer {
         // Show loading indicator
         imageElement.style.opacity = '0.5';
         
-        // Load image
+        // Load image with CORS
+        imageElement.crossOrigin = 'anonymous';
         imageElement.src = imageUrl;
         
         // Wait for image to load
@@ -754,7 +770,7 @@ class MediaViewer {
             // Show loading
             canvas.style.opacity = '0.5';
             
-            // Load PDF document
+            // Load PDF document with CORS
             const loadingTask = pdfjsLib.getDocument({
                 url: pdfUrl,
                 withCredentials: true,
@@ -862,14 +878,10 @@ class MediaViewer {
     
     async loadZIPContents(fileId) {
         try {
-            const token = Auth.getAccessToken();
+            // Get ZIP file via proxy
+            const fileUrl = await this.getFileUrlViaProxy(fileId);
             
-            // Get ZIP file
-            const response = await fetch(`${VAULT_CONFIG.api.drive.files}/${fileId}?alt=media`, {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
-            });
+            const response = await fetch(fileUrl);
             
             if (!response.ok) {
                 throw new Error('Failed to load ZIP file');
@@ -1273,4 +1285,3 @@ class MediaViewer {
 
 // Create global MediaViewer instance
 window.MediaViewer = new MediaViewer();
-
