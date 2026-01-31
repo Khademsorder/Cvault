@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#050505">
+    <meta name="description" content="Vault OS - Secure Cloud Storage">
+    
+    <title>Vault OS Ultimate</title>
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    
+    <!-- Player -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+    
+    <!-- PWA Support -->
+    <link rel="manifest" href="manifest.json">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- PIN Screen -->
+    <div id="pin-screen" class="screen-layer">
+        <div class="auth-box">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <div class="logo-text">VAULT</div>
+            </div>
+            <h2 class="auth-title">System Locked</h2>
+            <p class="auth-subtitle">Enter 4-Digit Security PIN</p>
+            <div class="pin-display">
+                <input type="password" id="pin-input" maxlength="4" readonly>
+            </div>
+            <div class="num-pad">
+                <button class="num-btn" data-num="1">1</button>
+                <button class="num-btn" data-num="2">2</button>
+                <button class="num-btn" data-num="3">3</button>
+                <button class="num-btn" data-num="4">4</button>
+                <button class="num-btn" data-num="5">5</button>
+                <button class="num-btn" data-num="6">6</button>
+                <button class="num-btn" data-num="7">7</button>
+                <button class="num-btn" data-num="8">8</button>
+                <button class="num-btn" data-num="9">9</button>
+                <button class="num-btn btn-clear" data-action="clear">C</button>
+                <button class="num-btn" data-num="0">0</button>
+                <button class="num-btn btn-submit" data-action="submit">✓</button>
+            </div>
+            <p id="pin-error" class="error-text hidden">Wrong PIN!</p>
+            <div class="pin-hint">
+                <i class="fas fa-info-circle"></i>
+                <span>Default PIN: 1171</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Login Modal -->
+    <div id="login-modal" class="modal hidden">
+        <div class="modal-content login-modal">
+            <div class="login-header">
+                <div class="server-status">
+                    <span class="status-item online">
+                        <i class="fas fa-wifi"></i>
+                        <span>Online</span>
+                    </span>
+                    <span class="status-item secure">
+                        <i class="fas fa-lock"></i>
+                        <span>Encrypted</span>
+                    </span>
+                </div>
+                <button class="btn-close" id="close-login">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="login-body">
+                <div class="login-brand">
+                    <i class="fas fa-fingerprint"></i>
+                    <h1>Vault OS</h1>
+                    <p class="tagline">Secure Cloud Storage & Media OS</p>
+                </div>
+                
+                <div class="login-form">
+                    <button id="google-login-btn" class="btn-login btn-google">
+                        <i class="fab fa-google"></i>
+                        <span>Connect Google Drive</span>
+                    </button>
+                    
+                    <div class="login-info">
+                        <div class="info-item">
+                            <i class="fas fa-shield-alt"></i>
+                            <span>Military-grade encryption</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-infinity"></i>
+                            <span>15GB Free Storage</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-bolt"></i>
+                            <span>Fast media processing</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="login-footer">
+                    <p class="footer-text">
+                        <i class="fas fa-lock"></i>
+                        Your data never leaves your device
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Interface -->
+    <div id="app-interface" class="hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="btn-menu" id="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="brand">
+                    <i class="fas fa-fingerprint"></i>
+                    <span class="brand-name">Vault</span>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search files...">
+                    <button class="btn-search-clear hidden">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="storage-indicator">
+                    <div class="storage-bar">
+                        <div class="storage-fill" id="storage-bar-fill"></div>
+                    </div>
+                    <span class="storage-text" id="storage-text">0GB / 15GB</span>
+                </div>
+                <button class="btn-notification">
+                    <i class="fas fa-bell"></i>
+                    <span class="notification-badge hidden">0</span>
+                </button>
+                <div class="user-avatar" id="user-avatar">
+                    <img src="" alt="User" id="avatar-img" onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%2300f3ff%22/><text x=%2250%22 y=%2265%22 text-anchor=%22middle%22 font-size=%2240%22 fill=%22white%22>U</text></svg>'">
+                    <div class="user-status"></div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Desktop Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <div class="user-name" id="user-name">User</div>
+                    <div class="user-email" id="user-email">user@example.com</div>
+                </div>
+            </div>
+            
+            <div class="sidebar-menu">
+                <a class="menu-item active" data-tab="home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a class="menu-item" data-tab="gallery">
+                    <i class="fas fa-images"></i>
+                    <span>Gallery</span>
+                </a>
+                <a class="menu-item" data-tab="recent">
+                    <i class="fas fa-clock"></i>
+                    <span>Recent</span>
+                </a>
+                <a class="menu-item" data-tab="shared">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Shared</span>
+                    <span class="menu-badge">3</span>
+                </a>
+                <a class="menu-item" data-tab="trash">
+                    <i class="fas fa-trash"></i>
+                    <span>Trash</span>
+                </a>
+                <a class="menu-item" data-tab="settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="storage-widget">
+                    <div class="storage-info">
+                        <div class="storage-label">Storage</div>
+                        <div class="storage-value" id="sidebar-storage">0GB / 15GB</div>
+                    </div>
+                    <div class="storage-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="sidebar-progress-fill"></div>
+                        </div>
+                        <button class="btn-upgrade">
+                            <i class="fas fa-rocket"></i>
+                            <span>Upgrade</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Breadcrumbs -->
+            <div class="breadcrumbs" id="breadcrumbs">
+                <a class="crumb home-crumb">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <div class="crumb-separator">/</div>
+                <a class="crumb current-crumb" id="current-folder">All Files</a>
+            </div>
+
+            <!-- Gallery Categories -->
+            <div class="gallery-categories hidden" id="gallery-categories">
+                <div class="category-grid">
+                    <div class="category-card" data-type="image">
+                        <div class="category-icon photo">
+                            <i class="fas fa-camera"></i>
+                        </div>
+                        <h3>Photos</h3>
+                        <p class="category-count" data-count="0">0 files</p>
+                    </div>
+                    <div class="category-card" data-type="video">
+                        <div class="category-icon video">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h3>Videos</h3>
+                        <p class="category-count" data-count="0">0 files</p>
+                    </div>
+                    <div class="category-card" data-type="audio">
+                        <div class="category-icon audio">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <h3>Audio</h3>
+                        <p class="category-count" data-count="0">0 files</p>
+                    </div>
+                    <div class="category-card" data-type="document">
+                        <div class="category-icon doc">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h3>Documents</h3>
+                        <p class="category-count" data-count="0">0 files</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Grid -->
+            <div class="file-grid-container">
+                <div class="grid-header">
+                    <div class="view-toggle">
+                        <button class="view-btn active" data-view="grid">
+                            <i class="fas fa-th"></i>
+                        </button>
+                        <button class="view-btn" data-view="list">
+                            <i class="fas fa-list"></i>
+                        </button>
+                    </div>
+                    <div class="sort-options">
+                        <select id="sort-select" class="sort-select">
+                            <option value="name">Name A-Z</option>
+                            <option value="name_desc">Name Z-A</option>
+                            <option value="date" selected>Date Modified</option>
+                            <option value="size">Size</option>
+                            <option value="type">Type</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="file-grid" id="file-grid">
+                    <!-- Files will be loaded here -->
+                </div>
+
+                <div class="empty-state hidden" id="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <h3>No Files Yet</h3>
+                    <p>Upload your first file or create a folder to get started</p>
+                    <button class="btn-empty-action" id="first-upload">
+                        <i class="fas fa-upload"></i>
+                        Upload Files
+                    </button>
+                </div>
+
+                <div class="loading-state hidden" id="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading files...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- FAB Menu -->
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <button class="fab-item" data-action="upload-file">
+                    <i class="fas fa-file-upload"></i>
+                    <span>Upload File</span>
+                </button>
+                <button class="fab-item" data-action="upload-folder">
+                    <i class="fas fa-folder-plus"></i>
+                    <span>Upload Folder</span>
+                </button>
+                <button class="fab-item" data-action="create-folder">
+                    <i class="fas fa-folder"></i>
+                    <span>New Folder</span>
+                </button>
+                <button class="fab-item" data-action="create-note">
+                    <i class="fas fa-edit"></i>
+                    <span>New Note</span>
+                </button>
+                <button class="fab-item" data-action="scan-document">
+                    <i class="fas fa-qrcode"></i>
+                    <span>Scan Document</span>
+                </button>
+            </div>
+            <button class="fab-main" id="fab-main">
+                <i class="fas fa-plus" id="fab-icon"></i>
+            </button>
+        </div>
+
+        <!-- Hidden File Inputs -->
+        <input type="file" id="file-input" multiple hidden>
+        <input type="file" id="folder-input" webkitdirectory hidden>
+
+        <!-- Media Viewer Modal -->
+        <div id="media-modal" class="modal hidden">
+            <div class="modal-content media-modal">
+                <button class="btn-close-media" id="close-media">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <div class="media-header">
+                    <h3 class="media-title" id="media-title">File Preview</h3>
+                    <div class="media-actions">
+                        <button class="btn-media-action" id="download-media">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn-media-action" id="share-media">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button class="btn-media-action btn-danger" id="delete-media">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <div class="media-body">
+                    <div id="video-container" class="hidden">
+                        <div class="video-wrapper">
+                            <video id="video-player" controls crossorigin playsinline>
+                                <source src="" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="video-controls">
+                            <button class="btn-control" id="subtitle-btn">
+                                <i class="fas fa-closed-captioning"></i>
+                                <span>Subtitles</span>
+                            </button>
+                            <button class="btn-control" id="quality-btn">
+                                <i class="fas fa-hd"></i>
+                                <span>Quality</span>
+                            </button>
+                            <button class="btn-control" id="fullscreen-btn">
+                                <i class="fas fa-expand"></i>
+                                <span>Fullscreen</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div id="image-container" class="hidden">
+                        <div class="image-wrapper">
+                            <img id="image-viewer" src="" alt="Image Preview">
+                        </div>
+                        <div class="image-controls">
+                            <button class="btn-control" id="rotate-left">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button class="btn-control" id="rotate-right">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button class="btn-control" id="filter-btn">
+                                <i class="fas fa-sliders-h"></i>
+                            </button>
+                            <button class="btn-control" id="crop-btn">
+                                <i class="fas fa-crop"></i>
+                            </button>
+                            <button class="btn-control" id="save-image">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                        <div class="filter-panel hidden" id="filter-panel">
+                            <button class="filter-btn" data-filter="none">Normal</button>
+                            <button class="filter-btn" data-filter="grayscale(100%)">Grayscale</button>
+                            <button class="filter-btn" data-filter="sepia(100%)">Sepia</button>
+                            <button class="filter-btn" data-filter="brightness(150%)">Bright</button>
+                            <button class="filter-btn" data-filter="contrast(200%)">Contrast</button>
+                        </div>
+                    </div>
+
+                    <div id="audio-container" class="hidden">
+                        <div class="audio-wrapper">
+                            <audio id="audio-player" controls>
+                                <source src="" type="audio/mpeg">
+                            </audio>
+                        </div>
+                        <div class="audio-info">
+                            <div class="audio-visualizer" id="audio-visualizer">
+                                <!-- Visualizer bars will be generated by JS -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="document-container" class="hidden">
+                        <div class="document-viewer" id="document-viewer">
+                            <!-- Document content will be loaded here -->
+                        </div>
+                    </div>
+
+                    <div id="zip-container" class="hidden">
+                        <div class="zip-viewer">
+                            <h4>Zip File Contents</h4>
+                            <div class="zip-list" id="zip-list">
+                                <!-- Zip contents will be listed here -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="unsupported-container" class="hidden">
+                        <div class="unsupported-message">
+                            <i class="fas fa-exclamation-triangle"></i>
+                            <h4>Preview Not Available</h4>
+                            <p>This file type cannot be previewed in the browser.</p>
+                            <button class="btn-download" id="download-unsupported">
+                                <i class="fas fa-download"></i>
+                                Download File
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="media-footer">
+                    <div class="file-info">
+                        <div class="info-item">
+                            <i class="fas fa-file"></i>
+                            <span id="file-name">file.name</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-weight"></i>
+                            <span id="file-size">0 KB</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-calendar"></i>
+                            <span id="file-date">Today</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Text Editor Modal -->
+        <div id="editor-modal" class="modal hidden">
+            <div class="modal-content editor-modal">
+                <div class="editor-header">
+                    <input type="text" id="editor-title" placeholder="Untitled Note.txt" value="Untitled Note.txt">
+                    <div class="editor-actions">
+                        <button class="btn-editor" id="save-note">
+                            <i class="fas fa-save"></i>
+                            <span>Save</span>
+                        </button>
+                        <button class="btn-editor" id="close-editor">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="editor-body">
+                    <div class="editor-toolbar">
+                        <button class="tool-btn" data-command="bold">
+                            <i class="fas fa-bold"></i>
+                        </button>
+                        <button class="tool-btn" data-command="italic">
+                            <i class="fas fa-italic"></i>
+                        </button>
+                        <button class="tool-btn" data-command="underline">
+                            <i class="fas fa-underline"></i>
+                        </button>
+                        <button class="tool-btn" data-command="insertUnorderedList">
+                            <i class="fas fa-list-ul"></i>
+                        </button>
+                        <button class="tool-btn" data-command="insertOrderedList">
+                            <i class="fas fa-list-ol"></i>
+                        </button>
+                        <button class="tool-btn" data-command="formatBlock" data-value="h2">
+                            <i class="fas fa-heading"></i>
+                        </button>
+                        <button class="tool-btn" id="insert-link">
+                            <i class="fas fa-link"></i>
+                        </button>
+                    </div>
+                    <div class="editor-area" id="editor-area" contenteditable="true">
+                        <p>Start typing your note here...</p>
+                    </div>
+                </div>
+                <div class="editor-footer">
+                    <div class="editor-stats">
+                        <span id="word-count">0 words</span>
+                        <span id="char-count">0 characters</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content settings-modal">
+                <div class="settings-header">
+                    <h2>
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </h2>
+                    <button class="btn-close-settings" id="close-settings">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+
+                <div class="settings-body">
+                    <div class="settings-tabs">
+                        <button class="settings-tab active" data-tab="general">
+                            <i class="fas fa-sliders-h"></i>
+                            General
+                        </button>
+                        <button class="settings-tab" data-tab="security">
+                            <i class="fas fa-shield-alt"></i>
+                            Security
+                        </button>
+                        <button class="settings-tab" data-tab="storage">
+                            <i class="fas fa-database"></i>
+                            Storage
+                        </button>
+                        <button class="settings-tab" data-tab="appearance">
+                            <i class="fas fa-palette"></i>
+                            Appearance
+                        </button>
+                        <button class="settings-tab" data-tab="about">
+                            <i class="fas fa-info-circle"></i>
+                            About
+                        </button>
+                    </div>
+
+                    <div class="settings-content">
+                        <!-- General Tab -->
+                        <div class="settings-panel active" id="general-panel">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Dark Mode</h4>
+                                    <p>Use dark theme for better battery life</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="dark-mode" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Auto-Lock</h4>
+                                    <p>Lock app after 5 minutes of inactivity</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="auto-lock" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Notifications</h4>
+                                    <p>Receive notifications for uploads and shares</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="notifications" checked>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Default Upload Folder</h4>
+                                    <p>Choose where to upload files by default</p>
+                                </div>
+                                <select class="select-input" id="upload-folder">
+                                    <option value="root">Root Folder</option>
+                                    <option value="photos">Photos</option>
+                                    <option value="documents">Documents</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Security Tab -->
+                        <div class="settings-panel" id="security-panel">
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Change PIN</h4>
+                                    <p>Update your 4-digit security PIN</p>
+                                </div>
+                                <button class="btn-setting-action" id="change-pin">
+                                    <i class="fas fa-key"></i>
+                                    Change
+                                </button>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Biometric Login</h4>
+                                    <p>Use fingerprint or face recognition</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="biometric" disabled>
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Encryption Level</h4>
+                                    <p>AES-256 military-grade encryption</p>
+                                </div>
+                                <span class="badge badge-success">Active</span>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Session Timeout</h4>
+                                    <p>Automatically logout after</p>
+                                </div>
+                                <select class="select-input" id="session-timeout">
+                                    <option value="5">5 minutes</option>
+                                    <option value="15">15 minutes</option>
+                                    <option value="60" selected>1 hour</option>
+                                    <option value="1440">24 hours</option>
+                                </select>
+                            </div>
+                        </div>
+
+                        <!-- Storage Tab -->
+                        <div class="settings-panel" id="storage-panel">
+                            <div class="storage-stats">
+                                <div class="storage-meter">
+                                    <div class="meter-background">
+                                        <div class="meter-fill" id="settings-storage-fill"></div>
+                                    </div>
+                                    <div class="meter-text">
+                                        <span id="settings-storage-text">0GB used of 15GB</span>
+                                        <span id="storage-percent">0%</span>
+                                    </div>
+                                </div>
+                                <div class="storage-details">
+                                    <div class="detail-item">
+                                        <i class="fas fa-images" style="color:#ff6b6b"></i>
+                                        <div>
+                                            <span class="detail-label">Photos</span>
+                                            <span class="detail-value" id="photos-size">0 GB</span>
+                                        </div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-video" style="color:#4ecdc4"></i>
+                                        <div>
+                                            <span class="detail-label">Videos</span>
+                                            <span class="detail-value" id="videos-size">0 GB</span>
+                                        </div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-file-alt" style="color:#ff9f43"></i>
+                                        <div>
+                                            <span class="detail-label">Documents</span>
+                                            <span class="detail-value" id="documents-size">0 GB</span>
+                                        </div>
+                                    </div>
+                                    <div class="detail-item">
+                                        <i class="fas fa-archive" style="color:#a29bfe"></i>
+                                        <div>
+                                            <span class="detail-label">Other</span>
+                                            <span class="detail-value" id="other-size">0 GB</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="storage-actions">
+                                <button class="btn-storage-action" id="clear-cache">
+                                    <i class="fas fa-broom"></i>
+                                    Clear Cache
+                                </button>
+                                <button class="btn-storage-action" id="manage-storage">
+                                    <i class="fas fa-cogs"></i>
+                                    Manage Storage
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- Appearance Tab -->
+                        <div class="settings-panel" id="appearance-panel">
+                            <div class="theme-selector">
+                                <h4>Theme Color</h4>
+                                <div class="theme-colors">
+                                    <button class="color-option active" data-color="#00f3ff">
+                                        <div class="color-preview" style="background:#00f3ff"></div>
+                                        <span>Cyber Blue</span>
+                                    </button>
+                                    <button class="color-option" data-color="#ff6b6b">
+                                        <div class="color-preview" style="background:#ff6b6b"></div>
+                                        <span>Neon Red</span>
+                                    </button>
+                                    <button class="color-option" data-color="#4ecdc4">
+                                        <div class="color-preview" style="background:#4ecdc4"></div>
+                                        <span>Mint Green</span>
+                                    </button>
+                                    <button class="color-option" data-color="#ff9f43">
+                                        <div class="color-preview" style="background:#ff9f43"></div>
+                                        <span>Sunset Orange</span>
+                                    </button>
+                                    <button class="color-option" data-color="#a29bfe">
+                                        <div class="color-preview" style="background:#a29bfe"></div>
+                                        <span>Purple Haze</span>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Reduce Animations</h4>
+                                    <p>Disable animations for better performance</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="reduce-animations">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                            <div class="setting-item">
+                                <div class="setting-info">
+                                    <h4>Compact View</h4>
+                                    <p>Show more items in grid view</p>
+                                </div>
+                                <label class="switch">
+                                    <input type="checkbox" id="compact-view">
+                                    <span class="slider"></span>
+                                </label>
+                            </div>
+                        </div>
+
+                        <!-- About Tab -->
+                        <div class="settings-panel" id="about-panel">
+                            <div class="about-section">
+                                <div class="app-icon">
+                                    <i class="fas fa-shield-alt"></i>
+                                </div>
+                                <h3>Vault OS Ultimate</h3>
+                                <p class="version">Version 1.0.0</p>
+                                <p class="about-description">
+                                    Secure cloud storage with military-grade encryption and advanced media processing.
+                                </p>
+                            </div>
+                            <div class="about-links">
+                                <a href="#" class="about-link">
+                                    <i class="fas fa-question-circle"></i>
+                                    Help & Support
+                                </a>
+                                <a href="#" class="about-link">
+                                    <i class="fas fa-file-alt"></i>
+                                    Privacy Policy
+                                </a>
+                                <a href="#" class="about-link">
+                                    <i class="fas fa-scale-balanced"></i>
+                                    Terms of Service
+                                </a>
+                                <a href="#" class="about-link">
+                                    <i class="fas fa-code"></i>
+                                    Developer API
+                                </a>
+                            </div>
+                            <div class="about-footer">
+                                <button class="btn-check-updates">
+                                    <i class="fas fa-sync-alt"></i>
+                                    Check for Updates
+                                </button>
+                                <button class="btn-export-data">
+                                    <i class="fas fa-download"></i>
+                                    Export All Data
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="settings-footer">
+                    <button class="btn-logout" id="logout-btn">
+                        <i class="fas fa-sign-out-alt"></i>
+                        Log Out
+                    </button>
+                    <button class="btn-save-settings" id="save-settings">
+                        <i class="fas fa-save"></i>
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change PIN Modal -->
+        <div id="pin-modal" class="modal hidden">
+            <div class="modal-content pin-modal">
+                <h3>
+                    <i class="fas fa-key"></i>
+                    Change Security PIN
+                </h3>
+                <div class="pin-form">
+                    <div class="pin-input-group">
+                        <label>Current PIN</label>
+                        <input type="password" id="current-pin" maxlength="4" placeholder="••••">
+                    </div>
+                    <div class="pin-input-group">
+                        <label>New PIN</label>
+                        <input type="password" id="new-pin" maxlength="4" placeholder="••••">
+                    </div>
+                    <div class="pin-input-group">
+                        <label>Confirm PIN</label>
+                        <input type="password" id="confirm-pin" maxlength="4" placeholder="••••">
+                    </div>
+                </div>
+                <div class="pin-actions">
+                    <button class="btn-secondary" id="cancel-pin-change">Cancel</button>
+                    <button class="btn-primary" id="save-pin-change">Save New PIN</button>
+                </div>
+                <div class="pin-error hidden" id="pin-change-error"></div>
+            </div>
+        </div>
+
+        <!-- Upload Progress -->
+        <div id="upload-progress" class="hidden">
+            <div class="progress-header">
+                <h4>
+                    <i class="fas fa-upload"></i>
+                    Uploading Files
+                </h4>
+                <button class="btn-close-progress" id="close-progress">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="progress-list" id="progress-list">
+                <!-- Upload items will be added here -->
+            </div>
+            <div class="progress-overall">
+                <div class="progress-bar">
+                    <div class="progress-fill" id="overall-progress"></div>
+                </div>
+                <div class="progress-text">
+                    <span id="upload-status">Preparing...</span>
+                    <span id="upload-speed">0 KB/s</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Actions Bar -->
+        <div id="batch-actions" class="hidden">
+            <div class="batch-header">
+                <span class="batch-count" id="selected-count">0 items selected</span>
+                <button class="btn-clear-batch" id="clear-batch">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="batch-buttons">
+                <button class="batch-btn" id="batch-download">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+                <button class="batch-btn" id="batch-share">
+                    <i class="fas fa-share-alt"></i>
+                    Share
+                </button>
+                <button class="batch-btn" id="batch-move">
+                    <i class="fas fa-folder"></i>
+                    Move
+                </button>
+                <button class="batch-btn btn-danger" id="batch-delete">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+
+        <!-- Toast Notifications -->
+        <div id="toast-container"></div>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="bottom-nav" id="bottom-nav">
+            <a class="nav-item active" data-tab="home">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a class="nav-item" data-tab="gallery">
+                <i class="fas fa-images"></i>
+                <span>Gallery</span>
+            </a>
+            <a class="nav-item" data-tab="recent">
+                <i class="fas fa-clock"></i>
+                <span>Recent</span>
+            </a>
+            <a class="nav-item" data-tab="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+    </div>
+
+    <!-- JavaScript Libraries -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- Main App Script -->
+    <script src="app.js"></script>
+</body>
+</html>
