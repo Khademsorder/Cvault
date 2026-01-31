@@ -3318,3 +3318,20 @@ input:checked + .slider::before {
     }
 }
 
+toggleFabMenu() {
+    this.fabMenuOpen = !this.fabMenuOpen;
+    const fabMenu = document.getElementById('fab-menu');
+    if (fabMenu) fabMenu.classList.toggle('hidden');
+    
+    const fabIcon = document.getElementById('fab-icon');
+    if (fabIcon) fabIcon.className = this.fabMenuOpen ? 'fas fa-times' : 'fas fa-plus';
+}
+
+handleSyncNow() {
+    const settings = this.getSavedSettings();
+    if (!settings.autoSync) {
+        this.showError('Enable auto sync in settings first');
+        return;
+    }
+    if (window.Drive) Drive.syncNow();
+}
