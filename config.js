@@ -273,10 +273,11 @@ const VAULT_CONFIG = {
         return url;
     },
     
-    getOAuthUrl: function(redirectUri, state = '') {
+        getOAuthUrl: function(redirectUri, state = '') {
         const params = {
             client_id: GOOGLE_CONFIG.clientId,
-            redirect_uri: redirectUri,
+            // নিচে আপনার সঠিক GitHub লিংক বসানো হলো:
+            redirect_uri: 'https://khademsorder.github.io/Cvault/',
             response_type: 'token',
             scope: GOOGLE_CONFIG.scopes,
             include_granted_scopes: 'true',
@@ -285,6 +286,7 @@ const VAULT_CONFIG = {
         };
         return API_ENDPOINTS.oauth.auth + '?' + new URLSearchParams(params).toString();
     },
+
     
     validateFileType: function(mimeType) {
         return APP_CONFIG.allowedFileTypes.includes(mimeType);
