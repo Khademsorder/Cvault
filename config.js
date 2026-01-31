@@ -321,6 +321,66 @@ const VAULT_CONFIG = {
 
 // Make config globally available
 window.VAULT_CONFIG = VAULT_CONFIG;
+/* =========================================
+   VAULT OS - GLOBAL CONFIGURATION WRAPPER
+   (Add this to the very bottom of config.js)
+   ========================================= */
+
+window.VAULT_CONFIG = {
+    // Reference to existing configs
+    firebase: FIREBASE_CONFIG,
+    google: GOOGLE_CONFIG,
+    app: {
+        // If APP_CONFIG exists, spread it, otherwise define defaults
+        name: 'Vault OS',
+        version: '2.0.0',
+        allowedFileTypes: [
+            // Images
+            'image/jpeg', 'image/png', 'image/gif', 'image/webp', 'image/svg+xml',
+            // Video
+            'video/mp4', 'video/webm', 'video/ogg',
+            // Audio
+            'audio/mpeg', 'audio/ogg', 'audio/wav',
+            // Documents
+            'application/pdf', 'text/plain', 'application/json',
+            'application/zip', 'application/x-zip-compressed'
+        ]
+    },
+    
+    // API Endpoints (Required for Media Player & Drive)
+    api: {
+        drive: {
+            files: 'https://www.googleapis.com/drive/v3/files',
+            upload: 'https://www.googleapis.com/upload/drive/v3/files',
+            about: 'https://www.googleapis.com/drive/v3/about'
+        },
+        oauth: {
+            auth: 'https://accounts.google.com/o/oauth2/v2/auth',
+            token: 'https://oauth2.googleapis.com/token'
+        }
+    },
+    
+    // Helper Functions
+    getApiUrl: function(endpoint, params) {
+        let url = this.api.drive[endpoint] || endpoint;
+        
+        if (params) {
+            const queryString = Object.keys(params)
+                .map(key => `${key}=${encodeURIComponent(params[key])}`)
+                .join('&');
+            url += `?${queryString}`;
+        }
+        return url;
+    },
+    
+    formatFileSize: function(bytes) {
+        if (bytes === 0 || !bytes) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+};
 
 // Log configuration loaded
 console.log(`✅ Vault OS Config v${APP_CONFIG.version} loaded`);
