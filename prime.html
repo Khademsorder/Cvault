@@ -1,0 +1,1177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <!-- Meta Tags -->
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#050505">
+    <meta name="description" content="Vault OS Ultimate - Secure Cloud Storage with Google Drive integration">
+    <meta name="keywords" content="cloud storage, secure vault, google drive, file manager, encrypted storage">
+    <meta name="author" content="Vault Team">
+    
+    <!-- Google OAuth Meta Tags -->
+    <meta name="google-signin-client_id" content="318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com">
+    <meta name="google-signin-scope" content="https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile">
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://vault-os.netlify.app/">
+    <meta property="og:title" content="Vault OS Ultimate - Secure Cloud Storage">
+    <meta property="og:description" content="Advanced Google Drive client with enhanced security and media viewers">
+    <meta property="og:image" content="https://vault-os.netlify.app/og-image.png">
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image">
+    <meta property="twitter:url" content="https://vault-os.netlify.app/">
+    <meta property="twitter:title" content="Vault OS Ultimate">
+    <meta property="twitter:description" content="Secure Cloud Storage with Google Drive integration">
+    <meta property="twitter:image" content="https://vault-os.netlify.app/og-image.png">
+    
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="/manifest.json">
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png">
+    
+    <title>Vault OS Ultimate - Secure Cloud Storage</title>
+    
+    <!-- Fonts & Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@400;500&display=swap">
+    
+    <!-- Plyr for Video -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+    
+    <!-- CSS -->
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <!-- PIN Screen -->
+    <div id="pin-screen" class="screen-layer">
+        <div class="auth-box">
+            <div class="logo">
+                <i class="fas fa-shield-alt"></i>
+                <div class="logo-text">VAULT</div>
+            </div>
+            <h2 class="auth-title">Secure Access</h2>
+            <p class="auth-subtitle">Enter your 4-digit security PIN</p>
+            <div class="pin-display">
+                <input type="password" id="pin-input" maxlength="4" readonly>
+            </div>
+            <div class="num-pad">
+                <button class="num-btn" data-num="1">1</button>
+                <button class="num-btn" data-num="2">2</button>
+                <button class="num-btn" data-num="3">3</button>
+                <button class="num-btn" data-num="4">4</button>
+                <button class="num-btn" data-num="5">5</button>
+                <button class="num-btn" data-num="6">6</button>
+                <button class="num-btn" data-num="7">7</button>
+                <button class="num-btn" data-num="8">8</button>
+                <button class="num-btn" data-num="9">9</button>
+                <button class="num-btn btn-clear" data-action="clear">C</button>
+                <button class="num-btn" data-num="0">0</button>
+                <button class="num-btn btn-submit" data-action="submit">✓</button>
+            </div>
+            <p id="pin-error" class="error-text hidden">Incorrect PIN. Default: 1171</p>
+            <div class="pin-hint">
+                <i class="fas fa-info-circle"></i>
+                <span>Change PIN in Settings after login</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Drive Connection Interface -->
+    <div id="drive-connect-modal" class="modal hidden">
+        <div class="modal-content drive-connect-modal">
+            <div class="modal-header">
+                <h3>
+                    <i class="fab fa-google-drive"></i>
+                    Connect Google Drive
+                </h3>
+                <button class="btn-close" id="close-drive-modal">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="modal-body">
+                <!-- Connection Steps -->
+                <div class="connection-steps">
+                    <div class="step active" data-step="1">
+                        <div class="step-icon">
+                            <i class="fas fa-plug"></i>
+                        </div>
+                        <div class="step-content">
+                            <h4>Step 1: Authorize Access</h4>
+                            <p>Allow Vault OS to access your Google Drive</p>
+                            <button class="btn-authorize" id="authorize-drive">
+                                <i class="fab fa-google"></i>
+                                Authorize with Google
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="step" data-step="2">
+                        <div class="step-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
+                        <div class="step-content">
+                            <h4>Step 2: Grant Permissions</h4>
+                            <p>We need these permissions:</p>
+                            <ul class="permissions-list">
+                                <li>
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>View your Google Drive files</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Create and edit files</span>
+                                </li>
+                                <li>
+                                    <i class="fas fa-check-circle"></i>
+                                    <span>Sync changes in real-time</span>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                    
+                    <div class="step" data-step="3">
+                        <div class="step-icon">
+                            <i class="fas fa-sync-alt"></i>
+                        </div>
+                        <div class="step-content">
+                            <h4>Step 3: Sync Your Files</h4>
+                            <p>Initial sync in progress...</p>
+                            <div class="sync-progress" id="sync-progress">
+                                <div class="progress-bar">
+                                    <div class="progress-fill"></div>
+                                </div>
+                                <div class="progress-text">0% • Preparing...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Connection Status -->
+                <div class="connection-status" id="connection-status">
+                    <div class="status-header">
+                        <i class="fas fa-circle" id="status-indicator"></i>
+                        <h5>Connection Status</h5>
+                    </div>
+                    <div class="status-details">
+                        <div class="status-item">
+                            <span class="label">OAuth Status:</span>
+                            <span class="value" id="oauth-status">Not started</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">API Access:</span>
+                            <span class="value" id="api-status">Disabled</span>
+                        </div>
+                        <div class="status-item">
+                            <span class="label">Sync Status:</span>
+                            <span class="value" id="sync-status">Waiting</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-secondary" id="cancel-connection">
+                    Cancel
+                </button>
+                <button class="btn-primary" id="retry-connection">
+                    <i class="fas fa-redo"></i>
+                    Retry Connection
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Interface -->
+    <div id="app-interface" class="hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="btn-menu" id="menu-toggle">
+                    <i class="fas fa-bars"></i>
+                </button>
+                <div class="brand">
+                    <i class="fas fa-fingerprint"></i>
+                    <span class="brand-name">Vault</span>
+                </div>
+            </div>
+            
+            <!-- Drive Connection Status -->
+            <div class="drive-status-container">
+                <button class="drive-status-btn" id="drive-status-toggle">
+                    <div class="drive-status-indicator">
+                        <i class="fab fa-google-drive"></i>
+                        <span class="status-dot" id="drive-status-dot"></span>
+                    </div>
+                    <span class="status-text" id="drive-status-text">Drive: Disconnected</span>
+                    <i class="fas fa-chevron-down status-arrow"></i>
+                </button>
+                
+                <!-- Drive Status Dropdown -->
+                <div class="drive-status-dropdown hidden" id="drive-status-dropdown">
+                    <div class="dropdown-header">
+                        <i class="fab fa-google-drive"></i>
+                        <h4>Google Drive Connection</h4>
+                    </div>
+                    
+                    <div class="dropdown-content">
+                        <div class="status-item">
+                            <i class="fas fa-plug"></i>
+                            <div>
+                                <span class="label">Connection:</span>
+                                <span class="value" id="dropdown-connection">Disconnected</span>
+                            </div>
+                        </div>
+                        
+                        <div class="status-item">
+                            <i class="fas fa-sync-alt"></i>
+                            <div>
+                                <span class="label">Last Sync:</span>
+                                <span class="value" id="dropdown-last-sync">Never</span>
+                            </div>
+                        </div>
+                        
+                        <div class="status-item">
+                            <i class="fas fa-database"></i>
+                            <div>
+                                <span class="label">Files:</span>
+                                <span class="value" id="dropdown-file-count">0 files</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="dropdown-actions">
+                        <button class="dropdown-btn" id="reconnect-drive">
+                            <i class="fas fa-redo"></i>
+                            Reconnect
+                        </button>
+                        <button class="dropdown-btn" id="manage-drive">
+                            <i class="fas fa-cog"></i>
+                            Manage
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Search Bar -->
+            <div class="header-center">
+                <div class="search-container">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="search-input" class="search-input" placeholder="Search files...">
+                    <button class="btn-search-clear hidden" id="clear-search">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Header Right -->
+            <div class="header-right">
+                <!-- Sync Status -->
+                <div class="sync-status" id="sync-status-widget">
+                    <div class="sync-icon">
+                        <i class="fas fa-sync-alt"></i>
+                    </div>
+                    <div class="sync-details">
+                        <span class="sync-text" id="sync-text">Synced</span>
+                        <span class="sync-time" id="sync-time">Now</span>
+                    </div>
+                </div>
+                
+                <!-- User Profile -->
+                <div class="user-profile" id="user-profile">
+                    <img src="" alt="User" id="user-avatar" class="user-avatar"
+                         onerror="this.src='data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><circle cx=%2250%22 cy=%2250%22 r=%2245%22 fill=%22%2300f3ff%22/><text x=%2250%22 y=%2265%22 text-anchor=%22middle%22 font-size=%2240%22 fill=%22white%22>U</text></svg>'">
+                    <div class="profile-dropdown hidden" id="profile-dropdown">
+                        <div class="dropdown-item" id="view-profile">
+                            <i class="fas fa-user"></i>
+                            <span>Profile</span>
+                        </div>
+                        <div class="dropdown-item" id="account-settings">
+                            <i class="fas fa-cog"></i>
+                            <span>Account Settings</span>
+                        </div>
+                        <div class="dropdown-divider"></div>
+                        <div class="dropdown-item logout" id="logout-btn">
+                            <i class="fas fa-sign-out-alt"></i>
+                            <span>Logout</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </header>
+
+        <!-- Desktop Sidebar -->
+        <nav class="sidebar" id="sidebar">
+            <div class="sidebar-menu">
+                <a class="menu-item active" data-tab="home" id="tab-home">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <a class="menu-item" data-tab="recent" id="tab-recent">
+                    <i class="fas fa-clock"></i>
+                    <span>Recent</span>
+                </a>
+                <a class="menu-item" data-tab="gallery" id="tab-gallery">
+                    <i class="fas fa-images"></i>
+                    <span>Gallery</span>
+                </a>
+                <a class="menu-item" data-tab="shared" id="tab-shared">
+                    <i class="fas fa-share-alt"></i>
+                    <span>Shared</span>
+                    <span class="menu-badge" id="shared-count">0</span>
+                </a>
+                <a class="menu-item" data-tab="trash" id="tab-trash">
+                    <i class="fas fa-trash"></i>
+                    <span>Trash</span>
+                    <span class="menu-badge" id="trash-count">0</span>
+                </a>
+                <a class="menu-item" data-tab="settings" id="tab-settings">
+                    <i class="fas fa-cog"></i>
+                    <span>Settings</span>
+                </a>
+            </div>
+            
+            <div class="sidebar-footer">
+                <div class="storage-widget">
+                    <div class="storage-header">
+                        <i class="fas fa-database"></i>
+                        <h5>Storage</h5>
+                    </div>
+                    <div class="storage-progress">
+                        <div class="progress-bar">
+                            <div class="progress-fill" id="sidebar-storage-fill"></div>
+                        </div>
+                        <div class="storage-text" id="sidebar-storage-text">0GB of 15GB used</div>
+                    </div>
+                    <button class="btn-upgrade" id="upgrade-storage">
+                        <i class="fas fa-rocket"></i>
+                        Upgrade
+                    </button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content" id="main-content">
+            <!-- Breadcrumbs -->
+            <div class="breadcrumbs" id="breadcrumbs">
+                <a class="crumb home-crumb" id="home-crumb">
+                    <i class="fas fa-home"></i>
+                    <span>Home</span>
+                </a>
+                <div class="crumb-separator">/</div>
+                <span class="crumb current-crumb" id="current-crumb">All Files</span>
+            </div>
+
+            <!-- View Controls -->
+            <div class="view-controls">
+                <div class="view-toggle">
+                    <button class="view-btn active" data-view="grid" id="view-grid">
+                        <i class="fas fa-th"></i>
+                        <span>Grid</span>
+                    </button>
+                    <button class="view-btn" data-view="list" id="view-list">
+                        <i class="fas fa-list"></i>
+                        <span>List</span>
+                    </button>
+                </div>
+                
+                <div class="sort-options">
+                    <select id="sort-select" class="sort-select">
+                        <option value="name_asc">Name A-Z</option>
+                        <option value="name_desc">Name Z-A</option>
+                        <option value="date_desc" selected>Newest First</option>
+                        <option value="date_asc">Oldest First</option>
+                        <option value="size_desc">Largest First</option>
+                        <option value="size_asc">Smallest First</option>
+                        <option value="type">File Type</option>
+                    </select>
+                </div>
+                
+                <div class="filter-options">
+                    <select id="filter-select" class="filter-select">
+                        <option value="all">All Files</option>
+                        <option value="images">Images</option>
+                        <option value="videos">Videos</option>
+                        <option value="audio">Audio</option>
+                        <option value="documents">Documents</option>
+                        <option value="folders">Folders</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- Gallery Categories (Only in Gallery Tab) -->
+            <div class="gallery-categories hidden" id="gallery-categories">
+                <div class="category-grid">
+                    <div class="category-card active" data-type="image" id="cat-images">
+                        <div class="category-icon">
+                            <i class="fas fa-images"></i>
+                        </div>
+                        <h3>Photos</h3>
+                        <p class="category-count" id="image-count">0 files</p>
+                    </div>
+                    <div class="category-card" data-type="video" id="cat-videos">
+                        <div class="category-icon">
+                            <i class="fas fa-video"></i>
+                        </div>
+                        <h3>Videos</h3>
+                        <p class="category-count" id="video-count">0 files</p>
+                    </div>
+                    <div class="category-card" data-type="audio" id="cat-audio">
+                        <div class="category-icon">
+                            <i class="fas fa-music"></i>
+                        </div>
+                        <h3>Audio</h3>
+                        <p class="category-count" id="audio-count">0 files</p>
+                    </div>
+                    <div class="category-card" data-type="document" id="cat-documents">
+                        <div class="category-icon">
+                            <i class="fas fa-file-alt"></i>
+                        </div>
+                        <h3>Documents</h3>
+                        <p class="category-count" id="doc-count">0 files</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- File Container -->
+            <div class="file-container">
+                <!-- Grid View -->
+                <div class="file-grid active" id="file-grid">
+                    <!-- Files loaded dynamically -->
+                </div>
+                
+                <!-- List View -->
+                <div class="file-list hidden" id="file-list">
+                    <div class="list-header">
+                        <div class="list-col name">Name</div>
+                        <div class="list-col type">Type</div>
+                        <div class="list-col size">Size</div>
+                        <div class="list-col modified">Modified</div>
+                        <div class="list-col actions">Actions</div>
+                    </div>
+                    <div class="list-body" id="list-body">
+                        <!-- List items loaded dynamically -->
+                    </div>
+                </div>
+
+                <!-- Empty State -->
+                <div class="empty-state hidden" id="empty-state">
+                    <div class="empty-icon">
+                        <i class="fas fa-cloud"></i>
+                    </div>
+                    <h3 id="empty-title">No Files Found</h3>
+                    <p id="empty-message">Connect Google Drive to see your files</p>
+                    <div class="empty-actions">
+                        <button class="btn-primary" id="connect-empty-drive">
+                            <i class="fab fa-google-drive"></i>
+                            Connect Google Drive
+                        </button>
+                        <button class="btn-secondary" id="upload-first-file">
+                            <i class="fas fa-upload"></i>
+                            Upload Files
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Loading State -->
+                <div class="loading-state hidden" id="loading-state">
+                    <div class="loading-spinner"></div>
+                    <p>Loading files...</p>
+                </div>
+            </div>
+        </main>
+
+        <!-- FAB Menu -->
+        <div class="fab-container">
+            <div class="fab-menu hidden" id="fab-menu">
+                <button class="fab-item" id="upload-file-btn">
+                    <i class="fas fa-file-upload"></i>
+                    <span>Upload File</span>
+                </button>
+                <button class="fab-item" id="upload-folder-btn">
+                    <i class="fas fa-folder-plus"></i>
+                    <span>Upload Folder</span>
+                </button>
+                <button class="fab-item" id="create-folder-btn">
+                    <i class="fas fa-folder"></i>
+                    <span>New Folder</span>
+                </button>
+                <button class="fab-item" id="create-note-btn">
+                    <i class="fas fa-edit"></i>
+                    <span>New Note</span>
+                </button>
+            </div>
+            <button class="fab-main" id="fab-main">
+                <i class="fas fa-plus" id="fab-icon"></i>
+            </button>
+        </div>
+
+        <!-- Hidden File Inputs -->
+        <input type="file" id="file-input" multiple hidden>
+        <input type="file" id="folder-input" webkitdirectory directory hidden>
+
+        <!-- Media Viewer Modal -->
+        <div id="media-modal" class="modal hidden">
+            <div class="modal-content media-modal">
+                <button class="btn-close" id="close-media">
+                    <i class="fas fa-times"></i>
+                </button>
+                
+                <div class="media-header">
+                    <h3 class="media-title" id="media-title">File Preview</h3>
+                    <div class="media-actions">
+                        <button class="btn-media-action" id="download-media">
+                            <i class="fas fa-download"></i>
+                        </button>
+                        <button class="btn-media-action" id="share-media">
+                            <i class="fas fa-share-alt"></i>
+                        </button>
+                        <button class="btn-media-action" id="delete-media">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="media-body">
+                    <!-- Video Player -->
+                    <div class="media-container video-container hidden" id="video-container">
+                        <div class="video-wrapper">
+                            <video id="video-player" controls crossorigin playsinline>
+                                <source src="" type="video/mp4">
+                            </video>
+                        </div>
+                        <div class="video-controls">
+                            <button class="btn-control" id="rotate-video">
+                                <i class="fas fa-undo"></i>
+                                Rotate
+                            </button>
+                            <button class="btn-control" id="fullscreen-video">
+                                <i class="fas fa-expand"></i>
+                                Fullscreen
+                            </button>
+                            <button class="btn-control" id="quality-select">
+                                <i class="fas fa-hd"></i>
+                                Quality
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Image Viewer -->
+                    <div class="media-container image-container hidden" id="image-container">
+                        <div class="image-wrapper">
+                            <img id="image-viewer" src="" alt="Image Preview">
+                        </div>
+                        <div class="image-controls">
+                            <button class="btn-control" id="rotate-left">
+                                <i class="fas fa-undo"></i>
+                            </button>
+                            <button class="btn-control" id="rotate-right">
+                                <i class="fas fa-redo"></i>
+                            </button>
+                            <button class="btn-control" id="zoom-in">
+                                <i class="fas fa-search-plus"></i>
+                            </button>
+                            <button class="btn-control" id="zoom-out">
+                                <i class="fas fa-search-minus"></i>
+                            </button>
+                            <button class="btn-control" id="fullscreen-image">
+                                <i class="fas fa-expand"></i>
+                            </button>
+                            <button class="btn-control" id="save-image">
+                                <i class="fas fa-save"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- PDF Viewer -->
+                    <div class="media-container pdf-container hidden" id="pdf-container">
+                        <div class="pdf-viewer">
+                            <div class="pdf-toolbar">
+                                <button class="pdf-btn" id="prev-page">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <span class="page-info">
+                                    Page <span id="current-page">1</span> of <span id="total-pages">1</span>
+                                </span>
+                                <button class="pdf-btn" id="next-page">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                                <input type="range" id="page-slider" min="1" max="1" value="1" class="page-slider">
+                                <button class="pdf-btn" id="zoom-in-pdf">
+                                    <i class="fas fa-search-plus"></i>
+                                </button>
+                                <button class="pdf-btn" id="zoom-out-pdf">
+                                    <i class="fas fa-search-minus"></i>
+                                </button>
+                                <button class="pdf-btn" id="fullscreen-pdf">
+                                    <i class="fas fa-expand"></i>
+                                </button>
+                            </div>
+                            <div class="pdf-canvas-container">
+                                <canvas id="pdf-canvas"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- ZIP Viewer -->
+                    <div class="media-container zip-container hidden" id="zip-container">
+                        <div class="zip-viewer">
+                            <div class="zip-header">
+                                <h4>ZIP Archive Contents</h4>
+                                <button class="btn-extract-all" id="extract-all">
+                                    <i class="fas fa-file-archive"></i>
+                                    Extract All
+                                </button>
+                            </div>
+                            <div class="zip-list" id="zip-list">
+                                <!-- ZIP contents loaded dynamically -->
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Default Viewer (Drive) -->
+                    <div class="media-container default-container hidden" id="default-container">
+                        <div class="default-viewer">
+                            <i class="fas fa-external-link-alt"></i>
+                            <h4>Opening in Google Drive</h4>
+                            <p>This file will open in Google Drive viewer</p>
+                            <button class="btn-open-drive" id="open-in-drive">
+                                <i class="fab fa-google-drive"></i>
+                                Open in Drive
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="media-footer">
+                    <div class="file-info">
+                        <div class="info-item">
+                            <i class="fas fa-file"></i>
+                            <span id="file-name">file.name</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-weight-hanging"></i>
+                            <span id="file-size">0 KB</span>
+                        </div>
+                        <div class="info-item">
+                            <i class="fas fa-calendar"></i>
+                            <span id="file-date">Today</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Settings Modal -->
+        <div id="settings-modal" class="modal hidden">
+            <div class="modal-content settings-modal">
+                <div class="settings-header">
+                    <h2>
+                        <i class="fas fa-cog"></i>
+                        Settings
+                    </h2>
+                    <button class="btn-close" id="close-settings">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="settings-body">
+                    <div class="settings-tabs">
+                        <button class="settings-tab active" data-tab="general">
+                            <i class="fas fa-sliders-h"></i>
+                            General
+                        </button>
+                        <button class="settings-tab" data-tab="viewer">
+                            <i class="fas fa-eye"></i>
+                            Viewer
+                        </button>
+                        <button class="settings-tab" data-tab="sync">
+                            <i class="fas fa-sync-alt"></i>
+                            Sync
+                        </button>
+                        <button class="settings-tab" data-tab="security">
+                            <i class="fas fa-shield-alt"></i>
+                            Security
+                        </button>
+                        <button class="settings-tab" data-tab="about">
+                            <i class="fas fa-info-circle"></i>
+                            About
+                        </button>
+                    </div>
+                    
+                    <div class="settings-content">
+                        <!-- General Settings -->
+                        <div class="settings-panel active" id="general-panel">
+                            <div class="setting-section">
+                                <h3>Appearance</h3>
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-moon"></i>
+                                        <div>
+                                            <h4>Dark Mode</h4>
+                                            <p>Use dark theme interface</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="dark-mode" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-th-large"></i>
+                                        <div>
+                                            <h4>Default View</h4>
+                                            <p>Choose default file view mode</p>
+                                        </div>
+                                    </div>
+                                    <select class="select-input" id="default-view">
+                                        <option value="grid">Grid View</option>
+                                        <option value="list">List View</option>
+                                    </select>
+                                </div>
+                            </div>
+                            
+                            <div class="setting-section">
+                                <h3>Google Drive</h3>
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fab fa-google-drive"></i>
+                                        <div>
+                                            <h4>Connection Status</h4>
+                                            <p id="drive-connection-status-text">Disconnected</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-setting" id="manage-drive-settings">
+                                        <i class="fas fa-cog"></i>
+                                        Manage
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Viewer Settings -->
+                        <div class="settings-panel" id="viewer-panel">
+                            <div class="setting-section">
+                                <h3>Media Viewers</h3>
+                                <p class="section-description">Toggle between upgraded Vault viewers and default Google Drive viewers</p>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-video"></i>
+                                        <div>
+                                            <h4>Video Player</h4>
+                                            <p>Upgraded player with rotation, quality controls</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="upgraded-video" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-image"></i>
+                                        <div>
+                                            <h4>Image Viewer</h4>
+                                            <p>Enhanced viewer with rotation, zoom, filters</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="upgraded-image" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-file-pdf"></i>
+                                        <div>
+                                            <h4>PDF Viewer</h4>
+                                            <p>Built-in PDF reader with page navigation</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="upgraded-pdf" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-file-archive"></i>
+                                        <div>
+                                            <h4>ZIP Viewer</h4>
+                                            <p>Extract and preview ZIP files directly</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="upgraded-zip" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Sync Settings -->
+                        <div class="settings-panel" id="sync-panel">
+                            <div class="setting-section">
+                                <h3>Synchronization</h3>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-sync-alt"></i>
+                                        <div>
+                                            <h4>Auto Sync</h4>
+                                            <p>Automatically sync changes with Google Drive</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="auto-sync" checked>
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-wifi"></i>
+                                        <div>
+                                            <h4>Sync over Mobile Data</h4>
+                                            <p>Allow syncing when not on WiFi</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="mobile-sync">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-battery-three-quarters"></i>
+                                        <div>
+                                            <h4>Low Power Mode</h4>
+                                            <p>Reduce sync frequency to save battery</p>
+                                        </div>
+                                    </div>
+                                    <label class="switch">
+                                        <input type="checkbox" id="low-power-sync">
+                                        <span class="slider"></span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Security Settings -->
+                        <div class="settings-panel" id="security-panel">
+                            <div class="setting-section">
+                                <h3>Security</h3>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-key"></i>
+                                        <div>
+                                            <h4>Change PIN</h4>
+                                            <p>Update your 4-digit security PIN</p>
+                                        </div>
+                                    </div>
+                                    <button class="btn-setting" id="change-pin-btn">
+                                        Change
+                                    </button>
+                                </div>
+                                
+                                <div class="setting-item">
+                                    <div class="setting-label">
+                                        <i class="fas fa-lock"></i>
+                                        <div>
+                                            <h4>Auto Lock</h4>
+                                            <p>Lock app after period of inactivity</p>
+                                        </div>
+                                    </div>
+                                    <select class="select-input" id="auto-lock-time">
+                                        <option value="1">1 minute</option>
+                                        <option value="5">5 minutes</option>
+                                        <option value="15" selected>15 minutes</option>
+                                        <option value="60">1 hour</option>
+                                        <option value="0">Never</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- About Settings -->
+                        <div class="settings-panel" id="about-panel">
+                            <div class="setting-section">
+                                <h3>About Vault OS</h3>
+                                
+                                <div class="about-content">
+                                    <div class="app-icon">
+                                        <i class="fas fa-shield-alt"></i>
+                                    </div>
+                                    <h4>Vault OS Ultimate</h4>
+                                    <p class="version">Version 2.0.0</p>
+                                    
+                                    <div class="about-features">
+                                        <div class="feature">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>End-to-end encryption</span>
+                                        </div>
+                                        <div class="feature">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Google Drive integration</span>
+                                        </div>
+                                        <div class="feature">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Advanced media viewers</span>
+                                        </div>
+                                        <div class="feature">
+                                            <i class="fas fa-check-circle"></i>
+                                            <span>Real-time synchronization</span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="settings-footer">
+                    <button class="btn-secondary" id="reset-settings">
+                        Reset to Default
+                    </button>
+                    <button class="btn-primary" id="save-settings">
+                        Save Changes
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Change PIN Modal -->
+        <div id="pin-change-modal" class="modal hidden">
+            <div class="modal-content pin-change-modal">
+                <h3>
+                    <i class="fas fa-key"></i>
+                    Change Security PIN
+                </h3>
+                
+                <div class="pin-form">
+                    <div class="pin-input-group">
+                        <label>Current PIN</label>
+                        <input type="password" id="current-pin-input" maxlength="4" placeholder="••••">
+                    </div>
+                    
+                    <div class="pin-input-group">
+                        <label>New PIN</label>
+                        <input type="password" id="new-pin-input" maxlength="4" placeholder="••••">
+                    </div>
+                    
+                    <div class="pin-input-group">
+                        <label>Confirm New PIN</label>
+                        <input type="password" id="confirm-pin-input" maxlength="4" placeholder="••••">
+                    </div>
+                </div>
+                
+                <div class="pin-actions">
+                    <button class="btn-secondary" id="cancel-pin-change">
+                        Cancel
+                    </button>
+                    <button class="btn-primary" id="save-pin-change">
+                        Save New PIN
+                    </button>
+                </div>
+                
+                <div class="pin-error hidden" id="pin-change-error"></div>
+            </div>
+        </div>
+
+        <!-- Upload Progress Modal -->
+        <div id="upload-progress-modal" class="modal hidden">
+            <div class="modal-content upload-progress-modal">
+                <div class="progress-header">
+                    <h4>
+                        <i class="fas fa-upload"></i>
+                        Upload Progress
+                    </h4>
+                    <button class="btn-close" id="close-upload-progress">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                
+                <div class="progress-list" id="upload-progress-list">
+                    <!-- Upload items added dynamically -->
+                </div>
+                
+                <div class="progress-summary">
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="overall-progress"></div>
+                    </div>
+                    <div class="progress-text">
+                        <span id="upload-status">Preparing...</span>
+                        <span id="upload-speed">0 KB/s</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Batch Actions Bar -->
+        <div id="batch-actions" class="hidden">
+            <div class="batch-header">
+                <span id="selected-count">0 items selected</span>
+                <button class="btn-clear" id="clear-selection">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="batch-buttons">
+                <button class="batch-btn" id="batch-download">
+                    <i class="fas fa-download"></i>
+                    Download
+                </button>
+                <button class="batch-btn" id="batch-share">
+                    <i class="fas fa-share-alt"></i>
+                    Share
+                </button>
+                <button class="batch-btn" id="batch-move">
+                    <i class="fas fa-folder"></i>
+                    Move
+                </button>
+                <button class="batch-btn btn-danger" id="batch-delete">
+                    <i class="fas fa-trash"></i>
+                    Delete
+                </button>
+            </div>
+        </div>
+
+        <!-- Mobile Bottom Navigation -->
+        <nav class="bottom-nav" id="bottom-nav">
+            <a class="nav-item active" data-tab="home">
+                <i class="fas fa-home"></i>
+                <span>Home</span>
+            </a>
+            <a class="nav-item" data-tab="recent">
+                <i class="fas fa-clock"></i>
+                <span>Recent</span>
+            </a>
+            <a class="nav-item" data-tab="gallery">
+                <i class="fas fa-images"></i>
+                <span>Gallery</span>
+            </a>
+            <a class="nav-item" data-tab="settings">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </a>
+        </nav>
+
+        <!-- Toast Container -->
+        <div id="toast-container"></div>
+    </div>
+
+    <!-- ===== NON‑SECURITY PRO UPGRADES ===== -->
+    <div id="favorites-panel" class="hidden">
+        <h3><i class="fas fa-star"></i> Favorites</h3>
+        <div class="file-grid" id="favorites-grid"></div>
+    </div>
+
+    <!-- Drive Analyzer Modal -->
+    <div id="analyzer-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3><i class="fas fa-chart-pie"></i> Drive Analyzer</h3>
+            <div class="analyzer-stats">
+                <div class="stat">Large Files</div>
+                <div class="stat">Duplicates</div>
+                <div class="stat">Old Files</div>
+            </div>
+            <button class="btn-primary">Scan Drive</button>
+        </div>
+    </div>
+
+    <!-- Duplicate Finder -->
+    <div id="duplicate-modal" class="modal hidden">
+        <div class="modal-content">
+            <h3><i class="fas fa-copy"></i> Duplicate Files</h3>
+            <div id="duplicate-list"></div>
+            <button class="btn-danger">Delete Selected</button>
+        </div>
+    </div>
+
+    <!-- Insights Dashboard -->
+    <div id="insights-panel" class="hidden">
+        <h3><i class="fas fa-chart-line"></i> Usage Insights</h3>
+        <ul>
+            <li>Most Opened Files</li>
+            <li>Most Shared</li>
+            <li>Largest Files</li>
+        </ul>
+    </div>
+
+    <!-- Offline Mode Banner -->
+    <div id="offline-banner" class="hidden">
+        <i class="fas fa-wifi-slash"></i> Offline Mode: Read‑only access
+    </div>
+
+    <!-- Smart Search Chips -->
+    <div id="smart-search" class="hidden">
+        <span class="chip">PDF Last Week</span>
+        <span class="chip">Videos &gt; 100MB</span>
+        <span class="chip">Images</span>
+    </div>
+
+    <!-- Mini Player Placeholder -->
+    <div id="mini-player" class="hidden">
+        <i class="fas fa-play"></i> Playing in background
+    </div>
+    <!-- ===== END NON‑SECURITY UPGRADES ===== -->
+
+    <!-- JavaScript Libraries -->
+    <!-- Google API Libraries -->
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
+    
+    <!-- Plyr Video Player -->
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    
+    <!-- File Operations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
+    
+    <!-- App Modules -->
+    <script src="config.js"></script>
+    <script src="auth.js"></script>
+    <script src="drive.js"></script>
+    <script src="ui.js"></script>
+    <script src="media.js"></script>
+    <script src="app.js"></script>
+    
+    <!-- Initialize Firebase -->
+    <script>
+        // Initialize Firebase with your configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+            authDomain: "encrypted-vault-4683d.firebaseapp.com",
+            databaseURL: "https://encrypted-vault-4683d-default-rtdb.firebaseio.com",
+            projectId: "encrypted-vault-4683d",
+            storageBucket: "encrypted-vault-4683d.firebasestorage.app",
+            messagingSenderId: "851257263743",
+            appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+    </script>
+</body>
+</html>
