@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyber">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Features - Vault OS Ultimate</title>
+    <link rel="stylesheet" href="../styles.css">
+    <style>
+        .features-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 1.5rem;
+            margin-top: 2rem;
+        }
+        
+        .feature-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 10px;
+            padding: 1.5rem;
+            transition: transform 0.3s, box-shadow 0.3s;
+        }
+        
+        .feature-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0, 243, 255, 0.1);
+        }
+        
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .feature-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+            margin-top: 1rem;
+        }
+        
+        .status-active {
+            background: rgba(0, 255, 157, 0.1);
+            color: #00ff9d;
+            border: 1px solid rgba(0, 255, 157, 0.3);
+        }
+        
+        .status-coming {
+            background: rgba(255, 221, 89, 0.1);
+            color: #ffdd59;
+            border: 1px solid rgba(255, 221, 89, 0.3);
+        }
+        
+        .status-planned {
+            background: rgba(0, 168, 255, 0.1);
+            color: #00a8ff;
+            border: 1px solid rgba(0, 168, 255, 0.3);
+        }
+        
+        .back-button {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            padding: 0.75rem 1.5rem;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            text-decoration: none;
+            margin-bottom: 2rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="features-container">
+        <a href="prime.html" class="back-button">
+            ← Back to Vault OS
+        </a>
+        
+        <header class="features-header">
+            <h1>🚀 Vault OS Ultimate Features</h1>
+            <p class="subtitle">Explore all the powerful features of your secure cloud storage</p>
+        </header>
+        
+        <div class="feature-stats">
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="active-features">24</div>
+                    <div class="stat-label">Active Features</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="coming-soon">8</div>
+                    <div class="stat-label">Coming Soon</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="planned-features">12</div>
+                    <div class="stat-label">Planned Features</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="user-count">1,000+</div>
+                    <div class="stat-label">Active Users</div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="feature-categories">
+            <h2>🔐 Authentication & Security</h2>
+            <div class="feature-grid" id="security-features">
+                <!-- Security features will be loaded here -->
+            </div>
+            
+            <h2>📁 File Operations</h2>
+            <div class="feature-grid" id="file-features">
+                <!-- File operation features will be loaded here -->
+            </div>
+            
+            <h2>🎨 Media & Viewers</h2>
+            <div class="feature-grid" id="media-features">
+                <!-- Media features will be loaded here -->
+            </div>
+            
+            <h2>🔄 Sync & Storage</h2>
+            <div class="feature-grid" id="sync-features">
+                <!-- Sync features will be loaded here -->
+            </div>
+            
+            <h2>⚡ Performance & UI</h2>
+            <div class="feature-grid" id="ui-features">
+                <!-- UI features will be loaded here -->
+            </div>
+            
+            <h2>🚀 Advanced Features</h2>
+            <div class="feature-grid" id="advanced-features">
+                <!-- Advanced features will be loaded here -->
+            </div>
+        </div>
+        
+        <div class="features-footer">
+            <h3>💡 Feature Requests</h3>
+            <p>Have an idea for a new feature? <a href="mailto:support@vaultos.com">Contact our team</a></p>
+            <p class="version-info">Vault OS Ultimate v3.0.0 | Last Updated: <span id="last-updated"></span></p>
+        </div>
+    </div>
+    
+    <script src="../js/vault_features.js"></script>
+    <script>
+        // Initialize features
+        document.addEventListener('DOMContentLoaded', () => {
+            if (window.vault_features) {
+                vault_features.init();
+            }
+        });
+    </script>
+</body>
+</html>
