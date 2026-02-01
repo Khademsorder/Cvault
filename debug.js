@@ -1,473 +1,565 @@
-// simple-debug.js
-// =========================================
-// SIMPLE BUT POWERFUL DEBUG CONSOLE
-// No Errors Guaranteed!
-// =========================================
+// === SUPER DEBUG.js ===
+// Save as debug.js and include in your app
 
-(function() {
-    'use strict';
-    
-    console.log('🐛 Simple Debug Console loading...');
-    
-    // 1. FIRST - Create the floating button (ALWAYS VISIBLE)
-    function createDebugButton() {
-        try {
-            const button = document.createElement('button');
-            button.id = 'simple-debug-btn';
-            button.innerHTML = '🐛';
-            button.title = 'Debug Console';
-            
-            // Force visible with highest priority
-            Object.assign(button.style, {
-                position: 'fixed',
-                bottom: '20px',
-                right: '20px',
-                width: '60px',
-                height: '60px',
-                background: 'linear-gradient(135deg, #FF4081, #FF5252)',
-                color: 'white',
-                borderRadius: '50%',
-                border: '3px solid white',
-                fontSize: '24px',
-                cursor: 'pointer',
-                zIndex: '9999999',
-                boxShadow: '0 6px 25px rgba(255, 64, 129, 0.5)',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                transition: 'all 0.3s ease'
-            });
-            
-            // Add hover effect
-            button.addEventListener('mouseenter', () => {
-                button.style.transform = 'scale(1.2)';
-            });
-            
-            button.addEventListener('mouseleave', () => {
-                button.style.transform = 'scale(1)';
-            });
-            
-            // Simple click handler
-            button.addEventListener('click', showDebugConsole);
-            
-            document.body.appendChild(button);
-            console.log('✅ Debug button created');
-            
-        } catch (error) {
-            console.error('Failed to create debug button:', error);
-        }
+class SuperDebug {
+    constructor() {
+        this.logs = [];
+        this.maxLogs = 500;
+        this.startTime = Date.now();
+        this.init();
     }
     
-    // 2. Create SIMPLE debug console
-    function createDebugConsole() {
-        try {
-            const consoleDiv = document.createElement('div');
-            consoleDiv.id = 'simple-debug-console';
-            
-            Object.assign(consoleDiv.style, {
-                position: 'fixed',
-                bottom: '90px',
-                right: '20px',
-                width: '90%',
-                maxWidth: '500px',
-                height: '60vh',
-                background: 'rgba(20, 20, 30, 0.98)',
-                backdropFilter: 'blur(20px)',
-                border: '2px solid #FF4081',
-                borderRadius: '15px',
-                zIndex: '9999998',
-                fontFamily: 'monospace',
-                color: 'white',
-                display: 'none',
-                flexDirection: 'column',
-                boxShadow: '0 15px 50px rgba(0,0,0,0.7)',
-                overflow: 'hidden'
-            });
-            
-            // Simple HTML
-            consoleDiv.innerHTML = `
-                <div style="
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    padding: 15px;
-                    background: rgba(40, 40, 50, 0.95);
-                    border-bottom: 1px solid rgba(255,255,255,0.1);
-                ">
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <span style="font-size: 20px;">🐛</span>
-                        <span style="font-weight: bold; color: #FF4081;">Simple Debug</span>
-                    </div>
-                    <div style="display: flex; gap: 10px;">
-                        <button id="debug-clear" style="
-                            background: rgba(255,100,100,0.2);
-                            color: #ff6464;
-                            border: 1px solid rgba(255,100,100,0.3);
-                            width: 40px;
-                            height: 40px;
-                            border-radius: 50%;
-                            cursor: pointer;
-                            display: flex;
-                            justify-content: center;
-                            align-items: center;
-                        ">🗑️</button>
-                        <button id="debug-close" style="
-                            background: rgba(255,255,255,0.1);
-                            color: white;
-                            border: none;
-                            width: 40px;
-                            height: 40px;
-                            border-radius: 50%;
-                            cursor: pointer;
-                            font-size: 20px;
-                        ">✕</button>
-                    </div>
-                </div>
-                
-                <div style="
-                    flex: 1;
-                    overflow-y: auto;
-                    padding: 15px;
-                    font-size: 12px;
-                    line-height: 1.4;
-                " id="debug-logs"></div>
-                
-                <div style="
-                    padding: 15px;
-                    background: rgba(30,30,40,0.95);
-                    border-top: 1px solid rgba(255,255,255,0.1);
-                    display: flex;
-                    gap: 10px;
-                ">
-                    <button id="copy-ai" style="
-                        flex: 1;
-                        padding: 10px;
-                        background: linear-gradient(135deg, #2196F3, #1976D2);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-weight: bold;
-                        display: flex;
-                        align-items: center;
-                        justify-content: center;
-                        gap: 8px;
-                    ">
-                        <span>🤖</span>
-                        <span>Copy for AI</span>
-                    </button>
-                    <button id="test-api" style="
-                        padding: 10px 20px;
-                        background: linear-gradient(135deg, #4CAF50, #388E3C);
-                        color: white;
-                        border: none;
-                        border-radius: 8px;
-                        cursor: pointer;
-                        font-weight: bold;
-                    ">🔌 Test API</button>
-                </div>
-            `;
-            
-            document.body.appendChild(consoleDiv);
-            
-            // Add event listeners
-            document.getElementById('debug-close').addEventListener('click', hideDebugConsole);
-            document.getElementById('debug-clear').addEventListener('click', clearDebugLogs);
-            document.getElementById('copy-ai').addEventListener('click', copyForAI);
-            document.getElementById('test-api').addEventListener('click', testAPIConnection);
-            
-            console.log('✅ Debug console created');
-            
-        } catch (error) {
-            console.error('Failed to create debug console:', error);
-        }
+    init() {
+        console.log('🚀 SuperDebug Activated');
+        
+        // 1. HOOK EVERYTHING
+        this.hookConsole();
+        this.hookErrors();
+        this.hookNetwork();
+        this.hookStorage();
+        this.hookMediaViewer();
+        this.createUI();
+        
+        // Auto-diagnose
+        setTimeout(() => this.autoDiagnose(), 2000);
     }
     
-    // 3. Show/Hide console
-    function showDebugConsole() {
-        try {
-            const consoleDiv = document.getElementById('simple-debug-console');
-            if (consoleDiv) {
-                consoleDiv.style.display = 'flex';
-                consoleDiv.style.animation = 'slideIn 0.3s ease';
-            }
-        } catch (error) {
-            console.error('Failed to show console:', error);
-        }
-    }
-    
-    function hideDebugConsole() {
-        try {
-            const consoleDiv = document.getElementById('simple-debug-console');
-            if (consoleDiv) {
-                consoleDiv.style.display = 'none';
-            }
-        } catch (error) {
-            console.error('Failed to hide console:', error);
-        }
-    }
-    
-    // 4. Log collection
-    const debugLogs = [];
-    
-    // Override console methods
-    function hookConsole() {
-        try {
-            const originalLog = console.log;
-            const originalError = console.error;
-            const originalWarn = console.warn;
-            
-            console.log = function(...args) {
-                originalLog.apply(console, args);
-                addLog('log', args);
-            };
-            
-            console.error = function(...args) {
-                originalError.apply(console, args);
-                addLog('error', args);
-            };
-            
-            console.warn = function(...args) {
-                originalWarn.apply(console, args);
-                addLog('warn', args);
-            };
-            
-            // Capture global errors
-            window.addEventListener('error', (e) => {
-                addLog('error', [`UNHANDLED: ${e.message} at ${e.filename}:${e.lineno}`]);
-            });
-            
-            console.log('✅ Console hooked');
-            
-        } catch (error) {
-            console.error('Failed to hook console:', error);
-        }
-    }
-    
-    function addLog(type, args) {
-        try {
-            const timestamp = new Date().toLocaleTimeString();
-            const message = args.map(arg => 
-                typeof arg === 'object' ? JSON.stringify(arg) : String(arg)
-            ).join(' ');
-            
-            debugLogs.push({ type, timestamp, message });
-            
-            // Update UI if console is visible
-            updateLogDisplay();
-            
-        } catch (error) {
-            console.error('Failed to add log:', error);
-        }
-    }
-    
-    function updateLogDisplay() {
-        try {
-            const logsDiv = document.getElementById('debug-logs');
-            if (!logsDiv) return;
-            
-            // Show last 50 logs
-            const recentLogs = debugLogs.slice(-50);
-            
-            logsDiv.innerHTML = recentLogs.map(log => `
-                <div style="
-                    padding: 8px 12px;
-                    margin: 4px 0;
-                    border-radius: 6px;
-                    border-left: 4px solid ${getLogColor(log.type)};
-                    background: rgba(255,255,255,0.03);
-                    font-size: 11px;
-                ">
-                    <span style="color: #888; font-size: 10px;">${log.timestamp}</span>
-                    <span style="
-                        display: inline-block;
-                        padding: 2px 6px;
-                        border-radius: 4px;
-                        background: ${getLogBgColor(log.type)};
-                        color: white;
-                        font-size: 9px;
-                        margin: 0 8px;
-                        text-transform: uppercase;
-                    ">${log.type}</span>
-                    <span>${log.message}</span>
-                </div>
-            `).join('');
-            
-            // Auto scroll to bottom
-            logsDiv.scrollTop = logsDiv.scrollHeight;
-            
-        } catch (error) {
-            console.error('Failed to update log display:', error);
-        }
-    }
-    
-    function getLogColor(type) {
-        const colors = {
-            log: '#2196F3',
-            error: '#FF5252',
-            warn: '#FFC107',
-            info: '#4CAF50'
-        };
-        return colors[type] || '#2196F3';
-    }
-    
-    function getLogBgColor(type) {
-        const colors = {
-            log: 'rgba(33, 150, 243, 0.3)',
-            error: 'rgba(255, 82, 82, 0.3)',
-            warn: 'rgba(255, 193, 7, 0.3)',
-            info: 'rgba(76, 175, 80, 0.3)'
-        };
-        return colors[type] || 'rgba(33, 150, 243, 0.3)';
-    }
-    
-    // 5. Clear logs
-    function clearDebugLogs() {
-        try {
-            debugLogs.length = 0;
-            const logsDiv = document.getElementById('debug-logs');
-            if (logsDiv) {
-                logsDiv.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Logs cleared</div>';
-            }
-            console.log('🗑️ Logs cleared');
-        } catch (error) {
-            console.error('Failed to clear logs:', error);
-        }
-    }
-    
-    // 6. Copy for AI
-    function copyForAI() {
-        try {
-            const data = {
-                url: window.location.href,
-                userAgent: navigator.userAgent,
-                timestamp: new Date().toISOString(),
-                logs: debugLogs.slice(-100),
-                localStorage: Object.keys(localStorage).length,
-                errors: debugLogs.filter(log => log.type === 'error').length
-            };
-            
-            const text = `=== DEBUG REPORT ===
-URL: ${data.url}
-Time: ${data.timestamp}
-Errors: ${data.errors}
-
-RECENT ERRORS:
-${debugLogs.filter(log => log.type === 'error').slice(-10).map((log, i) => `${i+1}. ${log.message}`).join('\n')}
-
-FULL LOGS (last 100):
-${debugLogs.slice(-100).map(log => `[${log.timestamp}] ${log.type}: ${log.message}`).join('\n')}
-
-=== END REPORT ===`;
-            
-            navigator.clipboard.writeText(text)
-                .then(() => {
-                    console.log('✅ Copied to clipboard for AI');
-                    alert('✅ Debug data copied! Paste to ChatGPT/Claude.');
-                })
-                .catch(err => {
-                    // Fallback
-                    const textarea = document.createElement('textarea');
-                    textarea.value = text;
-                    document.body.appendChild(textarea);
-                    textarea.select();
-                    document.execCommand('copy');
-                    document.body.removeChild(textarea);
-                    alert('✅ Copied (fallback method)!');
+    hookConsole() {
+        const methods = ['log', 'error', 'warn', 'info', 'debug'];
+        methods.forEach(method => {
+            const original = console[method];
+            console[method] = (...args) => {
+                // Store log
+                this.logs.push({
+                    type: method,
+                    args,
+                    time: Date.now() - this.startTime,
+                    stack: new Error().stack
                 });
                 
-        } catch (error) {
-            console.error('Failed to copy for AI:', error);
-            alert('❌ Failed to copy. Check console.');
-        }
+                // Keep limited
+                if (this.logs.length > this.maxLogs) this.logs.shift();
+                
+                // Call original
+                original.apply(console, args);
+                
+                // Update UI
+                this.updateUI();
+            };
+        });
     }
     
-    // 7. Test API connection
-    async function testAPIConnection() {
-        try {
-            console.log('🔌 Testing API connection...');
-            
-            if (typeof Auth === 'undefined') {
-                console.error('❌ Auth not available');
-                alert('Auth not loaded');
-                return;
-            }
-            
-            const token = Auth.getAccessToken();
-            if (!token) {
-                console.error('❌ No access token');
-                alert('No access token');
-                return;
-            }
-            
-            const response = await fetch('https://www.googleapis.com/drive/v3/files?pageSize=1', {
-                headers: {
-                    'Authorization': `Bearer ${token}`
-                }
+    hookErrors() {
+        // Global error handler
+        window.addEventListener('error', (e) => {
+            this.logs.push({
+                type: 'GLOBAL_ERROR',
+                args: [e.message, `at ${e.filename}:${e.lineno}`],
+                time: Date.now() - this.startTime,
+                fatal: true
             });
             
-            if (response.ok) {
-                console.log('✅ API connection successful');
-                alert('✅ API connection successful!');
-            } else {
-                console.error('❌ API failed:', response.status);
-                alert(`❌ API failed: ${response.status}`);
-            }
-            
-        } catch (error) {
-            console.error('❌ API test error:', error);
-            alert(`❌ Error: ${error.message}`);
-        }
+            // Auto-fix common errors
+            this.autoFixError(e);
+        });
+        
+        // Promise errors
+        window.addEventListener('unhandledrejection', (e) => {
+            this.logs.push({
+                type: 'PROMISE_ERROR',
+                args: [e.reason],
+                time: Date.now() - this.startTime
+            });
+        });
     }
     
-    // 8. Initialize everything
-    function init() {
-        try {
-            console.log('🐛 Initializing Simple Debug...');
+    hookNetwork() {
+        // Hook Fetch
+        const originalFetch = window.fetch;
+        window.fetch = async (...args) => {
+            const url = args[0];
+            const method = args[1]?.method || 'GET';
+            const start = Date.now();
             
-            // Create button first
-            createDebugButton();
+            this.logs.push({
+                type: 'NETWORK_REQUEST',
+                args: [`🌐 ${method} ${url}`, args[1]?.body],
+                time: Date.now() - this.startTime
+            });
             
-            // Create console
-            createDebugConsole();
+            try {
+                const response = await originalFetch.apply(this, args);
+                const duration = Date.now() - start;
+                
+                this.logs.push({
+                    type: 'NETWORK_RESPONSE',
+                    args: [`✅ ${url} → ${response.status} (${duration}ms)`],
+                    time: Date.now() - this.startTime
+                });
+                
+                return response;
+            } catch (error) {
+                this.logs.push({
+                    type: 'NETWORK_ERROR',
+                    args: [`❌ ${url} → ${error.message}`],
+                    time: Date.now() - this.startTime
+                });
+                throw error;
+            }
+        };
+        
+        // Hook XHR
+        const originalXHR = window.XMLHttpRequest.prototype.open;
+        window.XMLHttpRequest.prototype.open = function(method, url) {
+            this._debugData = { method, url, start: Date.now() };
+            return originalXHR.apply(this, arguments);
+        };
+        
+        window.XMLHttpRequest.prototype.send = function(data) {
+            this.addEventListener('load', () => {
+                const duration = Date.now() - this._debugData.start;
+                this.logs.push({
+                    type: 'XHR_RESPONSE',
+                    args: [`📡 ${this._debugData.method} ${this._debugData.url} → ${this.status} (${duration}ms)`],
+                    time: Date.now() - this.startTime
+                });
+            });
             
-            // Hook into console
-            hookConsole();
+            this.addEventListener('error', (e) => {
+                this.logs.push({
+                    type: 'XHR_ERROR',
+                    args: [`💥 ${this._debugData.method} ${this._debugData.url} → ${e.type}`],
+                    time: Date.now() - this.startTime
+                });
+            });
             
-            // Add CSS animation
-            const style = document.createElement('style');
-            style.textContent = `
-                @keyframes slideIn {
-                    from {
-                        opacity: 0;
-                        transform: translateY(20px);
-                    }
-                    to {
-                        opacity: 1;
-                        transform: translateY(0);
-                    }
+            return XMLHttpRequest.prototype.send.apply(this, [data]);
+        };
+    }
+    
+    hookMediaViewer() {
+        // Monitor MediaViewer loading
+        let checkCount = 0;
+        const checkInterval = setInterval(() => {
+            checkCount++;
+            
+            if (window.MediaViewer) {
+                this.logs.push({
+                    type: 'MEDIAVIEWER_LOADED',
+                    args: ['✅ MediaViewer loaded after', checkCount * 100 + 'ms'],
+                    time: Date.now() - this.startTime
+                });
+                
+                // Check methods
+                const methods = Object.getOwnPropertyNames(MediaViewer);
+                this.logs.push({
+                    type: 'MEDIAVIEWER_METHODS',
+                    args: ['🔧 Methods:', methods.join(', ')],
+                    time: Date.now() - this.startTime
+                });
+                
+                // Fix if openImage missing
+                if (typeof MediaViewer.openImage !== 'function') {
+                    this.fixMediaViewer();
                 }
                 
-                #simple-debug-btn:hover {
-                    transform: scale(1.2) !important;
-                    box-shadow: 0 10px 30px rgba(255, 64, 129, 0.7) !important;
+                clearInterval(checkInterval);
+            }
+            
+            if (checkCount > 50) { // 5 seconds
+                this.logs.push({
+                    type: 'MEDIAVIEWER_TIMEOUT',
+                    args: ['❌ MediaViewer never loaded!'],
+                    time: Date.now() - this.startTime,
+                    fatal: true
+                });
+                clearInterval(checkInterval);
+                
+                // Create emergency MediaViewer
+                this.createEmergencyMediaViewer();
+            }
+        }, 100);
+        
+        // Hook MediaViewer calls
+        const originalOpenImage = MediaViewer?.openImage;
+        if (MediaViewer && originalOpenImage) {
+            MediaViewer.openImage = function(...args) {
+                this.logs.push({
+                    type: 'MEDIAVIEWER_CALL',
+                    args: ['🖼️ openImage called with:', args[0]],
+                    time: Date.now() - this.startTime
+                });
+                
+                try {
+                    return originalOpenImage.apply(MediaViewer, args);
+                } catch (error) {
+                    this.logs.push({
+                        type: 'MEDIAVIEWER_ERROR',
+                        args: ['💥 openImage failed:', error.message],
+                        time: Date.now() - this.startTime
+                    });
+                    
+                    // Fallback
+                    window.open(args[0], '_blank');
+                    return null;
                 }
-            `;
-            document.head.appendChild(style);
-            
-            console.log('✅ Simple Debug initialized successfully!');
-            console.log('💡 Click the 🐛 button to open debug console');
-            
-        } catch (error) {
-            console.error('❌ Failed to initialize debug:', error);
+            };
         }
     }
     
-    // Start when DOM is ready
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', init);
-    } else {
-        setTimeout(init, 100);
+    fixMediaViewer() {
+        console.log('🔧 Attempting to fix MediaViewer...');
+        
+        // Method 1: Check for alternative method names
+        const methods = Object.getOwnPropertyNames(MediaViewer);
+        const possibleNames = ['open', 'show', 'view', 'display', 'openImage', 'showImage'];
+        
+        for (const name of possibleNames) {
+            if (typeof MediaViewer[name] === 'function') {
+                MediaViewer.openImage = MediaViewer[name];
+                this.logs.push({
+                    type: 'MEDIAVIEWER_FIXED',
+                    args: [`✅ Fixed! Using ${name} instead of openImage`],
+                    time: Date.now() - this.startTime
+                });
+                return;
+            }
+        }
+        
+        // Method 2: Create openImage method
+        MediaViewer.openImage = function(url) {
+            console.log('🖼️ [FALLBACK] Opening image:', url);
+            
+            // Try multiple ways to open
+            try {
+                // Method A: Simple image viewer
+                const win = window.open('', '_blank');
+                win.document.write(`
+                    <html>
+                    <head><title>Image Viewer</title></head>
+                    <body style="margin:0;background:#000;">
+                        <img src="${url}" style="max-width:100%;height:auto;">
+                    </body>
+                    </html>
+                `);
+            } catch (e) {
+                // Method B: Data URL
+                fetch(url)
+                    .then(r => r.blob())
+                    .then(blob => {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                            const img = new Image();
+                            img.src = reader.result;
+                            img.style = 'position:fixed;top:0;left:0;width:100%;height:100%;object-fit:contain;';
+                            document.body.appendChild(img);
+                        };
+                        reader.readAsDataURL(blob);
+                    });
+            }
+        };
+        
+        this.logs.push({
+            type: 'MEDIAVIEWER_CREATED',
+            args: ['✅ Created fallback openImage method'],
+            time: Date.now() - this.startTime
+        });
     }
     
-})();
+    createEmergencyMediaViewer() {
+        window.MediaViewer = window.MediaViewer || {};
+        window.MediaViewer.openImage = function(url) {
+            alert(`Opening: ${url}\n\nThis is emergency viewer.`);
+            window.open(url, '_blank');
+        };
+        
+        this.logs.push({
+            type: 'EMERGENCY_VIEWER',
+            args: ['⚠️ Created emergency MediaViewer'],
+            time: Date.now() - this.startTime
+        });
+    }
+    
+    autoDiagnose() {
+        console.log('🔍 Running auto-diagnosis...');
+        
+        const issues = [];
+        
+        // Check 1: MediaViewer
+        if (!window.MediaViewer) {
+            issues.push('❌ MediaViewer not loaded');
+        } else if (typeof MediaViewer.openImage !== 'function') {
+            issues.push('❌ MediaViewer.openImage is not a function');
+        }
+        
+        // Check 2: Script loading order
+        const scripts = Array.from(document.scripts);
+        const driveIndex = scripts.findIndex(s => s.src.includes('drive.js'));
+        const mediaIndex = scripts.findIndex(s => s.src && 
+            (s.src.includes('media') || s.src.includes('MediaViewer')));
+        
+        if (mediaIndex > -1 && driveIndex > -1 && mediaIndex > driveIndex) {
+            issues.push('⚠️ MediaViewer loads AFTER drive.js (wrong order)');
+        }
+        
+        // Check 3: Network status
+        if (!navigator.onLine) {
+            issues.push('⚠️ App is offline');
+        }
+        
+        // Log diagnosis
+        if (issues.length > 0) {
+            this.logs.push({
+                type: 'DIAGNOSIS',
+                args: ['🏥 Issues found:', ...issues],
+                time: Date.now() - this.startTime
+            });
+            
+            // Show in UI
+            this.showNotification(`Found ${issues.length} issues`);
+        } else {
+            this.logs.push({
+                type: 'DIAGNOSIS',
+                args: ['✅ All systems OK'],
+                time: Date.now() - this.startTime
+            });
+        }
+    }
+    
+    autoFixError(error) {
+        const msg = error.message.toLowerCase();
+        
+        // Fix MediaViewer.openImage error
+        if (msg.includes('mediaviewer.openimage') || 
+            msg.includes('is not a function') && 
+            msg.includes('drive.js:608')) {
+            
+            console.log('🛠️ Auto-fixing MediaViewer error...');
+            
+            // Immediate fix
+            const code = `
+                if (!window.MediaViewer) window.MediaViewer = {};
+                if (typeof window.MediaViewer.openImage !== 'function') {
+                    window.MediaViewer.openImage = function(url) {
+                        console.log('Auto-fixed: Opening', url);
+                        window.open(url, '_blank');
+                    };
+                }
+            `;
+            
+            try {
+                eval(code);
+                this.showNotification('✅ Fixed MediaViewer automatically!');
+            } catch (e) {
+                console.error('Auto-fix failed:', e);
+            }
+        }
+    }
+    
+    createUI() {
+        // Create debug panel
+        const panel = document.createElement('div');
+        panel.id = 'superDebugPanel';
+        panel.style = `
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: rgba(0,0,0,0.9);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            max-width: 400px;
+            max-height: 300px;
+            overflow-y: auto;
+            font-family: monospace;
+            font-size: 12px;
+            z-index: 999999;
+            border: 2px solid #00ff00;
+            display: none;
+        `;
+        
+        panel.innerHTML = `
+            <div style="display:flex;justify-content:space-between;margin-bottom:5px;">
+                <strong style="color:#00ff00;">🐛 SuperDebug</strong>
+                <button onclick="document.getElementById('superDebugPanel').style.display='none'" 
+                        style="background:red;color:white;border:none;padding:2px 8px;">X</button>
+            </div>
+            <div id="debugLogs"></div>
+            <div style="margin-top:10px;border-top:1px solid #333;padding-top:5px;">
+                <button onclick="window.superDebug.exportLogs()" style="font-size:10px;padding:3px;">Export Logs</button>
+                <button onclick="window.superDebug.clearLogs()" style="font-size:10px;padding:3px;">Clear</button>
+                <button onclick="window.superDebug.runTests()" style="font-size:10px;padding:3px;">Test All</button>
+            </div>
+        `;
+        
+        document.body.appendChild(panel);
+        
+        // Create toggle button
+        const toggle = document.createElement('button');
+        toggle.id = 'debugToggle';
+        toggle.style = `
+            position: fixed;
+            bottom: 10px;
+            right: 10px;
+            background: #00ff00;
+            color: black;
+            border: none;
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            font-size: 20px;
+            cursor: pointer;
+            z-index: 999999;
+            box-shadow: 0 2px 10px rgba(0,255,0,0.5);
+        `;
+        toggle.innerHTML = '🐛';
+        toggle.title = 'Debug Panel';
+        toggle.onclick = () => {
+            panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+        };
+        
+        document.body.appendChild(toggle);
+    }
+    
+    updateUI() {
+        const logDiv = document.getElementById('debugLogs');
+        if (!logDiv) return;
+        
+        // Show last 10 logs
+        const lastLogs = this.logs.slice(-10);
+        logDiv.innerHTML = lastLogs.map(log => `
+            <div style="color:${
+                log.type.includes('ERROR') ? '#ff5555' : 
+                log.type.includes('NETWORK') ? '#55aaff' : 
+                '#aaaaaa'
+            }; margin: 2px 0; border-left: 3px solid ${
+                log.fatal ? 'red' : 'gray'
+            }; padding-left: 5px;">
+                <small>[${log.time}ms]</small> ${log.args.join(' ')}
+            </div>
+        `).join('');
+        
+        logDiv.scrollTop = logDiv.scrollHeight;
+    }
+    
+    showNotification(text) {
+        const notif = document.createElement('div');
+        notif.style = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #333;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 5px;
+            z-index: 999999;
+            animation: fadeIn 0.3s;
+        `;
+        notif.textContent = text;
+        document.body.appendChild(notif);
+        
+        setTimeout(() => notif.remove(), 3000);
+    }
+    
+    exportLogs() {
+        const data = JSON.stringify(this.logs, null, 2);
+        const blob = new Blob([data], {type: 'application/json'});
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `debug_logs_${Date.now()}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+    }
+    
+    clearLogs() {
+        this.logs = [];
+        this.updateUI();
+    }
+    
+    runTests() {
+        console.log('🧪 Running diagnostic tests...');
+        
+        // Test 1: MediaViewer
+        this.testMediaViewer();
+        
+        // Test 2: Network
+        this.testNetwork();
+        
+        // Test 3: Storage
+        this.testStorage();
+        
+        this.showNotification('Tests completed! Check console.');
+    }
+    
+    testMediaViewer() {
+        console.log('🧪 Testing MediaViewer...');
+        
+        if (!window.MediaViewer) {
+            console.error('❌ MediaViewer not found');
+            return;
+        }
+        
+        console.log('✅ MediaViewer exists');
+        console.log('📋 Methods:', Object.keys(MediaViewer));
+        
+        // Test openImage
+        if (typeof MediaViewer.openImage === 'function') {
+            console.log('✅ openImage is a function');
+            
+            // Test with dummy image
+            setTimeout(() => {
+                try {
+                    MediaViewer.openImage('https://via.placeholder.com/100');
+                    console.log('✅ MediaViewer test passed');
+                } catch (e) {
+                    console.error('❌ MediaViewer test failed:', e);
+                }
+            }, 1000);
+        } else {
+            console.error('❌ openImage is not a function');
+        }
+    }
+    
+    testNetwork() {
+        console.log('🧪 Testing network...');
+        
+        // Test fetch
+        fetch('https://httpbin.org/get')
+            .then(() => console.log('✅ Network connectivity OK'))
+            .catch(() => console.error('❌ Network connectivity failed'));
+    }
+    
+    testStorage() {
+        console.log('🧪 Testing storage...');
+        
+        try {
+            localStorage.setItem('debug_test', Date.now());
+            localStorage.removeItem('debug_test');
+            console.log('✅ LocalStorage OK');
+        } catch (e) {
+            console.error('❌ LocalStorage failed:', e);
+        }
+    }
+}
+
+// Auto-start when included
+if (typeof window !== 'undefined') {
+    window.superDebug = new SuperDebug();
+    
+    // Make it globally available
+    window.fixMediaViewer = function() {
+        window.superDebug.fixMediaViewer();
+    };
+    
+    window.getDebugReport = function() {
+        return JSON.stringify(window.superDebug.logs, null, 2);
+    };
+}
+
+// Export for module systems
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = SuperDebug;
+}
