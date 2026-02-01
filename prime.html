@@ -1,0 +1,889 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyber">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🔐 Vault OS Ultimate - Secure Cloud Storage</title>
+    
+    <!-- PWA Meta Tags -->
+    <meta name="description" content="Secure Google Drive client with advanced encryption, media viewing, and offline access">
+    <meta name="theme-color" content="#00f3ff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔐</text></svg>">
+    <link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔐</text></svg>">
+    
+    <!-- Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <!-- Styles -->
+    <link rel="stylesheet" href="styles.css">
+    
+    <!-- Favicon -->
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔐</text></svg>">
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loading-screen" class="loading-screen">
+        <div class="loading-content">
+            <div class="loading-logo">🔐</div>
+            <h1 class="loading-title">Vault OS Ultimate</h1>
+            <div class="loading-spinner"></div>
+            <p class="loading-message">Initializing secure environment...</p>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill"></div>
+                </div>
+                <span class="progress-text">0%</span>
+            </div>
+            <p class="loading-version">v3.0.0</p>
+        </div>
+    </div>
+
+    <!-- PIN Authentication Screen -->
+    <div id="pin-screen" class="auth-screen hidden">
+        <div class="auth-container">
+            <div class="auth-header">
+                <div class="auth-logo">🔐</div>
+                <h1 class="auth-title">Vault OS</h1>
+                <p class="auth-subtitle">Enter your PIN to unlock</p>
+            </div>
+            
+            <div class="pin-input-container">
+                <input type="password" 
+                       id="pin-input" 
+                       class="pin-input" 
+                       placeholder="••••" 
+                       maxlength="4" 
+                       readonly
+                       autocomplete="off">
+                <div id="pin-error" class="pin-error hidden">
+                    Wrong PIN. Please try again.
+                </div>
+            </div>
+            
+            <div class="pin-pad">
+                <div class="pin-row">
+                    <button class="num-btn" data-num="1">1</button>
+                    <button class="num-btn" data-num="2">2</button>
+                    <button class="num-btn" data-num="3">3</button>
+                </div>
+                <div class="pin-row">
+                    <button class="num-btn" data-num="4">4</button>
+                    <button class="num-btn" data-num="5">5</button>
+                    <button class="num-btn" data-num="6">6</button>
+                </div>
+                <div class="pin-row">
+                    <button class="num-btn" data-num="7">7</button>
+                    <button class="num-btn" data-num="8">8</button>
+                    <button class="num-btn" data-num="9">9</button>
+                </div>
+                <div class="pin-row">
+                    <button class="btn-clear">Clear</button>
+                    <button class="num-btn" data-num="0">0</button>
+                    <button class="btn-submit">↵</button>
+                </div>
+            </div>
+            
+            <div class="auth-footer">
+                <p class="auth-hint">
+                    <i>Default PIN: 1171</i><br>
+                    <small>You can change it in settings</small>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Interface -->
+    <div id="app-interface" class="app-interface hidden">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button id="sidebar-toggle" class="btn-icon" title="Toggle sidebar">
+                    ☰
+                </button>
+                <div class="header-logo">
+                    <span class="logo-icon">🔐</span>
+                    <span class="logo-text">Vault OS</span>
+                </div>
+                
+                <!-- Breadcrumb Navigation -->
+                <nav id="breadcrumb" class="breadcrumb">
+                    <a href="#" data-folder="root" class="breadcrumb-item">My Drive</a>
+                </nav>
+            </div>
+            
+            <div class="header-center">
+                <!-- Search Bar -->
+                <div class="search-container">
+                    <input type="text" 
+                           id="search-input" 
+                           class="search-input" 
+                           placeholder="Search files...">
+                    <button id="search-btn" class="btn-icon search-btn">
+                        🔍
+                    </button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <!-- Status Indicators -->
+                <div class="status-indicators">
+                    <span id="online-indicator" class="status-indicator online" title="Online">🌐</span>
+                    <span id="sync-indicator" class="status-indicator" title="Up to date">🔄</span>
+                </div>
+                
+                <!-- View Toggle -->
+                <div class="view-toggle">
+                    <button id="view-grid" class="btn-icon active" title="Grid view">
+                        ▦
+                    </button>
+                    <button id="view-list" class="btn-icon" title="List view">
+                        ☰
+                    </button>
+                </div>
+                
+                <!-- Upload Button -->
+                <button id="upload-btn" class="btn-primary" title="Upload files (Ctrl+U)">
+                    📤 Upload
+                </button>
+                <input type="file" id="upload-input" class="hidden" multiple>
+                
+                <!-- User Profile -->
+                <div class="user-profile" id="user-profile">
+                    <img id="user-avatar" 
+                         src="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='45' fill='%2300f3ff'/><text x='50' y='65' text-anchor='middle' font-size='40' fill='white' font-family='Arial'>VA</text></svg>" 
+                         alt="User" 
+                         class="user-avatar">
+                    <div class="user-info">
+                        <span id="user-name" class="user-name">User</span>
+                        <span id="user-email" class="user-email">user@example.com</span>
+                    </div>
+                    <span class="user-dropdown">▼</span>
+                </div>
+            </div>
+        </header>
+
+        <!-- Main Layout -->
+        <div class="app-layout">
+            <!-- Sidebar -->
+            <aside class="app-sidebar">
+                <div class="sidebar-content">
+                    <!-- Quick Actions -->
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-title">Quick Actions</h3>
+                        <ul class="sidebar-menu">
+                            <li>
+                                <a href="#" class="sidebar-link" data-route="home">
+                                    <span class="link-icon">🏠</span>
+                                    <span class="link-text">My Drive</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="sidebar-link" data-route="recent">
+                                    <span class="link-icon">🕒</span>
+                                    <span class="link-text">Recent</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="sidebar-link" data-route="starred">
+                                    <span class="link-icon">⭐</span>
+                                    <span class="link-text">Starred</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="sidebar-link" data-route="trash">
+                                    <span class="link-icon">🗑️</span>
+                                    <span class="link-text">Trash</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Storage Info -->
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-title">Storage</h3>
+                        <div class="storage-info">
+                            <div class="storage-bar">
+                                <div id="storage-bar" class="storage-fill"></div>
+                            </div>
+                            <div class="storage-text">
+                                <span id="storage-used">0 GB</span> used of 
+                                <span id="storage-total">15 GB</span>
+                            </div>
+                            <div class="storage-percent" id="storage-percent">0%</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Settings -->
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-title">Settings</h3>
+                        <ul class="sidebar-menu">
+                            <li>
+                                <a href="#" class="sidebar-link" data-action="settings">
+                                    <span class="link-icon">⚙️</span>
+                                    <span class="link-text">Settings</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="sidebar-link" data-action="help">
+                                    <span class="link-icon">❓</span>
+                                    <span class="link-text">Help</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="sidebar-link" data-action="about">
+                                    <span class="link-icon">ℹ️</span>
+                                    <span class="link-text">About</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="sidebar-link" data-action="feedback">
+                                    <span class="link-icon">💬</span>
+                                    <span class="link-text">Feedback</span>
+                                </a>
+                            </li>
+                            <li>
+                                <a href="#" class="sidebar-link" data-route="logout">
+                                    <span class="link-icon">🚪</span>
+                                    <span class="link-text">Logout</span>
+                                </a>
+                            </li>
+                        </ul>
+                    </div>
+                    <!-- More -->
+<div class="sidebar-section">
+    <h3 class="sidebar-title">More</h3>
+    <ul class="sidebar-menu">
+        <li>
+            <a href="modules/features.html" class="sidebar-link" target="_blank">
+                <span class="link-icon">🚀</span>
+                <span class="link-text">Features</span>
+                <span class="link-badge">New</span>
+            </a>
+        </li>
+        <li>
+            <a href="modules/storage.html" class="sidebar-link" target="_blank">
+                <span class="link-icon">💾</span>
+                <span class="link-text">Storage Info</span>
+            </a>
+        </li>
+    </ul>
+</div>
+                    <!-- Theme Switcher -->
+                    <div class="sidebar-section">
+                        <h3 class="sidebar-title">Theme</h3>
+                        <div class="theme-switcher">
+                            <select id="theme-selector" class="theme-selector">
+                                <option value="cyber">🌌 Cyber</option>
+                                <option value="dark">🌙 Dark</option>
+                                <option value="light">☀️ Light</option>
+                                <option value="midnight">🌠 Midnight</option>
+                                <option value="amoled">⚫ AMOLED</option>
+                            </select>
+                            <button id="theme-toggle" class="btn-icon" title="Cycle themes">
+                                🎨
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- PWA Install -->
+                    <div id="install-container" class="hidden">
+                        <button id="install-btn" class="btn-secondary btn-full">
+                            📱 Install App
+                        </button>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="app-main">
+                <!-- Toolbar -->
+                <div class="main-toolbar">
+                    <div class="toolbar-left">
+                        <button id="create-folder-btn" class="btn-secondary" data-action="create-folder">
+                            📁 New Folder
+                        </button>
+                        <button id="refresh-btn" class="btn-icon" data-action="refresh" title="Refresh">
+                            🔄
+                        </button>
+                        <button id="sync-btn" class="btn-icon" data-action="sync" title="Sync now">
+                            ⚡
+                        </button>
+                    </div>
+                    
+                    <div class="toolbar-right">
+                        <div class="toolbar-actions">
+                            <button id="select-all-btn" class="btn-icon" data-action="select-all" title="Select all (Ctrl+A)">
+                                ☑️
+                            </button>
+                            <button id="deselect-all-btn" class="btn-icon" data-action="deselect-all" title="Deselect all">
+                                ❌
+                            </button>
+                            <button id="download-selected-btn" class="btn-secondary" data-action="download-selected">
+                                ⤓ Download
+                            </button>
+                            <button id="delete-selected-btn" class="btn-danger" data-action="delete-selected">
+                                🗑️ Delete
+                            </button>
+                        </div>
+                        
+                        <div class="toolbar-info">
+                            <span id="selected-count" class="selected-count">0 selected</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File List Container -->
+                <div class="main-content">
+                    <div id="file-list" class="file-list grid-view">
+                        <!-- Files will be loaded here dynamically -->
+                        <div class="empty-state">
+                            <div class="empty-icon">📁</div>
+                            <h3>No files yet</h3>
+                            <p>Upload files or connect your Google Drive to get started</p>
+                            <button id="upload-empty-btn" class="btn-primary">
+                                📤 Upload Files
+                            </button>
+                            <button id="connect-empty-drive" class="btn-secondary">
+                                🔗 Connect Drive
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Debug Panel (Optional) -->
+                <div id="debug-panel" class="debug-panel hidden">
+                    <div class="debug-header">
+                        <h4>Debug Information</h4>
+                        <button id="debug-close" class="btn-icon">×</button>
+                    </div>
+                    <div class="debug-content">
+                        <pre id="debug-info">Loading debug info...</pre>
+                    </div>
+                </div>
+            </main>
+        </div>
+
+        <!-- Footer -->
+        <footer class="app-footer">
+            <div class="footer-left">
+                <span class="footer-status" id="drive-status-text">Drive: Disconnected</span>
+                <span class="footer-status-dot" id="drive-status-dot"></span>
+            </div>
+            <div class="footer-center">
+                <span class="footer-text">Vault OS Ultimate v3.0.0</span>
+            </div>
+            <div class="footer-right">
+                <button id="debug-toggle" class="btn-icon" title="Toggle debug panel">
+                    🐛
+                </button>
+                <button id="keyboard-shortcuts-btn" class="btn-icon" title="Keyboard shortcuts">
+                    ⌨️
+                </button>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Profile Dropdown -->
+    <div id="profile-dropdown" class="profile-dropdown hidden">
+        <div class="dropdown-header">
+            <img id="dropdown-avatar" class="dropdown-avatar" src="" alt="User">
+            <div class="dropdown-user">
+                <span id="dropdown-name" class="dropdown-name">User</span>
+                <span id="dropdown-email" class="dropdown-email">user@example.com</span>
+            </div>
+        </div>
+        <div class="dropdown-menu">
+            <a href="#" class="dropdown-item" id="view-profile">
+                <span class="dropdown-icon">👤</span>
+                View Profile
+            </a>
+            <a href="#" class="dropdown-item" id="account-settings">
+                <span class="dropdown-icon">⚙️</span>
+                Account Settings
+            </a>
+            <div class="dropdown-divider"></div>
+            <a href="#" class="dropdown-item" data-route="logout">
+                <span class="dropdown-icon">🚪</span>
+                Logout
+            </a>
+        </div>
+    </div>
+
+    <!-- ==================== MODALS ==================== -->
+
+    <!-- Google Drive Connection Modal -->
+    <div id="drive-connect-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Connect Google Drive</h2>
+                <button id="close-drive-modal" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="connection-steps">
+                    <div class="step active" data-step="1">
+                        <span class="step-number">1</span>
+                        <span class="step-text">Authentication</span>
+                    </div>
+                    <div class="step" data-step="2">
+                        <span class="step-number">2</span>
+                        <span class="step-text">Authorization</span>
+                    </div>
+                    <div class="step" data-step="3">
+                        <span class="step-number">3</span>
+                        <span class="step-text">Sync</span>
+                    </div>
+                </div>
+                
+                <div class="connection-progress">
+                    <div class="progress-bar">
+                        <div class="progress-fill"></div>
+                    </div>
+                    <div class="progress-text">Ready to connect</div>
+                </div>
+                
+                <div class="connection-info">
+                    <p>Vault OS needs access to your Google Drive to:</p>
+                    <ul>
+                        <li>View and manage your files</li>
+                        <li>Upload and download files</li>
+                        <li>Create folders and organize content</li>
+                        <li>Sync files across devices</li>
+                    </ul>
+                    
+                    <div class="connection-status" id="drive-connection-status">
+                        <p id="drive-connection-status-text">Status: Ready to connect</p>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="authorize-drive" class="btn-primary">
+                    🔗 Connect Google Drive
+                </button>
+                <button id="retry-connection" class="btn-secondary">
+                    🔄 Retry
+                </button>
+                <button id="cancel-connection" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Settings</h2>
+                <button id="close-settings" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="settings-tabs">
+                    <button class="settings-tab active" data-tab="general">General</button>
+                    <button class="settings-tab" data-tab="appearance">Appearance</button>
+                    <button class="settings-tab" data-tab="sync">Sync</button>
+                    <button class="settings-tab" data-tab="security">Security</button>
+                    <button class="settings-tab" data-tab="advanced">Advanced</button>
+                </div>
+                
+                <div class="settings-content">
+                    <!-- General Tab -->
+                    <div id="general-tab" class="settings-tab-content active">
+                        <div class="setting-group">
+                            <label for="items-per-page">Items per page</label>
+                            <select id="items-per-page" class="form-select">
+                                <option value="25">25 items</option>
+                                <option value="50" selected>50 items</option>
+                                <option value="100">100 items</option>
+                                <option value="200">200 items</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="thumbnail-size">Thumbnail size</label>
+                            <select id="thumbnail-size" class="form-select">
+                                <option value="150">Small</option>
+                                <option value="200" selected>Medium</option>
+                                <option value="250">Large</option>
+                                <option value="300">Extra Large</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="confirm-deletions-toggle" checked>
+                                <span>Confirm before deleting files</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="show-hidden-files-toggle">
+                                <span>Show hidden files</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Appearance Tab -->
+                    <div id="appearance-tab" class="settings-tab-content">
+                        <div class="setting-group">
+                            <label for="theme-selector-modal">Theme</label>
+                            <select id="theme-selector-modal" class="form-select">
+                                <option value="cyber">Cyber</option>
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                                <option value="midnight">Midnight</option>
+                                <option value="amoled">AMOLED</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="dark-mode-toggle">
+                                <span>Dark mode</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="animations-toggle" checked>
+                                <span>Enable animations</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Sync Tab -->
+                    <div id="sync-tab" class="settings-tab-content">
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="auto-sync-toggle" checked>
+                                <span>Auto-sync files</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="sync-interval">Sync interval</label>
+                            <select id="sync-interval" class="form-select">
+                                <option value="15000">15 seconds</option>
+                                <option value="30000" selected>30 seconds</option>
+                                <option value="60000">1 minute</option>
+                                <option value="300000">5 minutes</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="background-sync-toggle" checked>
+                                <span>Background sync</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="offline-mode-toggle">
+                                <span>Offline mode (experimental)</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <!-- Security Tab -->
+                    <div id="security-tab" class="settings-tab-content">
+                        <div class="setting-group">
+                            <label>Change PIN</label>
+                            <button id="change-pin-btn" class="btn-secondary">
+                                Change PIN
+                            </button>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="auto-lock-toggle">
+                                <span>Auto-lock after 15 minutes</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="encryption-toggle" disabled>
+                                <span>End-to-end encryption (coming soon)</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <button id="clear-cache-btn" class="btn-secondary">
+                                Clear Cache
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Advanced Tab -->
+                    <div id="advanced-tab" class="settings-tab-content">
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="debug-toggle-modal">
+                                <span>Debug mode</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="performance-monitoring-toggle">
+                                <span>Performance monitoring</span>
+                            </label>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <label for="log-level">Log level</label>
+                            <select id="log-level" class="form-select">
+                                <option value="error">Error</option>
+                                <option value="warn">Warning</option>
+                                <option value="info" selected>Info</option>
+                                <option value="debug">Debug</option>
+                                <option value="verbose">Verbose</option>
+                            </select>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <button id="export-data-btn" class="btn-secondary">
+                                Export Data
+                            </button>
+                            <button id="import-data-btn" class="btn-secondary">
+                                Import Data
+                            </button>
+                        </div>
+                        
+                        <div class="setting-group">
+                            <button id="reset-settings" class="btn-danger">
+                                Reset All Settings
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-settings" class="btn-primary">
+                    Save Settings
+                </button>
+                <button id="cancel-settings" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Change Modal -->
+    <div id="pin-change-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Change PIN</h2>
+                <button id="cancel-pin-change" class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div class="pin-change-form">
+                    <div class="form-group">
+                        <label for="current-pin-input">Current PIN</label>
+                        <input type="password" 
+                               id="current-pin-input" 
+                               class="form-input" 
+                               maxlength="4" 
+                               placeholder="Enter current PIN">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="new-pin-input">New PIN (4 digits)</label>
+                        <input type="password" 
+                               id="new-pin-input" 
+                               class="form-input" 
+                               maxlength="4" 
+                               placeholder="Enter new PIN">
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="confirm-pin-input">Confirm New PIN</label>
+                        <input type="password" 
+                               id="confirm-pin-input" 
+                               class="form-input" 
+                               maxlength="4" 
+                               placeholder="Confirm new PIN">
+                    </div>
+                    
+                    <div id="pin-change-error" class="error-message hidden">
+                        PINs do not match or invalid.
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button id="save-pin-change" class="btn-primary">
+                    Save PIN
+                </button>
+                <button id="cancel-pin-btn" class="btn-secondary">
+                    Cancel
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Info Modal -->
+    <div id="file-info-modal" class="modal hidden">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>File Information</h2>
+                <button class="modal-close">&times;</button>
+            </div>
+            <div class="modal-body">
+                <div id="file-info-content">
+                    <!-- File info will be loaded here -->
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-secondary close-file-info">
+                    Close
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Confirm Modal (Dynamic) -->
+    <div id="confirm-modal" class="modal hidden"></div>
+
+    <!-- Alert Modal (Dynamic) -->
+    <div id="alert-modal" class="modal hidden"></div>
+
+    <!-- Prompt Modal (Dynamic) -->
+    <div id="prompt-modal" class="modal hidden"></div>
+
+    <!-- Drop Zone -->
+    <div id="drop-zone" class="drop-zone hidden">
+        <div class="drop-message">📤 Drop files here to upload</div>
+    </div>
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div id="loading-overlay" class="loading-overlay hidden">
+        <div class="loading-spinner"></div>
+        <div class="loading-message">Loading...</div>
+    </div>
+
+    <!-- Hidden File Input for Import -->
+    <input type="file" id="import-input" class="hidden" accept=".json">
+
+    <!-- Scripts -->
+    <!-- Configuration -->
+    <script src="config.js"></script>
+    
+    <!-- Authentication -->
+    <script src="auth.js"></script>
+    
+    <!-- Drive Management -->
+    <script src="drive.js"></script>
+    
+    <!-- Media Viewer -->
+    <script src="media.js"></script>
+    
+    <!-- UI Management -->
+    <script src="ui.js"></script>
+    
+    <!-- Main Application -->
+    <script src="app.js"></script>
+    
+    <!-- Service Worker Registration -->
+    <script>
+        // Register service worker for PWA
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('/service-worker.js')
+                    .then(registration => {
+                        console.log('ServiceWorker registered:', registration);
+                    })
+                    .catch(error => {
+                        console.log('ServiceWorker registration failed:', error);
+                    });
+            });
+        }
+        
+        // Prevent right-click context menu in production
+        if (window.location.hostname !== 'localhost' && window.location.hostname !== '127.0.0.1') {
+            document.addEventListener('contextmenu', (e) => {
+                if (!e.target.closest('.allow-context-menu')) {
+                    e.preventDefault();
+                }
+            });
+        }
+        
+        // Prevent drag-and-drop navigation
+        document.addEventListener('dragover', (e) => e.preventDefault());
+        document.addEventListener('drop', (e) => e.preventDefault());
+        
+        // Show loading screen initially
+        window.addEventListener('load', () => {
+            setTimeout(() => {
+                document.getElementById('loading-screen')?.classList.add('hidden');
+            }, 1000);
+        });
+        
+        // Fallback: Hide loading screen after 5 seconds
+        setTimeout(() => {
+            document.getElementById('loading-screen')?.classList.add('hidden');
+        }, 5000);
+    </script>
+    <!-- Import Input (hidden) -->
+<input type="file" id="import-input" class="hidden" accept=".json">
+
+<!-- Scripts for new features -->
+<script src="modules/features.js"></script>
+<script src="modules/storage.js"></script>
+
+<script>
+    // Check if user is on mobile, show appropriate message
+    if (window.innerWidth <= 768) {
+        console.log('Mobile device detected - opening in new tab recommended');
+    }
+    
+    // Handle features link
+    document.querySelectorAll('a[href="modules/features.html"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                // On mobile, open in same tab
+                return; // Let default behavior
+            } else {
+                // On desktop, open in new tab
+                e.preventDefault();
+                window.open('modules/features.html', '_blank', 'noopener,noreferrer');
+            }
+        });
+    });
+    
+    // Handle storage link
+    document.querySelectorAll('a[href="modules/storage.html"]').forEach(link => {
+        link.addEventListener('click', (e) => {
+            if (window.innerWidth <= 768) {
+                return;
+            } else {
+                e.preventDefault();
+                window.open('modules/storage.html', '_blank', 'noopener,noreferrer');
+            }
+        });
+    });
+</script>
+    <!-- Global Error Handler -->
+    <script>
+        window.addEventListener('error', function(e) {
+            console.error('Global error:', e.error);
+            if (window.app && window.app.handleError) {
+                window.app.handleError(e.error);
+            }
+        });
+        
+        window.addEventListener('unhandledrejection', function(e) {
+            console.error('Unhandled promise rejection:', e.reason);
+            if (window.app && window.app.handleError) {
+                window.app.handleError(e.reason, { type: 'unhandled-rejection' });
+            }
+        });
+    </script>
+</body>
+</html>
