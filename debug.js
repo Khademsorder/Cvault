@@ -1,256 +1,167 @@
-// debug.js - ULTIMATE EXPERT EDITION (V3.0)
-// =========================================
-// Features: Stack Trace, Network, Live Input, Storage, DOM Inspector, AI Export
-// =========================================
-
+// debug.js - FORCE VISIBLE & FLOATING BUTTON
+// ===========================================
 (function() {
     'use strict';
-    
-    // Auto-init
-    if (document.readyState === 'loading') {
-        document.addEventListener('DOMContentLoaded', initDebugTools);
-    } else {
-        setTimeout(initDebugTools, 1000);
-    }
-    
-    const debugState = {
-        isConsoleVisible: false,
-        isInspectorActive: false,
-        logs: []
-    };
-    
-    function initDebugTools() {
-        console.log('🚀 Ultimate Debug Tools V3.0 Loaded');
-        createUI();
+
+    // 1. কোড রান হচ্ছে কিনা বোঝার জন্য কনসোলে মেসেজ
+    console.log('🐞 Debugger Starting...');
+
+    // পেজ লোড হলেই বাটন তৈরি হবে
+    window.addEventListener('load', function() {
+        createFloatingButton();
+        createConsoleWindow();
         overrideConsole();
-        interceptNetworkRequests();
-        initGlobalErrorHandlers();
-    }
-    
+    });
+
     // =========================================
-    // 1. UI ARCHITECTURE
+    // ১. ভাসমান বাটন (Floating Button) - FORCE MODE
     // =========================================
-    function createUI() {
-        // A. Floating Button
+    function createFloatingButton() {
+        // আগের কোনো বাটন থাকলে রিমুভ করা হবে
+        const oldBtn = document.getElementById('my-debug-btn');
+        if (oldBtn) oldBtn.remove();
+
         const btn = document.createElement('div');
-        btn.id = 'dbg-btn';
-        btn.innerHTML = '🐛';
-        btn.style.cssText = `position:fixed; bottom:20px; right:20px; width:50px; height:50px; background:#111; color:#fff; border:2px solid #00e676; border-radius:50%; font-size:24px; display:flex; align-items:center; justify-content:center; z-index:999999; box-shadow:0 4px 15px rgba(0,0,0,0.6); cursor:pointer; transition:transform 0.2s;`;
-        btn.onclick = toggleConsole;
-        document.body.appendChild(btn);
-
-        // B. Main Console Window
-        const win = document.createElement('div');
-        win.id = 'dbg-win';
-        win.style.cssText = `position:fixed; bottom:80px; right:20px; width:90%; max-width:450px; height:60vh; background:rgba(10,10,10,0.98); border:1px solid #333; border-radius:12px; z-index:999998; display:none; flex-direction:column; font-family:'Courier New', monospace; color:#fff; box-shadow:0 10px 40px rgba(0,0,0,0.9); backdrop-filter:blur(5px);`;
+        btn.id = 'my-debug-btn';
+        btn.innerHTML = '🐛'; // আইকন
         
-        win.innerHTML = `
-            <div style="padding:10px; background:#1a1a1a; border-bottom:1px solid #333; display:flex; justify-content:space-between; align-items:center;">
-                <span style="color:#00e676; font-weight:bold; font-size:14px;">⚡ DevTools</span>
-                <div style="display:flex; gap:5px;">
-                    <button id="btn-inspect" onclick="toggleInspector()" style="background:#333; color:#fff; border:1px solid #555; padding:4px 8px; border-radius:4px; font-size:11px;">🕵️ Inspect</button>
-                    <button onclick="copyAllLogs()" style="background:#2979ff; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px;">📋 Copy for AI</button>
-                    <button onclick="closeConsole()" style="background:#d32f2f; color:#fff; border:none; padding:4px 8px; border-radius:4px; font-size:11px;">✕</button>
-                </div>
-            </div>
-            
-            <div style="display:flex; background:#000; border-bottom:1px solid #333;">
-                <button onclick="showTab('console')" id="tab-console" class="dbg-tab" style="flex:1; padding:10px; background:none; border:none; color:#00e676; border-bottom:2px solid #00e676;">Console</button>
-                <button onclick="showTab('network')" id="tab-network" class="dbg-tab" style="flex:1; padding:10px; background:none; border:none; color:#888;">Network</button>
-                <button onclick="showTab('system')" id="tab-system" class="dbg-tab" style="flex:1; padding:10px; background:none; border:none; color:#888;">System</button>
-            </div>
-
-            <div id="view-console" class="dbg-view" style="flex:1; overflow-y:auto; padding:10px; font-size:12px;"></div>
-            <div id="view-network" class="dbg-view" style="flex:1; overflow-y:auto; padding:10px; font-size:12px; display:none;"></div>
-            <div id="view-system" class="dbg-view" style="flex:1; overflow-y:auto; padding:10px; font-size:12px; display:none;"></div>
-
-            <div style="padding:8px; border-top:1px solid #333; background:#1a1a1a; display:flex;">
-                <span style="color:#00e676; margin-right:8px;">></span>
-                <input id="dbg-cmd" type="text" placeholder="Run JS Code..." style="flex:1; background:transparent; border:none; color:#fff; outline:none; font-family:monospace;">
-            </div>
+        // বাটন স্টাইল (যাতে সবকিছুর উপরে থাকে)
+        btn.style.cssText = `
+            position: fixed !important;
+            top: 20px !important;       /* নিচে না, উপরে দেওয়া হলো */
+            right: 20px !important;     /* ডান পাশে */
+            width: 50px !important;
+            height: 50px !important;
+            background: #000 !important;
+            color: #0f0 !important;
+            border: 2px solid #0f0 !important;
+            border-radius: 50% !important;
+            font-size: 28px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            z-index: 2147483647 !important; /* সর্বোচ্চ লেয়ার */
+            cursor: pointer !important;
+            box-shadow: 0 0 15px rgba(0, 255, 0, 0.8) !important;
+            user-select: none !important;
+            -webkit-tap-highlight-color: transparent !important;
         `;
-        document.body.appendChild(win);
 
-        // Input Listener
-        document.getElementById('dbg-cmd').addEventListener('keydown', function(e) {
-            if(e.key === 'Enter') { execCmd(this.value); this.value = ''; }
-        });
-
-        // Global functions for HTML onclick
-        window.toggleConsole = () => {
-            const el = document.getElementById('dbg-win');
-            debugState.isConsoleVisible = !debugState.isConsoleVisible;
-            el.style.display = debugState.isConsoleVisible ? 'flex' : 'none';
-            if(debugState.isConsoleVisible) refreshSystemTab();
-        };
-        window.closeConsole = () => {
-             document.getElementById('dbg-win').style.display = 'none';
-             debugState.isConsoleVisible = false;
-        };
-        window.showTab = (name) => {
-            ['console','network','system'].forEach(t => {
-                document.getElementById(`view-${t}`).style.display = 'none';
-                document.getElementById(`tab-${t}`).style.style = 'flex:1; padding:10px; background:none; border:none; color:#888;';
-            });
-            document.getElementById(`view-${name}`).style.display = 'block';
-            const tab = document.getElementById(`tab-${name}`);
-            tab.style.color = '#00e676';
-            tab.style.borderBottom = '2px solid #00e676';
-        };
-        
-        // Inspector & Export
-        window.toggleInspector = initInspectorMode;
-        window.copyAllLogs = () => {
-            const text = debugState.logs.map(l => `[${l.time}] ${l.type.toUpperCase()}: ${l.msg}`).join('\n');
-            navigator.clipboard.writeText(text).then(() => alert('✅ Logs Copied! Paste to AI now.'));
-        };
-    }
-
-    // =========================================
-    // 2. CONSOLE & ERROR HANDLING
-    // =========================================
-    function overrideConsole() {
-        const methods = ['log', 'error', 'warn', 'info'];
-        methods.forEach(method => {
-            const original = console[method];
-            console[method] = (...args) => {
-                original.apply(console, args);
-                logToUI(method, args);
-            };
-        });
-    }
-    
-    function initGlobalErrorHandlers() {
-        window.onerror = (msg, url, line) => {
-            console.error(`CRASH: ${msg}`, `(${url.split('/').pop()}:${line})`);
-        };
-        window.onunhandledrejection = (e) => {
-            console.error(`PROMISE FAIL: ${e.reason}`);
-        };
-    }
-
-    function logToUI(type, args) {
-        const time = new Date().toLocaleTimeString('en-US', {hour12:false});
-        // Convert args to clean string
-        const msg = args.map(a => {
-            if(a instanceof HTMLElement) return `<${a.tagName.toLowerCase()} class="${a.className}">`;
-            if(typeof a === 'object') return JSON.stringify(a);
-            return String(a);
-        }).join(' ');
-
-        // Save to memory
-        debugState.logs.push({time, type, msg});
-
-        // Render
-        const color = type === 'error' ? '#ff5252' : (type === 'warn' ? '#ffab40' : '#fff');
-        const row = document.createElement('div');
-        row.style.cssText = `border-bottom:1px solid #222; padding:4px 0; color:${color}; word-break:break-all;`;
-        row.innerHTML = `<span style="color:#555; font-size:10px; margin-right:5px;">${time}</span>${msg}`;
-        
-        const container = document.getElementById('view-console');
-        if(container) {
-            container.appendChild(row);
-            container.scrollTop = container.scrollHeight;
-        }
-        
-        if(type === 'error') document.getElementById('dbg-btn').style.borderColor = '#ff5252';
-    }
-
-    // =========================================
-    // 3. DOM INSPECTOR (New Feature)
-    // =========================================
-    function initInspectorMode() {
-        debugState.isInspectorActive = !debugState.isInspectorActive;
-        const btn = document.getElementById('btn-inspect');
-        
-        if(debugState.isInspectorActive) {
-            btn.style.background = '#00e676';
-            btn.innerText = 'Tap Element';
-            closeConsole();
-            
-            // Add global click listener
-            document.body.addEventListener('click', inspectorHandler, true);
-        } else {
-            btn.style.background = '#333';
-            btn.innerText = '🕵️ Inspect';
-            document.body.removeEventListener('click', inspectorHandler, true);
-        }
-    }
-    
-    function inspectorHandler(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        
-        const el = e.target;
-        const rect = el.getBoundingClientRect();
-        
-        // Log details
-        console.log('--- INSPECTED ELEMENT ---');
-        console.log('Tag:', el.tagName);
-        console.log('Classes:', el.className);
-        console.log('Size:', `${Math.round(rect.width)}px x ${Math.round(rect.height)}px`);
-        console.log('Content:', el.innerText.substring(0, 20) + '...');
-        
-        // Highlight effect
-        const prevOutline = el.style.outline;
-        el.style.outline = '2px solid #ff5252';
-        setTimeout(() => el.style.outline = prevOutline, 1000);
-        
-        // Disable inspector
-        initInspectorMode(); 
-        toggleConsole(); // Re-open console
-    }
-
-    // =========================================
-    // 4. NETWORK & SYSTEM
-    // =========================================
-    function interceptNetworkRequests() {
-        const origFetch = window.fetch;
-        window.fetch = async (...args) => {
-            const url = args[0].toString().split('?')[0]; // Clean URL
-            logNet('⏳', url, '#ffab40');
-            try {
-                const res = await origFetch(...args);
-                logNet(res.status, url, res.ok ? '#00e676' : '#ff5252');
-                return res;
-            } catch (err) {
-                logNet('ERR', url, '#ff5252');
-                throw err;
+        // বাটন টিপলে কনসোল খুলবে/বন্ধ হবে
+        btn.onclick = function() {
+            const win = document.getElementById('my-debug-win');
+            if (win.style.display === 'none') {
+                win.style.display = 'flex';
+                btn.style.background = '#222'; // Active color
+            } else {
+                win.style.display = 'none';
+                btn.style.background = '#000'; // Normal color
             }
         };
+
+        document.documentElement.appendChild(btn); // body-তে না দিয়ে সরাসরি HTML-এ দেওয়া হলো
+        console.log('✅ Button Created');
     }
 
-    function logNet(status, url, color) {
-        const div = document.createElement('div');
-        div.style.cssText = `padding:5px 0; border-bottom:1px solid #222; display:flex; justify-content:space-between;`;
-        div.innerHTML = `<span style="color:${color}; font-weight:bold;">${status}</span><span style="color:#aaa; font-size:11px; margin-left:10px;">${url.substring(url.length-25)}</span>`;
-        document.getElementById('view-network').appendChild(div);
+    // =========================================
+    // ২. কনসোল উইন্ডো (Console Window)
+    // =========================================
+    function createConsoleWindow() {
+        const win = document.createElement('div');
+        win.id = 'my-debug-win';
+        
+        win.style.cssText = `
+            position: fixed !important;
+            top: 80px !important;
+            left: 5% !important;
+            width: 90% !important;
+            height: 50vh !important;
+            background: rgba(10, 10, 10, 0.98) !important;
+            border: 1px solid #333 !important;
+            border-radius: 8px !important;
+            z-index: 2147483646 !important;
+            display: none; /* শুরুতে বন্ধ থাকবে */
+            flex-direction: column !important;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.8) !important;
+            font-family: monospace !important;
+        `;
+
+        win.innerHTML = `
+            <div style="padding:10px; background:#222; border-bottom:1px solid #444; display:flex; justify-content:space-between; align-items:center;">
+                <span style="color:#0f0; font-weight:bold;">📟 Debug Console</span>
+                <div>
+                    <button onclick="copyLogs()" style="background:#007bff; color:white; border:none; padding:5px 10px; border-radius:4px; margin-right:5px;">📋 Copy for AI</button>
+                    <button onclick="document.getElementById('my-debug-win').style.display='none'" style="background:#d32f2f; color:white; border:none; padding:5px 10px; border-radius:4px;">✕</button>
+                </div>
+            </div>
+
+            <div id="debug-log-area" style="flex:1; overflow-y:scroll; padding:10px; color:#fff; font-size:12px;">
+                <div style="color:#888;">System ready...</div>
+            </div>
+
+            <div style="padding:10px; border-top:1px solid #444; background:#111;">
+                <input id="debug-cmd-input" type="text" placeholder="> Write JS Code & Hit Enter..." style="width:100%; background:transparent; border:none; color:#0f0; outline:none; font-family:monospace;">
+            </div>
+        `;
+
+        document.documentElement.appendChild(win);
+
+        // Copy Function for AI
+        window.copyLogs = function() {
+            const logs = document.getElementById('debug-log-area').innerText;
+            navigator.clipboard.writeText(logs).then(() => alert('Logs copied! Now paste to AI.'));
+        };
+
+        // Command Input Handler
+        document.getElementById('debug-cmd-input').addEventListener('keydown', function(e) {
+            if (e.key === 'Enter') {
+                const code = this.value;
+                console.log('> ' + code); // Log command
+                try {
+                    const result = eval(code); // Run Code
+                    console.log('< ' + result);
+                } catch (err) {
+                    console.error('Error: ' + err.message);
+                }
+                this.value = '';
+            }
+        });
     }
 
-    function refreshSystemTab() {
-        const info = {
-            'Screen': `${window.innerWidth} x ${window.innerHeight}`,
-            'User Agent': navigator.userAgent,
-            'Platform': navigator.platform,
-            'Language': navigator.language,
-            'Memory': navigator.deviceMemory ? `${navigator.deviceMemory} GB` : 'N/A',
-            'Cores': navigator.hardwareConcurrency || 'N/A'
+    // =========================================
+    // ৩. কনসোল ক্যাপচার (Console Override)
+    // =========================================
+    function overrideConsole() {
+        const logArea = document.getElementById('debug-log-area');
+        const oldLog = console.log;
+        const oldErr = console.error;
+
+        function printToScreen(msg, color) {
+            if (!logArea) return;
+            const div = document.createElement('div');
+            div.style.cssText = `padding: 4px 0; border-bottom: 1px solid #333; color: ${color}; word-wrap: break-word;`;
+            div.innerText = msg;
+            logArea.appendChild(div);
+            logArea.scrollTop = logArea.scrollHeight; // Auto scroll
+        }
+
+        console.log = function(...args) {
+            oldLog.apply(console, args);
+            printToScreen('✔ ' + args.join(' '), '#fff');
+        };
+
+        console.error = function(...args) {
+            oldErr.apply(console, args);
+            printToScreen('✘ ' + args.join(' '), '#ff5252');
+            // এরর হলে বাটন লাল হবে
+            const btn = document.getElementById('my-debug-btn');
+            if(btn) btn.style.borderColor = 'red';
         };
         
-        let html = '';
-        for(let key in info) {
-            html += `<div style="padding:5px; border-bottom:1px solid #222;"><b style="color:#00e676;">${key}:</b> <span style="color:#fff;">${info[key]}</span></div>`;
-        }
-        document.getElementById('view-system').innerHTML = html;
-    }
-
-    function execCmd(val) {
-        try {
-            console.log(`> ${val}`);
-            console.log(eval(val));
-        } catch(e) {
-            console.error(e.message);
-        }
+        // Window Error Handler
+        window.onerror = function(msg, url, line) {
+            console.error(`Crash: ${msg} (Line: ${line})`);
+        };
     }
 
 })();
