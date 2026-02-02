@@ -1,0 +1,355 @@
+/* =========================================
+   VAULT OS - GOLD MASTER STYLESHEET
+   Version: 5.0 (Production Grade)
+   Theme: Cyberpunk / Glassmorphism
+   ========================================= */
+
+:root {
+    /* 🎨 CORE PALETTE */
+    --primary: #00f3ff;           /* Neon Cyan */
+    --primary-dim: rgba(0, 243, 255, 0.15);
+    --secondary: #ff0055;         /* Neon Pink */
+    --success: #00e676;           /* Neon Green */
+    --warning: #ffd700;           /* Neon Gold */
+    
+    /* 🌑 BACKGROUNDS */
+    --bg-deep: #050505;           /* Deepest Black */
+    --bg-surface: #121212;        /* Panel BG */
+    --bg-glass: rgba(18, 18, 18, 0.85); /* Glass Effect */
+    
+    /* 🔤 TYPOGRAPHY & BORDERS */
+    --text-main: #ffffff;
+    --text-muted: #888888;
+    --border: rgba(255, 255, 255, 0.1);
+    
+    /* 📐 DIMENSIONS & ANIMATION */
+    --header-h: 60px;
+    --sidebar-w: 260px;
+    --radius: 12px;
+    --ease: cubic-bezier(0.23, 1, 0.32, 1);
+    --z-modal: 5000;
+    --z-ctx: 6000;
+    --z-boot: 9999;
+}
+
+/* =========================================
+   1. RESET & GLOBAL
+   ========================================= */
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+body {
+    background-color: var(--bg-deep);
+    color: var(--text-main);
+    font-family: 'Inter', system-ui, sans-serif;
+    font-size: 14px;
+    height: 100vh;
+    height: 100dvh;
+    overflow: hidden;
+    user-select: none;
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--primary); }
+
+button { cursor: pointer; border: none; outline: none; font-family: inherit; transition: 0.2s; }
+input, textarea { border: none; outline: none; font-family: inherit; }
+.hidden { display: none !important; }
+
+/* =========================================
+   2. BOOT SCREEN (Terminal Style)
+   ========================================= */
+#boot-screen {
+    position: fixed; inset: 0; background: #000; z-index: var(--z-boot);
+    display: flex; align-items: center; justify-content: center;
+    font-family: 'JetBrains Mono', monospace; pointer-events: none;
+}
+
+.terminal-boot { width: 90%; max-width: 400px; }
+.boot-logo {
+    font-size: 2.5rem; font-weight: 800; color: var(--primary);
+    text-shadow: 0 0 20px var(--primary-dim); margin-bottom: 20px;
+    letter-spacing: 4px;
+}
+.boot-log { color: var(--success); font-size: 0.9rem; line-height: 1.6; opacity: 0.8; }
+.blink { animation: blink 1s infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+/* =========================================
+   3. AUTH SCREEN (Glassmorphism)
+   ========================================= */
+#auth-screen {
+    position: fixed; inset: 0; z-index: 8000;
+    background: radial-gradient(circle at center, #1a1a1a 0%, #000 100%);
+    display: flex; align-items: center; justify-content: center;
+    transition: opacity 0.5s;
+}
+
+.auth-glass-panel {
+    background: rgba(20, 20, 20, 0.6);
+    border: 1px solid var(--border);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    padding: 40px;
+    width: 340px;
+    text-align: center;
+    box-shadow: 0 20px 50px rgba(0,0,0,0.6);
+}
+
+.auth-avatar {
+    width: 80px; height: 80px; margin: 0 auto 20px;
+    background: #000; border: 2px solid var(--primary);
+    border-radius: 50%; display: flex; align-items: center; justify-content: center;
+    font-size: 2rem; color: var(--primary);
+    box-shadow: 0 0 20px var(--primary-dim);
+}
+
+.pin-dots-wrapper { display: flex; justify-content: center; gap: 15px; margin: 30px 0; }
+.dot { width: 12px; height: 12px; border-radius: 50%; background: #333; transition: 0.2s; }
+.dot.active { background: var(--primary); box-shadow: 0 0 10px var(--primary); transform: scale(1.2); }
+
+.numpad-touch { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+.numpad-touch button {
+    aspect-ratio: 1; border-radius: 50%; background: rgba(255,255,255,0.05);
+    color: #fff; font-size: 1.5rem;
+}
+.numpad-touch button:active { background: var(--primary); color: #000; }
+.numpad-touch button.func { font-size: 1.2rem; color: var(--text-muted); background: transparent; }
+.numpad-touch button.go { color: var(--primary); }
+
+/* =========================================
+   4. LAYOUT & SIDEBAR
+   ========================================= */
+#app-interface { display: flex; height: 100%; position: relative; }
+
+.sidebar {
+    width: var(--sidebar-w); background: rgba(10,10,10,0.95);
+    border-right: 1px solid var(--border);
+    display: flex; flex-direction: column; z-index: 1000;
+    transition: transform 0.3s var(--ease);
+}
+
+.sidebar-header {
+    height: var(--header-h); display: flex; align-items: center;
+    padding: 0 20px; justify-content: space-between;
+    border-bottom: 1px solid var(--border);
+}
+.logo-text {
+    font-family: 'JetBrains Mono'; font-weight: 800; font-size: 1.2rem;
+    color: var(--primary); letter-spacing: 2px;
+}
+
+.user-card { padding: 20px; text-align: center; border-bottom: 1px solid var(--border); }
+.user-status-ring img {
+    width: 60px; height: 60px; border-radius: 50%; border: 2px solid #333; padding: 2px;
+}
+.user-status-ring.online img { border-color: var(--success); box-shadow: 0 0 15px rgba(0,230,118,0.2); }
+
+.nav-scroller { flex: 1; overflow-y: auto; padding: 15px 10px; }
+.nav-category { font-size: 0.7rem; color: var(--text-muted); margin: 15px 10px 5px; font-weight: 700; }
+.nav-item {
+    width: 100%; display: flex; align-items: center; gap: 12px;
+    padding: 10px 15px; border-radius: 8px; color: var(--text-muted);
+    background: transparent; margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.05); color: #fff; }
+.nav-item.active { background: var(--primary-dim); color: var(--primary); }
+
+.storage-widget { padding: 20px; background: rgba(0,0,0,0.2); }
+.bar-header { display: flex; justify-content: space-between; margin-bottom: 5px; font-size: 0.8rem; color: var(--text-muted); }
+.progress-container { height: 4px; background: #333; border-radius: 2px; overflow: hidden; }
+.progress-fill { height: 100%; background: var(--primary); width: 0%; transition: width 1s; }
+
+/* =========================================
+   5. MAIN STAGE & TOOLBAR
+   ========================================= */
+.main-stage { flex: 1; display: flex; flex-direction: column; background: var(--bg-deep); overflow: hidden; position: relative; }
+
+.top-toolbar {
+    height: var(--header-h); display: flex; align-items: center;
+    justify-content: space-between; padding: 0 20px;
+    border-bottom: 1px solid var(--border); background: var(--bg-surface);
+}
+
+.search-capsule {
+    position: relative; width: 300px;
+}
+.search-capsule input {
+    width: 100%; background: #000; border: 1px solid var(--border);
+    padding: 8px 15px 8px 35px; border-radius: 20px; color: #fff;
+}
+.search-capsule input:focus { border-color: var(--primary); box-shadow: 0 0 10px var(--primary-dim); }
+.search-capsule i { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: var(--text-muted); }
+
+/* Action Ribbon */
+.action-ribbon { padding: 15px 20px; display: flex; justify-content: space-between; align-items: center; }
+.primary-actions { display: flex; gap: 10px; }
+
+.action-chip {
+    padding: 8px 16px; border-radius: 8px; background: var(--bg-surface);
+    color: #fff; border: 1px solid var(--border); display: flex; align-items: center; gap: 8px;
+}
+.action-chip:hover { border-color: var(--text-muted); transform: translateY(-2px); }
+.action-chip.primary { background: var(--primary); color: #000; border: none; font-weight: 700; }
+
+/* Dropdowns */
+.dropdown-container { position: relative; }
+.dropdown-menu {
+    position: absolute; top: 110%; left: 0; background: rgba(20,20,20,0.95);
+    border: 1px solid var(--border); border-radius: 8px; padding: 5px;
+    min-width: 160px; backdrop-filter: blur(10px); z-index: 100;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); animation: fadeUp 0.2s;
+}
+.menu-item { padding: 10px; cursor: pointer; border-radius: 4px; display: flex; gap: 10px; color: #ccc; }
+.menu-item:hover { background: var(--primary-dim); color: var(--primary); }
+
+/* Selection Bar */
+.selection-actions {
+    display: flex; align-items: center; gap: 10px; background: var(--bg-surface);
+    padding: 5px 15px; border-radius: 30px; border: 1px solid var(--primary);
+    animation: fadeUp 0.3s;
+}
+.selection-actions button { background: transparent; color: #fff; font-size: 1.2rem; }
+.selection-actions button:hover { color: var(--primary); }
+.selection-actions button.danger:hover { color: var(--secondary); }
+
+/* =========================================
+   6. FILE BROWSER (Grid & List)
+   ========================================= */
+.file-browser { flex: 1; padding: 20px; overflow-y: auto; }
+
+/* Grid View */
+.grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 15px; }
+.file-card {
+    background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+    border-radius: 12px; overflow: hidden; cursor: pointer; transition: 0.2s;
+}
+.file-card:hover { transform: translateY(-3px); border-color: var(--text-muted); background: rgba(255,255,255,0.05); }
+.file-card.selected { border-color: var(--primary); background: var(--primary-dim); box-shadow: 0 0 15px var(--primary-dim); }
+
+.fc-thumb { height: 90px; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.2); }
+.fc-thumb i { font-size: 2.5rem; color: var(--text-muted); }
+.fc-thumb img { width: 100%; height: 100%; object-fit: cover; }
+
+.fc-info { padding: 10px; text-align: center; }
+.fc-name { display: block; font-size: 0.85rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.fc-meta { font-size: 0.7rem; color: var(--text-muted); margin-top: 2px; }
+
+/* List View */
+.list-view { display: flex; flex-direction: column; gap: 5px; }
+.list-view .file-card { display: flex; align-items: center; padding: 8px 15px; height: 50px; }
+.list-view .fc-thumb { width: 30px; height: 30px; margin-right: 15px; background: transparent; }
+.list-view .fc-thumb i { font-size: 1.5rem; }
+.list-view .fc-info { text-align: left; flex: 1; display: flex; justify-content: space-between; padding: 0; }
+
+/* Empty State */
+.empty-state {
+    position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+    text-align: center; color: var(--text-muted);
+}
+.empty-graphic { font-size: 4rem; margin-bottom: 20px; opacity: 0.5; }
+
+/* =========================================
+   7. MODALS & VIEWERS
+   ========================================= */
+.modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.9); z-index: var(--z-modal);
+    display: flex; align-items: center; justify-content: center; backdrop-filter: blur(5px);
+}
+
+/* Fullscreen Viewer */
+.modal-fullscreen { width: 100%; height: 100%; display: flex; flex-direction: column; }
+.viewer-header {
+    padding: 15px 20px; display: flex; justify-content: space-between; align-items: center;
+    background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+}
+.viewer-content { flex: 1; display: flex; align-items: center; justify-content: center; overflow: hidden; position: relative; }
+.viewer-content img, .viewer-content video { max-width: 100%; max-height: 100%; }
+
+/* Standard Modal Window (Picker/Settings) */
+.modal-window {
+    background: #181818; width: 90%; max-width: 500px; border-radius: 12px;
+    border: 1px solid var(--border); box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+    overflow: hidden; animation: zoomIn 0.2s;
+}
+.modal-top-bar {
+    padding: 15px; border-bottom: 1px solid var(--border); background: #202020;
+    display: flex; justify-content: space-between; align-items: center;
+}
+.modal-footer { padding: 15px; border-top: 1px solid var(--border); text-align: right; }
+
+/* Picker List */
+.picker-item {
+    padding: 10px 15px; cursor: pointer; border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; gap: 10px;
+}
+.picker-item:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
+
+/* =========================================
+   8. WIDGETS (Audio, Upload, Context)
+   ========================================= */
+/* Audio Dock */
+.audio-dock {
+    position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+    background: rgba(20,20,20,0.95); border: 1px solid var(--primary);
+    padding: 10px 20px; border-radius: 50px; display: flex; align-items: center; gap: 20px;
+    box-shadow: 0 10px 30px rgba(0,243,255,0.2); backdrop-filter: blur(10px); z-index: 4000;
+}
+.track-info { display: flex; align-items: center; gap: 10px; }
+.track-art { width: 30px; height: 30px; background: #333; border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+.track-meta { display: flex; flex-direction: column; font-size: 0.8rem; }
+.track-controls button { background: transparent; color: #fff; font-size: 1.2rem; }
+
+/* Upload Dock */
+.upload-dock {
+    position: fixed; bottom: 20px; right: 20px; width: 300px;
+    background: #181818; border: 1px solid var(--border); border-radius: 12px;
+    z-index: 3000; box-shadow: 0 10px 40px rgba(0,0,0,0.5); overflow: hidden;
+}
+.dock-header { padding: 10px 15px; background: #202020; display: flex; justify-content: space-between; }
+.dock-body { max-height: 200px; overflow-y: auto; padding: 10px; }
+.upload-item { padding: 8px; font-size: 0.85rem; border-bottom: 1px solid rgba(255,255,255,0.05); }
+.progress-track-mini { height: 3px; background: #333; margin-top: 5px; border-radius: 2px; }
+.progress-bar-mini { height: 100%; background: var(--success); transition: width 0.2s; }
+
+/* Context Menu */
+.ctx-menu {
+    position: fixed; background: rgba(20,20,20,0.95); border: 1px solid var(--border);
+    padding: 5px; border-radius: 8px; width: 180px; backdrop-filter: blur(10px);
+    z-index: var(--z-ctx); box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+}
+.ctx-menu li {
+    padding: 8px 12px; cursor: pointer; display: flex; gap: 10px; align-items: center;
+    color: #ccc; border-radius: 4px; font-size: 0.9rem;
+}
+.ctx-menu li:hover { background: var(--primary); color: #000; }
+.ctx-sep { height: 1px; background: rgba(255,255,255,0.1); margin: 4px 0; }
+
+/* Toasts */
+#toast-container { position: fixed; bottom: 20px; left: 20px; display: flex; flex-direction: column; gap: 10px; z-index: 9999; }
+.toast {
+    background: #202020; color: #fff; padding: 12px 20px; border-radius: 4px;
+    border-left: 3px solid var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+    animation: slideInLeft 0.3s;
+}
+.toast.success { border-color: var(--success); color: var(--success); }
+.toast.error { border-color: var(--secondary); color: var(--secondary); }
+
+/* =========================================
+   9. MOBILE & ANIMATIONS
+   ========================================= */
+@media (max-width: 768px) {
+    .sidebar { position: fixed; height: 100%; transform: translateX(-100%); }
+    .sidebar.open { transform: translateX(0); }
+    .search-capsule { width: 150px; }
+    .primary-actions span { display: none; } /* Hide text on mobile chips */
+}
+
+@keyframes spin { 100% { transform: rotate(360deg); } }
+@keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes zoomIn { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+@keyframes slideInLeft { from { transform: translateX(-100%); } }
+
+

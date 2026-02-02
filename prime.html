@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyber">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#00f3ff">
+    <title>Vault OS | Ultimate Cloud Ecosystem</title>
+    
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script>window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
+    
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+    <div id="boot-screen">
+        <div class="terminal-boot">
+            <div class="boot-logo">VAULT OS <span class="blink">_</span></div>
+            <div class="boot-log">
+                > KERNEL: LOADED<br>
+                > SECURITY: ACTIVE<br>
+                > MODULES: SYNCED<br>
+                > WAITING FOR USER...
+            </div>
+        </div>
+    </div>
+
+    <div id="auth-screen" class="hidden">
+        <div class="auth-glass-panel">
+            <div class="auth-avatar">
+                <i class="ri-shield-keyhole-line"></i>
+            </div>
+            <h2>Identity Verification</h2>
+            <p class="auth-hint">Enter Security PIN</p>
+            
+            <div class="pin-dots-wrapper">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            
+            <div class="numpad-touch">
+                <button data-val="1">1</button><button data-val="2">2</button><button data-val="3">3</button>
+                <button data-val="4">4</button><button data-val="5">5</button><button data-val="6">6</button>
+                <button data-val="7">7</button><button data-val="8">8</button><button data-val="9">9</button>
+                <button class="func" data-val="clear"><i class="ri-delete-back-line"></i></button>
+                <button data-val="0">0</button>
+                <button class="func go" data-val="enter"><i class="ri-arrow-right-line"></i></button>
+            </div>
+        </div>
+    </div>
+
+    <div id="app-interface">
+        
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <div class="logo-text">VAULT</div>
+                <button id="mobile-close-sidebar" class="mobile-only"><i class="ri-menu-fold-line"></i></button>
+            </div>
+
+            <div class="user-card">
+                <div class="user-status-ring">
+                    <img id="user-avatar" src="assets/default.png" onerror="this.src='https://ui-avatars.com/api/?name=Guest&background=0a0a0a&color=fff'">
+                </div>
+                <div class="user-meta">
+                    <h5 id="user-name">Guest User</h5>
+                    <button id="btn-drive-connect" class="mini-btn">Connect Drive</button>
+                    <div id="user-email" style="display:none"></div>
+                </div>
+            </div>
+
+            <nav class="nav-scroller">
+                <div class="nav-category">STORAGE</div>
+                <button class="nav-item active" data-path="root"><i class="ri-hard-drive-2-line"></i> My Drive</button>
+                <button class="nav-item" data-path="recent"><i class="ri-time-line"></i> Recent</button>
+                <button class="nav-item" data-path="starred"><i class="ri-star-fill"></i> Starred</button>
+                <button class="nav-item" data-path="trash"><i class="ri-delete-bin-line"></i> Trash</button>
+
+                <div class="nav-category">SMART LIBRARY</div>
+                <button class="nav-item" data-filter="image"><i class="ri-image-2-line"></i> Photos</button>
+                <button class="nav-item" data-filter="video"><i class="ri-movie-line"></i> Videos</button>
+                <button class="nav-item" data-filter="audio"><i class="ri-music-2-line"></i> Music</button>
+                <button class="nav-item" data-filter="pdf"><i class="ri-file-pdf-line"></i> Documents</button>
+                <button class="nav-item" data-filter="code"><i class="ri-code-box-line"></i> Dev & Code</button>
+
+                <div class="nav-category">SYSTEM</div>
+                <button class="nav-item" id="btn-app-import"><i class="ri-import-line"></i> Secure Import</button>
+                <button class="nav-item" id="btn-settings"><i class="ri-settings-line"></i> Settings</button>
+            </nav>
+
+            <div class="storage-widget">
+                <div class="bar-header">
+                    <span>Storage</span>
+                    <span id="storage-percent">0%</span>
+                </div>
+                <div class="progress-container">
+                    <div id="storage-bar" class="progress-fill"></div>
+                </div>
+            </div>
+        </aside>
+
+        <main class="main-stage">
+            
+            <header class="top-toolbar">
+                <div class="left-tools">
+                    <button id="sidebar-toggle"><i class="ri-menu-unfold-line"></i></button>
+                    <div class="breadcrumb-trail" id="breadcrumbs">
+                        <span class="crumb">My Drive</span>
+                    </div>
+                </div>
+
+                <div class="center-tools">
+                    <div class="search-capsule">
+                        <i class="ri-search-line"></i>
+                        <input type="text" id="search-input" placeholder="Search Vault...">
+                    </div>
+                </div>
+
+                <div class="right-tools">
+                    <button class="icon-btn" id="btn-refresh"><i class="ri-refresh-line"></i></button>
+                    <div class="view-switch">
+                        <button class="switch-btn active" data-view="grid"><i class="ri-grid-fill"></i></button>
+                        <button class="switch-btn" data-view="list"><i class="ri-list-check"></i></button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="action-ribbon">
+                <div class="primary-actions">
+                    <div class="dropdown-container">
+                        <button class="action-chip primary" id="btn-upload-menu">
+                            <i class="ri-upload-cloud-line"></i> Upload <i class="ri-arrow-down-s-line"></i>
+                        </button>
+                        <div class="dropdown-menu hidden" id="upload-dropdown">
+                            <div class="menu-item" id="act-upload-file"><i class="ri-file-add-line"></i> Files</div>
+                            <div class="menu-item" id="act-upload-folder"><i class="ri-folder-upload-line"></i> Folder</div>
+                        </div>
+                        <input type="file" id="inp-file" multiple hidden>
+                        <input type="file" id="inp-folder" webkitdirectory directory hidden>
+                    </div>
+
+                    <button class="action-chip" id="btn-new-folder" onclick="Actions.createFolder()"><i class="ri-folder-add-line"></i> Folder</button>
+                    
+                    <div class="dropdown-container">
+                        <button class="action-chip dropdown-trigger" id="btn-sort-menu"><i class="ri-sort-desc"></i> Sort</button>
+                        <div class="dropdown-menu hidden" id="sort-dropdown">
+                            <div class="menu-item" data-sort="name">Name (A-Z)</div>
+                            <div class="menu-item" data-sort="date">Date Modified</div>
+                            <div class="menu-item" data-sort="size">Size</div>
+                            <div class="menu-item" data-sort="type">File Type</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="selection-bar" class="selection-actions hidden">
+                    <span id="select-count">0 items</span>
+                    <div class="sep"></div>
+                    <button data-act="download" title="Download"><i class="ri-download-line"></i></button>
+                    <button data-act="move" title="Move"><i class="ri-drag-move-line"></i></button>
+                    <button data-act="copy" title="Copy"><i class="ri-file-copy-line"></i></button>
+                    <button data-act="rename" title="Rename"><i class="ri-edit-line"></i></button>
+                    <button data-act="delete" class="danger" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                </div>
+            </div>
+
+            <div id="file-grid-container" class="file-browser grid-view">
+                </div>
+
+            <div id="empty-state-placeholder" class="empty-state hidden">
+                <div class="empty-graphic">📂</div>
+                <h3>Sector Empty</h3>
+                <p>No data found in this location.</p>
+            </div>
+
+            <div id="global-audio-player" class="audio-dock hidden">
+                <div class="track-info">
+                    <div class="track-art"><i class="ri-disc-line"></i></div>
+                    <div class="track-meta">
+                        <span id="audio-track-name">Unknown Track</span>
+                        <span id="audio-track-time">00:00</span>
+                    </div>
+                </div>
+                <div class="track-controls">
+                    <button id="ap-play"><i class="ri-pause-fill"></i></button>
+                    <button id="ap-close"><i class="ri-close-line"></i></button>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <div id="modal-viewer" class="modal-overlay hidden">
+        <div class="modal-fullscreen">
+            <div class="viewer-header">
+                <h4 id="viewer-title">Filename.ext</h4>
+                <div class="viewer-tools">
+                    <button id="btn-viewer-close" class="close-btn"><i class="ri-close-line"></i></button>
+                </div>
+            </div>
+            <div class="viewer-content">
+                <div class="spinner"></div>
+                <div id="slot-markdown" class="media-slot hidden markdown-body"></div>
+            </div>
+        </div>
+    </div>
+
+    <div id="upload-manager" class="upload-dock hidden">
+        <div class="dock-header">
+            <span>Uploading...</span>
+            <button onclick="this.closest('.upload-dock').classList.add('hidden')"><i class="ri-arrow-down-s-line"></i></button>
+        </div>
+        <div id="upload-list-container" class="dock-body">
+            </div>
+    </div>
+
+    <div id="modal-picker-wrapper"></div>
+
+    <ul id="context-menu" class="ctx-menu hidden">
+        <li data-act="open"><i class="ri-eye-line"></i> Open</li>
+        <li data-act="download"><i class="ri-download-line"></i> Download</li>
+        <li class="ctx-sep"></li>
+        <li data-act="move"><i class="ri-drag-move-line"></i> Move</li>
+        <li data-act="copy"><i class="ri-file-copy-line"></i> Copy</li>
+        <li data-act="rename"><i class="ri-edit-line"></i> Rename</li>
+        <li class="ctx-sep"></li>
+        <li data-act="delete" class="text-danger"><i class="ri-delete-bin-line"></i> Delete</li>
+    </ul>
+
+    <div id="toast-container"></div>
+
+    <div id="modal-import" class="hidden"></div>
+
+    <script src="app.js"></script>
+</body>
+</html>
