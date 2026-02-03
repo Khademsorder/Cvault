@@ -1,0 +1,1387 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyber">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <title>VAULT OS v5.0 - Secure Drive Manager</title>
+    
+    <!-- CDN Libraries -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css">
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+    
+    <style>
+        /* Critical CSS for initial render */
+        :root {
+            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            --cyber-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
+            --danger-gradient: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
+            --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Screen -->
+    <div id="loadingScreen" class="loading-screen active">
+        <div class="loading-content">
+            <div class="loading-logo">
+                <div class="vault-icon">🔒</div>
+                <h1>VAULT <span>OS</span></h1>
+                <div class="version">v5.0</div>
+            </div>
+            <div class="loading-progress">
+                <div class="progress-bar">
+                    <div class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="loading-text">Initializing Secure Environment...</div>
+            </div>
+            <div class="loading-details">
+                <div class="detail-item">
+                    <span class="detail-label">Security:</span>
+                    <span class="detail-value">Encryption Active</span>
+                </div>
+                <div class="detail-item">
+                    <span class="detail-label">Connection:</span>
+                    <span class="detail-value" id="loadingConnection">Checking...</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- PIN Lock Screen -->
+    <div id="pinScreen" class="pin-screen">
+        <div class="pin-container">
+            <div class="pin-header">
+                <div class="pin-icon">🔒</div>
+                <h2>VAULT LOCKED</h2>
+                <p>Enter 4-digit PIN to access</p>
+            </div>
+            <div class="pin-display">
+                <div class="pin-dots">
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                    <span class="pin-dot"></span>
+                </div>
+                <div class="pin-input"></div>
+                <div class="pin-error" id="pinError"></div>
+            </div>
+            <div class="pin-keypad">
+                <div class="keypad-row">
+                    <button class="pin-key" data-key="1">1</button>
+                    <button class="pin-key" data-key="2">2</button>
+                    <button class="pin-key" data-key="3">3</button>
+                </div>
+                <div class="keypad-row">
+                    <button class="pin-key" data-key="4">4</button>
+                    <button class="pin-key" data-key="5">5</button>
+                    <button class="pin-key" data-key="6">6</button>
+                </div>
+                <div class="keypad-row">
+                    <button class="pin-key" data-key="7">7</button>
+                    <button class="pin-key" data-key="8">8</button>
+                    <button class="pin-key" data-key="9">9</button>
+                </div>
+                <div class="keypad-row">
+                    <button class="pin-key clear" data-key="clear">⌫</button>
+                    <button class="pin-key" data-key="0">0</button>
+                    <button class="pin-key submit" data-key="submit">↵</button>
+                </div>
+            </div>
+            <div class="pin-footer">
+                <div class="pin-attempts">
+                    <span class="attempts-count">Attempts: <span id="attemptCount">0/5</span></span>
+                </div>
+                <div class="pin-timeout" id="pinTimeout" style="display: none;">
+                    <i class='bx bx-time-five'></i>
+                    <span>Try again in <span id="timeoutMinutes">5</span> minutes</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div class="app-container" style="display: none;">
+        <!-- Top Navigation -->
+        <nav class="top-nav">
+            <div class="nav-left">
+                <button id="menuToggle" class="nav-btn menu-toggle">
+                    <i class='bx bx-menu'></i>
+                </button>
+                <div class="nav-brand">
+                    <span class="brand-icon">🔒</span>
+                    <span class="brand-text">VAULT <span class="brand-os">OS</span></span>
+                    <span class="nav-version">v5.0</span>
+                </div>
+            </div>
+            
+            <div class="nav-center">
+                <div class="drive-tabs" id="driveTabs">
+                    <button class="drive-tab active" data-drive="user">
+                        <i class='bx bx-user'></i>
+                        <span>My Drive</span>
+                    </button>
+                    <button class="drive-tab" data-drive="vault">
+                        <i class='bx bx-lock-alt'></i>
+                        <span>Vault Drive</span>
+                    </button>
+                    <button class="drive-tab copy-drive" id="copyToVaultBtn" title="Copy to Vault Drive">
+                        <i class='bx bx-copy'></i>
+                        <span>Copy to Vault</span>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="nav-right">
+                <div class="search-container">
+                    <i class='bx bx-search'></i>
+                    <input type="text" id="searchInput" class="search-input" placeholder="Search files...">
+                    <button class="search-clear" id="searchClear">
+                        <i class='bx bx-x'></i>
+                    </button>
+                </div>
+                <button class="nav-btn upload-btn" id="uploadBtn" title="Upload">
+                    <i class='bx bx-cloud-upload'></i>
+                </button>
+                <button class="nav-btn refresh-btn" id="refreshBtn" title="Refresh">
+                    <i class='bx bx-refresh'></i>
+                </button>
+                <button class="nav-btn view-toggle" id="viewToggle" title="Toggle View">
+                    <i class='bx bx-grid-alt'></i>
+                </button>
+                <div class="user-profile" id="userProfile">
+                    <div class="profile-pic" id="profilePic">
+                        <i class='bx bx-user'></i>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Sidebar -->
+        <aside class="sidebar" id="sidebar">
+            <div class="sidebar-header">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">
+                        <i class='bx bx-user'></i>
+                    </div>
+                    <div class="user-details">
+                        <h3 class="user-name" id="userName">Guest User</h3>
+                        <span class="user-email" id="userEmail">Not Connected</span>
+                        <div class="user-storage">
+                            <div class="storage-mini-bar">
+                                <div class="storage-mini-fill"></div>
+                            </div>
+                            <span class="storage-mini-text">0%</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="sidebar-close" id="sidebarClose">
+                    <i class='bx bx-chevron-left'></i>
+                </button>
+            </div>
+
+            <div class="sidebar-menu">
+                <div class="menu-section">
+                    <h4 class="section-title">MAIN</h4>
+                    <a href="#" class="menu-item active" data-view="drive">
+                        <i class='bx bx-hdd'></i>
+                        <span>My Drive</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="recent">
+                        <i class='bx bx-time'></i>
+                        <span>Recent Files</span>
+                        <span class="menu-badge">12</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="starred">
+                        <i class='bx bx-star'></i>
+                        <span>Starred</span>
+                        <span class="menu-badge">5</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="trash">
+                        <i class='bx bx-trash'></i>
+                        <span>Trash</span>
+                        <span class="menu-badge">3</span>
+                    </a>
+                </div>
+
+                <div class="menu-section">
+                    <h4 class="section-title">VIRTUAL FOLDERS</h4>
+                    <a href="#" class="menu-item" data-view="images">
+                        <i class='bx bx-image'></i>
+                        <span>Images</span>
+                        <span class="menu-badge">24</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="videos">
+                        <i class='bx bx-video'></i>
+                        <span>Videos</span>
+                        <span class="menu-badge">8</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="documents">
+                        <i class='bx bx-file'></i>
+                        <span>Documents</span>
+                        <span class="menu-badge">15</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="audio">
+                        <i class='bx bx-music'></i>
+                        <span>Audio</span>
+                        <span class="menu-badge">7</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="archives">
+                        <i class='bx bx-archive'></i>
+                        <span>Archives</span>
+                        <span class="menu-badge">3</span>
+                    </a>
+                    <a href="#" class="menu-item" data-view="code">
+                        <i class='bx bx-code'></i>
+                        <span>Code Files</span>
+                        <span class="menu-badge">11</span>
+                    </a>
+                </div>
+
+                <div class="menu-section">
+                    <h4 class="section-title">CONNECTIONS</h4>
+                    <button class="menu-item" id="googleConnectBtn">
+                        <i class='bx bx-cloud'></i>
+                        <span>Google Connect</span>
+                        <span class="menu-status offline" id="connectStatus">Offline</span>
+                    </button>
+                    <button class="menu-item" id="reconnectBtn">
+                        <i class='bx bx-refresh'></i>
+                        <span>Reconnect</span>
+                    </button>
+                    <button class="menu-item" id="connectionStatusBtn">
+                        <i class='bx bx-wifi'></i>
+                        <span>Connection Status</span>
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <h4 class="section-title">FILE OPERATIONS</h4>
+                    <button class="menu-item" id="createFolderBtn">
+                        <i class='bx bx-folder-plus'></i>
+                        <span>New Folder</span>
+                    </button>
+                    <button class="menu-item" id="fileInfoBtn">
+                        <i class='bx bx-info-circle'></i>
+                        <span>File Information</span>
+                    </button>
+                    <button class="menu-item" id="sortBtn">
+                        <i class='bx bx-sort-alt-2'></i>
+                        <span>Sort Files</span>
+                    </button>
+                    <button class="menu-item" id="filterBtn">
+                        <i class='bx bx-filter-alt'></i>
+                        <span>Filter</span>
+                    </button>
+                </div>
+
+                <div class="menu-section">
+                    <h4 class="section-title">SYSTEM</h4>
+                    <button class="menu-item" id="settingsBtn">
+                        <i class='bx bx-cog'></i>
+                        <span>Settings</span>
+                    </button>
+                    <button class="menu-item" id="storageInfoBtn">
+                        <i class='bx bx-pie-chart-alt'></i>
+                        <span>Storage Info</span>
+                    </button>
+                    <button class="menu-item" id="advancedViewerBtn">
+                        <i class='bx bx-slideshow'></i>
+                        <span>Advanced Viewer</span>
+                    </button>
+                    <button class="menu-item" id="erudaBtn">
+                        <i class='bx bx-bug'></i>
+                        <span>Developer Tools</span>
+                    </button>
+                </div>
+            </div>
+
+            <div class="sidebar-footer">
+                <div class="storage-info">
+                    <div class="storage-header">
+                        <span>Storage Usage</span>
+                        <span class="storage-percent">0%</span>
+                    </div>
+                    <div class="storage-bar">
+                        <div class="storage-fill"></div>
+                    </div>
+                    <div class="storage-details">
+                        <span id="storageUsed">0 GB</span>
+                        <span>of</span>
+                        <span id="storageTotal">15 GB</span>
+                        <span>used</span>
+                    </div>
+                </div>
+                <div class="session-info">
+                    <span class="session-time">
+                        <i class='bx bx-time'></i>
+                        <span id="sessionTimer">24:00:00</span>
+                    </span>
+                    <button class="logout-btn" id="logoutBtn">
+                        <i class='bx bx-log-out'></i>
+                        <span>Lock Vault</span>
+                    </button>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <!-- Breadcrumb -->
+            <div class="breadcrumb">
+                <div class="breadcrumb-path" id="breadcrumbPath">
+                    <button class="breadcrumb-item home">
+                        <i class='bx bx-home'></i>
+                    </button>
+                    <span class="breadcrumb-separator">/</span>
+                    <button class="breadcrumb-item">My Drive</button>
+                </div>
+                <div class="breadcrumb-actions">
+                    <button class="action-btn" id="selectAllBtn" title="Select All">
+                        <i class='bx bx-checkbox'></i>
+                    </button>
+                    <button class="action-btn" id="shareBtn" title="Share" disabled>
+                        <i class='bx bx-share-alt'></i>
+                    </button>
+                    <button class="action-btn" id="downloadBtn" title="Download" disabled>
+                        <i class='bx bx-download'></i>
+                    </button>
+                    <button class="action-btn" id="copyBtn" title="Copy" disabled>
+                        <i class='bx bx-copy'></i>
+                    </button>
+                    <button class="action-btn" id="moveBtn" title="Move" disabled>
+                        <i class='bx bx-folder'></i>
+                    </button>
+                    <button class="action-btn delete" id="deleteBtn" title="Delete" disabled>
+                        <i class='bx bx-trash'></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- File Actions Bar -->
+            <div class="file-actions-bar" id="fileActionsBar" style="display: none;">
+                <div class="actions-left">
+                    <span class="selected-count">
+                        <i class='bx bx-check-circle'></i>
+                        <span id="selectedCount">0</span> selected
+                    </span>
+                </div>
+                <div class="actions-right">
+                    <button class="action-btn small" id="actionShare">
+                        <i class='bx bx-share-alt'></i> Share
+                    </button>
+                    <button class="action-btn small" id="actionCopy">
+                        <i class='bx bx-copy'></i> Copy
+                    </button>
+                    <button class="action-btn small" id="actionMove">
+                        <i class='bx bx-folder'></i> Move
+                    </button>
+                    <button class="action-btn small delete" id="actionDelete">
+                        <i class='bx bx-trash'></i> Delete
+                    </button>
+                    <button class="action-btn small cancel" id="actionCancel">
+                        <i class='bx bx-x'></i> Cancel
+                    </button>
+                </div>
+            </div>
+
+            <!-- File Grid/List View -->
+            <div class="content-area" id="contentArea">
+                <div class="view-header">
+                    <div class="view-controls">
+                        <div class="sort-controls">
+                            <select id="sortSelect" class="sort-select">
+                                <option value="name_asc">Name (A-Z)</option>
+                                <option value="name_desc">Name (Z-A)</option>
+                                <option value="date_desc">Date (Newest)</option>
+                                <option value="date_asc">Date (Oldest)</option>
+                                <option value="size_desc">Size (Largest)</option>
+                                <option value="size_asc">Size (Smallest)</option>
+                                <option value="type">File Type</option>
+                            </select>
+                        </div>
+                        <div class="view-switch">
+                            <button class="view-switch-btn active" data-view="grid">
+                                <i class='bx bx-grid-alt'></i>
+                            </button>
+                            <button class="view-switch-btn" data-view="list">
+                                <i class='bx bx-list-ul'></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-container grid-view active" id="gridView">
+                    <!-- Files will be dynamically loaded here -->
+                    <div class="empty-state">
+                        <div class="empty-icon">
+                            <i class='bx bx-cloud-off'></i>
+                        </div>
+                        <h3>Drive Empty</h3>
+                        <p>Connect to Google Drive or upload files to get started</p>
+                        <div class="empty-actions">
+                            <button class="connect-btn" id="connectEmptyBtn">
+                                <i class='bx bx-plug'></i>
+                                Connect Google Drive
+                            </button>
+                            <button class="upload-btn-empty" id="uploadEmptyBtn">
+                                <i class='bx bx-cloud-upload'></i>
+                                Upload Files
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="view-container list-view" id="listView" style="display: none;">
+                    <!-- List view table will be loaded here -->
+                    <div class="file-table">
+                        <div class="table-header">
+                            <div class="table-col name">Name</div>
+                            <div class="table-col type">Type</div>
+                            <div class="table-col size">Size</div>
+                            <div class="table-col modified">Modified</div>
+                            <div class="table-col actions">Actions</div>
+                        </div>
+                        <div class="table-body" id="tableBody">
+                            <!-- Table rows will be added here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Upload Queue -->
+            <div class="upload-queue" id="uploadQueue">
+                <div class="queue-header">
+                    <h4><i class='bx bx-upload'></i> Upload Queue <span class="queue-count">(0)</span></h4>
+                    <div class="queue-controls">
+                        <button class="queue-btn" id="pauseAllBtn" title="Pause All">
+                            <i class='bx bx-pause'></i>
+                        </button>
+                        <button class="queue-btn" id="resumeAllBtn" title="Resume All">
+                            <i class='bx bx-play'></i>
+                        </button>
+                        <button class="queue-btn" id="clearQueueBtn" title="Clear Queue">
+                            <i class='bx bx-trash'></i>
+                        </button>
+                        <button class="queue-toggle" id="queueToggle">
+                            <i class='bx bx-chevron-up'></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="queue-items" id="queueItems">
+                    <!-- Upload items will be added here -->
+                </div>
+                <div class="queue-stats">
+                    <span class="stat-item">
+                        <i class='bx bx-time'></i>
+                        <span id="queueTime">--:--</span>
+                    </span>
+                    <span class="stat-item">
+                        <i class='bx bx-timer'></i>
+                        <span id="queueSpeed">0 MB/s</span>
+                    </span>
+                    <span class="stat-item">
+                        <i class='bx bx-data'></i>
+                        <span id="queueProgress">0%</span>
+                    </span>
+                </div>
+            </div>
+
+            <!-- Status Bar -->
+            <div class="status-bar">
+                <div class="status-left">
+                    <span class="status-item">
+                        <i class='bx bx-folder'></i>
+                        <span id="folderCount">0</span> folders
+                    </span>
+                    <span class="status-item">
+                        <i class='bx bx-file'></i>
+                        <span id="fileCount">0</span> files
+                    </span>
+                    <span class="status-item">
+                        <i class='bx bx-data'></i>
+                        <span id="totalSize">0 MB</span>
+                    </span>
+                </div>
+                <div class="status-center">
+                    <span class="status-item" id="syncStatus">
+                        <i class='bx bx-sync'></i>
+                        <span>Syncing...</span>
+                    </span>
+                </div>
+                <div class="status-right">
+                    <span class="status-item" id="connectionStatus">
+                        <i class='bx bx-wifi-off'></i>
+                        <span>Offline</span>
+                    </span>
+                    <span class="status-item" id="tokenStatus">
+                        <i class='bx bx-shield'></i>
+                        <span>Token: Valid</span>
+                    </span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- Context Menu (3-dot menu for files) -->
+    <div class="context-menu" id="contextMenu">
+        <button class="context-item" data-action="preview">
+            <i class='bx bx-show'></i> Preview
+        </button>
+        <button class="context-item" data-action="download">
+            <i class='bx bx-download'></i> Download
+        </button>
+        <div class="context-divider"></div>
+        <button class="context-item" data-action="share">
+            <i class='bx bx-share-alt'></i> Share
+        </button>
+        <button class="context-item" data-action="copy">
+            <i class='bx bx-copy'></i> Copy
+        </button>
+        <button class="context-item" data-action="move">
+            <i class='bx bx-folder'></i> Move
+        </button>
+        <div class="context-divider"></div>
+        <button class="context-item" data-action="rename">
+            <i class='bx bx-edit'></i> Rename
+        </button>
+        <button class="context-item" data-action="star">
+            <i class='bx bx-star'></i> Add to Starred
+        </button>
+        <div class="context-divider"></div>
+        <button class="context-item info" data-action="info">
+            <i class='bx bx-info-circle'></i> File Info
+        </button>
+        <button class="context-item danger" data-action="delete">
+            <i class='bx bx-trash'></i> Delete
+        </button>
+    </div>
+
+    <!-- File Info Modal -->
+    <div class="modal" id="fileInfoModal">
+        <div class="modal-header">
+            <h3><i class='bx bx-info-circle'></i> File Information</h3>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="file-info-header">
+                <div class="file-icon" id="infoFileIcon">
+                    <i class='bx bx-file'></i>
+                </div>
+                <div class="file-info-title">
+                    <h4 id="infoFileName">File Name</h4>
+                    <span class="file-type" id="infoFileType">Unknown Type</span>
+                </div>
+            </div>
+            <div class="info-section">
+                <h5>Basic Information</h5>
+                <div class="info-grid">
+                    <div class="info-item">
+                        <span class="info-label">File ID:</span>
+                        <span class="info-value" id="infoFileId">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Size:</span>
+                        <span class="info-value" id="infoFileSize">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Created:</span>
+                        <span class="info-value" id="infoCreated">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Modified:</span>
+                        <span class="info-value" id="infoModified">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">MIME Type:</span>
+                        <span class="info-value" id="infoMimeType">--</span>
+                    </div>
+                    <div class="info-item">
+                        <span class="info-label">Location:</span>
+                        <span class="info-value" id="infoLocation">--</span>
+                    </div>
+                </div>
+            </div>
+            <div class="info-section">
+                <h5>Permissions</h5>
+                <div class="permissions-grid">
+                    <div class="permission-item">
+                        <i class='bx bx-check' id="infoReadable"></i>
+                        <span>Readable</span>
+                    </div>
+                    <div class="permission-item">
+                        <i class='bx bx-check' id="infoWritable"></i>
+                        <span>Writable</span>
+                    </div>
+                    <div class="permission-item">
+                        <i class='bx bx-check' id="infoSharable"></i>
+                        <span>Sharable</span>
+                    </div>
+                    <div class="permission-item">
+                        <i class='bx bx-check' id="infoTrashable"></i>
+                        <span>Trashable</span>
+                    </div>
+                </div>
+            </div>
+            <div class="info-section">
+                <h5>Advanced Details</h5>
+                <div class="advanced-info">
+                    <div class="advanced-item">
+                        <span class="adv-label">MD5 Checksum:</span>
+                        <span class="adv-value" id="infoChecksum">--</span>
+                    </div>
+                    <div class="advanced-item">
+                        <span class="adv-label">Version:</span>
+                        <span class="adv-value" id="infoVersion">1</span>
+                    </div>
+                    <div class="advanced-item">
+                        <span class="adv-label">View Count:</span>
+                        <span class="adv-value" id="infoViewCount">0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" id="copyFileLinkBtn">
+                <i class='bx bx-link'></i>
+                Copy Link
+            </button>
+            <button class="btn primary" id="openFileBtn">
+                <i class='bx bx-show'></i>
+                Open File
+            </button>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div class="modal" id="shareModal">
+        <div class="modal-header">
+            <h3><i class='bx bx-share-alt'></i> Share File</h3>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="share-input-group">
+                <input type="text" class="share-link" id="shareLink" readonly>
+                <button class="btn secondary" id="copyShareLinkBtn">
+                    <i class='bx bx-copy'></i>
+                </button>
+            </div>
+            <div class="share-permissions">
+                <h5>Permissions</h5>
+                <div class="permission-options">
+                    <label class="permission-option">
+                        <input type="radio" name="permission" value="view" checked>
+                        <span>Can view</span>
+                    </label>
+                    <label class="permission-option">
+                        <input type="radio" name="permission" value="comment">
+                        <span>Can comment</span>
+                    </label>
+                    <label class="permission-option">
+                        <input type="radio" name="permission" value="edit">
+                        <span>Can edit</span>
+                    </label>
+                </div>
+            </div>
+            <div class="share-expiry">
+                <h5>Link Expiry</h5>
+                <select id="shareExpiry">
+                    <option value="1day">1 day</option>
+                    <option value="7days">7 days</option>
+                    <option value="30days">30 days</option>
+                    <option value="never" selected>Never</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" id="cancelShare">Cancel</button>
+            <button class="btn primary" id="generateShareLinkBtn">
+                <i class='bx bx-link-alt'></i>
+                Generate Share Link
+            </button>
+        </div>
+    </div>
+
+    <!-- Move/Copy Modal -->
+    <div class="modal" id="moveCopyModal">
+        <div class="modal-header">
+            <h3><i class='bx bx-folder'></i> <span id="moveCopyTitle">Move Files</span></h3>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="folder-tree" id="folderTree">
+                <!-- Folder tree will be loaded here -->
+                <div class="tree-loading">
+                    <i class='bx bx-loader-circle bx-spin'></i>
+                    Loading folders...
+                </div>
+            </div>
+            <div class="destination-path">
+                <span>Destination: </span>
+                <span id="destPath">My Drive</span>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" id="cancelMoveCopy">Cancel</button>
+            <button class="btn primary" id="confirmMoveCopyBtn">
+                <i class='bx bx-check'></i>
+                Confirm
+            </button>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal upload-modal" id="uploadModal">
+        <div class="modal-header">
+            <h3><i class='bx bx-cloud-upload'></i> Upload Files</h3>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="upload-tabs">
+                <button class="upload-tab active" data-tab="files">
+                    <i class='bx bx-file'></i>
+                    Upload Files
+                </button>
+                <button class="upload-tab" data-tab="folder">
+                    <i class='bx bx-folder'></i>
+                    Upload Folder
+                </button>
+            </div>
+            
+            <div class="upload-content">
+                <div class="tab-content active" id="filesTab">
+                    <div class="upload-dropzone" id="uploadDropzone">
+                        <i class='bx bx-cloud-upload'></i>
+                        <h4>Drop files here or click to browse</h4>
+                        <p>Max file size: 10GB | Supports resumable uploads</p>
+                        <input type="file" id="fileInput" multiple hidden>
+                        <button class="btn secondary" id="browseFilesBtn">
+                            <i class='bx bx-folder-open'></i>
+                            Browse Files
+                        </button>
+                    </div>
+                    <div class="selected-files" id="selectedFiles">
+                        <!-- Selected files will appear here -->
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="folderTab">
+                    <div class="folder-upload-dropzone" id="folderDropzone">
+                        <i class='bx bx-folder-open'></i>
+                        <h4>Drop folder here or click to browse</h4>
+                        <p>Upload entire folder structure with subfolders</p>
+                        <input type="file" id="folderInput" webkitdirectory mozdirectory msdirectory odirectory directory multiple hidden>
+                        <button class="btn secondary" id="browseFolderBtn">
+                            <i class='bx bx-folder-plus'></i>
+                            Browse Folder
+                        </button>
+                    </div>
+                    <div class="selected-folder" id="selectedFolder">
+                        <!-- Folder structure will appear here -->
+                    </div>
+                </div>
+            </div>
+            
+            <div class="upload-options">
+                <h5>Upload Options</h5>
+                <div class="option-grid">
+                    <div class="option-item">
+                        <label>
+                            <input type="checkbox" id="chunkUpload" checked>
+                            <span>Chunk upload (resumable)</span>
+                        </label>
+                    </div>
+                    <div class="option-item">
+                        <label>
+                            <input type="checkbox" id="onlineOnly" checked>
+                            <span>Online only</span>
+                        </label>
+                    </div>
+                    <div class="option-item">
+                        <label>
+                            <input type="checkbox" id="keepStructure">
+                            <span>Keep folder structure</span>
+                        </label>
+                    </div>
+                    <div class="option-item">
+                        <label>
+                            <input type="checkbox" id="overwriteExisting">
+                            <span>Overwrite existing files</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="upload-destination">
+                    <span>Destination: </span>
+                    <span class="dest-folder" id="uploadDestFolder">My Drive</span>
+                    <button class="btn-small" id="changeDestBtn">
+                        <i class='bx bx-edit'></i> Change
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" id="cancelUpload">Cancel</button>
+            <button class="btn primary" id="startUploadBtn" disabled>
+                <i class='bx bx-upload'></i>
+                Start Upload
+            </button>
+        </div>
+    </div>
+
+    <!-- Google Connect Modal -->
+    <div class="modal connect-modal" id="googleConnectModal">
+        <div class="modal-header">
+            <h3><i class='bx bx-google'></i> Connect Google Drive</h3>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="connect-info">
+                <div class="connect-icon">
+                    <i class='bx bx-cloud'></i>
+                </div>
+                <h4>Secure Google Drive Integration</h4>
+                <p>Connect your Google Drive to access files securely using OAuth 2.0</p>
+                
+                <div class="connect-steps">
+                    <div class="step-item active">
+                        <div class="step-number">1</div>
+                        <div class="step-content">
+                            <h5>Authentication</h5>
+                            <p>Secure OAuth 2.0 login with Google</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">2</div>
+                        <div class="step-content">
+                            <h5>Permissions</h5>
+                            <p>Grant file access permissions</p>
+                        </div>
+                    </div>
+                    <div class="step-item">
+                        <div class="step-number">3</div>
+                        <div class="step-content">
+                            <h5>Sync Setup</h5>
+                            <p>Configure automatic synchronization</p>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="connect-scopes">
+                    <h5>Permissions Required:</h5>
+                    <ul>
+                        <li><i class='bx bx-check'></i> View and manage Google Drive files</li>
+                        <li><i class='bx bx-check'></i> View your basic profile info</li>
+                        <li><i class='bx bx-check'></i> Create and edit files</li>
+                        <li><i class='bx bx-check'></i> Read file metadata</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" id="cancelConnect">Cancel</button>
+            <button class="btn primary" id="connectGoogleBtn">
+                <i class='bx bx-plug'></i>
+                Connect Google Account
+            </button>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div class="modal settings-modal" id="settingsModal">
+        <div class="modal-header">
+            <h3><i class='bx bx-cog'></i> Settings</h3>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="settings-tabs">
+                <button class="tab-btn active" data-tab="general">General</button>
+                <button class="tab-btn" data-tab="viewers">File Viewers</button>
+                <button class="tab-btn" data-tab="security">Security</button>
+                <button class="tab-btn" data-tab="performance">Performance</button>
+                <button class="tab-btn" data-tab="about">About</button>
+            </div>
+            
+            <div class="settings-content">
+                <div class="tab-content active" id="generalTab">
+                    <div class="setting-group">
+                        <h5>Appearance</h5>
+                        <div class="setting-item">
+                            <label>Theme</label>
+                            <select id="themeSelect">
+                                <option value="cyber">Cyber (Default)</option>
+                                <option value="dark">Dark</option>
+                                <option value="light">Light</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Default View</label>
+                            <select id="viewSelect">
+                                <option value="grid">Grid View</option>
+                                <option value="list">List View</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h5>File Operations</h5>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="confirmDelete" checked>
+                                Confirm before delete
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="confirmOverwrite" checked>
+                                Confirm before overwrite
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="showThumbnails" checked>
+                                Show file thumbnails
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="viewersTab">
+                    <div class="setting-group">
+                        <h5>Advanced File Viewers</h5>
+                        <p class="setting-description">Enable/disable specific file viewers</p>
+                        
+                        <div class="viewer-options">
+                            <div class="viewer-item">
+                                <label>
+                                    <input type="checkbox" id="imageViewer" checked>
+                                    <span>Image Viewer</span>
+                                    <span class="viewer-status">Default</span>
+                                </label>
+                            </div>
+                            <div class="viewer-item">
+                                <label>
+                                    <input type="checkbox" id="pdfViewer" checked>
+                                    <span>PDF Viewer</span>
+                                    <span class="viewer-status">CDN: pdf.js</span>
+                                </label>
+                            </div>
+                            <div class="viewer-item">
+                                <label>
+                                    <input type="checkbox" id="videoViewer" checked>
+                                    <span>Video Viewer</span>
+                                    <span class="viewer-status">CDN: Plyr.js</span>
+                                </label>
+                            </div>
+                            <div class="viewer-item">
+                                <label>
+                                    <input type="checkbox" id="audioViewer" checked>
+                                    <span>Audio Viewer</span>
+                                    <span class="viewer-status">CDN: Howler.js</span>
+                                </label>
+                            </div>
+                            <div class="viewer-item">
+                                <label>
+                                    <input type="checkbox" id="textViewer" checked>
+                                    <span>Text Viewer</span>
+                                    <span class="viewer-status">Syntax Highlighting</span>
+                                </label>
+                            </div>
+                            <div class="viewer-item">
+                                <label>
+                                    <input type="checkbox" id="codeViewer" checked>
+                                    <span>Code Viewer</span>
+                                    <span class="viewer-status">CDN: Prism.js</span>
+                                </label>
+                            </div>
+                            <div class="viewer-item">
+                                <label>
+                                    <input type="checkbox" id="archiveViewer" checked>
+                                    <span>Archive Viewer</span>
+                                    <span class="viewer-status">CDN: JSZip</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="securityTab">
+                    <div class="setting-group">
+                        <h5>PIN Security</h5>
+                        <div class="setting-item">
+                            <label>Change PIN</label>
+                            <div class="pin-change">
+                                <input type="password" id="newPin" placeholder="Enter new 4-digit PIN" maxlength="4">
+                                <button class="btn-small" id="changePinBtn">Change</button>
+                            </div>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="autoLock" checked>
+                                Auto-lock after 5 minutes idle
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h5>Session Management</h5>
+                        <div class="setting-item">
+                            <label>Session Timeout</label>
+                            <select id="sessionTimeout">
+                                <option value="1">1 hour</option>
+                                <option value="8">8 hours</option>
+                                <option value="24" selected>24 hours</option>
+                                <option value="72">72 hours</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Token Refresh Interval</label>
+                            <select id="tokenRefresh">
+                                <option value="15">15 minutes</option>
+                                <option value="30">30 minutes</option>
+                                <option value="45" selected>45 minutes</option>
+                                <option value="60">60 minutes</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h5>Clear Data</h5>
+                        <button class="btn danger" id="clearCacheBtn">
+                            <i class='bx bx-trash'></i>
+                            Clear Local Cache
+                        </button>
+                        <button class="btn danger" id="clearAllDataBtn">
+                            <i class='bx bx-reset'></i>
+                            Reset All Settings
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="performanceTab">
+                    <div class="setting-group">
+                        <h5>Cache Settings</h5>
+                        <div class="setting-item">
+                            <label>Cache Size Limit</label>
+                            <select id="cacheLimit">
+                                <option value="100">100 MB</option>
+                                <option value="250">250 MB</option>
+                                <option value="500" selected>500 MB</option>
+                                <option value="1000">1 GB</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Thumbnail Cache</label>
+                            <select id="thumbnailCache">
+                                <option value="50">50 thumbnails</option>
+                                <option value="100">100 thumbnails</option>
+                                <option value="200" selected>200 thumbnails</option>
+                                <option value="500">500 thumbnails</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h5>Upload Settings</h5>
+                        <div class="setting-item">
+                            <label>Chunk Size</label>
+                            <select id="chunkSize">
+                                <option value="1">1 MB</option>
+                                <option value="5" selected>5 MB</option>
+                                <option value="10">10 MB</option>
+                                <option value="20">20 MB</option>
+                            </select>
+                        </div>
+                        <div class="setting-item">
+                            <label>Parallel Uploads</label>
+                            <select id="parallelUploads">
+                                <option value="1">1 file</option>
+                                <option value="2" selected>2 files</option>
+                                <option value="3">3 files</option>
+                                <option value="5">5 files</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="setting-group">
+                        <h5>Network</h5>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="lazyLoading" checked>
+                                Enable lazy loading
+                            </label>
+                        </div>
+                        <div class="setting-item">
+                            <label>
+                                <input type="checkbox" id="prefetchThumbnails" checked>
+                                Prefetch thumbnails
+                            </label>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="tab-content" id="aboutTab">
+                    <div class="about-info">
+                        <div class="about-header">
+                            <div class="about-logo">🔒</div>
+                            <div class="about-title">
+                                <h4>VAULT OS</h4>
+                                <span class="about-version">v5.0.0</span>
+                            </div>
+                        </div>
+                        
+                        <div class="about-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Description:</span>
+                                <span class="detail-value">Secure Drive Manager</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Author:</span>
+                                <span class="detail-value">VAULT Team</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">License:</span>
+                                <span class="detail-value">MIT</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Repository:</span>
+                                <a href="https://github.com/khademsorder/Cvault" target="_blank" class="detail-link">
+                                    github.com/khademsorder/Cvault
+                                </a>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Build Date:</span>
+                                <span class="detail-value" id="buildDate">2026-02-04</span>
+                            </div>
+                        </div>
+                        
+                        <div class="about-features">
+                            <h5>Features</h5>
+                            <ul>
+                                <li>Secure Google Drive Integration</li>
+                                <li>Resumable Chunk Uploads</li>
+                                <li>Advanced File Viewers</li>
+                                <li>24-hour Session Management</li>
+                                <li>Token Auto-Refresh (45 min)</li>
+                                <li>IndexedDB Caching</li>
+                                <li>Mobile-First Design</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" id="cancelSettings">Cancel</button>
+            <button class="btn primary" id="saveSettings">
+                <i class='bx bx-save'></i>
+                Save Settings
+            </button>
+        </div>
+    </div>
+
+    <!-- Storage Info Modal -->
+    <div class="modal" id="storageInfoModal">
+        <div class="modal-header">
+            <h3><i class='bx bx-pie-chart-alt'></i> Storage Information</h3>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body">
+            <div class="storage-overview">
+                <div class="storage-chart">
+                    <div class="chart-container">
+                        <canvas id="storageChart"></canvas>
+                    </div>
+                    <div class="chart-legend">
+                        <div class="legend-item">
+                            <span class="legend-color used"></span>
+                            <span class="legend-text">Used: <span id="chartUsed">0 GB</span></span>
+                        </div>
+                        <div class="legend-item">
+                            <span class="legend-color free"></span>
+                            <span class="legend-text">Free: <span id="chartFree">15 GB</span></span>
+                        </div>
+                    </div>
+                </div>
+                <div class="storage-stats">
+                    <div class="stat-item total">
+                        <span class="stat-label">Total Storage</span>
+                        <span class="stat-value" id="totalStorage">15 GB</span>
+                    </div>
+                    <div class="stat-item used">
+                        <span class="stat-label">Used Storage</span>
+                        <span class="stat-value" id="usedStorage">0 GB</span>
+                    </div>
+                    <div class="stat-item free">
+                        <span class="stat-label">Free Storage</span>
+                        <span class="stat-value" id="freeStorage">15 GB</span>
+                    </div>
+                    <div class="stat-item percentage">
+                        <span class="stat-label">Usage Percentage</span>
+                        <span class="stat-value" id="usagePercent">0%</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="storage-breakdown">
+                <h5>Storage Breakdown</h5>
+                <div class="breakdown-list">
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">
+                            <i class='bx bx-image'></i>
+                            Images
+                        </span>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="breakdown-value" data-type="images">0 MB</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">
+                            <i class='bx bx-video'></i>
+                            Videos
+                        </span>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="breakdown-value" data-type="videos">0 MB</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">
+                            <i class='bx bx-file'></i>
+                            Documents
+                        </span>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="breakdown-value" data-type="documents">0 MB</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">
+                            <i class='bx bx-music'></i>
+                            Audio
+                        </span>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="breakdown-value" data-type="audio">0 MB</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">
+                            <i class='bx bx-archive'></i>
+                            Archives
+                        </span>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="breakdown-value" data-type="archives">0 MB</span>
+                    </div>
+                    <div class="breakdown-item">
+                        <span class="breakdown-label">
+                            <i class='bx bx-code'></i>
+                            Code Files
+                        </span>
+                        <div class="breakdown-bar">
+                            <div class="breakdown-fill" style="width: 0%"></div>
+                        </div>
+                        <span class="breakdown-value" data-type="code">0 MB</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn secondary" id="refreshStorageBtn">
+                <i class='bx bx-refresh'></i>
+                Refresh
+            </button>
+        </div>
+    </div>
+
+    <!-- Advanced Preview Modal -->
+    <div class="modal preview-modal" id="previewModal">
+        <div class="modal-header">
+            <div class="preview-header">
+                <h3><i class='bx bx-show'></i> <span id="previewTitle">Preview</span></h3>
+                <div class="preview-controls">
+                    <button class="preview-btn" id="prevFileBtn">
+                        <i class='bx bx-chevron-left'></i>
+                    </button>
+                    <button class="preview-btn" id="nextFileBtn">
+                        <i class='bx bx-chevron-right'></i>
+                    </button>
+                    <button class="preview-btn" id="fullscreenBtn">
+                        <i class='bx bx-fullscreen'></i>
+                    </button>
+                    <button class="preview-btn" id="downloadPreviewBtn">
+                        <i class='bx bx-download'></i>
+                    </button>
+                </div>
+            </div>
+            <button class="modal-close">
+                <i class='bx bx-x'></i>
+            </button>
+        </div>
+        <div class="modal-body preview-body">
+            <div class="preview-content" id="previewContent">
+                <!-- Preview content will be loaded here -->
+                <div class="preview-loading">
+                    <i class='bx bx-loader-circle bx-spin'></i>
+                    Loading preview...
+                </div>
+            </div>
+        </div>
+        <div class="modal-footer preview-footer">
+            <div class="preview-info">
+                <span class="file-name" id="previewFileName">filename.ext</span>
+                <span class="file-size" id="previewFileSize">0 MB</span>
+            </div>
+            <div class="preview-nav">
+                <span class="nav-info">
+                    <span id="currentFileIndex">1</span> of <span id="totalFilesCount">1</span>
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- Audio Elements for UI Sounds -->
+    <audio id="clickSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+    <audio id="successSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+    <audio id="errorSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+    <audio id="lockSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+    <audio id="unlockSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
+
+    <!-- Scripts -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="script.js"></script>
+</body>
+</html>
