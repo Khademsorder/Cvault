@@ -1,258 +1,421 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="cyber">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <meta name="theme-color" content="#00f3ff">
-    <title>Vault OS | Ultimate Cloud Ecosystem</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>VAULT OS - Secure Drive Manager</title>
     
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js"></script>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Rajdhani:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script>window.pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';</script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-    
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" rel="stylesheet" />
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
-    
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-
-    <link href="https://cdn.jsdelivr.net/npm/remixicon@3.5.0/fonts/remixicon.css" rel="stylesheet">
-    
+    <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
-</head>
-<body>
-
-    <div id="boot-screen">
-        <div class="terminal-boot">
-            <div class="boot-logo">VAULT OS <span class="blink">_</span></div>
-            <div class="boot-log">
-                > KERNEL: LOADED<br>
-                > SECURITY: ACTIVE<br>
-                > MODULES: SYNCED<br>
-                > WAITING FOR USER...
-            </div>
-        </div>
-    </div>
-
-    <div id="auth-screen" class="hidden">
-        <div class="auth-glass-panel">
-            <div class="auth-avatar">
-                <i class="ri-shield-keyhole-line"></i>
-            </div>
-            <h2>Identity Verification</h2>
-            <p class="auth-hint">Enter Security PIN</p>
-            
-            <div class="pin-dots-wrapper">
-                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
-            </div>
-            
-            <div class="numpad-touch">
-                <button data-val="1">1</button><button data-val="2">2</button><button data-val="3">3</button>
-                <button data-val="4">4</button><button data-val="5">5</button><button data-val="6">6</button>
-                <button data-val="7">7</button><button data-val="8">8</button><button data-val="9">9</button>
-                <button class="func" data-val="clear"><i class="ri-delete-back-line"></i></button>
-                <button data-val="0">0</button>
-                <button class="func go" data-val="enter"><i class="ri-arrow-right-line"></i></button>
-            </div>
-        </div>
-    </div>
-
-    <div id="app-interface">
+    
+    <!-- Viewer CDN Libraries -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+    
+    <!-- Firebase SDK v9 (Modular - Compatible) -->
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+    
+    <!-- Google Identity Services for OAuth -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    
+    <!-- Viewer Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
+    
+    <!-- Touch & Mobile Support -->
+    <script>
+    // Prevent double-tap zoom on mobile
+    document.addEventListener('touchstart', function(event) {
+        if (event.touches.length > 1) {
+            event.preventDefault();
+        }
+    }, { passive: false });
+    
+    let lastTouchEnd = 0;
+    document.addEventListener('touchend', function(event) {
+        const now = (new Date()).getTime();
+        if (now - lastTouchEnd <= 300) {
+            event.preventDefault();
+        }
+        lastTouchEnd = now;
+    }, { passive: false });
+    </script>
+    
+    <style>
+    /* Immediate mobile fixes */
+    @media (max-width: 768px) {
+        html, body {
+            overflow-x: hidden;
+            position: fixed;
+            width: 100%;
+            height: 100%;
+        }
         
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <div class="logo-text">VAULT</div>
-                <button id="mobile-close-sidebar" class="mobile-only"><i class="ri-menu-fold-line"></i></button>
+        .pin-key {
+            min-height: 70px;
+            font-size: 1.8rem;
+            touch-action: manipulation;
+        }
+        
+        input, button, select, textarea {
+            font-size: 16px !important; /* Prevents iOS zoom */
+        }
+    }
+    </style>
+</head>
+<body data-theme="cyber" data-view="grid" data-auth="locked" data-device="auto">
+    
+    <!-- PIN Gate -->
+    <div id="pinGate" class="pin-gate" data-visible="true">
+        <div class="pin-container">
+            <div class="pin-header">
+                <div class="pin-logo">🔒</div>
+                <h1>VAULT OS</h1>
+                <p class="pin-subtitle">Secure Drive Manager</p>
             </div>
-
-            <div class="user-card">
-                <div class="user-status-ring">
-                    <img id="user-avatar" src="assets/default.png" onerror="this.src='https://ui-avatars.com/api/?name=Guest&background=0a0a0a&color=fff'">
-                </div>
-                <div class="user-meta">
-                    <h5 id="user-name">Guest User</h5>
-                    <button id="btn-drive-connect" class="mini-btn">Connect Drive</button>
-                    <div id="user-email" style="display:none"></div>
-                </div>
-            </div>
-
-            <nav class="nav-scroller">
-                <div class="nav-category">STORAGE</div>
-                <button class="nav-item active" data-path="root"><i class="ri-hard-drive-2-line"></i> My Drive</button>
-                <button class="nav-item" data-path="recent"><i class="ri-time-line"></i> Recent</button>
-                <button class="nav-item" data-path="starred"><i class="ri-star-fill"></i> Starred</button>
-                <button class="nav-item" data-path="trash"><i class="ri-delete-bin-line"></i> Trash</button>
-
-                <div class="nav-category">SMART LIBRARY</div>
-                <button class="nav-item" data-filter="image"><i class="ri-image-2-line"></i> Photos</button>
-                <button class="nav-item" data-filter="video"><i class="ri-movie-line"></i> Videos</button>
-                <button class="nav-item" data-filter="audio"><i class="ri-music-2-line"></i> Music</button>
-                <button class="nav-item" data-filter="pdf"><i class="ri-file-pdf-line"></i> Documents</button>
-                <button class="nav-item" data-filter="code"><i class="ri-code-box-line"></i> Dev & Code</button>
-
-                <div class="nav-category">SYSTEM</div>
-                <button class="nav-item" id="btn-app-import"><i class="ri-import-line"></i> Secure Import</button>
-                <button class="nav-item" id="btn-settings"><i class="ri-settings-line"></i> Settings</button>
-            </nav>
-
-            <div class="storage-widget">
-                <div class="bar-header">
-                    <span>Storage</span>
-                    <span id="storage-percent">0%</span>
-                </div>
-                <div class="progress-container">
-                    <div id="storage-bar" class="progress-fill"></div>
-                </div>
-            </div>
-        </aside>
-
-        <main class="main-stage">
             
-            <header class="top-toolbar">
-                <div class="left-tools">
-                    <button id="sidebar-toggle"><i class="ri-menu-unfold-line"></i></button>
-                    <div class="breadcrumb-trail" id="breadcrumbs">
-                        <span class="crumb">My Drive</span>
-                    </div>
+            <div class="pin-display">
+                <div class="pin-display-text" id="pinDisplayText">Enter 4-digit PIN</div>
+                <div class="pin-dots">
+                    <div class="pin-dot" data-position="1"></div>
+                    <div class="pin-dot" data-position="2"></div>
+                    <div class="pin-dot" data-position="3"></div>
+                    <div class="pin-dot" data-position="4"></div>
                 </div>
+            </div>
 
-                <div class="center-tools">
-                    <div class="search-capsule">
-                        <i class="ri-search-line"></i>
-                        <input type="text" id="search-input" placeholder="Search Vault...">
-                    </div>
+            <!-- Virtual Keypad (FIXED) -->
+            <div class="pin-keypad">
+                <button class="pin-key" data-key="1">1</button>
+                <button class="pin-key" data-key="2">2</button>
+                <button class="pin-key" data-key="3">3</button>
+                <button class="pin-key" data-key="4">4</button>
+                <button class="pin-key" data-key="5">5</button>
+                <button class="pin-key" data-key="6">6</button>
+                <button class="pin-key" data-key="7">7</button>
+                <button class="pin-key" data-key="8">8</button>
+                <button class="pin-key" data-key="9">9</button>
+                <button class="pin-key" data-action="clear">C</button>
+                <button class="pin-key" data-key="0">0</button>
+                <button class="pin-key" data-action="enter" id="pinEnter">↵</button>
+            </div>
+
+            <!-- Google Sign-In Button -->
+            <div class="google-auth-slot" id="googleAuthSlot" data-visible="false">
+                <div class="auth-divider">— OR —</div>
+                <div id="g_id_onload"
+                     data-client_id="318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com"
+                     data-context="signin"
+                     data-ux_mode="redirect"
+                     data-login_uri="https://khademsorder.github.io/Cvault"
+                     data-redirect_uri="https://khademsorder.github.io/Cvault"
+                     data-callback="handleGoogleTokenResponse"
+                     data-auto_prompt="false">
                 </div>
-
-                <div class="right-tools">
-                    <button class="icon-btn" id="btn-refresh"><i class="ri-refresh-line"></i></button>
-                    <div class="view-switch">
-                        <button class="switch-btn active" data-view="grid"><i class="ri-grid-fill"></i></button>
-                        <button class="switch-btn" data-view="list"><i class="ri-list-check"></i></button>
-                    </div>
+                <div class="g_id_signin"
+                     data-type="standard"
+                     data-size="large"
+                     data-theme="filled_blue"
+                     data-text="signin_with"
+                     data-shape="rectangular"
+                     data-logo_alignment="left">
                 </div>
-            </header>
+            </div>
 
-            <div class="action-ribbon">
-                <div class="primary-actions">
-                    <div class="dropdown-container">
-                        <button class="action-chip primary" id="btn-upload-menu">
-                            <i class="ri-upload-cloud-line"></i> Upload <i class="ri-arrow-down-s-line"></i>
+            <div class="pin-actions">
+                <button class="btn-secondary" id="pinForgot">Forgot PIN?</button>
+                <button class="btn-secondary" id="pinReset">Setup New Vault</button>
+            </div>
+
+            <div class="pin-error" id="pinError"></div>
+            
+            <div class="pin-footer">
+                <div class="pin-status">
+                    <span class="status-indicator" id="pinStatus">🔴 Initializing...</span>
+                </div>
+                <div class="pin-hint">
+                    PIN is locally hashed • Google Drive required for storage
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main App Container -->
+    <div id="appContainer" class="app-container" data-visible="false">
+        
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-left">
+                <button class="menu-toggle" id="menuToggle" aria-label="Toggle menu">
+                    <span class="menu-icon"></span>
+                </button>
+                <div class="logo">
+                    <span class="logo-icon">🔐</span>
+                    <span class="logo-text">VAULT OS</span>
+                </div>
+                <div class="current-folder" id="currentFolder">
+                    <span class="folder-icon">📁</span>
+                    <span class="folder-path" id="folderPath">/Vault Root</span>
+                </div>
+            </div>
+            
+            <div class="header-center">
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="Search in Vault..." aria-label="Search files">
+                    <button class="search-btn" aria-label="Search">🔍</button>
+                </div>
+            </div>
+            
+            <div class="header-right">
+                <div class="storage-indicator" id="storageIndicator">
+                    <div class="storage-progress">
+                        <div class="storage-bar" id="storageBar"></div>
+                    </div>
+                    <span class="storage-text" id="storageText">Loading...</span>
+                </div>
+                <div class="user-profile" id="userProfile">
+                    <div class="avatar" id="userAvatar">👤</div>
+                    <span class="user-name" id="userName">Not Signed In</span>
+                </div>
+                <button class="auth-btn" id="authBtn">Connect Google</button>
+            </div>
+        </header>
+
+        <!-- Main Content Area -->
+        <div class="main-content">
+            
+            <!-- Sidebar -->
+            <aside class="sidebar" id="sidebar">
+                <nav class="sidebar-nav">
+                    <div class="nav-section">
+                        <h3 class="nav-title">VAULT</h3>
+                        <button class="nav-item active" data-action="goHome" id="navHome">
+                            <span class="nav-icon">🏠</span>
+                            <span class="nav-text">Home</span>
                         </button>
-                        <div class="dropdown-menu hidden" id="upload-dropdown">
-                            <div class="menu-item" id="act-upload-file"><i class="ri-file-add-line"></i> Files</div>
-                            <div class="menu-item" id="act-upload-folder"><i class="ri-folder-upload-line"></i> Folder</div>
-                        </div>
-                        <input type="file" id="inp-file" multiple hidden>
-                        <input type="file" id="inp-folder" webkitdirectory directory hidden>
+                        <button class="nav-item" data-action="goRecent" id="navRecent">
+                            <span class="nav-icon">🕒</span>
+                            <span class="nav-text">Recent</span>
+                        </button>
+                        <button class="nav-item" data-action="goStarred" id="navStarred">
+                            <span class="nav-icon">⭐</span>
+                            <span class="nav-text">Starred</span>
+                        </button>
+                        <button class="nav-item" data-action="goTrash" id="navTrash">
+                            <span class="nav-icon">🗑️</span>
+                            <span class="nav-text">Trash</span>
+                        </button>
                     </div>
-
-                    <button class="action-chip" id="btn-new-folder" onclick="Actions.createFolder()"><i class="ri-folder-add-line"></i> Folder</button>
                     
-                    <div class="dropdown-container">
-                        <button class="action-chip dropdown-trigger" id="btn-sort-menu"><i class="ri-sort-desc"></i> Sort</button>
-                        <div class="dropdown-menu hidden" id="sort-dropdown">
-                            <div class="menu-item" data-sort="name">Name (A-Z)</div>
-                            <div class="menu-item" data-sort="date">Date Modified</div>
-                            <div class="menu-item" data-sort="size">Size</div>
-                            <div class="menu-item" data-sort="type">File Type</div>
+                    <div class="nav-section">
+                        <h3 class="nav-title">QUICK ACCESS</h3>
+                        <div class="folder-tree" id="folderTree">
+                            <div class="tree-loading">Loading folders...</div>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-section">
+                        <h3 class="nav-title">SETTINGS</h3>
+                        <button class="nav-item" data-action="showSettings" id="navSettings">
+                            <span class="nav-icon">⚙️</span>
+                            <span class="nav-text">Settings</span>
+                        </button>
+                        <button class="nav-item" data-action="toggleDriveMode" id="navDriveMode">
+                            <span class="nav-icon">🔄</span>
+                            <span class="nav-text" id="driveModeText">Vault Mode</span>
+                        </button>
+                        <button class="nav-item" data-action="refreshVault">
+                            <span class="nav-icon">🔄</span>
+                            <span class="nav-text">Refresh</span>
+                        </button>
+                        <button class="nav-item" data-action="lockVault">
+                            <span class="nav-icon">🔒</span>
+                            <span class="nav-text">Lock Vault</span>
+                        </button>
+                    </div>
+                </nav>
+                
+                <div class="sidebar-footer">
+                    <div class="connection-status" id="connectionStatus">
+                        <span class="status-indicator online"></span>
+                        <span class="status-text">Online</span>
+                    </div>
+                    <div class="app-version">v2.0.0</div>
+                </div>
+            </aside>
+
+            <!-- File Browser -->
+            <main class="file-browser" id="fileBrowser">
+                <div class="browser-header">
+                    <div class="browser-controls">
+                        <button class="btn-icon" data-action="createFolder" title="New Folder" id="btnCreateFolder">
+                            <span>📁</span>
+                            <span>New Folder</span>
+                        </button>
+                        <button class="btn-icon" data-action="uploadFiles" title="Upload Files" id="btnUpload">
+                            <span>📤</span>
+                            <span>Upload</span>
+                        </button>
+                        <button class="btn-icon" data-action="viewToggle" title="Toggle View" id="btnViewToggle">
+                            <span id="viewIcon">◻️</span>
+                            <span id="viewText">Grid View</span>
+                        </button>
+                        <button class="btn-icon" data-action="selectAll" title="Select All" id="btnSelectAll">
+                            <span>☑️</span>
+                            <span>Select All</span>
+                        </button>
+                        <button class="btn-icon" data-action="deselectAll" title="Deselect All" id="btnDeselectAll" disabled>
+                            <span>❌</span>
+                            <span>Clear</span>
+                        </button>
+                    </div>
+                    
+                    <div class="browser-info">
+                        <div class="file-count" id="fileCount">0 items</div>
+                        <div class="sort-controls">
+                            <select id="sortSelect" aria-label="Sort files by">
+                                <option value="name">Name ↑</option>
+                                <option value="name_desc">Name ↓</option>
+                                <option value="modified">Modified</option>
+                                <option value="size">Size</option>
+                                <option value="type">Type</option>
+                            </select>
                         </div>
                     </div>
                 </div>
 
-                <div id="selection-bar" class="selection-actions hidden">
-                    <span id="select-count">0 items</span>
-                    <div class="sep"></div>
-                    <button data-act="download" title="Download"><i class="ri-download-line"></i></button>
-                    <button data-act="move" title="Move"><i class="ri-drag-move-line"></i></button>
-                    <button data-act="copy" title="Copy"><i class="ri-file-copy-line"></i></button>
-                    <button data-act="rename" title="Rename"><i class="ri-edit-line"></i></button>
-                    <button data-act="delete" class="danger" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                <div class="file-container" id="fileContainer">
+                    <div class="empty-state" id="emptyState">
+                        <div class="empty-icon">📁</div>
+                        <h3>Vault is Empty</h3>
+                        <p>Upload files or create folders to get started</p>
+                        <button class="btn-primary" data-action="uploadFiles" id="btnFirstUpload">Upload First File</button>
+                    </div>
+                    
+                    <div class="file-grid" id="fileGrid" data-view="grid"></div>
+                </div>
+            </main>
+
+            <!-- Upload Dock -->
+            <div class="upload-dock" id="uploadDock" data-visible="false">
+                <div class="upload-header">
+                    <h4>Uploads</h4>
+                    <button class="upload-close" id="uploadClose" aria-label="Close uploads">✕</button>
+                </div>
+                <div class="upload-list" id="uploadList"></div>
+                <div class="upload-stats">
+                    <span id="uploadStats">0 files in queue</span>
+                    <button class="btn-secondary" id="cancelAllUploads">Cancel All</button>
                 </div>
             </div>
+        </div>
 
-            <div id="file-grid-container" class="file-browser grid-view">
-                </div>
-
-            <div id="empty-state-placeholder" class="empty-state hidden">
-                <div class="empty-graphic">📂</div>
-                <h3>Sector Empty</h3>
-                <p>No data found in this location.</p>
-            </div>
-
-            <div id="global-audio-player" class="audio-dock hidden">
-                <div class="track-info">
-                    <div class="track-art"><i class="ri-disc-line"></i></div>
-                    <div class="track-meta">
-                        <span id="audio-track-name">Unknown Track</span>
-                        <span id="audio-track-time">00:00</span>
+        <!-- Media Viewer -->
+        <div class="media-modal" id="mediaModal" data-visible="false">
+            <div class="modal-overlay" id="modalOverlay"></div>
+            <div class="modal-content">
+                <div class="modal-header">
+                    <div class="modal-title" id="modalTitle">Preview</div>
+                    <div class="modal-controls">
+                        <button class="modal-btn" data-action="download" title="Download">⬇️</button>
+                        <button class="modal-btn" data-action="share" title="Share">🔗</button>
+                        <button class="modal-btn" data-action="info" title="Info">ℹ️</button>
+                        <button class="modal-btn" id="modalClose" title="Close">✕</button>
                     </div>
                 </div>
-                <div class="track-controls">
-                    <button id="ap-play"><i class="ri-pause-fill"></i></button>
-                    <button id="ap-close"><i class="ri-close-line"></i></button>
+                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-footer">
+                    <div class="file-info" id="fileInfo">
+                        <span class="file-name" id="fileName">-</span>
+                        <span class="file-size" id="fileSize">-</span>
+                        <span class="file-modified" id="fileModified">-</span>
+                    </div>
+                    <div class="modal-actions">
+                        <button class="btn-secondary" data-action="previous">◀ Previous</button>
+                        <button class="btn-secondary" data-action="next">Next ▶</button>
+                    </div>
                 </div>
             </div>
-
-        </main>
-    </div>
-
-    <div id="modal-viewer" class="modal-overlay hidden">
-        <div class="modal-fullscreen">
-            <div class="viewer-header">
-                <h4 id="viewer-title">Filename.ext</h4>
-                <div class="viewer-tools">
-                    <button id="btn-viewer-close" class="close-btn"><i class="ri-close-line"></i></button>
-                </div>
-            </div>
-            <div class="viewer-content">
-                <div class="spinner"></div>
-                <div id="slot-markdown" class="media-slot hidden markdown-body"></div>
-            </div>
         </div>
-    </div>
 
-    <div id="upload-manager" class="upload-dock hidden">
-        <div class="dock-header">
-            <span>Uploading...</span>
-            <button onclick="this.closest('.upload-dock').classList.add('hidden')"><i class="ri-arrow-down-s-line"></i></button>
+        <!-- Context Menu -->
+        <div class="context-menu" id="contextMenu">
+            <div class="context-item" data-action="open">📂 Open</div>
+            <div class="context-item" data-action="download">⬇️ Download</div>
+            <div class="context-item" data-action="rename">✏️ Rename</div>
+            <div class="context-item" data-action="share">🔗 Share</div>
+            <div class="context-item" data-action="star">⭐ Star</div>
+            <div class="context-item" data-action="move">📁 Move</div>
+            <div class="context-item" data-action="copy">📋 Copy</div>
+            <div class="context-divider"></div>
+            <div class="context-item danger" data-action="delete">🗑️ Delete</div>
         </div>
-        <div id="upload-list-container" class="dock-body">
-            </div>
+
+        <!-- Toast Notifications -->
+        <div class="toast-container" id="toastContainer"></div>
+        
+        <!-- Hidden File Input -->
+        <input type="file" id="fileInput" multiple style="display: none;" webkitdirectory directory allowdirs>
+        <input type="file" id="folderInput" multiple style="display: none;" webkitdirectory directory allowdirs>
     </div>
 
-    <div id="modal-picker-wrapper"></div>
+    <!-- Global OAuth Callback Handler -->
+    <script>
+    // Global callback for Google OAuth
+    window.handleGoogleTokenResponse = function(response) {
+        console.log('Google OAuth response received');
+        if (window.vaultOS && window.vaultOS.googleAuth) {
+            window.vaultOS.googleAuth.handleCredentialResponse(response);
+        } else {
+            console.error('VaultOS not initialized');
+            // Store for later
+            sessionStorage.setItem('pending_oauth_response', JSON.stringify(response));
+        }
+    };
+    
+    // Handle OAuth redirect with hash parameters
+    function handleOAuthRedirect() {
+        const hash = window.location.hash.substring(1);
+        if (hash.includes('access_token')) {
+            const params = new URLSearchParams(hash);
+            const token = params.get('access_token');
+            const expiresIn = params.get('expires_in');
+            
+            if (token && window.vaultOS) {
+                window.vaultOS.state.accessToken = token;
+                window.vaultOS.state.authStatus = 'google_connected';
+                
+                // Clear hash from URL
+                history.replaceState(null, '', window.location.pathname);
+                
+                // Initialize Drive
+                if (window.vaultOS.driveManager) {
+                    window.vaultOS.driveManager.init();
+                }
+            }
+        }
+    }
+    
+    // Initialize when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        handleOAuthRedirect();
+        
+        // Check for stored OAuth response
+        const storedResponse = sessionStorage.getItem('pending_oauth_response');
+        if (storedResponse && window.vaultOS) {
+            window.vaultOS.googleAuth.handleCredentialResponse(JSON.parse(storedResponse));
+            sessionStorage.removeItem('pending_oauth_response');
+        }
+    });
+    </script>
 
-    <ul id="context-menu" class="ctx-menu hidden">
-        <li data-act="open"><i class="ri-eye-line"></i> Open</li>
-        <li data-act="download"><i class="ri-download-line"></i> Download</li>
-        <li class="ctx-sep"></li>
-        <li data-act="move"><i class="ri-drag-move-line"></i> Move</li>
-        <li data-act="copy"><i class="ri-file-copy-line"></i> Copy</li>
-        <li data-act="rename"><i class="ri-edit-line"></i> Rename</li>
-        <li class="ctx-sep"></li>
-        <li data-act="delete" class="text-danger"><i class="ri-delete-bin-line"></i> Delete</li>
-    </ul>
-
-    <div id="toast-container"></div>
-
-    <div id="modal-import" class="hidden"></div>
-
+    <!-- Main Application Logic -->
     <script src="app.js"></script>
 </body>
 </html>
