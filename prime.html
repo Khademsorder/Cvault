@@ -1,25 +1,25 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VAULT OS - Secure Drive Manager</title>
     
     <!-- CSS -->
     <link rel="stylesheet" href="styles.css">
     
-    <!-- Viewer CDN Libraries -->
+    <!-- ALL MEDIA CDNs -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
     
-    <!-- Firebase SDK v9 (Modular - Compatible) -->
+    <!-- Firebase -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     
-    <!-- Google Identity Services for OAuth -->
+    <!-- Google Identity -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
-    <!-- Viewer Libraries -->
+    <!-- ALL VIEWER LIBRARIES -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
@@ -28,27 +28,8 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
     
-    <!-- Touch & Mobile Support -->
-    <script>
-    // Prevent double-tap zoom on mobile
-    document.addEventListener('touchstart', function(event) {
-        if (event.touches.length > 1) {
-            event.preventDefault();
-        }
-    }, { passive: false });
-    
-    let lastTouchEnd = 0;
-    document.addEventListener('touchend', function(event) {
-        const now = (new Date()).getTime();
-        if (now - lastTouchEnd <= 300) {
-            event.preventDefault();
-        }
-        lastTouchEnd = now;
-    }, { passive: false });
-    </script>
-    
     <style>
-    /* Immediate mobile fixes */
+    /* Critical Mobile Fixes */
     @media (max-width: 768px) {
         html, body {
             overflow-x: hidden;
@@ -56,41 +37,115 @@
             width: 100%;
             height: 100%;
         }
-        
         .pin-key {
             min-height: 70px;
             font-size: 1.8rem;
-            touch-action: manipulation;
         }
-        
-        input, button, select, textarea {
-            font-size: 16px !important; /* Prevents iOS zoom */
+        input, button, select {
+            font-size: 16px !important;
         }
+    }
+    
+    /* Media Toggle Buttons */
+    .media-toggle-container {
+        display: flex;
+        gap: 10px;
+        margin: 15px 0;
+        flex-wrap: wrap;
+        justify-content: center;
+    }
+    
+    .media-toggle-btn {
+        padding: 8px 15px;
+        border: 2px solid var(--color-border);
+        background: var(--color-bg-tertiary);
+        border-radius: 20px;
+        color: var(--color-text-primary);
+        font-size: 0.9rem;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        transition: all 0.3s;
+    }
+    
+    .media-toggle-btn.active {
+        background: var(--color-accent);
+        border-color: var(--color-accent);
+        color: white;
+    }
+    
+    .media-toggle-btn .toggle-icon {
+        font-size: 1.1rem;
+    }
+    
+    /* Theme Selector */
+    .theme-selector {
+        display: flex;
+        gap: 10px;
+        margin: 20px 0;
+        justify-content: center;
+    }
+    
+    .theme-option {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        border: 3px solid transparent;
+        cursor: pointer;
+        transition: all 0.3s;
+    }
+    
+    .theme-option:hover {
+        transform: scale(1.1);
+    }
+    
+    .theme-option.active {
+        border-color: white;
+        box-shadow: 0 0 10px rgba(255,255,255,0.5);
+    }
+    
+    .theme-option[data-theme="cyber"] {
+        background: linear-gradient(135deg, #0a0a0f, #00d4ff);
+    }
+    
+    .theme-option[data-theme="dark"] {
+        background: linear-gradient(135deg, #1a1a1a, #8b5cf6);
+    }
+    
+    .theme-option[data-theme="light"] {
+        background: linear-gradient(135deg, #ffffff, #3b82f6);
     }
     </style>
 </head>
-<body data-theme="cyber" data-view="grid" data-auth="locked" data-device="auto">
+<body data-theme="cyber" data-view="grid">
     
-    <!-- PIN Gate -->
-    <div id="pinGate" class="pin-gate" data-visible="true">
+    <!-- ===== PIN GATE ===== -->
+    <div id="pinGate" class="pin-gate" style="display: flex;">
         <div class="pin-container">
             <div class="pin-header">
-                <div class="pin-logo">🔒</div>
+                <div class="pin-logo">🔐</div>
                 <h1>VAULT OS</h1>
                 <p class="pin-subtitle">Secure Drive Manager</p>
+            </div>
+            
+            <!-- Theme Selector -->
+            <div class="theme-selector">
+                <div class="theme-option active" data-theme="cyber" title="Cyber Theme"></div>
+                <div class="theme-option" data-theme="dark" title="Dark Theme"></div>
+                <div class="theme-option" data-theme="light" title="Light Theme"></div>
             </div>
             
             <div class="pin-display">
                 <div class="pin-display-text" id="pinDisplayText">Enter 4-digit PIN</div>
                 <div class="pin-dots">
-                    <div class="pin-dot" data-position="1"></div>
-                    <div class="pin-dot" data-position="2"></div>
-                    <div class="pin-dot" data-position="3"></div>
-                    <div class="pin-dot" data-position="4"></div>
+                    <div class="pin-dot" id="pinDot1"></div>
+                    <div class="pin-dot" id="pinDot2"></div>
+                    <div class="pin-dot" id="pinDot3"></div>
+                    <div class="pin-dot" id="pinDot4"></div>
                 </div>
             </div>
 
-            <!-- Virtual Keypad (FIXED) -->
             <div class="pin-keypad">
                 <button class="pin-key" data-key="1">1</button>
                 <button class="pin-key" data-key="2">2</button>
@@ -105,9 +160,36 @@
                 <button class="pin-key" data-key="0">0</button>
                 <button class="pin-key" data-action="enter" id="pinEnter">↵</button>
             </div>
+            
+            <!-- Media Format Toggles -->
+            <div class="media-toggle-container">
+                <button class="media-toggle-btn active" data-format="image">
+                    <span class="toggle-icon">🖼️</span>
+                    <span>Images</span>
+                </button>
+                <button class="media-toggle-btn active" data-format="video">
+                    <span class="toggle-icon">🎬</span>
+                    <span>Videos</span>
+                </button>
+                <button class="media-toggle-btn active" data-format="audio">
+                    <span class="toggle-icon">🎵</span>
+                    <span>Audio</span>
+                </button>
+                <button class="media-toggle-btn active" data-format="pdf">
+                    <span class="toggle-icon">📕</span>
+                    <span>PDF</span>
+                </button>
+                <button class="media-toggle-btn" data-format="markdown">
+                    <span class="toggle-icon">📝</span>
+                    <span>Markdown</span>
+                </button>
+                <button class="media-toggle-btn" data-format="code">
+                    <span class="toggle-icon">💻</span>
+                    <span>Code</span>
+                </button>
+            </div>
 
-            <!-- Google Sign-In Button -->
-            <div class="google-auth-slot" id="googleAuthSlot" data-visible="false">
+            <div class="google-auth-slot" id="googleAuthSlot" style="display: none;">
                 <div class="auth-divider">— OR —</div>
                 <div id="g_id_onload"
                      data-client_id="318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com"
@@ -115,7 +197,6 @@
                      data-ux_mode="redirect"
                      data-login_uri="https://khademsorder.github.io/Cvault"
                      data-redirect_uri="https://khademsorder.github.io/Cvault"
-                     data-callback="handleGoogleTokenResponse"
                      data-auto_prompt="false">
                 </div>
                 <div class="g_id_signin"
@@ -146,8 +227,8 @@
         </div>
     </div>
 
-    <!-- Main App Container -->
-    <div id="appContainer" class="app-container" data-visible="false">
+    <!-- ===== MAIN APP ===== -->
+    <div id="appContainer" class="app-container" style="display: none;">
         
         <!-- Header -->
         <header class="app-header">
@@ -187,7 +268,13 @@
             </div>
         </header>
 
-        <!-- Main Content Area -->
+        <!-- Connection Banner -->
+        <div id="connectionBanner" class="connection-banner">
+            <div class="connection-dot"></div>
+            <span id="connectionText">Checking connection...</span>
+        </div>
+
+        <!-- Main Content -->
         <div class="main-content">
             
             <!-- Sidebar -->
@@ -221,16 +308,42 @@
                     </div>
                     
                     <div class="nav-section">
+                        <h3 class="nav-title">MEDIA VIEWER</h3>
+                        <div class="media-toggle-sidebar">
+                            <button class="nav-item media-toggle-side" data-format="image">
+                                <span class="nav-icon">🖼️</span>
+                                <span class="nav-text">Images</span>
+                                <span class="media-toggle-status active">✅</span>
+                            </button>
+                            <button class="nav-item media-toggle-side" data-format="video">
+                                <span class="nav-icon">🎬</span>
+                                <span class="nav-text">Videos</span>
+                                <span class="media-toggle-status active">✅</span>
+                            </button>
+                            <button class="nav-item media-toggle-side" data-format="audio">
+                                <span class="nav-icon">🎵</span>
+                                <span class="nav-text">Audio</span>
+                                <span class="media-toggle-status active">✅</span>
+                            </button>
+                            <button class="nav-item media-toggle-side" data-format="pdf">
+                                <span class="nav-icon">📕</span>
+                                <span class="nav-text">PDF</span>
+                                <span class="media-toggle-status active">✅</span>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="nav-section">
                         <h3 class="nav-title">SETTINGS</h3>
-                        <button class="nav-item" data-action="showSettings" id="navSettings">
-                            <span class="nav-icon">⚙️</span>
-                            <span class="nav-text">Settings</span>
+                        <button class="nav-item" id="themeToggle">
+                            <span class="nav-icon" id="themeIcon">🌌</span>
+                            <span class="nav-text" id="themeText">Cyber Theme</span>
                         </button>
                         <button class="nav-item" data-action="toggleDriveMode" id="navDriveMode">
                             <span class="nav-icon">🔄</span>
                             <span class="nav-text" id="driveModeText">Vault Mode</span>
                         </button>
-                        <button class="nav-item" data-action="refreshVault">
+                        <button class="nav-item" data-action="refreshVault" id="navRefresh">
                             <span class="nav-icon">🔄</span>
                             <span class="nav-text">Refresh</span>
                         </button>
@@ -246,7 +359,7 @@
                         <span class="status-indicator online"></span>
                         <span class="status-text">Online</span>
                     </div>
-                    <div class="app-version">v2.0.0</div>
+                    <div class="app-version">v4.0</div>
                 </div>
             </aside>
 
@@ -262,15 +375,15 @@
                             <span>📤</span>
                             <span>Upload</span>
                         </button>
-                        <button class="btn-icon" data-action="viewToggle" title="Toggle View" id="btnViewToggle">
+                        <button class="btn-icon" title="Toggle View" id="btnViewToggle">
                             <span id="viewIcon">◻️</span>
                             <span id="viewText">Grid View</span>
                         </button>
-                        <button class="btn-icon" data-action="selectAll" title="Select All" id="btnSelectAll">
+                        <button class="btn-icon" title="Select All" id="btnSelectAll">
                             <span>☑️</span>
                             <span>Select All</span>
                         </button>
-                        <button class="btn-icon" data-action="deselectAll" title="Deselect All" id="btnDeselectAll" disabled>
+                        <button class="btn-icon" title="Deselect All" id="btnDeselectAll" disabled>
                             <span>❌</span>
                             <span>Clear</span>
                         </button>
@@ -280,11 +393,11 @@
                         <div class="file-count" id="fileCount">0 items</div>
                         <div class="sort-controls">
                             <select id="sortSelect" aria-label="Sort files by">
-                                <option value="name">Name ↑</option>
+                                <option value="name_asc">Name ↑</option>
                                 <option value="name_desc">Name ↓</option>
-                                <option value="modified">Modified</option>
-                                <option value="size">Size</option>
-                                <option value="type">Type</option>
+                                <option value="date_desc">Modified</option>
+                                <option value="size_desc">Size</option>
+                                <option value="type_asc">Type</option>
                             </select>
                         </div>
                     </div>
@@ -298,17 +411,19 @@
                         <button class="btn-primary" data-action="uploadFiles" id="btnFirstUpload">Upload First File</button>
                     </div>
                     
-                    <div class="file-grid" id="fileGrid" data-view="grid"></div>
+                    <div class="file-grid" id="fileGrid"></div>
                 </div>
             </main>
 
             <!-- Upload Dock -->
-            <div class="upload-dock" id="uploadDock" data-visible="false">
+            <div class="upload-dock" id="uploadDock">
                 <div class="upload-header">
                     <h4>Uploads</h4>
                     <button class="upload-close" id="uploadClose" aria-label="Close uploads">✕</button>
                 </div>
-                <div class="upload-list" id="uploadList"></div>
+                <div class="upload-list" id="uploadList">
+                    <div class="upload-empty">No active uploads</div>
+                </div>
                 <div class="upload-stats">
                     <span id="uploadStats">0 files in queue</span>
                     <button class="btn-secondary" id="cancelAllUploads">Cancel All</button>
@@ -316,20 +431,25 @@
             </div>
         </div>
 
-        <!-- Media Viewer -->
-        <div class="media-modal" id="mediaModal" data-visible="false">
+        <!-- Media Viewer Modal -->
+        <div class="media-modal" id="mediaModal">
             <div class="modal-overlay" id="modalOverlay"></div>
             <div class="modal-content">
                 <div class="modal-header">
                     <div class="modal-title" id="modalTitle">Preview</div>
                     <div class="modal-controls">
-                        <button class="modal-btn" data-action="download" title="Download">⬇️</button>
-                        <button class="modal-btn" data-action="share" title="Share">🔗</button>
-                        <button class="modal-btn" data-action="info" title="Info">ℹ️</button>
+                        <button class="modal-btn" onclick="downloadCurrentFile()" title="Download">⬇️</button>
+                        <button class="modal-btn" onclick="shareCurrentFile()" title="Share">🔗</button>
+                        <button class="modal-btn" onclick="showFileInfo()" title="Info">ℹ️</button>
                         <button class="modal-btn" id="modalClose" title="Close">✕</button>
                     </div>
                 </div>
-                <div class="modal-body" id="modalBody"></div>
+                <div class="modal-body" id="modalBody">
+                    <div class="media-loading">
+                        <div class="loading-spinner"></div>
+                        <div>Loading preview...</div>
+                    </div>
+                </div>
                 <div class="modal-footer">
                     <div class="file-info" id="fileInfo">
                         <span class="file-name" id="fileName">-</span>
@@ -337,8 +457,8 @@
                         <span class="file-modified" id="fileModified">-</span>
                     </div>
                     <div class="modal-actions">
-                        <button class="btn-secondary" data-action="previous">◀ Previous</button>
-                        <button class="btn-secondary" data-action="next">Next ▶</button>
+                        <button class="btn-secondary" onclick="previousFile()">◀ Previous</button>
+                        <button class="btn-secondary" onclick="nextFile()">Next ▶</button>
                     </div>
                 </div>
             </div>
@@ -357,44 +477,41 @@
             <div class="context-item danger" data-action="delete">🗑️ Delete</div>
         </div>
 
-        <!-- Toast Notifications -->
+        <!-- Toast Container -->
         <div class="toast-container" id="toastContainer"></div>
         
-        <!-- Hidden File Input -->
-        <input type="file" id="fileInput" multiple style="display: none;" webkitdirectory directory allowdirs>
-        <input type="file" id="folderInput" multiple style="display: none;" webkitdirectory directory allowdirs>
+        <!-- Hidden File Inputs -->
+        <input type="file" id="fileInput" multiple style="display: none;">
+        <input type="file" id="folderInput" style="display: none;" webkitdirectory directory>
     </div>
 
-    <!-- Global OAuth Callback Handler -->
+    <!-- Global OAuth Handler -->
     <script>
-    // Global callback for Google OAuth
-    window.handleGoogleTokenResponse = function(response) {
-        console.log('Google OAuth response received');
-        if (window.vaultOS && window.vaultOS.googleAuth) {
-            window.vaultOS.googleAuth.handleCredentialResponse(response);
+    // Handle Google OAuth callback
+    function handleGoogleTokenResponse(response) {
+        console.log('Google OAuth response:', response);
+        if (window.vaultOS && window.vaultOS.authManager) {
+            window.vaultOS.authManager.handleOAuthResponse(response);
         } else {
-            console.error('VaultOS not initialized');
-            // Store for later
-            sessionStorage.setItem('pending_oauth_response', JSON.stringify(response));
+            sessionStorage.setItem('pending_oauth', JSON.stringify(response));
         }
-    };
+    }
     
-    // Handle OAuth redirect with hash parameters
+    // Handle OAuth redirect from URL hash
     function handleOAuthRedirect() {
         const hash = window.location.hash.substring(1);
         if (hash.includes('access_token')) {
             const params = new URLSearchParams(hash);
             const token = params.get('access_token');
-            const expiresIn = params.get('expires_in');
             
             if (token && window.vaultOS) {
                 window.vaultOS.state.accessToken = token;
                 window.vaultOS.state.authStatus = 'google_connected';
                 
-                // Clear hash from URL
+                // Clear hash
                 history.replaceState(null, '', window.location.pathname);
                 
-                // Initialize Drive
+                // Initialize drive
                 if (window.vaultOS.driveManager) {
                     window.vaultOS.driveManager.init();
                 }
@@ -402,20 +519,107 @@
         }
     }
     
-    // Initialize when page loads
     document.addEventListener('DOMContentLoaded', function() {
         handleOAuthRedirect();
         
         // Check for stored OAuth response
-        const storedResponse = sessionStorage.getItem('pending_oauth_response');
-        if (storedResponse && window.vaultOS) {
-            window.vaultOS.googleAuth.handleCredentialResponse(JSON.parse(storedResponse));
-            sessionStorage.removeItem('pending_oauth_response');
+        const stored = sessionStorage.getItem('pending_oauth');
+        if (stored) {
+            try {
+                const response = JSON.parse(stored);
+                if (window.vaultOS) {
+                    window.vaultOS.authManager.handleOAuthResponse(response);
+                }
+            } catch (e) {
+                console.error('Failed to parse OAuth response:', e);
+            }
+            sessionStorage.removeItem('pending_oauth');
         }
     });
     </script>
 
-    <!-- Main Application Logic -->
+    <!-- Media Toggle Functionality -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Theme selector
+        document.querySelectorAll('.theme-option').forEach(option => {
+            option.addEventListener('click', function() {
+                const theme = this.dataset.theme;
+                
+                // Update active state
+                document.querySelectorAll('.theme-option').forEach(opt => {
+                    opt.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // Apply theme
+                document.body.dataset.theme = theme;
+                localStorage.setItem('vault_theme', theme);
+                
+                // Update theme button in sidebar
+                const themeIcon = document.getElementById('themeIcon');
+                const themeText = document.getElementById('themeText');
+                
+                if (themeIcon && themeText) {
+                    themeIcon.textContent = theme === 'cyber' ? '🌌' : 
+                                          theme === 'dark' ? '🌙' : '☀️';
+                    themeText.textContent = theme === 'cyber' ? 'Cyber Theme' :
+                                          theme === 'dark' ? 'Dark Theme' : 'Light Theme';
+                }
+            });
+        });
+        
+        // Media format toggles
+        document.querySelectorAll('.media-toggle-btn, .media-toggle-side').forEach(btn => {
+            btn.addEventListener('click', function() {
+                const format = this.dataset.format;
+                const isActive = this.classList.contains('active');
+                
+                this.classList.toggle('active');
+                
+                // Update status icon
+                const status = this.querySelector('.media-toggle-status');
+                if (status) {
+                    status.textContent = isActive ? '❌' : '✅';
+                }
+                
+                // Save to localStorage
+                const mediaSettings = JSON.parse(localStorage.getItem('media_settings') || '{}');
+                mediaSettings[format] = !isActive;
+                localStorage.setItem('media_settings', JSON.stringify(mediaSettings));
+                
+                // Show toast
+                const toast = document.createElement('div');
+                toast.className = 'toast toast-info';
+                toast.innerHTML = `
+                    <div>${isActive ? '❌' : '✅'}</div>
+                    <div>${format.charAt(0).toUpperCase() + format.slice(1)} viewer ${isActive ? 'disabled' : 'enabled'}</div>
+                `;
+                document.getElementById('toastContainer').appendChild(toast);
+                
+                setTimeout(() => toast.remove(), 3000);
+            });
+        });
+        
+        // Load saved theme
+        const savedTheme = localStorage.getItem('vault_theme') || 'cyber';
+        document.querySelector(`.theme-option[data-theme="${savedTheme}"]`)?.classList.add('active');
+        document.body.dataset.theme = savedTheme;
+        
+        // Load media settings
+        const mediaSettings = JSON.parse(localStorage.getItem('media_settings') || '{}');
+        Object.keys(mediaSettings).forEach(format => {
+            const btn = document.querySelector(`[data-format="${format}"]`);
+            if (btn && mediaSettings[format]) {
+                btn.classList.add('active');
+                const status = btn.querySelector('.media-toggle-status');
+                if (status) status.textContent = '✅';
+            }
+        });
+    });
+    </script>
+
+    <!-- Main App JS -->
     <script src="app.js"></script>
 </body>
 </html>
