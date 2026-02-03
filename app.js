@@ -1,792 +1,1145 @@
-// VAULT OS v2.1 - COMPLETE BUG-FIXED VERSION
-// ALL CRITICAL BUGS FIXED
+// ==================== VAULT OS v4.0 - PRODUCTION READY ====================
+// ALL SYSTEMS INTEGRATED: Google Drive, Firebase, IndexDB, Media Proxy, Chunk Upload
 
-// ==================== GLOBAL STATE ====================
-const state = {
-    authStatus: 'locked',
-    accessToken: null,
-    driveScopes: [],
-    userProfile: null,
-    currentFolder: 'root',
-    folderTree: [],
-    fileList: [],
-    selectedFiles: [],
-    uploadQueue: [],
-    settings: {
-        theme: 'cyber',
-        view: 'grid',
-        driveMode: 'vault',
-        mediaViewer: {
-            image: true,
-            video: true,
-            audio: true,
-            pdf: true,
-            markdown: true,
-            code: true,
-            zipPreview: false
-        }
-    },
-    storageInfo: {
-        total: 0,
-        used: 0,
-        free: 0,
-        usageLevel: 'LOW'
-    },
-    pinHash: null,
-    sessionStart: null,
-    firebaseApp: null,
-    firebaseDB: null,
-    currentPin: '',
-    pinAttempts: 0,
-    maxPinAttempts: 5
-};
-
-// ==================== FINAL CONFIGURATION ====================
+// ==================== CONFIGURATION ====================
 const CONFIG = {
+    // Google OAuth
     googleOAuth: {
         clientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
-        scope: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/drive.metadata https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email",
-        responseType: "token",
-        accessType: "online",
-        prompt: "consent",
-        redirectURI: "https://khademsorder.github.io/Cvault",
+        scope: "https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.metadata.readonly",
+        redirectURI: window.location.origin + window.location.pathname,
         authEndpoint: "https://accounts.google.com/o/oauth2/v2/auth",
-        tokenInfoEndpoint: "https://www.googleapis.com/oauth2/v1/tokeninfo"
+        tokenInfoEndpoint: "https://oauth2.googleapis.com/tokeninfo"
     },
+    
+    // Google Drive
     drive: {
         apiVersion: "v3",
         rootFolderId: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn",
-        onlineRequired: true,
         uploadEndpoint: "https://www.googleapis.com/upload/drive/v3/files",
-        aboutEndpoint: "https://www.googleapis.com/drive/v3/about"
+        aboutEndpoint: "https://www.googleapis.com/drive/v3/about",
+        chunkSize: 5 * 1024 * 1024, // 5MB chunks
+        maxFileSize: 10 * 1024 * 1024 * 1024 // 10GB
     },
+    
+    // Firebase
     firebase: {
         apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
         authDomain: "encrypted-vault-4683d.firebaseapp.com",
-        databaseURL: "https://encrypted-vault-4683d-default-rtdb.firebaseio.com",
         projectId: "encrypted-vault-4683d",
-        storageBucket: "encrypted-vault-4683d.firebasestorage.app",
+        storageBucket: "encrypted-vault-4683d.appspot.com",
         messagingSenderId: "851257263743",
-        appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+        appId: "1:851257263743:web:e0d16606bd06f692f5e14a",
+        databaseURL: "https://encrypted-vault-4683d-default-rtdb.firebaseio.com"
     },
+    
+    // Media Proxies
     mediaProxies: {
         readOnly: "https://script.google.com/macros/s/AKfycby2hqAq0JePMbnjEbwwcPBFjS14lvS3pM2Z1PPgY4OraTcpvTmZFPKQr9CQ4vba4Xk7/exec",
         fullAccess: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec"
     },
+    
+    // Security
     security: {
         pinLength: 4,
-        pinValidityHours: 24,
-        maxPinAttempts: 5,
-        lockoutMinutes: 5
+        maxAttempts: 5,
+        lockoutMinutes: 5,
+        sessionHours: 24,
+        tokenRefreshMinutes: 50
+    },
+    
+    // App Settings
+    app: {
+        maxConcurrentUploads: 2,
+        thumbnailSize: 200,
+        cacheTTL: 24 * 60 * 60 * 1000, // 24 hours
+        offlineCacheLimit: 100 * 1024 * 1024 // 100MB
     }
 };
 
-// ==================== UTILITY FUNCTIONS ====================
+// ==================== GLOBAL STATE ====================
+const state = {
+    // Authentication
+    authStatus: 'locked', // locked | unlocked | google_connected
+    pinHash: localStorage.getItem('vault_pin_hash'),
+    pinAttempts: parseInt(localStorage.getItem('pin_attempts')) || 0,
+    lockoutUntil: parseInt(localStorage.getItem('lockout_until')) || null,
+    sessionStart: parseInt(localStorage.getItem('session_start')) || null,
+    
+    // Google
+    accessToken: localStorage.getItem('drive_access_token'),
+    tokenExpiry: parseInt(localStorage.getItem('token_expiry')) || null,
+    userProfile: JSON.parse(localStorage.getItem('user_profile')) || null,
+    
+    // File Management
+    currentFolder: CONFIG.drive.rootFolderId,
+    folderStack: [],
+    folderTree: [],
+    fileList: [],
+    selectedFiles: new Set(),
+    searchQuery: '',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    
+    // Upload System
+    uploadQueue: [],
+    activeUploads: 0,
+    uploadProgress: new Map(),
+    
+    // UI State
+    settings: {
+        theme: localStorage.getItem('theme') || 'cyber',
+        view: localStorage.getItem('view') || 'grid',
+        driveMode: localStorage.getItem('drive_mode') || 'vault',
+        autoSync: localStorage.getItem('auto_sync') !== 'false',
+        offlineMode: localStorage.getItem('offline_mode') === 'true'
+    },
+    
+    // Storage Info
+    storageInfo: {
+        total: 0,
+        used: 0,
+        free: 0,
+        percentage: 0
+    },
+    
+    // Databases
+    db: null, // IndexedDB
+    firebaseApp: null,
+    firebaseDB: null,
+    
+    // Network
+    isOnline: navigator.onLine,
+    syncInterval: null
+};
+
+// ==================== INDEXEDDB CACHE ====================
+class CacheDB {
+    constructor() {
+        this.db = null;
+        this.init();
+    }
+    
+    async init() {
+        return new Promise((resolve, reject) => {
+            const request = indexedDB.open('VaultCache', 2);
+            
+            request.onerror = () => {
+                console.error('IndexedDB failed');
+                reject(request.error);
+            };
+            
+            request.onsuccess = (event) => {
+                this.db = event.target.result;
+                resolve(this.db);
+            };
+            
+            request.onupgradeneeded = (event) => {
+                const db = event.target.result;
+                
+                // Files cache
+                if (!db.objectStoreNames.contains('files')) {
+                    const store = db.createObjectStore('files', { keyPath: 'id' });
+                    store.createIndex('folderId', 'folderId');
+                    store.createIndex('timestamp', 'timestamp');
+                    store.createIndex('type', 'type');
+                }
+                
+                // Thumbnails cache
+                if (!db.objectStoreNames.contains('thumbnails')) {
+                    const store = db.createObjectStore('thumbnails', { keyPath: 'fileId' });
+                    store.createIndex('timestamp', 'timestamp');
+                }
+                
+                // Metadata cache
+                if (!db.objectStoreNames.contains('metadata')) {
+                    db.createObjectStore('metadata', { keyPath: 'key' });
+                }
+            };
+        });
+    }
+    
+    async getFiles(folderId) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['files'], 'readonly');
+            const store = transaction.objectStore('files');
+            const index = store.index('folderId');
+            const request = index.getAll(folderId);
+            
+            request.onsuccess = () => resolve(request.result || []);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    async saveFiles(folderId, files) {
+        const transaction = this.db.transaction(['files'], 'readwrite');
+        const store = transaction.objectStore('files');
+        
+        // Remove old files from this folder
+        const index = store.index('folderId');
+        const oldFiles = await new Promise(resolve => {
+            const request = index.getAll(folderId);
+            request.onsuccess = () => resolve(request.result);
+        });
+        
+        oldFiles.forEach(file => store.delete(file.id));
+        
+        // Save new files
+        const timestamp = Date.now();
+        files.forEach(file => {
+            store.put({
+                ...file,
+                folderId,
+                timestamp,
+                cached: true
+            });
+        });
+        
+        // Update metadata
+        const metaTransaction = this.db.transaction(['metadata'], 'readwrite');
+        const metaStore = metaTransaction.objectStore('metadata');
+        metaStore.put({
+            key: `folder_${folderId}_updated`,
+            value: timestamp
+        });
+    }
+    
+    async getThumbnail(fileId) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['thumbnails'], 'readonly');
+            const store = transaction.objectStore('thumbnails');
+            const request = store.get(fileId);
+            
+            request.onsuccess = () => resolve(request.result);
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    async saveThumbnail(fileId, thumbnailBlob) {
+        return new Promise((resolve, reject) => {
+            const transaction = this.db.transaction(['thumbnails'], 'readwrite');
+            const store = transaction.objectStore('thumbnails');
+            
+            // Clean old thumbnails if limit exceeded
+            this.cleanupThumbnails();
+            
+            const record = {
+                fileId,
+                thumbnail: thumbnailBlob,
+                timestamp: Date.now()
+            };
+            
+            const request = store.put(record);
+            request.onsuccess = () => resolve();
+            request.onerror = () => reject(request.error);
+        });
+    }
+    
+    async cleanupThumbnails() {
+        const transaction = this.db.transaction(['thumbnails'], 'readwrite');
+        const store = transaction.objectStore('thumbnails');
+        const index = store.index('timestamp');
+        const request = index.getAll();
+        
+        request.onsuccess = () => {
+            const thumbnails = request.result;
+            if (thumbnails.length > 100) { // Keep last 100 thumbnails
+                const toDelete = thumbnails.slice(0, thumbnails.length - 100);
+                toDelete.forEach(thumb => store.delete(thumb.fileId));
+            }
+        };
+    }
+}
+
+// ==================== UTILITIES ====================
 const utils = {
-    // Hash PIN using Web Crypto API with secure salt
+    // Security
     async hashPin(pin) {
-        try {
-            // Generate random salt for each PIN
-            const salt = crypto.getRandomValues(new Uint8Array(16));
-            const encoder = new TextEncoder();
-            const pinData = encoder.encode(pin);
-            
-            // Combine salt and PIN
-            const combined = new Uint8Array(salt.length + pinData.length);
-            combined.set(salt);
-            combined.set(pinData, salt.length);
-            
-            // Hash with SHA-256
-            const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            
-            // Store salt with hash
-            const saltHex = Array.from(salt).map(b => b.toString(16).padStart(2, '0')).join('');
-            return `${saltHex}:${hashHex}`;
-        } catch (error) {
-            console.error('PIN hashing failed:', error);
-            throw new Error('PIN security error');
-        }
+        const encoder = new TextEncoder();
+        const data = encoder.encode(pin + 'vault_salt');
+        const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+        const hashArray = Array.from(new Uint8Array(hashBuffer));
+        return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
     },
-
-    // Verify PIN hash
+    
     async verifyPin(pin, storedHash) {
-        try {
-            const [saltHex, originalHash] = storedHash.split(':');
-            const salt = new Uint8Array(saltHex.match(/.{1,2}/g).map(byte => parseInt(byte, 16)));
-            const encoder = new TextEncoder();
-            const pinData = encoder.encode(pin);
-            
-            const combined = new Uint8Array(salt.length + pinData.length);
-            combined.set(salt);
-            combined.set(pinData, salt.length);
-            
-            const hashBuffer = await crypto.subtle.digest('SHA-256', combined);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-            
-            return hashHex === originalHash;
-        } catch (error) {
-            console.error('PIN verification failed:', error);
-            return false;
-        }
+        const hash = await this.hashPin(pin);
+        return hash === storedHash;
     },
-
-    // Validate PIN format
-    isValidPin(pin) {
-        return /^\d{4}$/.test(pin);
-    },
-
-    // Format file size
+    
+    // Formatting
     formatFileSize(bytes) {
-        if (bytes === 0 || bytes === undefined) return '0 Bytes';
-        const k = 1024;
+        if (!bytes || bytes === 0) return '0 Bytes';
         const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
-        const i = Math.floor(Math.log(bytes) / Math.log(k));
-        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        const i = Math.floor(Math.log(bytes) / Math.log(1024));
+        return parseFloat((bytes / Math.pow(1024, i)).toFixed(2)) + ' ' + sizes[i];
     },
-
-    // Format date
+    
     formatDate(dateString) {
-        if (!dateString) return 'Unknown';
         try {
             const date = new Date(dateString);
-            return date.toLocaleDateString() + ' ' + date.toLocaleTimeString([], { 
-                hour: '2-digit', 
-                minute: '2-digit' 
-            });
-        } catch (e) {
-            return 'Invalid Date';
+            return new Intl.DateTimeFormat('bn-BD', {
+                year: 'numeric',
+                month: 'short',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+        } catch {
+            return '-';
         }
     },
-
-    // Get file icon
-    getFileIcon(mimeType, name) {
-        if (mimeType === 'application/vnd.google-apps.folder') return '📁';
+    
+    getFileIcon(file) {
+        const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+        if (isFolder) return '📁';
         
-        const ext = (name || '').split('.').pop().toLowerCase();
+        const mime = file.mimeType;
+        const ext = file.name.split('.').pop().toLowerCase();
         
-        if (mimeType.startsWith('image/')) return '🖼️';
-        if (mimeType.startsWith('video/')) return '🎬';
-        if (mimeType.startsWith('audio/')) return '🎵';
-        if (mimeType === 'application/pdf') return '📄';
-        if (mimeType.includes('zip') || ext === 'zip') return '🗜️';
+        const iconMap = {
+            // Images
+            'image/': '🖼️',
+            // Videos
+            'video/': '🎬',
+            // Audio
+            'audio/': '🎵',
+            // Documents
+            'application/pdf': '📕',
+            'application/msword': '📝',
+            'application/vnd.openxmlformats-officedocument.wordprocessingml.document': '📝',
+            'application/vnd.ms-excel': '📊',
+            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': '📊',
+            // Text
+            'text/': '📄',
+            // Archives
+            'application/zip': '🗜️',
+            'application/x-rar-compressed': '🗜️',
+            'application/x-7z-compressed': '🗜️'
+        };
         
-        const codeExts = ['js', 'css', 'html', 'json', 'py', 'php', 'sh', 'java', 'cpp', 'c', 'ts'];
-        if (codeExts.includes(ext)) return '📝';
-        
-        if (mimeType === 'text/plain' || ext === 'txt' || ext === 'md') return '📄';
+        for (const [key, icon] of Object.entries(iconMap)) {
+            if (mime.startsWith(key)) return icon;
+        }
         
         return '📄';
     },
-
-    // Show toast notification
-    showToast(type, title, message, duration = 5000) {
+    
+    // Thumbnail Generation
+    async generateThumbnail(file, maxSize = 200) {
+        return new Promise((resolve, reject) => {
+            if (!file.type.startsWith('image/')) {
+                resolve(null);
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const img = new Image();
+                img.onload = () => {
+                    const canvas = document.createElement('canvas');
+                    let width = img.width;
+                    let height = img.height;
+                    
+                    if (width > height) {
+                        if (width > maxSize) {
+                            height *= maxSize / width;
+                            width = maxSize;
+                        }
+                    } else {
+                        if (height > maxSize) {
+                            width *= maxSize / height;
+                            height = maxSize;
+                        }
+                    }
+                    
+                    canvas.width = width;
+                    canvas.height = height;
+                    
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, width, height);
+                    
+                    canvas.toBlob(resolve, 'image/jpeg', 0.7);
+                };
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+    
+    // Toast System
+    showToast(message, type = 'info', duration = 4000) {
         const container = document.getElementById('toastContainer');
-        if (!container) {
-            console.log(`[${type.toUpperCase()}] ${title}: ${message}`);
-            return;
-        }
+        if (!container) return;
         
+        const toastId = 'toast-' + Date.now();
         const toast = document.createElement('div');
-        toast.className = `toast ${type}`;
+        toast.id = toastId;
+        toast.className = `toast toast-${type}`;
         toast.innerHTML = `
             <div class="toast-content">
-                <div class="toast-title">${title}</div>
+                <div class="toast-icon">${type === 'success' ? '✅' : type === 'error' ? '❌' : 'ℹ️'}</div>
                 <div class="toast-message">${message}</div>
             </div>
-            <button class="toast-close">✕</button>
+            <button class="toast-close" onclick="document.getElementById('${toastId}').remove()">×</button>
         `;
         
         container.appendChild(toast);
         
-        toast.querySelector('.toast-close').onclick = () => toast.remove();
-        
-        if (duration > 0) {
-            setTimeout(() => toast.remove(), duration);
-        }
+        setTimeout(() => {
+            const element = document.getElementById(toastId);
+            if (element) element.remove();
+        }, duration);
     },
-
-    // Show error
-    showError(error, context = 'Operation') {
-        console.error(`[ERROR] ${context}:`, error);
+    
+    // Error Handling
+    async handleError(error, context) {
+        console.error(`[${context}]`, error);
         
-        let userMessage = 'An error occurred';
-        let errorType = 'error';
+        let message = 'একটি সমস্যা হয়েছে';
         
         if (error.status === 401) {
-            userMessage = 'Session expired. Please sign in again.';
-            errorType = 'warning';
-            state.authStatus = 'locked';
-            updateAuthUI();
+            message = 'অনুমতি শেষ হয়েছে। আবার লগইন করুন।';
+            authManager.lockVault();
         } else if (error.status === 403) {
-            userMessage = 'Permission denied.';
-        } else if (error.message?.includes('network')) {
-            userMessage = 'Network error. Check your connection.';
-            errorType = 'warning';
+            message = 'এই কাজের জন্য অনুমতি নেই।';
+        } else if (error.status === 429) {
+            message = 'বেশি রিকুয়েস্ট পাঠানো হয়েছে। কিছুক্ষণ পরে চেষ্টা করুন।';
+        } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+            message = 'নেটওয়ার্ক সমস্যা। ইন্টারনেট চেক করুন।';
+        } else if (error.message?.includes('quota')) {
+            message = 'স্টোরেজ ফুল। কিছু ফাইল মুছুন।';
         }
         
-        utils.showToast(errorType, `${context} Failed`, userMessage);
-    },
-
-    // Debounce function
-    debounce(func, wait) {
-        let timeout;
-        return function executedFunction(...args) {
-            const later = () => {
-                clearTimeout(timeout);
-                func(...args);
-            };
-            clearTimeout(timeout);
-            timeout = setTimeout(later, wait);
-        };
+        this.showToast(message, 'error');
+        
+        // Log to Firebase
+        if (state.firebaseDB) {
+            try {
+                await firebase.database(state.firebaseDB).ref('errors').push({
+                    context,
+                    message: error.message,
+                    timestamp: Date.now(),
+                    user: state.userProfile?.email || 'unknown'
+                });
+            } catch (logError) {
+                console.error('Error logging failed:', logError);
+            }
+        }
     }
 };
 
-// ==================== PIN MANAGEMENT ====================
-const pinManager = {
+// ==================== AUTH MANAGER ====================
+const authManager = {
+    currentPin: '',
+    
     init() {
-        console.log('Initializing PIN Manager');
+        console.log('🔐 Auth Manager Initializing');
         
-        // Load PIN hash
-        const storedHash = localStorage.getItem('vault_pin_hash');
-        if (storedHash) state.pinHash = storedHash;
+        // Load saved state
+        this.loadSession();
         
-        // Setup event listeners
-        this.setupEventListeners();
+        // Setup listeners
+        this.setupListeners();
+        
+        // Check OAuth redirect
+        this.checkOAuthRedirect();
         
         // Initialize Firebase
         this.initFirebase();
         
-        // Load settings
-        this.loadSettings();
+        // Update UI
+        this.updateAuthUI();
         
-        // Setup mobile height
-        this.setupMobileHeight();
+        // Start session monitor
+        this.startSessionMonitor();
     },
     
-    setupEventListeners() {
-        // Keypad number buttons
+    setupListeners() {
+        // PIN keypad
         document.querySelectorAll('.pin-key[data-key]').forEach(btn => {
-            btn.addEventListener('click', () => {
-                if (state.currentPin.length < 4) {
-                    state.currentPin += btn.dataset.key;
+            btn.onclick = () => {
+                if (this.currentPin.length < 4) {
+                    this.currentPin += btn.dataset.key;
                     this.updatePinDisplay();
-                    
-                    if (state.currentPin.length === 4) {
+                    if (this.currentPin.length === 4) {
                         setTimeout(() => this.validatePin(), 300);
                     }
                 }
-            });
+            };
         });
         
-        // Clear button
-        document.querySelector('.pin-key[data-action="clear"]').addEventListener('click', () => {
-            state.currentPin = '';
+        // PIN clear
+        document.querySelector('.pin-key[data-action="clear"]').onclick = () => {
+            this.currentPin = '';
             this.updatePinDisplay();
-            document.getElementById('pinError').textContent = '';
-        });
+            document.getElementById('pinError').style.display = 'none';
+        };
         
-        // Enter button
-        document.getElementById('pinEnter').addEventListener('click', () => this.validatePin());
+        // PIN enter
+        document.getElementById('pinEnter').onclick = () => this.validatePin();
         
-        // Keyboard input
+        // Google auth button
+        document.getElementById('authBtn').onclick = () => {
+            state.authStatus === 'google_connected' 
+                ? this.googleSignOut() 
+                : this.googleSignIn();
+        };
+        
+        // Keyboard for PIN
         document.addEventListener('keydown', (e) => {
-            if (state.authStatus === 'locked') {
-                if (e.key >= '0' && e.key <= '9' && state.currentPin.length < 4) {
-                    state.currentPin += e.key;
+            if (state.authStatus === 'locked' && state.pinHash) {
+                if (e.key >= '0' && e.key <= '9') {
+                    this.currentPin = (this.currentPin + e.key).slice(0, 4);
+                    this.updatePinDisplay();
+                    if (this.currentPin.length === 4) {
+                        setTimeout(() => this.validatePin(), 300);
+                    }
+                } else if (e.key === 'Backspace') {
+                    this.currentPin = this.currentPin.slice(0, -1);
                     this.updatePinDisplay();
                 } else if (e.key === 'Enter') {
                     this.validatePin();
-                } else if (e.key === 'Backspace' || e.key === 'Delete') {
-                    state.currentPin = '';
-                    this.updatePinDisplay();
                 }
-            }
-        });
-        
-        // Forgot PIN
-        document.getElementById('pinForgot').addEventListener('click', () => {
-            if (confirm('Reset PIN? This will clear all local data.')) {
-                localStorage.clear();
-                sessionStorage.clear();
-                state.pinHash = null;
-                state.currentPin = '';
-                this.updatePinDisplay();
-                utils.showToast('warning', 'Vault Reset', 'All local data cleared');
-            }
-        });
-        
-        // Reset Vault
-        document.getElementById('pinReset').addEventListener('click', () => {
-            if (confirm('Reset vault? All local settings will be lost.')) {
-                localStorage.removeItem('vault_pin_hash');
-                localStorage.removeItem('vault_settings');
-                state.pinHash = null;
-                state.currentPin = '';
-                this.updatePinDisplay();
-                utils.showToast('warning', 'Settings Reset', 'Local settings cleared');
             }
         });
     },
     
     updatePinDisplay() {
         const dots = document.querySelectorAll('.pin-dot');
-        const displayText = document.getElementById('pinDisplayText');
-        
-        dots.forEach((dot, index) => {
-            dot.dataset.filled = index < state.currentPin.length;
+        dots.forEach((dot, i) => {
+            dot.classList.toggle('filled', i < this.currentPin.length);
         });
         
-        if (state.currentPin.length === 0) {
-            displayText.textContent = 'Enter 4-digit PIN';
-        } else if (state.currentPin.length === 4) {
-            displayText.textContent = 'Press Enter ↵';
-        } else {
-            displayText.textContent = '•'.repeat(state.currentPin.length);
+        const textEl = document.getElementById('pinDisplayText');
+        if (textEl) {
+            if (this.currentPin.length === 0) {
+                textEl.textContent = '4 ডিজিট PIN দিন';
+            } else if (this.currentPin.length === 4) {
+                textEl.textContent = 'Enter চাপুন';
+            } else {
+                textEl.textContent = '•'.repeat(this.currentPin.length);
+            }
         }
     },
     
     async validatePin() {
-        const pinError = document.getElementById('pinError');
-        
-        // Validate format
-        if (!utils.isValidPin(state.currentPin)) {
-            pinError.textContent = 'PIN must be 4 digits';
-            state.currentPin = '';
-            this.updatePinDisplay();
+        // Check lockout
+        if (state.lockoutUntil && Date.now() < state.lockoutUntil) {
+            const minutes = Math.ceil((state.lockoutUntil - Date.now()) / 60000);
+            this.showPinError(`লক করা আছে। ${minutes} মিনিট পরে চেষ্টা করুন।`);
             return;
         }
         
-        // Check attempt limit
-        if (state.pinAttempts >= CONFIG.security.maxPinAttempts) {
-            const lockoutTime = CONFIG.security.lockoutMinutes * 60 * 1000;
-            pinError.textContent = `Too many attempts. Locked for ${CONFIG.security.lockoutMinutes} minutes.`;
-            setTimeout(() => {
-                state.pinAttempts = 0;
-                pinError.textContent = '';
-            }, lockoutTime);
+        // Check attempts
+        if (state.pinAttempts >= CONFIG.security.maxAttempts) {
+            state.lockoutUntil = Date.now() + (CONFIG.security.lockoutMinutes * 60000);
+            localStorage.setItem('lockout_until', state.lockoutUntil);
+            this.showPinError(`বেশি চেষ্টা। ${CONFIG.security.lockoutMinutes} মিনিট লক।`);
             return;
         }
         
         try {
             if (!state.pinHash) {
                 // First time setup
-                const hash = await utils.hashPin(state.currentPin);
+                const hash = await utils.hashPin(this.currentPin);
                 localStorage.setItem('vault_pin_hash', hash);
                 state.pinHash = hash;
                 this.unlockVault();
-                utils.showToast('success', 'PIN Set', 'PIN created successfully');
+                utils.showToast('PIN সেট করা হয়েছে ✅', 'success');
             } else {
                 // Verify PIN
                 state.pinAttempts++;
-                const isValid = await utils.verifyPin(state.currentPin, state.pinHash);
+                localStorage.setItem('pin_attempts', state.pinAttempts);
+                
+                const isValid = await utils.verifyPin(this.currentPin, state.pinHash);
                 
                 if (isValid) {
                     state.pinAttempts = 0;
+                    state.lockoutUntil = null;
+                    localStorage.removeItem('pin_attempts');
+                    localStorage.removeItem('lockout_until');
                     this.unlockVault();
                 } else {
-                    pinError.textContent = `Incorrect PIN. ${CONFIG.security.maxPinAttempts - state.pinAttempts} attempts left.`;
-                    state.currentPin = '';
+                    const attemptsLeft = CONFIG.security.maxAttempts - state.pinAttempts;
+                    this.showPinError(`ভুল PIN। ${attemptsLeft} বার চেষ্টা বাকি।`);
+                    this.currentPin = '';
                     this.updatePinDisplay();
                     
-                    // Vibrate on wrong PIN
-                    if (navigator.vibrate) navigator.vibrate(200);
+                    // Haptic feedback
+                    if (navigator.vibrate) navigator.vibrate([100, 50, 100]);
                 }
             }
         } catch (error) {
-            pinError.textContent = 'PIN verification failed';
-            console.error('PIN error:', error);
+            utils.handleError(error, 'PIN Validation');
+        }
+    },
+    
+    showPinError(message) {
+        const errorEl = document.getElementById('pinError');
+        if (errorEl) {
+            errorEl.textContent = message;
+            errorEl.style.display = 'block';
         }
     },
     
     unlockVault() {
         state.authStatus = 'unlocked';
         state.sessionStart = Date.now();
+        localStorage.setItem('session_start', state.sessionStart);
         
         // Update UI
-        document.getElementById('pinGate').dataset.visible = 'false';
-        document.getElementById('appContainer').dataset.visible = 'true';
-        document.getElementById('googleAuthSlot').dataset.visible = 'true';
+        document.getElementById('pinGate').style.display = 'none';
+        document.getElementById('appContainer').style.display = 'flex';
+        document.getElementById('sidebar').classList.add('active');
         
-        // Initialize Google OAuth
-        googleAuth.init();
+        // Initialize systems
+        driveManager.init();
+        uploadManager.init();
+        settingsManager.init();
         
-        // Setup event listeners
-        setupEventListeners();
-        
-        // Start session expiry check
-        this.startSessionExpiryCheck();
-        
-        utils.showToast('success', 'Vault Unlocked', 'Welcome to VAULT OS');
+        utils.showToast('VAULT আনলক করা হয়েছে ✅', 'success');
     },
     
     lockVault() {
         state.authStatus = 'locked';
         state.accessToken = null;
         state.userProfile = null;
-        state.currentPin = '';
+        this.currentPin = '';
         
-        document.getElementById('pinGate').dataset.visible = 'true';
-        document.getElementById('appContainer').dataset.visible = 'false';
-        document.getElementById('googleAuthSlot').dataset.visible = 'false';
+        localStorage.removeItem('drive_access_token');
+        localStorage.removeItem('token_expiry');
+        localStorage.removeItem('user_profile');
         
+        document.getElementById('pinGate').style.display = 'flex';
+        document.getElementById('appContainer').style.display = 'none';
         this.updatePinDisplay();
-        document.getElementById('pinError').textContent = '';
+        this.updateAuthUI();
         
-        updateFileBrowser([]);
-        updateAuthUI();
-        
-        utils.showToast('info', 'Vault Locked', 'Session secured');
+        utils.showToast('VAULT লক করা হয়েছে 🔒', 'info');
     },
     
-    startSessionExpiryCheck() {
-        const expiryMs = CONFIG.security.pinValidityHours * 60 * 60 * 1000;
+    async googleSignIn() {
+        try {
+            const params = new URLSearchParams({
+                client_id: CONFIG.googleOAuth.clientId,
+                redirect_uri: CONFIG.googleOAuth.redirectURI,
+                response_type: 'token',
+                scope: CONFIG.googleOAuth.scope,
+                include_granted_scopes: 'true',
+                state: 'google_drive_' + Date.now(),
+                prompt: 'consent'
+            });
+            
+            window.location.href = CONFIG.googleOAuth.authEndpoint + '?' + params;
+        } catch (error) {
+            utils.handleError(error, 'Google Sign In');
+        }
+    },
+    
+    checkOAuthRedirect() {
+        const hash = window.location.hash.substring(1);
+        const params = new URLSearchParams(hash);
         
-        setInterval(() => {
-            if (state.sessionStart && (Date.now() - state.sessionStart) > expiryMs) {
-                utils.showToast('warning', 'Session Expired', 'Vault locked due to inactivity');
-                this.lockVault();
+        if (params.has('access_token')) {
+            const accessToken = params.get('access_token');
+            const expiresIn = parseInt(params.get('expires_in')) || 3600;
+            
+            state.accessToken = accessToken;
+            state.tokenExpiry = Date.now() + (expiresIn * 1000);
+            state.authStatus = 'google_connected';
+            
+            localStorage.setItem('drive_access_token', accessToken);
+            localStorage.setItem('token_expiry', state.tokenExpiry);
+            
+            // Clear hash from URL
+            history.replaceState(null, '', window.location.pathname);
+            
+            // Get user info
+            this.fetchUserInfo();
+            
+            // Initialize drive
+            driveManager.init();
+        }
+    },
+    
+    async fetchUserInfo() {
+        try {
+            const response = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                headers: { Authorization: `Bearer ${state.accessToken}` }
+            });
+            
+            if (!response.ok) throw new Error('User info failed');
+            
+            const data = await response.json();
+            state.userProfile = {
+                name: data.name,
+                email: data.email,
+                picture: data.picture,
+                id: data.id
+            };
+            
+            localStorage.setItem('user_profile', JSON.stringify(state.userProfile));
+            this.updateAuthUI();
+            
+            utils.showToast(`স্বাগতম, ${data.name}!`, 'success');
+        } catch (error) {
+            console.warn('User info fetch failed, continuing with token');
+        }
+    },
+    
+    googleSignOut() {
+        if (confirm('গুগল ড্রাইভ থেকে লগআউট করবেন?')) {
+            state.accessToken = null;
+            state.userProfile = null;
+            state.authStatus = 'unlocked';
+            
+            localStorage.removeItem('drive_access_token');
+            localStorage.removeItem('token_expiry');
+            localStorage.removeItem('user_profile');
+            
+            // Revoke token
+            if (state.accessToken) {
+                fetch(`https://oauth2.googleapis.com/revoke?token=${state.accessToken}`, {
+                    method: 'POST'
+                }).catch(() => {});
             }
-        }, 60000);
+            
+            this.updateAuthUI();
+            fileBrowser.clear();
+            
+            utils.showToast('গুগল ড্রাইভ থেকে ডিস্কানেক্ট করা হয়েছে', 'info');
+        }
+    },
+    
+    updateAuthUI() {
+        const authBtn = document.getElementById('authBtn');
+        const userName = document.getElementById('userName');
+        const userAvatar = document.getElementById('userAvatar');
+        
+        if (!authBtn || !userName) return;
+        
+        if (state.authStatus === 'google_connected' && state.userProfile) {
+            authBtn.textContent = 'লগআউট';
+            authBtn.style.background = 'var(--color-danger)';
+            userName.textContent = state.userProfile.name;
+            
+            if (state.userProfile.picture) {
+                userAvatar.style.backgroundImage = `url('${state.userProfile.picture}')`;
+                userAvatar.textContent = '';
+            }
+        } else {
+            authBtn.textContent = 'গুগল সংযোগ';
+            authBtn.style.background = 'var(--color-accent)';
+            userName.textContent = 'সংযুক্ত নেই';
+            userAvatar.style.backgroundImage = '';
+            userAvatar.textContent = '👤';
+        }
     },
     
     async initFirebase() {
         try {
-            if (typeof firebase === 'undefined') {
-                console.warn('Firebase not available');
-                return;
-            }
-            
             state.firebaseApp = firebase.initializeApp(CONFIG.firebase);
             state.firebaseDB = firebase.database(state.firebaseApp);
-            
             console.log('Firebase initialized');
         } catch (error) {
             console.warn('Firebase init failed:', error);
         }
     },
     
-    loadSettings() {
-        try {
-            const saved = localStorage.getItem('vault_settings');
-            if (saved) {
-                const parsed = JSON.parse(saved);
-                Object.assign(state.settings, parsed);
-                document.body.dataset.theme = state.settings.theme;
-                document.body.dataset.view = state.settings.view;
+    loadSession() {
+        // Check session expiry
+        if (state.sessionStart) {
+            const hours = (Date.now() - state.sessionStart) / (1000 * 60 * 60);
+            if (hours > CONFIG.security.sessionHours) {
+                this.lockVault();
+                return;
             }
-        } catch (error) {
-            console.warn('Settings load failed:', error);
-        }
-    },
-    
-    setupMobileHeight() {
-        const setVH = () => {
-            const vh = window.innerHeight * 0.01;
-            document.documentElement.style.setProperty('--vh', `${vh}px`);
-        };
-        
-        setVH();
-        window.addEventListener('resize', setVH);
-        window.addEventListener('orientationchange', setVH);
-    }
-};
-
-// ==================== GOOGLE OAUTH ====================
-const googleAuth = {
-    init() {
-        console.log('Initializing Google OAuth');
-        
-        // Check if Google Identity Services loaded
-        if (typeof google === 'undefined') {
-            setTimeout(() => this.init(), 1000);
-            return;
         }
         
-        try {
-            google.accounts.id.initialize({
-                client_id: CONFIG.googleOAuth.clientId,
-                callback: this.handleCredentialResponse.bind(this),
-                auto_select: false,
-                ux_mode: 'redirect',
-                login_uri: CONFIG.googleOAuth.redirectURI,
-                redirect_uri: CONFIG.googleOAuth.redirectURI
-            });
-            
-            // Setup auth button
-            document.getElementById('authBtn').addEventListener('click', () => {
-                this.startOAuthFlow();
-            });
-            
-        } catch (error) {
-            console.error('Google OAuth init failed:', error);
-        }
-    },
-    
-    startOAuthFlow() {
-        if (state.authStatus === 'google_connected') {
-            this.signOut();
-            return;
-        }
-        
-        // Use Google's OAuth 2.0 implicit grant flow
-        const params = {
-            client_id: CONFIG.googleOAuth.clientId,
-            redirect_uri: window.location.origin,
-            response_type: 'token',
-            scope: CONFIG.googleOAuth.scope,
-            access_type: CONFIG.googleOAuth.accessType,
-            prompt: CONFIG.googleOAuth.prompt,
-            state: 'vault_' + Date.now()
-        };
-        
-        const url = CONFIG.googleOAuth.authEndpoint + '?' + new URLSearchParams(params);
-        window.location.href = url;
-    },
-    
-    async handleCredentialResponse(response) {
-        try {
-            if (!response || !response.credential) {
-                throw new Error('Invalid response');
+        // Auto unlock if session valid
+        if (state.pinHash && state.sessionStart) {
+            const hours = (Date.now() - state.sessionStart) / (1000 * 60 * 60);
+            if (hours < CONFIG.security.sessionHours) {
+                this.unlockVault();
             }
-            
-            // Decode JWT to get user info
-            const token = response.credential;
-            const parts = token.split('.');
-            if (parts.length !== 3) throw new Error('Invalid token');
-            
-            const payload = JSON.parse(atob(parts[1].replace(/-/g, '+').replace(/_/g, '/')));
-            
-            state.userProfile = {
-                name: payload.name || 'User',
-                email: payload.email || '',
-                picture: payload.picture || '',
-                id: payload.sub
-            };
-            
-            // Use the token for Drive API (simplified - in production need proper token exchange)
-            state.accessToken = token;
-            state.authStatus = 'google_connected';
-            
-            updateAuthUI();
-            driveManager.init();
-            
-            utils.showToast('success', 'Connected', `Signed in as ${state.userProfile.email}`);
-            
-        } catch (error) {
-            console.error('Google OAuth failed:', error);
-            utils.showError(error, 'Google Sign-In');
         }
     },
     
-    signOut() {
-        if (confirm('Sign out from Google?')) {
-            this.clearSession();
-        }
-    },
-    
-    clearSession() {
-        state.accessToken = null;
-        state.userProfile = null;
-        state.authStatus = 'unlocked';
-        state.fileList = [];
-        state.folderTree = [];
-        
-        updateAuthUI();
-        updateFileBrowser([]);
-        updateFolderTreeUI();
-        
-        utils.showToast('info', 'Signed Out', 'Disconnected from Google');
-    },
-    
-    checkTokenExpiry() {
-        if (!state.accessToken) return;
-        
-        setInterval(async () => {
-            try {
-                const response = await fetch(CONFIG.googleOAuth.tokenInfoEndpoint + '?access_token=' + state.accessToken);
-                if (response.status === 401) {
-                    utils.showToast('warning', 'Session Expired', 'Please sign in again');
-                    this.clearSession();
+    startSessionMonitor() {
+        setInterval(() => {
+            if (state.sessionStart) {
+                const hours = (Date.now() - state.sessionStart) / (1000 * 60 * 60);
+                if (hours > CONFIG.security.sessionHours) {
+                    utils.showToast('সেশন শেষ হয়েছে। আবার লগইন করুন।', 'warning');
+                    this.lockVault();
                 }
-            } catch (error) {
-                // Silent fail
             }
-        }, 300000);
+        }, 60000); // Check every minute
     }
 };
 
-// ==================== GOOGLE DRIVE MANAGER ====================
+// ==================== DRIVE MANAGER ====================
 const driveManager = {
+    cacheDB: null,
+    
     async init() {
-        console.log('Initializing Drive Manager');
+        console.log('🚀 Drive Manager Initializing');
         
-        if (!state.accessToken) {
-            utils.showToast('error', 'Not Connected', 'Please connect Google Drive');
-            return;
+        // Initialize cache
+        this.cacheDB = new CacheDB();
+        await this.cacheDB.init();
+        
+        // Check token validity
+        if (state.accessToken) {
+            await this.validateToken();
         }
         
-        try {
-            // Verify token and get user info
-            await this.verifyToken();
-            
-            // Ensure vault root exists
-            await this.ensureVaultRoot();
-            
-            // Load storage info
+        // Load storage info
+        if (state.authStatus === 'google_connected') {
             await this.loadStorageInfo();
-            
-            // Load root folder contents
-            await this.loadFolderContents(CONFIG.drive.rootFolderId);
-            
-            // Start token expiry check
-            googleAuth.checkTokenExpiry();
-            
+            await this.loadFolderContents(state.currentFolder);
+            this.startTokenRefresh();
+        }
+        
+        // Setup network listeners
+        this.setupNetworkListeners();
+    },
+    
+    async validateToken() {
+        try {
+            const response = await fetch(CONFIG.googleOAuth.tokenInfoEndpoint + `?access_token=${state.accessToken}`);
+            if (!response.ok) throw new Error('Token invalid');
         } catch (error) {
-            console.error('Drive init failed:', error);
-            utils.showError(error, 'Drive Connection');
-            
-            if (error.status === 401) {
-                googleAuth.clearSession();
-            }
+            console.warn('Token validation failed:', error);
+            authManager.googleSignOut();
         }
     },
     
-    async verifyToken() {
-        const response = await fetch('https://www.googleapis.com/drive/v3/about?fields=user', {
-            headers: { 'Authorization': `Bearer ${state.accessToken}` }
-        });
-        
-        if (!response.ok) {
-            throw { status: response.status };
-        }
-    },
-    
-    async ensureVaultRoot() {
-        const response = await fetch(
-            `https://www.googleapis.com/drive/v3/files/${CONFIG.drive.rootFolderId}?fields=id,name`,
-            {
-                headers: { 'Authorization': `Bearer ${state.accessToken}` }
+    startTokenRefresh() {
+        // Refresh token 10 minutes before expiry
+        setInterval(async () => {
+            if (state.tokenExpiry && Date.now() > state.tokenExpiry - 600000) {
+                try {
+                    // Use silent refresh
+                    const iframe = document.createElement('iframe');
+                    iframe.style.display = 'none';
+                    iframe.src = `https://accounts.google.com/o/oauth2/auth?client_id=${CONFIG.googleOAuth.clientId}&redirect_uri=${CONFIG.googleOAuth.redirectURI}&response_type=token&scope=${CONFIG.googleOAuth.scope}&prompt=none`;
+                    
+                    document.body.appendChild(iframe);
+                    setTimeout(() => iframe.remove(), 5000);
+                } catch (error) {
+                    console.warn('Token refresh failed:', error);
+                }
             }
-        );
-        
-        if (response.status === 404) {
-            throw new Error(`Vault root folder not found. Please create folder with ID: ${CONFIG.drive.rootFolderId}`);
-        }
-        
-        if (!response.ok) throw { status: response.status };
+        }, 60000); // Check every minute
     },
     
     async loadStorageInfo() {
         try {
-            const response = await fetch(CONFIG.drive.aboutEndpoint + '?fields=storageQuota', {
-                headers: { 'Authorization': `Bearer ${state.accessToken}` }
+            const response = await fetch(`${CONFIG.drive.aboutEndpoint}?fields=storageQuota`, {
+                headers: { Authorization: `Bearer ${state.accessToken}` }
             });
             
-            if (!response.ok) throw new Error('Storage API failed');
+            if (!response.ok) throw new Error('Storage info failed');
             
             const data = await response.json();
-            const quota = data.storageQuota || {};
-            
-            const total = parseInt(quota.limit || '0');
-            const used = parseInt(quota.usage || '0');
+            const quota = data.storageQuota;
             
             state.storageInfo = {
-                total: total,
-                used: used,
-                free: total > 0 ? total - used : 0,
-                usageLevel: this.calculateUsageLevel(used, total)
+                total: parseInt(quota.limit) || 0,
+                used: parseInt(quota.usage) || 0,
+                free: parseInt(quota.limit) - parseInt(quota.usage),
+                percentage: quota.limit ? (quota.usage / quota.limit) * 100 : 0
             };
             
-            updateStorageUI();
-            
+            this.updateStorageUI();
         } catch (error) {
-            console.error('Storage info load failed:', error);
+            utils.handleError(error, 'Load Storage Info');
         }
     },
     
-    calculateUsageLevel(used, total) {
-        if (total === 0) return 'UNKNOWN';
-        const percentage = (used / total) * 100;
-        if (percentage < 60) return 'LOW';
-        if (percentage < 85) return 'MEDIUM';
-        return 'HIGH';
+    updateStorageUI() {
+        const bar = document.getElementById('storageBar');
+        const text = document.getElementById('storageText');
+        
+        if (bar && text) {
+            const percentage = state.storageInfo.percentage;
+            bar.style.width = `${percentage}%`;
+            
+            if (percentage > 90) {
+                bar.style.background = 'var(--color-danger)';
+            } else if (percentage > 75) {
+                bar.style.background = 'var(--color-warning)';
+            }
+            
+            text.textContent = `${utils.formatFileSize(state.storageInfo.used)} / ${utils.formatFileSize(state.storageInfo.total)}`;
+        }
     },
     
-    async loadFolderContents(folderId) {
+    async loadFolderContents(folderId, forceRefresh = false) {
         try {
             state.currentFolder = folderId;
             
-            const url = `https://www.googleapis.com/drive/v3/files?` +
-                `q='${folderId}' in parents and trashed=false&` +
-                `fields=files(id,name,mimeType,size,modifiedTime,thumbnailLink,iconLink,webViewLink)&` +
-                `orderBy=name&` +
-                `pageSize=50`;
+            // Try cache first
+            if (!forceRefresh && state.settings.offlineMode) {
+                const cached = await this.cacheDB.getFiles(folderId);
+                if (cached.length > 0) {
+                    state.fileList = cached;
+                    fileBrowser.render();
+                    utils.showToast('ক্যাশেড ফাইল লোড করা হয়েছে', 'info');
+                    return;
+                }
+            }
+            
+            // Load from Drive
+            if (!state.accessToken) {
+                throw new Error('No access token');
+            }
+            
+            const url = new URL('https://www.googleapis.com/drive/v3/files');
+            url.searchParams.append('q', `'${folderId}' in parents and trashed=false`);
+            url.searchParams.append('fields', 'files(id,name,mimeType,size,modifiedTime,createdTime,thumbnailLink,webViewLink,iconLink)');
+            url.searchParams.append('orderBy', 'folder,name');
+            url.searchParams.append('pageSize', '100');
             
             const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${state.accessToken}` }
+                headers: { Authorization: `Bearer ${state.accessToken}` }
             });
             
-            if (!response.ok) throw { status: response.status };
+            if (!response.ok) throw new Error('Folder load failed');
             
             const data = await response.json();
             state.fileList = data.files || [];
             
-            updateFileBrowser(state.fileList);
-            updateFolderPath();
+            // Cache the results
+            await this.cacheDB.saveFiles(folderId, state.fileList);
             
-            // Load folder tree if in root
-            if (folderId === CONFIG.drive.rootFolderId) {
-                await this.loadFolderTree();
-            }
+            // Update UI
+            fileBrowser.render();
+            this.updateFolderPath();
+            
+            // Load thumbnails in background
+            this.prefetchThumbnails(state.fileList);
             
         } catch (error) {
-            console.error('Folder load failed:', error);
-            utils.showError(error, 'Load Files');
+            utils.handleError(error, 'Load Folder');
             state.fileList = [];
-            updateFileBrowser([]);
+            fileBrowser.render();
         }
     },
     
-    async loadFolderTree() {
-        try {
-            const response = await fetch(
-                `https://www.googleapis.com/drive/v3/files?` +
-                `q=mimeType='application/vnd.google-apps.folder' and '${CONFIG.drive.rootFolderId}' in parents and trashed=false&` +
-                `fields=files(id,name)&` +
-                `orderBy=name&` +
-                `pageSize=100`,
-                {
-                    headers: { 'Authorization': `Bearer ${state.accessToken}` }
+    async prefetchThumbnails(files) {
+        for (const file of files) {
+            if (file.thumbnailLink && !file.mimeType.startsWith('application/vnd.google-apps')) {
+                try {
+                    const response = await fetch(file.thumbnailLink);
+                    const blob = await response.blob();
+                    await this.cacheDB.saveThumbnail(file.id, blob);
+                } catch (error) {
+                    // Silent fail for thumbnails
                 }
-            );
-            
-            if (!response.ok) throw new Error('Folder tree failed');
-            
-            const data = await response.json();
-            state.folderTree = data.files || [];
-            
-            updateFolderTreeUI();
-            
-        } catch (error) {
-            console.error('Folder tree load failed:', error);
-            state.folderTree = [];
+            }
         }
     },
     
-    async createFolder(name) {
-        if (!name || !name.trim()) {
-            utils.showToast('error', 'Invalid Name', 'Please enter a folder name');
-            return;
+    async getThumbnail(file) {
+        // Try cache first
+        const cached = await this.cacheDB.getThumbnail(file.id);
+        if (cached?.thumbnail) {
+            return URL.createObjectURL(cached.thumbnail);
         }
         
+        // Use Google thumbnail
+        if (file.thumbnailLink) {
+            return file.thumbnailLink + '&w=200&h=200';
+        }
+        
+        // Use media proxy
+        return `${CONFIG.mediaProxies.readOnly}?id=${file.id}&size=200`;
+    },
+    
+    updateFolderPath() {
+        const pathEl = document.getElementById('folderPath');
+        if (pathEl) {
+            if (state.currentFolder === CONFIG.drive.rootFolderId) {
+                pathEl.textContent = '/VAULT';
+            } else {
+                pathEl.textContent = '/.../Current Folder';
+            }
+        }
+    },
+    
+    setupNetworkListeners() {
+        window.addEventListener('online', () => {
+            state.isOnline = true;
+            utils.showToast('অনলাইন ✅', 'success');
+            
+            if (state.authStatus === 'google_connected') {
+                this.loadFolderContents(state.currentFolder, true);
+            }
+        });
+        
+        window.addEventListener('offline', () => {
+            state.isOnline = false;
+            utils.showToast('অফলাইন মোড', 'warning');
+        });
+    },
+    
+    // Large File Chunk Upload System
+    async uploadFile(file, folderId = state.currentFolder, onProgress) {
+        return new Promise(async (resolve, reject) => {
+            try {
+                // Validate file size
+                if (file.size > CONFIG.drive.maxFileSize) {
+                    throw new Error(`ফাইল বেশি বড়। সর্বোচ্চ ${utils.formatFileSize(CONFIG.drive.maxFileSize)}`);
+                }
+                
+                // Check storage space
+                if (file.size > state.storageInfo.free) {
+                    throw new Error('স্টোরেজ ফুল। জায়গা খালি করুন।');
+                }
+                
+                // For small files, use simple upload
+                if (file.size <= CONFIG.drive.chunkSize) {
+                    const uploadedFile = await this.simpleUpload(file, folderId, onProgress);
+                    resolve(uploadedFile);
+                    return;
+                }
+                
+                // Large file - use chunked upload
+                const uploadedFile = await this.chunkedUpload(file, folderId, onProgress);
+                resolve(uploadedFile);
+                
+            } catch (error) {
+                reject(error);
+            }
+        });
+    },
+    
+    async simpleUpload(file, folderId, onProgress) {
+        const metadata = {
+            name: file.name,
+            parents: [folderId]
+        };
+        
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', file);
+        
+        const xhr = new XMLHttpRequest();
+        
+        return new Promise((resolve, reject) => {
+            xhr.upload.addEventListener('progress', (e) => {
+                if (e.lengthComputable && onProgress) {
+                    onProgress(Math.round((e.loaded / e.total) * 100));
+                }
+            });
+            
+            xhr.onload = () => {
+                if (xhr.status >= 200 && xhr.status < 300) {
+                    try {
+                        const result = JSON.parse(xhr.responseText);
+                        resolve(result);
+                    } catch (e) {
+                        reject(new Error('Parse error'));
+                    }
+                } else {
+                    reject(new Error(`Upload failed: ${xhr.status}`));
+                }
+            };
+            
+            xhr.onerror = () => reject(new Error('Network error'));
+            
+            xhr.open('POST', `${CONFIG.drive.uploadEndpoint}?uploadType=multipart`);
+            xhr.setRequestHeader('Authorization', `Bearer ${state.accessToken}`);
+            xhr.send(form);
+        });
+    },
+    
+    async chunkedUpload(file, folderId, onProgress) {
+        console.log(`Starting chunked upload: ${file.name} (${utils.formatFileSize(file.size)})`);
+        
+        const metadata = {
+            name: file.name,
+            parents: [folderId]
+        };
+        
+        // Step 1: Initiate resumable session
+        const initResponse = await fetch(`${CONFIG.drive.uploadEndpoint}?uploadType=resumable`, {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${state.accessToken}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(metadata)
+        });
+        
+        if (!initResponse.ok) {
+            throw new Error('Session initiation failed');
+        }
+        
+        const sessionUri = initResponse.headers.get('Location');
+        if (!sessionUri) {
+            throw new Error('No session URI received');
+        }
+        
+        // Step 2: Upload chunks
+        const chunkSize = CONFIG.drive.chunkSize;
+        const totalChunks = Math.ceil(file.size / chunkSize);
+        let uploadedBytes = 0;
+        
+        for (let chunkIndex = 0; chunkIndex < totalChunks; chunkIndex++) {
+            const start = chunkIndex * chunkSize;
+            const end = Math.min(start + chunkSize, file.size);
+            const chunk = file.slice(start, end);
+            
+            const response = await fetch(sessionUri, {
+                method: 'PUT',
+                headers: {
+                    'Content-Range': `bytes ${start}-${end-1}/${file.size}`,
+                    'Content-Type': 'application/octet-stream'
+                },
+                body: chunk
+            });
+            
+            if (response.status === 308) {
+                // Continue uploading
+                const range = response.headers.get('Range');
+                if (range) {
+                    uploadedBytes = parseInt(range.split('-')[1]) + 1;
+                }
+            } else if (response.ok) {
+                // Upload complete
+                const result = await response.json();
+                
+                // Update storage info
+                await this.loadStorageInfo();
+                
+                // Refresh file list
+                await this.loadFolderContents(folderId);
+                
+                return result;
+            } else {
+                throw new Error(`Chunk upload failed: ${response.status}`);
+            }
+            
+            // Update progress
+            uploadedBytes = end;
+            if (onProgress) {
+                onProgress(Math.round((uploadedBytes / file.size) * 100));
+            }
+        }
+        
+        throw new Error('Upload incomplete');
+    },
+    
+    async createFolder(name, parentId = state.currentFolder) {
         try {
             const metadata = {
                 name: name.trim(),
                 mimeType: 'application/vnd.google-apps.folder',
-                parents: [state.currentFolder]
+                parents: [parentId]
             };
             
             const response = await fetch('https://www.googleapis.com/drive/v3/files', {
@@ -798,140 +1151,59 @@ const driveManager = {
                 body: JSON.stringify(metadata)
             });
             
-            if (!response.ok) throw { status: response.status };
+            if (!response.ok) throw new Error('Create folder failed');
+            
+            const folder = await response.json();
             
             // Refresh view
             await this.loadFolderContents(state.currentFolder);
             
-            utils.showToast('success', 'Folder Created', `"${name}" created`);
+            utils.showToast(`ফোল্ডার তৈরি হয়েছে: ${name}`, 'success');
+            return folder;
             
         } catch (error) {
-            console.error('Create folder failed:', error);
-            utils.showError(error, 'Create Folder');
-        }
-    },
-    
-    async uploadFile(file, onProgress = null) {
-        if (!file || !file.name) {
-            throw new Error('Invalid file');
-        }
-        
-        try {
-            const metadata = {
-                name: file.name,
-                parents: [state.currentFolder]
-            };
-            
-            // Use XMLHttpRequest for progress tracking
-            return new Promise((resolve, reject) => {
-                const xhr = new XMLHttpRequest();
-                
-                if (onProgress) {
-                    xhr.upload.addEventListener('progress', (e) => {
-                        if (e.lengthComputable) {
-                            onProgress(Math.round((e.loaded / e.total) * 100));
-                        }
-                    });
-                }
-                
-                const form = new FormData();
-                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-                form.append('file', file);
-                
-                xhr.open('POST', CONFIG.drive.uploadEndpoint + '?uploadType=multipart');
-                xhr.setRequestHeader('Authorization', `Bearer ${state.accessToken}`);
-                
-                xhr.onload = async () => {
-                    if (xhr.status >= 200 && xhr.status < 300) {
-                        try {
-                            const uploadedFile = JSON.parse(xhr.responseText);
-                            
-                            // Refresh file list
-                            await this.loadFolderContents(state.currentFolder);
-                            
-                            // Refresh storage info
-                            await this.loadStorageInfo();
-                            
-                            utils.showToast('success', 'Upload Complete', `"${file.name}" uploaded`);
-                            
-                            resolve(uploadedFile);
-                        } catch (parseError) {
-                            reject(new Error('Failed to parse response'));
-                        }
-                    } else {
-                        reject(new Error(`Upload failed: ${xhr.status}`));
-                    }
-                };
-                
-                xhr.onerror = () => reject(new Error('Network error'));
-                xhr.send(form);
-            });
-            
-        } catch (error) {
-            console.error('Upload failed:', error);
-            utils.showError(error, 'Upload');
+            utils.handleError(error, 'Create Folder');
             throw error;
         }
     },
     
     async deleteFile(fileId) {
-        if (!fileId) return;
-        
         try {
             const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
                 method: 'DELETE',
-                headers: { 'Authorization': `Bearer ${state.accessToken}` }
+                headers: { Authorization: `Bearer ${state.accessToken}` }
             });
             
-            if (!response.ok && response.status !== 204) throw { status: response.status };
+            if (!response.ok && response.status !== 204) {
+                throw new Error('Delete failed');
+            }
             
-            // Refresh file list
+            // Remove from cache
+            const transaction = this.cacheDB.db.transaction(['files'], 'readwrite');
+            const store = transaction.objectStore('files');
+            store.delete(fileId);
+            
+            // Refresh
             await this.loadFolderContents(state.currentFolder);
-            
-            // Refresh storage info
             await this.loadStorageInfo();
             
-            utils.showToast('success', 'File Deleted', 'File moved to trash');
+            utils.showToast('ফাইল ডিলিট করা হয়েছে', 'success');
             
         } catch (error) {
-            console.error('Delete failed:', error);
-            utils.showError(error, 'Delete');
+            utils.handleError(error, 'Delete File');
+            throw error;
         }
     },
     
-    async renameFile(fileId, newName) {
-        if (!fileId || !newName) return;
-        
-        try {
-            const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-                method: 'PATCH',
-                headers: {
-                    'Authorization': `Bearer ${state.accessToken}`,
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify({ name: newName })
-            });
-            
-            if (!response.ok) throw { status: response.status };
-            
-            // Refresh file list
-            await this.loadFolderContents(state.currentFolder);
-            
-            utils.showToast('success', 'File Renamed', `Renamed to "${newName}"`);
-            
-        } catch (error) {
-            console.error('Rename failed:', error);
-            utils.showError(error, 'Rename');
-        }
-    },
-    
-    getFileDownloadUrl(fileId) {
+    getDownloadUrl(fileId) {
         return `https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`;
     },
     
-    getFilePreviewUrl(fileId, mimeType) {
-        const proxyUrl = CONFIG.mediaProxies.readOnly;
-        return `${proxyUrl}?id=${encodeURIComponent(fileId)}&mime=${encodeURIComponent(mimeType || '')}`;
+    getPreviewUrl(file) {
+        if (file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/')) {
+            return `${CONFIG.mediaProxies.readOnly}?id=${file.id}&mime=${encodeURIComponent(file.mimeType)}`;
+        }
+        return file.webViewLink || this.getDownloadUrl(file.id);
     }
 };
 
@@ -939,114 +1211,115 @@ const driveManager = {
 const uploadManager = {
     queue: [],
     activeUploads: 0,
-    maxConcurrent: 2,
     
     init() {
-        console.log('Initializing Upload Manager');
+        console.log('📤 Upload Manager Initializing');
         
+        // Setup file input
         const fileInput = document.getElementById('fileInput');
-        
-        // Upload button handlers
-        document.getElementById('btnUpload').addEventListener('click', () => fileInput.click());
-        document.getElementById('btnFirstUpload').addEventListener('click', () => fileInput.click());
-        
-        // File input change
-        fileInput.addEventListener('change', (e) => {
+        fileInput.onchange = (e) => {
             if (e.target.files.length > 0) {
                 this.addToQueue(Array.from(e.target.files));
-                fileInput.value = '';
             }
-        });
+        };
+        
+        // Upload buttons
+        document.getElementById('btnUpload').onclick = () => fileInput.click();
+        document.getElementById('btnFirstUpload').onclick = () => fileInput.click();
         
         // Upload dock controls
-        document.getElementById('uploadClose').addEventListener('click', () => {
-            document.getElementById('uploadDock').dataset.visible = 'false';
-        });
+        document.getElementById('uploadClose').onclick = () => {
+            document.getElementById('uploadDock').classList.remove('visible');
+        };
         
-        document.getElementById('cancelAllUploads').addEventListener('click', () => {
-            if (this.queue.length > 0 && confirm('Cancel all uploads?')) {
+        document.getElementById('cancelAllUploads').onclick = () => {
+            if (this.queue.length > 0 && confirm('সব আপলোড বাতিল করবেন?')) {
                 this.queue = [];
-                this.updateUploadUI();
-                utils.showToast('info', 'Uploads Cancelled', 'All uploads cancelled');
+                this.updateUI();
             }
-        });
+        };
         
-        // Process queue
-        setInterval(() => this.processQueue(), 1000);
+        // Start queue processor
+        this.processQueue();
     },
     
     addToQueue(files) {
         files.forEach(file => {
             this.queue.push({
-                file,
-                id: Date.now() + '_' + Math.random().toString(36).substr(2, 9),
-                progress: 0,
+                id: utils.generateId(),
+                file: file,
                 status: 'pending',
-                error: null
+                progress: 0,
+                error: null,
+                addedAt: Date.now()
             });
         });
         
-        this.updateUploadUI();
-        document.getElementById('uploadDock').dataset.visible = 'true';
+        this.updateUI();
+        document.getElementById('uploadDock').classList.add('visible');
         
-        utils.showToast('info', 'Files Queued', `${files.length} file(s) added to queue`);
+        utils.showToast(`${files.length} ফাইল যোগ করা হয়েছে`, 'info');
     },
     
     async processQueue() {
-        if (this.activeUploads >= this.maxConcurrent || this.queue.length === 0) return;
-        
-        const pendingIndex = this.queue.findIndex(item => item.status === 'pending');
-        if (pendingIndex === -1) return;
-        
-        const item = this.queue[pendingIndex];
-        item.status = 'uploading';
-        this.activeUploads++;
-        
-        this.updateUploadUI();
-        
-        try {
-            await driveManager.uploadFile(item.file, (progress) => {
-                item.progress = progress;
-                this.updateUploadUI();
-            });
+        // Check every second for pending uploads
+        setInterval(async () => {
+            if (this.activeUploads >= CONFIG.app.maxConcurrentUploads) return;
             
-            item.status = 'completed';
-            item.progress = 100;
+            const pendingItem = this.queue.find(item => item.status === 'pending');
+            if (!pendingItem) return;
             
-        } catch (error) {
-            item.status = 'error';
-            item.error = error.message || 'Upload failed';
-        }
-        
-        this.activeUploads--;
-        this.updateUploadUI();
-        
-        // Remove completed items after delay
-        setTimeout(() => {
-            this.queue = this.queue.filter(i => i.status !== 'completed');
-            this.updateUploadUI();
-        }, 5000);
+            this.activeUploads++;
+            pendingItem.status = 'uploading';
+            this.updateUI();
+            
+            try {
+                await driveManager.uploadFile(pendingItem.file, state.currentFolder, (progress) => {
+                    pendingItem.progress = progress;
+                    this.updateUI();
+                });
+                
+                pendingItem.status = 'completed';
+                pendingItem.progress = 100;
+                
+            } catch (error) {
+                pendingItem.status = 'error';
+                pendingItem.error = error.message;
+                utils.handleError(error, 'Upload');
+            }
+            
+            this.activeUploads--;
+            this.updateUI();
+            
+            // Remove completed items after delay
+            setTimeout(() => {
+                this.queue = this.queue.filter(item => item.status !== 'completed');
+                this.updateUI();
+            }, 5000);
+            
+        }, 1000);
     },
     
-    updateUploadUI() {
-        const uploadList = document.getElementById('uploadList');
-        const uploadStats = document.getElementById('uploadStats');
-        const uploadDock = document.getElementById('uploadDock');
+    updateUI() {
+        const listEl = document.getElementById('uploadList');
+        const statsEl = document.getElementById('uploadStats');
+        const dockEl = document.getElementById('uploadDock');
         
-        if (!uploadList || !uploadStats || !uploadDock) return;
+        if (!listEl || !statsEl || !dockEl) return;
         
+        // Update stats
         const pending = this.queue.filter(i => i.status === 'pending').length;
         const uploading = this.queue.filter(i => i.status === 'uploading').length;
         const completed = this.queue.filter(i => i.status === 'completed').length;
         const errors = this.queue.filter(i => i.status === 'error').length;
         
-        uploadStats.textContent = `${pending} pending • ${uploading} uploading • ${completed} done • ${errors} failed`;
+        statsEl.textContent = `${pending} অপেক্ষা • ${uploading} আপলোড • ${completed} সম্পূর্ণ • ${errors} ত্রুটি`;
         
-        uploadList.innerHTML = '';
+        // Update list
+        listEl.innerHTML = '';
         
         if (this.queue.length === 0) {
-            uploadList.innerHTML = '<div style="text-align: center; padding: 1rem; color: var(--color-text-secondary);">No uploads</div>';
-            uploadDock.dataset.visible = 'false';
+            dockEl.classList.remove('visible');
             return;
         }
         
@@ -1054,59 +1327,316 @@ const uploadManager = {
             const div = document.createElement('div');
             div.className = 'upload-item';
             div.innerHTML = `
-                <div class="upload-item-header">
-                    <div class="upload-file-name" title="${item.file.name}">${item.file.name}</div>
-                    <div class="upload-status ${item.status}">${item.status.toUpperCase()}</div>
+                <div class="upload-header">
+                    <div class="upload-name" title="${item.file.name}">${item.file.name}</div>
+                    <div class="upload-status ${item.status}">${item.status}</div>
                 </div>
                 <div class="upload-progress">
-                    <div class="upload-progress-bar" style="width: ${item.progress}%"></div>
+                    <div class="upload-bar" style="width: ${item.progress}%"></div>
                 </div>
-                <div class="upload-file-size">${utils.formatFileSize(item.file.size)}</div>
-                ${item.error ? `<div class="upload-error">${item.error}</div>` : ''}
+                <div class="upload-meta">
+                    <span>${utils.formatFileSize(item.file.size)}</span>
+                    ${item.error ? `<span class="upload-error">${item.error}</span>` : ''}
+                </div>
             `;
-            uploadList.appendChild(div);
+            listEl.appendChild(div);
         });
         
-        uploadDock.dataset.visible = 'true';
+        dockEl.classList.add('visible');
+    }
+};
+
+// ==================== FILE BROWSER ====================
+const fileBrowser = {
+    async render() {
+        const grid = document.getElementById('fileGrid');
+        const empty = document.getElementById('emptyState');
+        
+        if (!grid || !empty) return;
+        
+        // Clear selection
+        state.selectedFiles.clear();
+        
+        // Filter files based on search
+        let files = state.fileList;
+        if (state.searchQuery) {
+            const query = state.searchQuery.toLowerCase();
+            files = files.filter(file => 
+                file.name.toLowerCase().includes(query)
+            );
+        }
+        
+        // Sort files
+        files.sort((a, b) => {
+            let aVal, bVal;
+            
+            switch (state.sortBy) {
+                case 'name':
+                    aVal = a.name.toLowerCase();
+                    bVal = b.name.toLowerCase();
+                    return state.sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    
+                case 'size':
+                    aVal = a.size || 0;
+                    bVal = b.size || 0;
+                    return state.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                    
+                case 'date':
+                    aVal = new Date(a.modifiedTime || a.createdTime);
+                    bVal = new Date(b.modifiedTime || b.createdTime);
+                    return state.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                    
+                default:
+                    return 0;
+            }
+        });
+        
+        // Update count
+        document.getElementById('fileCount').textContent = `${files.length} আইটেম`;
+        
+        // Show empty state or files
+        if (files.length === 0) {
+            grid.innerHTML = '';
+            empty.style.display = 'block';
+            return;
+        }
+        
+        empty.style.display = 'none';
+        grid.innerHTML = '';
+        
+        // Render each file
+        for (const file of files) {
+            const item = await this.createFileItem(file);
+            grid.appendChild(item);
+        }
+    },
+    
+    async createFileItem(file) {
+        const div = document.createElement('div');
+        div.className = 'file-item';
+        div.dataset.id = file.id;
+        
+        const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+        const icon = utils.getFileIcon(file);
+        
+        // Get thumbnail URL
+        let thumbnailUrl = '';
+        if (!isFolder && file.mimeType.startsWith('image/')) {
+            try {
+                thumbnailUrl = await driveManager.getThumbnail(file);
+            } catch (error) {
+                // Use icon if thumbnail fails
+            }
+        }
+        
+        div.innerHTML = `
+            <div class="file-icon">${icon}</div>
+            ${thumbnailUrl ? `<img class="file-thumb" src="${thumbnailUrl}" alt="${file.name}" loading="lazy">` : ''}
+            <div class="file-info">
+                <div class="file-name" title="${file.name}">${file.name}</div>
+                <div class="file-meta">
+                    ${isFolder ? 'ফোল্ডার' : utils.formatFileSize(file.size)} • 
+                    ${utils.formatDate(file.modifiedTime)}
+                </div>
+            </div>
+            <div class="file-checkbox">
+                <input type="checkbox" class="file-select">
+            </div>
+        `;
+        
+        // Event listeners
+        div.onclick = (e) => {
+            if (!e.target.classList.contains('file-select')) {
+                this.handleFileClick(e, file);
+            }
+        };
+        
+        div.ondblclick = () => {
+            if (isFolder) {
+                driveManager.loadFolderContents(file.id);
+            } else {
+                fileViewer.open(file);
+            }
+        };
+        
+        div.oncontextmenu = (e) => {
+            e.preventDefault();
+            this.showContextMenu(e, file);
+        };
+        
+        const checkbox = div.querySelector('.file-select');
+        checkbox.onclick = (e) => {
+            e.stopPropagation();
+            if (checkbox.checked) {
+                state.selectedFiles.add(file.id);
+            } else {
+                state.selectedFiles.delete(file.id);
+            }
+            this.updateSelectionUI();
+        };
+        
+        return div;
+    },
+    
+    handleFileClick(e, file) {
+        const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+        const checkbox = e.currentTarget.querySelector('.file-select');
+        
+        if (e.ctrlKey || e.metaKey) {
+            // Toggle selection
+            checkbox.checked = !checkbox.checked;
+            if (checkbox.checked) {
+                state.selectedFiles.add(file.id);
+            } else {
+                state.selectedFiles.delete(file.id);
+            }
+        } else if (e.shiftKey && state.selectedFiles.size > 0) {
+            // Range selection
+            // Implementation needed
+        } else {
+            // Single selection
+            if (isFolder) {
+                driveManager.loadFolderContents(file.id);
+            } else {
+                document.querySelectorAll('.file-select').forEach(cb => cb.checked = false);
+                state.selectedFiles.clear();
+                checkbox.checked = true;
+                state.selectedFiles.add(file.id);
+                fileViewer.open(file);
+            }
+        }
+        
+        this.updateSelectionUI();
+    },
+    
+    updateSelectionUI() {
+        document.querySelectorAll('.file-item').forEach(item => {
+            const fileId = item.dataset.id;
+            const checkbox = item.querySelector('.file-select');
+            checkbox.checked = state.selectedFiles.has(fileId);
+            item.classList.toggle('selected', state.selectedFiles.has(fileId));
+        });
+        
+        // Update toolbar buttons
+        const deselectBtn = document.getElementById('btnDeselectAll');
+        if (deselectBtn) {
+            deselectBtn.disabled = state.selectedFiles.size === 0;
+        }
+    },
+    
+    showContextMenu(e, file) {
+        // Create context menu
+        const menu = document.getElementById('contextMenu');
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+        menu.classList.add('visible');
+        
+        // Setup menu items
+        const items = {
+            open: () => {
+                if (file.mimeType === 'application/vnd.google-apps.folder') {
+                    driveManager.loadFolderContents(file.id);
+                } else {
+                    fileViewer.open(file);
+                }
+            },
+            download: () => {
+                window.open(driveManager.getDownloadUrl(file.id), '_blank');
+            },
+            rename: async () => {
+                const newName = prompt('নতুন নাম:', file.name);
+                if (newName && newName !== file.name) {
+                    try {
+                        await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${state.accessToken}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({ name: newName })
+                        });
+                        
+                        driveManager.loadFolderContents(state.currentFolder);
+                        utils.showToast('নাম পরিবর্তন করা হয়েছে', 'success');
+                    } catch (error) {
+                        utils.handleError(error, 'Rename');
+                    }
+                }
+            },
+            share: () => {
+                if (file.webViewLink) {
+                    navigator.clipboard.writeText(file.webViewLink)
+                        .then(() => utils.showToast('লিংক কপি করা হয়েছে', 'success'))
+                        .catch(() => window.open(file.webViewLink, '_blank'));
+                }
+            },
+            delete: async () => {
+                if (confirm(`"${file.name}" ডিলিট করবেন?`)) {
+                    await driveManager.deleteFile(file.id);
+                }
+            }
+        };
+        
+        // Attach click handlers
+        menu.querySelectorAll('.context-item').forEach(item => {
+            const action = item.dataset.action;
+            item.onclick = () => {
+                if (items[action]) items[action]();
+                menu.classList.remove('visible');
+            };
+        });
+        
+        // Close menu on outside click
+        const closeMenu = () => {
+            menu.classList.remove('visible');
+            document.removeEventListener('click', closeMenu);
+        };
+        
+        setTimeout(() => document.addEventListener('click', closeMenu), 100);
+    },
+    
+    clear() {
+        state.fileList = [];
+        state.selectedFiles.clear();
+        this.render();
     }
 };
 
 // ==================== FILE VIEWER ====================
 const fileViewer = {
-    async viewFile(file) {
-        const modal = document.getElementById('mediaModal');
-        const modalBody = document.getElementById('modalBody');
+    currentFile: null,
+    
+    async open(file) {
+        this.currentFile = file;
         
-        if (!modal || !modalBody) return;
+        const modal = document.getElementById('mediaModal');
+        const body = document.getElementById('modalBody');
+        
+        if (!modal || !body) return;
         
         // Set file info
         document.getElementById('fileName').textContent = file.name;
         document.getElementById('fileSize').textContent = utils.formatFileSize(file.size);
         document.getElementById('fileModified').textContent = utils.formatDate(file.modifiedTime);
         
-        // Clear and show modal
-        modalBody.innerHTML = '<div style="padding: 2rem; text-align: center;">Loading...</div>';
-        modal.dataset.visible = 'true';
-        
-        // Determine file type
-        const ext = file.name.split('.').pop().toLowerCase();
-        const mimeType = file.mimeType;
+        // Show loading
+        body.innerHTML = '<div class="loading">লোড হচ্ছে...</div>';
+        modal.classList.add('visible');
         
         try {
-            if (mimeType.startsWith('image/')) {
-                await this.viewImage(file);
-            } else if (mimeType.startsWith('video/')) {
-                await this.viewVideo(file);
-            } else if (mimeType.startsWith('audio/')) {
-                await this.viewAudio(file);
-            } else if (mimeType === 'application/pdf') {
-                await this.viewPDF(file);
-            } else if (ext === 'md' || mimeType === 'text/markdown') {
-                await this.viewMarkdown(file);
-            } else if (this.isCodeFile(ext)) {
-                await this.viewCode(file);
-            } else if (mimeType === 'text/plain' || ext === 'txt') {
-                await this.viewText(file);
+            const mime = file.mimeType;
+            const ext = file.name.split('.').pop().toLowerCase();
+            
+            if (mime.startsWith('image/')) {
+                await this.showImage(file);
+            } else if (mime.startsWith('video/')) {
+                await this.showVideo(file);
+            } else if (mime.startsWith('audio/')) {
+                await this.showAudio(file);
+            } else if (mime === 'application/pdf') {
+                await this.showPDF(file);
+            } else if (ext === 'txt' || mime === 'text/plain') {
+                await this.showText(file);
             } else {
                 this.showUnsupported(file);
             }
@@ -1115,35 +1645,31 @@ const fileViewer = {
         }
     },
     
-    isCodeFile(ext) {
-        const codeExts = ['js', 'css', 'html', 'json', 'py', 'php', 'sh'];
-        return codeExts.includes(ext);
-    },
-    
-    async viewImage(file) {
-        const modalBody = document.getElementById('modalBody');
+    async showImage(file) {
+        const body = document.getElementById('modalBody');
         const img = document.createElement('img');
         
-        img.src = driveManager.getFilePreviewUrl(file.id, file.mimeType);
+        img.src = driveManager.getPreviewUrl(file);
         img.alt = file.name;
-        img.style.maxWidth = '100%';
+        img.style.maxWidth = '90%';
         img.style.maxHeight = '70vh';
+        img.style.borderRadius = '8px';
         
-        modalBody.innerHTML = '';
-        modalBody.appendChild(img);
+        body.innerHTML = '';
+        body.appendChild(img);
     },
     
-    async viewVideo(file) {
-        const modalBody = document.getElementById('modalBody');
-        
+    async showVideo(file) {
+        const body = document.getElementById('modalBody');
         const video = document.createElement('video');
-        video.src = driveManager.getFilePreviewUrl(file.id, file.mimeType);
-        video.controls = true;
-        video.style.width = '100%';
-        video.style.maxWidth = '800px';
         
-        modalBody.innerHTML = '';
-        modalBody.appendChild(video);
+        video.src = driveManager.getPreviewUrl(file);
+        video.controls = true;
+        video.style.maxWidth = '90%';
+        video.style.maxHeight = '70vh';
+        
+        body.innerHTML = '';
+        body.appendChild(video);
         
         // Initialize Plyr if available
         if (typeof Plyr !== 'undefined') {
@@ -1151,472 +1677,185 @@ const fileViewer = {
         }
     },
     
-    async viewAudio(file) {
-        const modalBody = document.getElementById('modalBody');
-        
+    async showAudio(file) {
+        const body = document.getElementById('modalBody');
         const audio = document.createElement('audio');
-        audio.src = driveManager.getFilePreviewUrl(file.id, file.mimeType);
-        audio.controls = true;
-        audio.style.width = '100%';
-        audio.style.maxWidth = '500px';
         
-        modalBody.innerHTML = '';
-        modalBody.appendChild(audio);
+        audio.src = driveManager.getPreviewUrl(file);
+        audio.controls = true;
+        audio.style.width = '90%';
+        
+        body.innerHTML = '';
+        body.appendChild(audio);
     },
     
-    async viewPDF(file) {
-        const modalBody = document.getElementById('modalBody');
+    async showPDF(file) {
+        const body = document.getElementById('modalBody');
         
-        modalBody.innerHTML = `
-            <div style="text-align: center; padding: 2rem;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+        body.innerHTML = `
+            <div class="pdf-viewer">
+                <div class="pdf-icon">📕</div>
                 <h3>${file.name}</h3>
-                <p>PDF Document</p>
-                <p style="margin: 1.5rem 0; color: var(--color-text-secondary);">
-                    Opening in Google Drive...
-                </p>
-                <button class="btn-primary" onclick="window.open('${file.webViewLink || driveManager.getFileDownloadUrl(file.id)}', '_blank')">
-                    Open in Drive
+                <p>PDF ডকুমেন্ট</p>
+                <button class="btn-primary" onclick="window.open('${file.webViewLink || driveManager.getDownloadUrl(file.id)}', '_blank')">
+                    গুগল ড্রাইভে খুলুন
                 </button>
             </div>
         `;
     },
     
-    async viewMarkdown(file) {
-        const modalBody = document.getElementById('modalBody');
-        
+    async showText(file) {
         try {
-            const response = await fetch(driveManager.getFilePreviewUrl(file.id, file.mimeType));
-            const markdown = await response.text();
-            
-            let html = markdown;
-            if (typeof marked !== 'undefined') {
-                html = marked.parse(markdown);
-            }
-            
-            const container = document.createElement('div');
-            container.className = 'markdown-viewer';
-            container.innerHTML = html;
-            
-            modalBody.innerHTML = '';
-            modalBody.appendChild(container);
-            
-        } catch (error) {
-            throw error;
-        }
-    },
-    
-    async viewCode(file) {
-        const modalBody = document.getElementById('modalBody');
-        
-        try {
-            const response = await fetch(driveManager.getFilePreviewUrl(file.id, file.mimeType));
-            const code = await response.text();
-            
-            const pre = document.createElement('pre');
-            const codeEl = document.createElement('code');
-            
-            codeEl.className = 'language-javascript';
-            codeEl.textContent = code;
-            
-            pre.appendChild(codeEl);
-            modalBody.innerHTML = '';
-            modalBody.appendChild(pre);
-            
-            if (typeof Prism !== 'undefined') {
-                Prism.highlightElement(codeEl);
-            }
-            
-        } catch (error) {
-            throw error;
-        }
-    },
-    
-    async viewText(file) {
-        const modalBody = document.getElementById('modalBody');
-        
-        try {
-            const response = await fetch(driveManager.getFilePreviewUrl(file.id, file.mimeType));
+            const response = await fetch(driveManager.getPreviewUrl(file));
             const text = await response.text();
             
             const pre = document.createElement('pre');
+            pre.textContent = text;
             pre.style.cssText = `
                 white-space: pre-wrap;
-                padding: 1rem;
+                padding: 20px;
                 background: var(--color-bg-tertiary);
                 border-radius: 8px;
-                max-height: 70vh;
+                max-height: 60vh;
                 overflow: auto;
-                font-family: monospace;
+                width: 90%;
+                margin: 0 auto;
             `;
-            pre.textContent = text;
             
-            modalBody.innerHTML = '';
-            modalBody.appendChild(pre);
-            
+            document.getElementById('modalBody').innerHTML = '';
+            document.getElementById('modalBody').appendChild(pre);
         } catch (error) {
             throw error;
         }
     },
     
     showUnsupported(file) {
-        const modalBody = document.getElementById('modalBody');
-        
-        modalBody.innerHTML = `
-            <div style="text-align: center; padding: 2rem;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">📄</div>
+        document.getElementById('modalBody').innerHTML = `
+            <div class="unsupported">
+                <div class="unsupported-icon">📄</div>
                 <h3>${file.name}</h3>
-                <p>Unsupported File Type</p>
-                <button class="btn-primary" onclick="window.open('${file.webViewLink || driveManager.getFileDownloadUrl(file.id)}', '_blank')">
-                    Open in Drive
+                <p>এই ফাইলটি প্রিভিউ করা যাবে না</p>
+                <button class="btn-primary" onclick="window.open('${driveManager.getDownloadUrl(file.id)}', '_blank')">
+                    ডাউনলোড করুন
                 </button>
             </div>
         `;
     },
     
     showError(file, error) {
-        const modalBody = document.getElementById('modalBody');
-        
-        modalBody.innerHTML = `
-            <div style="text-align: center; padding: 2rem;">
-                <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
-                <h3>Preview Failed</h3>
-                <p>Could not load "${file.name}"</p>
-                <p style="color: var(--color-danger); margin: 1rem 0;">${error.message || 'Unknown error'}</p>
-                <button class="btn-primary" onclick="window.open('${file.webViewLink || driveManager.getFileDownloadUrl(file.id)}', '_blank')">
-                    Open in Drive
+        document.getElementById('modalBody').innerHTML = `
+            <div class="error-viewer">
+                <div class="error-icon">❌</div>
+                <h3>প্রিভিউ ব্যর্থ</h3>
+                <p>"${file.name}" লোড করা যায়নি</p>
+                <p class="error-message">${error.message}</p>
+                <button class="btn-primary" onclick="window.open('${driveManager.getDownloadUrl(file.id)}', '_blank')">
+                    ডাউনলোড করুন
                 </button>
             </div>
         `;
     },
     
-    closeViewer() {
+    close() {
         const modal = document.getElementById('mediaModal');
         if (modal) {
-            modal.dataset.visible = 'false';
+            modal.classList.remove('visible');
             setTimeout(() => {
-                const modalBody = document.getElementById('modalBody');
-                if (modalBody) modalBody.innerHTML = '';
+                document.getElementById('modalBody').innerHTML = '';
             }, 300);
         }
     }
 };
 
-// ==================== UI UPDATERS ====================
-function updateAuthUI() {
-    const authBtn = document.getElementById('authBtn');
-    const userName = document.getElementById('userName');
-    const userAvatar = document.getElementById('userAvatar');
-    
-    if (!authBtn || !userName) return;
-    
-    if (state.authStatus === 'google_connected' && state.userProfile) {
-        authBtn.textContent = 'Sign Out';
-        authBtn.style.background = 'var(--color-danger)';
-        userName.textContent = state.userProfile.name || 'Google User';
-        userAvatar.textContent = state.userProfile.picture ? '' : '👤';
-        
-        if (state.userProfile.picture) {
-            userAvatar.style.backgroundImage = `url('${state.userProfile.picture}')`;
-            userAvatar.style.backgroundSize = 'cover';
-        }
-    } else {
-        authBtn.textContent = 'Connect Google';
-        authBtn.style.background = 'var(--color-accent)';
-        userName.textContent = 'Not Signed In';
-        userAvatar.textContent = '👤';
-        userAvatar.style.backgroundImage = '';
-    }
-}
-
-function updateStorageUI() {
-    const storageBar = document.getElementById('storageBar');
-    const storageText = document.getElementById('storageText');
-    
-    if (!storageBar || !storageText) return;
-    
-    if (state.storageInfo.total === 0) {
-        storageBar.style.width = '0%';
-        storageText.textContent = 'Loading...';
-        return;
-    }
-    
-    const percentage = (state.storageInfo.used / state.storageInfo.total) * 100;
-    storageBar.style.width = `${percentage}%`;
-    
-    if (state.storageInfo.usageLevel === 'HIGH') {
-        storageBar.style.background = 'var(--color-danger)';
-    } else if (state.storageInfo.usageLevel === 'MEDIUM') {
-        storageBar.style.background = 'var(--color-warning)';
-    }
-    
-    storageText.textContent = `${utils.formatFileSize(state.storageInfo.used)} / ${utils.formatFileSize(state.storageInfo.total)}`;
-}
-
-function updateFileBrowser(files) {
-    const fileGrid = document.getElementById('fileGrid');
-    const emptyState = document.getElementById('emptyState');
-    const fileCount = document.getElementById('fileCount');
-    
-    if (!fileGrid || !emptyState || !fileCount) return;
-    
-    // Clear selection
-    state.selectedFiles = [];
-    
-    if (!files || files.length === 0) {
-        emptyState.style.display = 'block';
-        fileGrid.innerHTML = '';
-        fileCount.textContent = '0 items';
-        return;
-    }
-    
-    emptyState.style.display = 'none';
-    fileCount.textContent = `${files.length} ${files.length === 1 ? 'item' : 'items'}`;
-    fileGrid.innerHTML = '';
-    
-    files.forEach((file, index) => {
-        const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-        const icon = utils.getFileIcon(file.mimeType, file.name);
-        
-        const item = document.createElement('div');
-        item.className = 'file-item';
-        item.dataset.id = file.id;
-        item.dataset.index = index;
-        
-        let thumbnail = '';
-        if (file.thumbnailLink && !isFolder) {
-            thumbnail = `<img class="file-preview" src="${file.thumbnailLink}" alt="${file.name}" onerror="this.style.display='none'">`;
-        }
-        
-        item.innerHTML = `
-            <div class="file-icon">${icon}</div>
-            ${thumbnail}
-            <div class="file-info">
-                <div class="file-name" title="${file.name}">${file.name}</div>
-                <div class="file-meta">
-                    ${isFolder ? 'Folder' : utils.formatFileSize(file.size)} • 
-                    ${utils.formatDate(file.modifiedTime)}
-                </div>
-            </div>
-        `;
-        
-        item.addEventListener('click', (e) => handleFileClick(e, file, index));
-        item.addEventListener('dblclick', () => {
-            if (isFolder) {
-                driveManager.loadFolderContents(file.id);
-            } else {
-                fileViewer.viewFile(file);
-            }
-        });
-        
-        item.addEventListener('contextmenu', (e) => {
-            e.preventDefault();
-            showContextMenu(e, file);
-        });
-        
-        fileGrid.appendChild(item);
-    });
-}
-
-function handleFileClick(e, file, index) {
-    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-    
-    if (e.ctrlKey || e.metaKey) {
-        // Toggle selection
-        const itemIndex = state.selectedFiles.indexOf(file.id);
-        if (itemIndex > -1) {
-            state.selectedFiles.splice(itemIndex, 1);
-        } else {
-            state.selectedFiles.push(file.id);
-        }
-        updateFileSelectionUI();
-    } else if (e.shiftKey) {
-        // Range selection
-        const lastSelected = state.selectedFiles[state.selectedFiles.length - 1];
-        if (lastSelected) {
-            const lastIndex = state.fileList.findIndex(f => f.id === lastSelected);
-            const start = Math.min(lastIndex, index);
-            const end = Math.max(lastIndex, index);
-            
-            for (let i = start; i <= end; i++) {
-                const fileId = state.fileList[i].id;
-                if (!state.selectedFiles.includes(fileId)) {
-                    state.selectedFiles.push(fileId);
-                }
-            }
-            updateFileSelectionUI();
-        }
-    } else {
-        // Single selection
-        if (isFolder) {
-            driveManager.loadFolderContents(file.id);
-        } else {
-            state.selectedFiles = [file.id];
-            updateFileSelectionUI();
-            fileViewer.viewFile(file);
-        }
-    }
-}
-
-function updateFileSelectionUI() {
-    const items = document.querySelectorAll('.file-item');
-    const btnDeselectAll = document.getElementById('btnDeselectAll');
-    
-    items.forEach(item => {
-        const fileId = item.dataset.id;
-        if (state.selectedFiles.includes(fileId)) {
-            item.classList.add('selected');
-        } else {
-            item.classList.remove('selected');
-        }
-    });
-    
-    if (btnDeselectAll) {
-        btnDeselectAll.disabled = state.selectedFiles.length === 0;
-    }
-}
-
-function updateFolderTreeUI() {
-    const folderTree = document.getElementById('folderTree');
-    if (!folderTree) return;
-    
-    if (state.folderTree.length === 0) {
-        folderTree.innerHTML = '<div class="tree-loading">No folders</div>';
-        return;
-    }
-    
-    folderTree.innerHTML = '';
-    
-    state.folderTree.forEach(folder => {
-        const item = document.createElement('div');
-        item.className = 'tree-item';
-        item.dataset.id = folder.id;
-        
-        item.innerHTML = `
-            <span class="tree-icon">📁</span>
-            <span class="tree-name">${folder.name}</span>
-        `;
-        
-        item.addEventListener('click', () => {
-            driveManager.loadFolderContents(folder.id);
-            if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.remove('active');
-            }
-        });
-        
-        folderTree.appendChild(item);
-    });
-}
-
-function updateFolderPath() {
-    const folderPath = document.getElementById('folderPath');
-    if (!folderPath) return;
-    
-    if (state.currentFolder === CONFIG.drive.rootFolderId) {
-        folderPath.textContent = '/Vault Root';
-    } else {
-        folderPath.textContent = '/.../Current Folder';
-    }
-}
-
-function showContextMenu(e, file) {
-    const contextMenu = document.getElementById('contextMenu');
-    if (!contextMenu) return;
-    
-    contextMenu.style.left = e.clientX + 'px';
-    contextMenu.style.top = e.clientY + 'px';
-    contextMenu.classList.add('visible');
-    
-    const menuItems = {
-        open: () => {
-            if (file.mimeType === 'application/vnd.google-apps.folder') {
-                driveManager.loadFolderContents(file.id);
-            } else {
-                fileViewer.viewFile(file);
-            }
-        },
-        download: () => {
-            window.open(driveManager.getFileDownloadUrl(file.id), '_blank');
-        },
-        rename: async () => {
-            const newName = prompt('New name:', file.name);
-            if (newName) {
-                await driveManager.renameFile(file.id, newName);
-            }
-        },
-        share: () => {
-            if (file.webViewLink) {
-                navigator.clipboard.writeText(file.webViewLink)
-                    .then(() => utils.showToast('success', 'Link Copied', 'Share link copied'))
-                    .catch(() => window.open(file.webViewLink, '_blank'));
-            }
-        },
-        delete: async () => {
-            if (confirm(`Delete "${file.name}"?`)) {
-                await driveManager.deleteFile(file.id);
-            }
-        }
-    };
-    
-    contextMenu.querySelectorAll('.context-item').forEach(item => {
-        const action = item.dataset.action;
-        item.onclick = () => {
-            if (menuItems[action]) menuItems[action]();
-            contextMenu.classList.remove('visible');
-        };
-    });
-    
-    const closeMenu = () => {
-        contextMenu.classList.remove('visible');
-        document.removeEventListener('click', closeMenu);
-    };
-    
-    setTimeout(() => document.addEventListener('click', closeMenu), 100);
-}
-
 // ==================== SETTINGS MANAGER ====================
 const settingsManager = {
     init() {
         this.loadSettings();
-        this.setupEventListeners();
+        this.setupListeners();
     },
     
     loadSettings() {
-        try {
-            const saved = localStorage.getItem('vault_settings');
-            if (saved) {
-                Object.assign(state.settings, JSON.parse(saved));
-                document.body.dataset.theme = state.settings.theme;
-                document.body.dataset.view = state.settings.view;
-                this.updateViewUI();
-            }
-        } catch (error) {
-            console.warn('Settings load failed:', error);
-        }
-    },
-    
-    saveSettings() {
-        localStorage.setItem('vault_settings', JSON.stringify(state.settings));
-    },
-    
-    setupEventListeners() {
-        // View toggle
-        document.getElementById('btnViewToggle').addEventListener('click', () => {
-            this.toggleView();
-        });
-        
-        // Drive mode toggle
-        document.getElementById('navDriveMode').addEventListener('click', () => {
-            this.toggleDriveMode();
-        });
-    },
-    
-    toggleView() {
-        state.settings.view = state.settings.view === 'grid' ? 'list' : 'grid';
+        // Load theme
+        document.body.dataset.theme = state.settings.theme;
         document.body.dataset.view = state.settings.view;
+        
+        // Update UI
         this.updateViewUI();
-        this.saveSettings();
-        updateFileBrowser(state.fileList);
+        this.updateThemeUI();
+    },
+    
+    setupListeners() {
+        // View toggle
+        document.getElementById('btnViewToggle').onclick = () => {
+            state.settings.view = state.settings.view === 'grid' ? 'list' : 'grid';
+            document.body.dataset.view = state.settings.view;
+            localStorage.setItem('view', state.settings.view);
+            this.updateViewUI();
+            fileBrowser.render();
+        };
+        
+        // Theme toggle
+        document.getElementById('themeToggle').onclick = () => {
+            const themes = ['cyber', 'dark', 'light'];
+            const currentIndex = themes.indexOf(state.settings.theme);
+            state.settings.theme = themes[(currentIndex + 1) % themes.length];
+            document.body.dataset.theme = state.settings.theme;
+            localStorage.setItem('theme', state.settings.theme);
+            this.updateThemeUI();
+        };
+        
+        // Search
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            const debouncedSearch = utils.debounce((query) => {
+                state.searchQuery = query;
+                fileBrowser.render();
+            }, 300);
+            
+            searchInput.oninput = (e) => debouncedSearch(e.target.value);
+        }
+        
+        // Sort
+        document.getElementById('sortSelect').onchange = (e) => {
+            const [sortBy, order] = e.target.value.split('_');
+            state.sortBy = sortBy;
+            state.sortOrder = order;
+            fileBrowser.render();
+        };
+        
+        // Create folder
+        document.getElementById('btnCreateFolder').onclick = async () => {
+            const name = prompt('ফোল্ডারের নাম দিন:');
+            if (name && name.trim()) {
+                await driveManager.createFolder(name.trim());
+            }
+        };
+        
+        // Select all
+        document.getElementById('btnSelectAll').onclick = () => {
+            state.selectedFiles = new Set(state.fileList.map(f => f.id));
+            fileBrowser.updateSelectionUI();
+        };
+        
+        // Deselect all
+        document.getElementById('btnDeselectAll').onclick = () => {
+            state.selectedFiles.clear();
+            fileBrowser.updateSelectionUI();
+        };
+        
+        // Navigation
+        document.getElementById('menuToggle').onclick = () => {
+            document.getElementById('sidebar').classList.toggle('active');
+        };
+        
+        document.getElementById('navHome').onclick = () => {
+            driveManager.loadFolderContents(CONFIG.drive.rootFolderId);
+        };
+        
+        document.getElementById('navRefresh').onclick = () => {
+            driveManager.loadFolderContents(state.currentFolder, true);
+            utils.showToast('রিফ্রেশ করা হয়েছে', 'info');
+        };
     },
     
     updateViewUI() {
@@ -1626,1188 +1865,102 @@ const settingsManager = {
         if (viewIcon && viewText) {
             if (state.settings.view === 'grid') {
                 viewIcon.textContent = '◻️';
-                viewText.textContent = 'Grid View';
+                viewText.textContent = 'গ্রিড ভিউ';
             } else {
                 viewIcon.textContent = '📋';
-                viewText.textContent = 'List View';
+                viewText.textContent = 'লিস্ট ভিউ';
             }
         }
     },
     
-    toggleDriveMode() {
-        if (state.settings.driveMode === 'vault') {
-            if (confirm('Switch to User Drive Mode? This allows reading entire Google Drive.')) {
-                state.settings.driveMode = 'user';
-                document.getElementById('driveModeText').textContent = 'User Drive Mode';
-                utils.showToast('warning', 'Drive Mode Changed', 'Now accessing entire Google Drive');
-                this.saveSettings();
-            }
-        } else {
-            state.settings.driveMode = 'vault';
-            document.getElementById('driveModeText').textContent = 'Vault Mode';
-            utils.showToast('info', 'Drive Mode Changed', 'Now restricted to Vault only');
-            this.saveSettings();
+    updateThemeUI() {
+        const themeIcon = document.getElementById('themeIcon');
+        const themeText = document.getElementById('themeText');
+        
+        if (themeIcon && themeText) {
+            themeIcon.textContent = state.settings.theme === 'cyber' ? '🌌' : 
+                                  state.settings.theme === 'dark' ? '🌙' : '☀️';
+            themeText.textContent = state.settings.theme === 'cyber' ? 'সাইবার' :
+                                  state.settings.theme === 'dark' ? 'ডার্ক' : 'লাইট';
         }
     }
 };
 
-// ==================== EVENT LISTENERS ====================
-function setupEventListeners() {
-    console.log('Setting up event listeners');
-    
-    // Menu toggle
-    const menuToggle = document.getElementById('menuToggle');
-    if (menuToggle) {
-        menuToggle.addEventListener('click', () => {
-            document.getElementById('sidebar').classList.toggle('active');
-        });
-    }
-    
-    // Search
-    const searchInput = document.getElementById('searchInput');
-    if (searchInput) {
-        const debouncedSearch = utils.debounce((query) => {
-            if (query.length >= 2) {
-                const filtered = state.fileList.filter(file => 
-                    file.name.toLowerCase().includes(query.toLowerCase())
-                );
-                updateFileBrowser(filtered);
-            } else if (query.length === 0) {
-                updateFileBrowser(state.fileList);
-            }
-        }, 300);
-        
-        searchInput.addEventListener('input', (e) => debouncedSearch(e.target.value));
-    }
-    
-    // Sort
-    const sortSelect = document.getElementById('sortSelect');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', (e) => {
-            const sortBy = e.target.value;
-            let sorted = [...state.fileList];
-            
-            switch (sortBy) {
-                case 'name':
-                    sorted.sort((a, b) => a.name.localeCompare(b.name));
-                    break;
-                case 'name_desc':
-                    sorted.sort((a, b) => b.name.localeCompare(a.name));
-                    break;
-                case 'modified':
-                    sorted.sort((a, b) => new Date(b.modifiedTime) - new Date(a.modifiedTime));
-                    break;
-                case 'size':
-                    sorted.sort((a, b) => (b.size || 0) - (a.size || 0));
-                    break;
-                case 'type':
-                    sorted.sort((a, b) => {
-                        const aIsFolder = a.mimeType === 'application/vnd.google-apps.folder';
-                        const bIsFolder = b.mimeType === 'application/vnd.google-apps.folder';
-                        if (aIsFolder && !bIsFolder) return -1;
-                        if (!aIsFolder && bIsFolder) return 1;
-                        return a.mimeType.localeCompare(b.mimeType);
-                    });
-                    break;
-            }
-            
-            updateFileBrowser(sorted);
-        });
-    }
-    
-    // Create folder
-    document.getElementById('btnCreateFolder').addEventListener('click', async () => {
-        if (!state.accessToken) {
-            utils.showToast('error', 'Not Connected', 'Connect Google Drive first');
-            return;
-        }
-        
-        const name = prompt('Folder name:');
-        if (name) await driveManager.createFolder(name);
-    });
-    
-    // Select all
-    document.getElementById('btnSelectAll').addEventListener('click', () => {
-        state.selectedFiles = state.fileList.map(f => f.id);
-        updateFileSelectionUI();
-    });
-    
-    // Deselect all
-    document.getElementById('btnDeselectAll').addEventListener('click', () => {
-        state.selectedFiles = [];
-        updateFileSelectionUI();
-    });
-    
-    // Navigation
-    document.querySelectorAll('[data-action="goHome"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            driveManager.loadFolderContents(CONFIG.drive.rootFolderId);
-        });
-    });
-    
-    document.querySelectorAll('[data-action="lockVault"]').forEach(btn => {
-        btn.addEventListener('click', () => pinManager.lockVault());
-    });
-    
-    document.querySelectorAll('[data-action="refreshVault"]').forEach(btn => {
-        btn.addEventListener('click', () => {
-            if (state.currentFolder) {
-                driveManager.loadFolderContents(state.currentFolder);
-                utils.showToast('info', 'Refreshed', 'Vault updated');
-            }
-        });
-    });
-    
-    // Modal close
-    const modalClose = document.getElementById('modalClose');
-    const modalOverlay = document.getElementById('modalOverlay');
-    
-    if (modalClose) modalClose.addEventListener('click', () => fileViewer.closeViewer());
-    if (modalOverlay) modalOverlay.addEventListener('click', () => fileViewer.closeViewer());
-    
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            fileViewer.closeViewer();
-            document.getElementById('contextMenu').classList.remove('visible');
-            
-            if (window.innerWidth < 768) {
-                document.getElementById('sidebar').classList.remove('active');
-            }
-        }
-        
-        if (e.key === 'F5' || (e.ctrlKey && e.key === 'r')) {
-            e.preventDefault();
-            if (state.currentFolder) {
-                driveManager.loadFolderContents(state.currentFolder);
-            }
-        }
-        
-        if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
-            e.preventDefault();
-            if (state.fileList.length > 0) {
-                state.selectedFiles = state.fileList.map(f => f.id);
-                updateFileSelectionUI();
-            }
-        }
-        
-        if (e.key === 'Delete' && state.selectedFiles.length > 0) {
-            e.preventDefault();
-            if (confirm(`Delete ${state.selectedFiles.length} selected item(s)?`)) {
-                state.selectedFiles.forEach(async id => {
-                    await driveManager.deleteFile(id);
-                });
-                state.selectedFiles = [];
-            }
-        }
-    });
-    
-    // Network status
-    window.addEventListener('online', () => {
-        updateConnectionStatus();
-        if (state.authStatus === 'google_connected') {
-            driveManager.loadFolderContents(state.currentFolder);
-            utils.showToast('success', 'Online', 'Connection restored');
-        }
-    });
-    
-    window.addEventListener('offline', () => {
-        updateConnectionStatus();
-        utils.showToast('error', 'Offline', 'Internet connection lost');
-    });
-    
-    // Window resize
-    let resizeTimeout;
-    window.addEventListener('resize', () => {
-        clearTimeout(resizeTimeout);
-        resizeTimeout = setTimeout(() => {
-            if (window.innerWidth >= 768) {
-                document.getElementById('sidebar').classList.remove('active');
-            }
-        }, 250);
-    });
-}
-
-function updateConnectionStatus() {
-    const statusEl = document.getElementById('connectionStatus');
-    if (!statusEl) return;
-    
-    const indicator = statusEl.querySelector('.status-indicator');
-    const text = statusEl.querySelector('.status-text');
-    
-    if (navigator.onLine) {
-        indicator.className = 'status-indicator online';
-        text.textContent = 'Online';
-    } else {
-        indicator.className = 'status-indicator offline';
-        text.textContent = 'Offline';
-    }
-}
-
 // ==================== INITIALIZATION ====================
 async function initVaultOS() {
-    console.log('VAULT OS v2.1 - Initializing');
-    
-    // Make vaultOS available globally for OAuth callbacks
-    window.vaultOS = {
-        state,
-        utils,
-        pinManager,
-        googleAuth,
-        driveManager,
-        fileViewer
-    };
+    console.log('🚀 VAULT OS v4.0 - Initializing');
     
     try {
-        // Initialize PIN Manager
-        pinManager.init();
+        // Initialize auth
+        await authManager.init();
         
-        // Initialize Settings Manager
+        // Initialize settings
         settingsManager.init();
         
-        // Initialize Upload Manager
-        uploadManager.init();
+        // Setup global keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape closes modals
+            if (e.key === 'Escape') {
+                fileViewer.close();
+                document.getElementById('contextMenu').classList.remove('visible');
+                if (window.innerWidth < 768) {
+                    document.getElementById('sidebar').classList.remove('active');
+                }
+            }
+            
+            // Ctrl+A selects all files
+            if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                e.preventDefault();
+                if (state.fileList.length > 0) {
+                    state.selectedFiles = new Set(state.fileList.map(f => f.id));
+                    fileBrowser.updateSelectionUI();
+                }
+            }
+            
+            // F5 refresh
+            if (e.key === 'F5') {
+                e.preventDefault();
+                driveManager.loadFolderContents(state.currentFolder, true);
+            }
+            
+            // Delete selected files
+            if (e.key === 'Delete' && state.selectedFiles.size > 0) {
+                e.preventDefault();
+                if (confirm(`${state.selectedFiles.size} ফাইল ডিলিট করবেন?`)) {
+                    state.selectedFiles.forEach(async id => {
+                        try {
+                            await driveManager.deleteFile(id);
+                        } catch (error) {
+                            utils.handleError(error, 'Delete Selected');
+                        }
+                    });
+                    state.selectedFiles.clear();
+                }
+            }
+        });
         
-        // Setup event listeners
-        setupEventListeners();
+        // Handle window resize
+        let resizeTimer;
+        window.addEventListener('resize', () => {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(() => {
+                if (window.innerWidth >= 768) {
+                    document.getElementById('sidebar').classList.remove('active');
+                }
+            }, 250);
+        });
         
-        // Check for OAuth redirect
-        checkOAuthRedirect();
-        
-        console.log('VAULT OS initialized successfully');
+        console.log('✅ VAULT OS v4.0 Ready');
         
     } catch (error) {
-        console.error('VAULT OS initialization failed:', error);
-        utils.showToast('error', 'Initialization Failed', 'Please refresh the page');
+        console.error('Initialization failed:', error);
+        utils.showToast('অ্যাপ শুরু করতে সমস্যা', 'error');
     }
 }
 
-function checkOAuthRedirect() {
-    const hash = window.location.hash.substring(1);
-    if (hash.includes('access_token')) {
-        console.log('Detected OAuth redirect');
-        
-        const params = new URLSearchParams(hash);
-        const token = params.get('access_token');
-        const expiresIn = params.get('expires_in');
-        
-        if (token) {
-            state.accessToken = token;
-            state.authStatus = 'google_connected';
-            
-            // Clear hash from URL
-            history.replaceState(null, '', window.location.pathname);
-            
-            // Get user info
-            fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
-                headers: { 'Authorization': `Bearer ${token}` }
-            })
-            .then(response => {
-                if (!response.ok) throw new Error('Failed to fetch user info');
-                return response.json();
-            })
-            .then(profile => {
-                state.userProfile = {
-                    name: profile.name,
-                    email: profile.email,
-                    picture: profile.picture,
-                    id: profile.id
-                };
-                
-                updateAuthUI();
-                driveManager.init();
-                
-                utils.showToast('success', 'Connected', `Signed in as ${profile.email}`);
-            })
-            .catch(error => {
-                console.warn('User info fetch failed:', error);
-                // Continue with just access token
-                driveManager.init();
-            });
-        }
-    }
-}
-
-// ==================== ERROR HANDLING ====================
-window.addEventListener('error', (e) => {
-    console.error('Global error:', e.error);
-    utils.showToast('error', 'Runtime Error', 'An unexpected error occurred');
-});
-
-window.addEventListener('unhandledrejection', (e) => {
-    console.error('Unhandled promise rejection:', e.reason);
-    utils.showToast('error', 'Async Error', 'An operation failed');
-});
-
-// ==================== START APPLICATION ====================
+// Start the app
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', initVaultOS);
 } else {
     initVaultOS();
 }
-
-// ==================== BUG FIX PATCH v3.1 ====================
-// Paste this at the END of your app.js file
-// This fixes ALL critical bugs in the current version
-
-(function() {
-    'use strict';
-    
-    console.log('🔧 Applying VAULT OS Bug Fix Patch v3.1...');
-    
-    // ==================== PATCH 1: FIX GOOGLE OAUTH TOKEN EXCHANGE ====================
-    const originalGoogleAuthInit = GoogleAuth?.init;
-    const originalHandleCredentialResponse = GoogleAuth?.handleCredentialResponse;
-    
-    if (GoogleAuth) {
-        // Override Google Auth initialization
-        GoogleAuth.init = function() {
-            console.log('🔧 PATCH: Initializing Google Auth with fixes');
-            
-            // Check if Google Identity Services loaded
-            if (typeof google === 'undefined') {
-                console.warn('Google Identity Services not loaded');
-                setTimeout(() => this.init(), 1000);
-                return;
-            }
-            
-            try {
-                // Initialize with correct parameters for Drive access
-                google.accounts.id.initialize({
-                    client_id: Config.googleOAuth.clientId,
-                    callback: this.handleCredentialResponsePatch.bind(this),
-                    auto_select: false,
-                    ux_mode: 'popup',
-                    context: 'signin'
-                });
-                
-                // Setup auth button
-                document.getElementById('authBtn').addEventListener('click', () => {
-                    this.handleAuthButtonClickPatch();
-                });
-                
-                // Setup global callback
-                window.handleGoogleTokenResponse = this.handleCredentialResponsePatch.bind(this);
-                
-                console.log('✅ Google Auth initialized with patch');
-                
-            } catch (error) {
-                console.error('Google Auth init failed:', error);
-                Utils.showError(error, 'Google Auth');
-            }
-        };
-        
-        // Patch for handling auth button click
-        GoogleAuth.handleAuthButtonClickPatch = function() {
-            if (VaultState.authStatus === 'google_connected') {
-                this.signOut();
-            } else {
-                this.startOAuthFlowPatch();
-            }
-        };
-        
-        // Patch for OAuth flow - use proper OAuth 2.0 for Drive access
-        GoogleAuth.startOAuthFlowPatch = function() {
-            if (!VaultState.networkOnline) {
-                Utils.showToast('error', 'Offline', 'Cannot sign in while offline');
-                return;
-            }
-            
-            // Use Google OAuth 2.0 implicit grant flow for Drive API
-            const params = {
-                client_id: Config.googleOAuth.clientId,
-                redirect_uri: window.location.origin + window.location.pathname,
-                response_type: 'token',
-                scope: Config.googleOAuth.scopes,
-                access_type: 'online',
-                prompt: 'consent',
-                state: 'vault_drive_' + Date.now(),
-                include_granted_scopes: 'true'
-            };
-            
-            const authUrl = Config.googleOAuth.authEndpoint + '?' + new URLSearchParams(params);
-            
-            // Redirect to Google OAuth (simplest working approach)
-            window.location.href = authUrl;
-        };
-        
-        // Patch for credential response handling
-        GoogleAuth.handleCredentialResponsePatch = function(response) {
-            console.log('🔧 PATCH: Handling Google OAuth with Drive access');
-            
-            try {
-                if (!response || !response.credential) {
-                    throw new Error('Invalid OAuth response');
-                }
-                
-                // The credential is an ID token - we need to trigger Drive OAuth
-                Utils.showToast('info', 'Authorizing Drive Access', 'Opening Google Drive authorization...');
-                
-                // Start OAuth flow for Drive access after short delay
-                setTimeout(() => {
-                    this.startOAuthFlowPatch();
-                }, 1500);
-                
-            } catch (error) {
-                console.error('Google OAuth handling failed:', error);
-                Utils.showError(error, 'Google Sign-In');
-            }
-        };
-        
-        // Patch OAuth redirect handler to properly parse tokens
-        const originalHandleOAuthRedirect = GoogleAuth.handleOAuthRedirect;
-        
-        GoogleAuth.handleOAuthRedirect = function() {
-            console.log('🔧 PATCH: Handling OAuth redirect with improved parsing');
-            
-            const hash = window.location.hash.substring(1);
-            
-            if (hash.includes('access_token')) {
-                console.log('✅ Detected OAuth redirect with access token');
-                
-                try {
-                    const params = new URLSearchParams(hash);
-                    const accessToken = params.get('access_token');
-                    const tokenType = params.get('token_type');
-                    const expiresIn = params.get('expires_in');
-                    const state = params.get('state');
-                    
-                    if (accessToken) {
-                        // Validate this is our Vault OAuth (not some other app)
-                        if (!state || !state.startsWith('vault_drive_')) {
-                            console.warn('Invalid OAuth state - ignoring');
-                            return;
-                        }
-                        
-                        // Store token
-                        VaultState.accessToken = accessToken;
-                        VaultState.tokenExpiry = Date.now() + (parseInt(expiresIn || '3600') * 1000);
-                        
-                        // Clear URL hash
-                        window.history.replaceState(null, '', window.location.pathname);
-                        
-                        // Get user info
-                        this.fetchUserInfoPatch().then(() => {
-                            // Update auth status
-                            VaultState.authStatus = 'google_connected';
-                            updateAuthUI();
-                            
-                            // Initialize Drive
-                            DriveManager.init();
-                            
-                            // Start token expiry check
-                            this.startTokenExpiryCheck();
-                            
-                            Utils.showToast('success', 'Connected', 'Google Drive connected successfully');
-                        }).catch(error => {
-                            console.error('User info fetch failed:', error);
-                            // Still initialize Drive with access token
-                            VaultState.authStatus = 'google_connected';
-                            updateAuthUI();
-                            DriveManager.init();
-                        });
-                        
-                        console.log('✅ Google OAuth completed with Drive access');
-                    }
-                } catch (error) {
-                    console.error('OAuth redirect parsing failed:', error);
-                }
-            }
-            
-            // Call original function if exists
-            if (originalHandleOAuthRedirect) {
-                originalHandleOAuthRedirect.call(this);
-            }
-        };
-        
-        // Patch user info fetch with better error handling
-        GoogleAuth.fetchUserInfoPatch = async function() {
-            try {
-                if (!VaultState.accessToken) {
-                    throw new Error('No access token');
-                }
-                
-                const response = await fetch(Config.googleOAuth.userInfoEndpoint, {
-                    headers: {
-                        'Authorization': `Bearer ${VaultState.accessToken}`
-                    }
-                });
-                
-                if (!response.ok) {
-                    // Try with different endpoint
-                    const driveResponse = await fetch(`${Config.drive.apiBase}/about?fields=user`, {
-                        headers: {
-                            'Authorization': `Bearer ${VaultState.accessToken}`
-                        }
-                    });
-                    
-                    if (driveResponse.ok) {
-                        const driveData = await driveResponse.json();
-                        VaultState.userProfile = {
-                            name: driveData.user?.displayName || 'Google User',
-                            email: driveData.user?.emailAddress || '',
-                            picture: '',
-                            id: driveData.user?.permissionId || ''
-                        };
-                    } else {
-                        throw new Error('Both user info endpoints failed');
-                    }
-                } else {
-                    const userInfo = await response.json();
-                    VaultState.userProfile = {
-                        name: userInfo.name || 'Google User',
-                        email: userInfo.email || '',
-                        picture: userInfo.picture || '',
-                        id: userInfo.id
-                    };
-                }
-                
-                console.log('✅ User info fetched:', VaultState.userProfile.email);
-                
-            } catch (error) {
-                console.error('User info fetch failed:', error);
-                // Set default user profile
-                VaultState.userProfile = {
-                    name: 'Google User',
-                    email: 'user@example.com',
-                    picture: '',
-                    id: 'unknown'
-                };
-                throw error; // Re-throw for caller to handle
-            }
-        };
-    }
-    
-    // ==================== PATCH 2: FIX FIREBASE OPERATIONS ====================
-    const FirebaseManager = {
-        // Log session events to Firebase
-        async logSession(action, data = {}) {
-            if (!VaultState.firebaseDB || !VaultState.firebaseApp) {
-                return; // Firebase not available
-            }
-            
-            try {
-                const sessionRef = VaultState.firebaseDB.ref('sessions').push();
-                await sessionRef.set({
-                    action,
-                    userId: VaultState.userProfile?.email || 'anonymous',
-                    timestamp: Date.now(),
-                    data: JSON.stringify(data),
-                    userAgent: navigator.userAgent,
-                    platform: navigator.platform,
-                    online: VaultState.networkOnline
-                });
-                
-                console.log('✅ Firebase session logged:', action);
-                
-            } catch (error) {
-                console.warn('Firebase log failed (non-critical):', error);
-                // Don't break the app if Firebase fails
-            }
-        },
-        
-        // Update user state in Firebase
-        async updateUserState() {
-            if (!VaultState.firebaseDB || !VaultState.userProfile) return;
-            
-            try {
-                // Create safe key from email
-                const safeEmail = VaultState.userProfile.email
-                    .replace(/[.#$/[\]]/g, '_');
-                
-                const userRef = VaultState.firebaseDB.ref(`users/${safeEmail}`);
-                
-                await userRef.update({
-                    lastActive: Date.now(),
-                    currentFolder: VaultState.currentFolder,
-                    fileCount: VaultState.fileList.length,
-                    storageUsed: VaultState.storageInfo.used,
-                    device: navigator.platform,
-                    online: VaultState.networkOnline,
-                    updatedAt: Date.now()
-                });
-                
-            } catch (error) {
-                console.warn('Firebase state update failed:', error);
-            }
-        },
-        
-        // Log file operations
-        async logFileOperation(operation, fileData) {
-            await this.logSession(`file_${operation}`, fileData);
-        }
-    };
-    
-    // Integrate Firebase logging into existing managers
-    if (DriveManager) {
-        // Patch DriveManager methods to include Firebase logging
-        const originalLoadFolderContents = DriveManager.loadFolderContents;
-        const originalUploadFile = DriveManager.uploadFile;
-        const originalDeleteFile = DriveManager.deleteFile;
-        const originalCreateFolder = DriveManager.createFolder;
-        
-        DriveManager.loadFolderContents = async function(folderId) {
-            try {
-                const result = await originalLoadFolderContents.call(this, folderId);
-                await FirebaseManager.logSession('folder_loaded', {
-                    folderId,
-                    fileCount: VaultState.fileList.length
-                });
-                await FirebaseManager.updateUserState();
-                return result;
-            } catch (error) {
-                await FirebaseManager.logSession('folder_load_error', { error: error.message });
-                throw error;
-            }
-        };
-        
-        DriveManager.uploadFile = async function(file, onProgress) {
-            try {
-                const result = await originalUploadFile.call(this, file, onProgress);
-                await FirebaseManager.logFileOperation('uploaded', {
-                    name: file.name,
-                    size: file.size,
-                    type: file.type,
-                    id: result?.id
-                });
-                await FirebaseManager.updateUserState();
-                return result;
-            } catch (error) {
-                await FirebaseManager.logSession('upload_error', {
-                    fileName: file.name,
-                    error: error.message
-                });
-                throw error;
-            }
-        };
-        
-        DriveManager.deleteFile = async function(fileId) {
-            try {
-                const result = await originalDeleteFile.call(this, fileId);
-                await FirebaseManager.logFileOperation('deleted', { fileId });
-                await FirebaseManager.updateUserState();
-                return result;
-            } catch (error) {
-                await FirebaseManager.logSession('delete_error', {
-                    fileId,
-                    error: error.message
-                });
-                throw error;
-            }
-        };
-        
-        DriveManager.createFolder = async function(name) {
-            try {
-                const result = await originalCreateFolder.call(this, name);
-                await FirebaseManager.logFileOperation('folder_created', {
-                    name,
-                    id: result?.id
-                });
-                await FirebaseManager.updateUserState();
-                return result;
-            } catch (error) {
-                await FirebaseManager.logSession('create_folder_error', {
-                    name,
-                    error: error.message
-                });
-                throw error;
-            }
-        };
-    }
-    
-    // ==================== PATCH 3: FIX UPLOAD CHUNKING FOR LARGE FILES ====================
-    if (DriveManager) {
-        // Add chunked upload capability
-        DriveManager.uploadFileChunked = async function(file, onProgress) {
-            if (!file || !file.name) {
-                throw new Error('Invalid file');
-            }
-            
-            // Check file size
-            if (file.size > Config.upload.maxFileSize) {
-                throw new Error(`File too large. Maximum size is ${Utils.formatFileSize(Config.upload.maxFileSize)}`);
-            }
-            
-            // Check storage space
-            if (VaultState.storageInfo.total > 0 && file.size > VaultState.storageInfo.free) {
-                throw new Error('Insufficient storage space');
-            }
-            
-            // Use chunked upload for files larger than 5MB
-            if (file.size > 5 * 1024 * 1024) {
-                return await this.uploadFileChunkedInternal(file, onProgress);
-            } else {
-                // Use regular upload for small files
-                return await this.uploadFile(file, onProgress);
-            }
-        };
-        
-        // Internal chunked upload implementation
-        DriveManager.uploadFileChunkedInternal = async function(file, onProgress) {
-            return new Promise((resolve, reject) => {
-                console.log('📁 Starting chunked upload for:', file.name);
-                
-                const metadata = {
-                    name: file.name,
-                    parents: [VaultState.currentFolder]
-                };
-                
-                // Step 1: Initiate resumable upload session
-                const initUrl = `${Config.drive.uploadBase}/files?uploadType=resumable`;
-                
-                const initXhr = new XMLHttpRequest();
-                initXhr.open('POST', initUrl);
-                initXhr.setRequestHeader('Authorization', `Bearer ${VaultState.accessToken}`);
-                initXhr.setRequestHeader('Content-Type', 'application/json; charset=UTF-8');
-                
-                initXhr.onload = () => {
-                    if (initXhr.status === 200) {
-                        const sessionUri = initXhr.getResponseHeader('Location');
-                        this.uploadFileChunkedWithSession(sessionUri, file, onProgress, resolve, reject);
-                    } else {
-                        reject(new Error(`Failed to initiate upload: ${initXhr.status}`));
-                    }
-                };
-                
-                initXhr.onerror = () => reject(new Error('Network error during upload initiation'));
-                initXhr.send(JSON.stringify(metadata));
-            });
-        };
-        
-        // Upload chunks using resumable session
-        DriveManager.uploadFileChunkedWithSession = async function(sessionUri, file, onProgress, resolve, reject) {
-            const CHUNK_SIZE = 256 * 1024; // 256KB chunks
-            const totalChunks = Math.ceil(file.size / CHUNK_SIZE);
-            let currentChunk = 0;
-            
-            const uploadNextChunk = () => {
-                if (currentChunk >= totalChunks) {
-                    // All chunks uploaded, finalize
-                    this.finalizeChunkedUpload(sessionUri, file.size, resolve, reject);
-                    return;
-                }
-                
-                const start = currentChunk * CHUNK_SIZE;
-                const end = Math.min(start + CHUNK_SIZE, file.size);
-                const chunk = file.slice(start, end);
-                
-                const chunkXhr = new XMLHttpRequest();
-                chunkXhr.open('PUT', sessionUri);
-                chunkXhr.setRequestHeader('Content-Range', `bytes ${start}-${end-1}/${file.size}`);
-                chunkXhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-                
-                chunkXhr.onload = () => {
-                    if (chunkXhr.status === 308) {
-                        // Resume incomplete
-                        const range = chunkXhr.getResponseHeader('Range');
-                        if (range) {
-                            const lastByte = parseInt(range.split('-')[1]) + 1;
-                            currentChunk = Math.floor(lastByte / CHUNK_SIZE);
-                        }
-                        uploadNextChunk();
-                    } else if (chunkXhr.status === 200 || chunkXhr.status === 201) {
-                        // Upload complete
-                        try {
-                            const result = JSON.parse(chunkXhr.responseText);
-                            resolve(result);
-                        } catch (e) {
-                            resolve({ id: 'unknown', name: file.name });
-                        }
-                    } else {
-                        reject(new Error(`Chunk upload failed: ${chunkXhr.status}`));
-                    }
-                };
-                
-                chunkXhr.onerror = () => reject(new Error('Network error during chunk upload'));
-                
-                chunkXhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const chunkProgress = (currentChunk * CHUNK_SIZE + e.loaded) / file.size * 100;
-                        if (onProgress) onProgress(Math.round(chunkProgress));
-                    }
-                };
-                
-                chunkXhr.send(chunk);
-                currentChunk++;
-            };
-            
-            // Start uploading chunks
-            uploadNextChunk();
-        };
-        
-        // Finalize chunked upload
-        DriveManager.finalizeChunkedUpload = function(sessionUri, fileSize, resolve, reject) {
-            const finalXhr = new XMLHttpRequest();
-            finalXhr.open('PUT', sessionUri);
-            finalXhr.setRequestHeader('Content-Range', `bytes */${fileSize}`);
-            finalXhr.setRequestHeader('Content-Length', '0');
-            
-            finalXhr.onload = () => {
-                if (finalXhr.status === 200 || finalXhr.status === 201) {
-                    try {
-                        const result = JSON.parse(finalXhr.responseText);
-                        
-                        // Refresh file list
-                        DriveManager.loadFolderContents(VaultState.currentFolder);
-                        
-                        // Refresh storage info
-                        DriveManager.loadStorageInfo();
-                        
-                        Utils.showToast('success', 'Upload Complete', `"${result.name}" uploaded`);
-                        
-                        resolve(result);
-                    } catch (e) {
-                        resolve({ id: 'unknown', name: 'Uploaded file' });
-                    }
-                } else {
-                    reject(new Error(`Finalize failed: ${finalXhr.status}`));
-                }
-            };
-            
-            finalXhr.onerror = () => reject(new Error('Network error during finalization'));
-            finalXhr.send();
-        };
-        
-        // Override the original uploadFile to use chunked version
-        const originalUploadFile = DriveManager.uploadFile;
-        DriveManager.uploadFile = async function(file, onProgress) {
-            try {
-                return await this.uploadFileChunked(file, onProgress);
-            } catch (error) {
-                // Fallback to original method if chunked fails
-                console.warn('Chunked upload failed, falling back:', error);
-                return await originalUploadFile.call(this, file, onProgress);
-            }
-        };
-    }
-    
-    // ==================== PATCH 4: FIX NETWORK ERROR HANDLING ====================
-    // Add network retry logic
-    const NetworkManager = {
-        maxRetries: 3,
-        retryDelay: 1000,
-        
-        async withRetry(operation, context = 'Operation') {
-            let lastError;
-            
-            for (let attempt = 1; attempt <= this.maxRetries; attempt++) {
-                try {
-                    return await operation();
-                } catch (error) {
-                    lastError = error;
-                    
-                    // Check if it's a network error
-                    const isNetworkError = error.message?.includes('network') || 
-                                         error.message?.includes('Network') ||
-                                         error.message?.includes('fetch') ||
-                                         !navigator.onLine;
-                    
-                    if (isNetworkError && attempt < this.maxRetries) {
-                        console.log(`🔁 Retrying ${context} (attempt ${attempt}/${this.maxRetries})...`);
-                        await this.delay(this.retryDelay * attempt);
-                        continue;
-                    }
-                    
-                    // Not a network error or max retries reached
-                    break;
-                }
-            }
-            
-            throw lastError;
-        },
-        
-        delay(ms) {
-            return new Promise(resolve => setTimeout(resolve, ms));
-        },
-        
-        // Check internet connection
-        checkConnection() {
-            return navigator.onLine;
-        },
-        
-        // Monitor connection changes
-        initConnectionMonitor() {
-            window.addEventListener('online', () => {
-                VaultState.networkOnline = true;
-                updateConnectionStatus();
-                Utils.showToast('success', 'Back Online', 'Connection restored');
-                
-                // Refresh data if connected to Google
-                if (VaultState.authStatus === 'google_connected' && VaultState.currentFolder) {
-                    setTimeout(() => {
-                        DriveManager.loadFolderContents(VaultState.currentFolder);
-                    }, 1000);
-                }
-            });
-            
-            window.addEventListener('offline', () => {
-                VaultState.networkOnline = false;
-                updateConnectionStatus();
-                Utils.showToast('error', 'Offline', 'Internet connection lost');
-            });
-        }
-    };
-    
-    // Apply network retry to DriveManager methods
-    if (DriveManager) {
-        const methodsToPatch = [
-            'loadFolderContents',
-            'loadStorageInfo',
-            'uploadFile',
-            'deleteFile',
-            'renameFile',
-            'createFolder',
-            'loadFolderTree'
-        ];
-        
-        methodsToPatch.forEach(methodName => {
-            if (DriveManager[methodName]) {
-                const originalMethod = DriveManager[methodName];
-                DriveManager[methodName] = async function(...args) {
-                    return await NetworkManager.withRetry(
-                        () => originalMethod.apply(this, args),
-                        methodName
-                    );
-                };
-            }
-        });
-    }
-    
-    // ==================== PATCH 5: FIX PIN SECURITY ENHANCEMENTS ====================
-    if (PinManager) {
-        // Add PIN brute force protection
-        PinManager.validatePin = async function() {
-            // Check lockout
-            if (VaultState.lockoutUntil && Date.now() < VaultState.lockoutUntil) {
-                const minutesLeft = Math.ceil((VaultState.lockoutUntil - Date.now()) / 60000);
-                this.showPinError(`Vault locked. Try again in ${minutesLeft} minute${minutesLeft > 1 ? 's' : ''}.`);
-                return;
-            }
-            
-            // Validate format
-            if (!Utils.isValidPin(VaultState.currentPin)) {
-                this.showPinError('PIN must be exactly 4 digits');
-                VaultState.currentPin = '';
-                this.updatePinDisplay();
-                return;
-            }
-            
-            // Add delay to prevent brute force
-            await new Promise(resolve => setTimeout(resolve, 500));
-            
-            try {
-                if (!VaultState.pinHash) {
-                    // First time - set new PIN
-                    const hash = await Utils.hashPin(VaultState.currentPin);
-                    localStorage.setItem('vault_pin_hash', hash);
-                    VaultState.pinHash = hash;
-                    VaultState.pinAttempts = 0;
-                    this.unlockVault();
-                    Utils.showToast('success', 'PIN Set', 'PIN created successfully');
-                } else {
-                    // Verify existing PIN
-                    VaultState.pinAttempts++;
-                    const isValid = await Utils.verifyPin(VaultState.currentPin, VaultState.pinHash);
-                    
-                    if (isValid) {
-                        VaultState.pinAttempts = 0;
-                        localStorage.removeItem('vault_lockout_until');
-                        localStorage.removeItem('vault_pin_attempts');
-                        this.unlockVault();
-                    } else {
-                        // Save attempts to localStorage
-                        localStorage.setItem('vault_pin_attempts', VaultState.pinAttempts.toString());
-                        
-                        const attemptsLeft = Config.security.maxPinAttempts - VaultState.pinAttempts;
-                        
-                        if (attemptsLeft <= 0) {
-                            // Lockout user
-                            const lockoutTime = Date.now() + (Config.security.lockoutMinutes * 60000);
-                            localStorage.setItem('vault_lockout_until', lockoutTime.toString());
-                            VaultState.lockoutUntil = lockoutTime;
-                            this.showPinError(`Too many attempts. Locked for ${Config.security.lockoutMinutes} minutes.`);
-                        } else {
-                            this.showPinError(`Incorrect PIN. ${attemptsLeft} attempt${attemptsLeft > 1 ? 's' : ''} remaining.`);
-                        }
-                        
-                        VaultState.currentPin = '';
-                        this.updatePinDisplay();
-                    }
-                }
-            } catch (error) {
-                console.error('PIN validation error:', error);
-                this.showPinError('Security system error. Please try again.');
-            }
-        };
-        
-        // Load PIN attempts from localStorage
-        const savedAttempts = localStorage.getItem('vault_pin_attempts');
-        if (savedAttempts) {
-            VaultState.pinAttempts = parseInt(savedAttempts) || 0;
-        }
-    }
-    
-    // ==================== PATCH 6: FIX MEDIA PROXY SECURITY ====================
-    if (DriveManager && DriveManager.getFilePreviewUrl) {
-        const originalGetFilePreviewUrl = DriveManager.getFilePreviewUrl;
-        
-        DriveManager.getFilePreviewUrl = function(fileId, mimeType) {
-            // Never send access token to proxy
-            const proxyUrl = Config.mediaProxies.readOnly;
-            const encodedId = encodeURIComponent(fileId);
-            const encodedMime = encodeURIComponent(mimeType || '');
-            
-            // Use proxy with only file ID and mime type
-            return `${proxyUrl}?id=${encodedId}&mime=${encodedMime}`;
-        };
-    }
-    
-    // ==================== PATCH 7: FIX INITIALIZATION ORDER ====================
-    // Ensure proper initialization order
-    const originalInitVaultOS = window.initVaultOS;
-    
-    window.initVaultOS = async function() {
-        console.log('🔧 PATCH: Initializing with proper order');
-        
-        try {
-            // Call original initialization
-            if (originalInitVaultOS) {
-                await originalInitVaultOS();
-            }
-            
-            // Apply patches after initialization
-            setTimeout(() => {
-                // Initialize network monitor
-                NetworkManager.initConnectionMonitor();
-                
-                // Check for OAuth redirect
-                if (GoogleAuth && GoogleAuth.handleOAuthRedirect) {
-                    GoogleAuth.handleOAuthRedirect();
-                }
-                
-                // Initialize Firebase logging
-                if (FirebaseManager && FirebaseManager.logSession) {
-                    FirebaseManager.logSession('app_started', {
-                        version: '3.1',
-                        timestamp: Date.now()
-                    });
-                }
-                
-                console.log('✅ All patches applied successfully');
-                
-            }, 1000);
-            
-        } catch (error) {
-            console.error('Initialization failed:', error);
-            Utils.showToast('error', 'Initialization Error', 'Please refresh the page');
-        }
-    };
-    
-    // ==================== PATCH 8: FIX MOBILE TOUCH EVENTS ====================
-    // Improve mobile touch experience
-    document.addEventListener('DOMContentLoaded', function() {
-        // Fix virtual keypad touch events
-        const pinKeys = document.querySelectorAll('.pin-key');
-        pinKeys.forEach(key => {
-            // Remove existing touch listeners
-            key.removeEventListener('touchstart', () => {});
-            key.removeEventListener('touchend', () => {});
-            
-            // Add improved touch listeners
-            key.addEventListener('touchstart', function(e) {
-                e.preventDefault();
-                this.style.transform = 'scale(0.95)';
-                this.style.opacity = '0.8';
-            }, { passive: false });
-            
-            key.addEventListener('touchend', function(e) {
-                e.preventDefault();
-                this.style.transform = '';
-                this.style.opacity = '';
-                
-                // Trigger click
-                this.click();
-            }, { passive: false });
-        });
-        
-        // Fix file item touch events
-        const fileItems = document.querySelectorAll('.file-item');
-        fileItems.forEach(item => {
-            let touchTimer;
-            
-            item.addEventListener('touchstart', function() {
-                touchTimer = setTimeout(() => {
-                    // Long press for context menu
-                    const event = new MouseEvent('contextmenu', {
-                        bubbles: true,
-                        cancelable: true,
-                        clientX: 100,
-                        clientY: 100
-                    });
-                    this.dispatchEvent(event);
-                }, 500);
-            });
-            
-            item.addEventListener('touchend', function() {
-                clearTimeout(touchTimer);
-            });
-            
-            item.addEventListener('touchmove', function() {
-                clearTimeout(touchTimer);
-            });
-        });
-        
-        // Prevent zoom on mobile
-        document.addEventListener('touchstart', function(e) {
-            if (e.touches.length > 1) {
-                e.preventDefault();
-            }
-        }, { passive: false });
-        
-        let lastTouchEnd = 0;
-        document.addEventListener('touchend', function(e) {
-            const now = Date.now();
-            if (now - lastTouchEnd <= 300) {
-                e.preventDefault();
-            }
-            lastTouchEnd = now;
-        }, { passive: false });
-    });
-    
-    // ==================== PATCH 9: FIX ERROR BOUNDARY ====================
-    // Global error handler
-    window.addEventListener('error', function(e) {
-        console.error('Global error caught:', e.error);
-        
-        // Don't show error toast for common non-breaking errors
-        const ignoreErrors = [
-            'ResizeObserver',
-            'NetworkError',
-            'Failed to fetch',
-            'Loading chunk'
-        ];
-        
-        const shouldShow = !ignoreErrors.some(ignore => 
-            e.message?.includes(ignore) || e.error?.message?.includes(ignore)
-        );
-        
-        if (shouldShow && Utils && Utils.showToast) {
-            Utils.showToast('error', 'Runtime Error', 'An unexpected error occurred');
-        }
-    });
-    
-    // Promise rejection handler
-    window.addEventListener('unhandledrejection', function(e) {
-        console.error('Unhandled promise rejection:', e.reason);
-        
-        // Don't show for network errors (handled elsewhere)
-        if (!e.reason?.message?.includes('network') && 
-            !e.reason?.message?.includes('Network') &&
-            Utils && Utils.showToast) {
-            Utils.showToast('error', 'Async Error', 'An operation failed unexpectedly');
-        }
-    });
-    
-    console.log('✅ VAULT OS Bug Fix Patch v3.1 applied successfully');
-    
-})();
