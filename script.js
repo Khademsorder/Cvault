@@ -138,6 +138,11 @@ const CONFIG = {
         confirmOverwrite: true,
         maxFilenameLength: 255
     },
+debug: {
+        enabled: true, 
+        logLevel: "info"
+    },  // <--- এই কমা (,) টি অবশ্যই দিন!
+
     
     // ================ FILE TYPE MAPPINGS ================
     fileTypes: {
