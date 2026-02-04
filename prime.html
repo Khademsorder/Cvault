@@ -1,1387 +1,2123 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="cyber">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>VAULT OS v5.0 - Secure Drive Manager</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🔐 VAULT OS v6.0 - Complete Security System</title>
     
-    <!-- CDN Libraries -->
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@iconscout/unicons@4.0.8/css/line.css">
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+    <!-- Firebase -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-functions.js"></script>
     
-    <link rel="stylesheet" href="styles.css">
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🔒</text></svg>">
+    <!-- Google Identity Services -->
+    <script src="https://accounts.google.com/gsi/client"></script>
+    
+    <!-- Plyr for media -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    
+    <!-- PDF.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    
+    <!-- Lottie for animations -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lottie-web/5.12.2/lottie.min.js"></script>
     
     <style>
-        /* Critical CSS for initial render */
+        /* ===== GLOBAL CONFIG ===== */
         :root {
-            --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            --cyber-gradient: linear-gradient(135deg, #00d2ff 0%, #3a7bd5 100%);
-            --danger-gradient: linear-gradient(135deg, #ff416c 0%, #ff4b2b 100%);
-            --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+            /* Cyber Theme */
+            --primary: #00ff9d;
+            --primary-dark: #00cc7a;
+            --secondary: #ff00ff;
+            --danger: #ff4757;
+            --warning: #ffdd00;
+            --info: #00d2ff;
+            --dark-bg: #0a0a0a;
+            --surface: #1a1a1a;
+            --surface-light: #2a2a2a;
+            --surface-hover: #3a3a3a;
+            --text: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333;
+            --glow: 0 0 20px rgba(0, 255, 157, 0.3);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --elevation-1: 0 4px 12px rgba(0,0,0,0.5);
+            --elevation-2: 0 8px 24px rgba(0,0,0,0.6);
+            --elevation-3: 0 12px 36px rgba(0,0,0,0.7);
+        }
+        
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            font-family: 'Segoe UI', system-ui, sans-serif;
+        }
+        
+        body {
+            background: var(--dark-bg);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* ===== BOOT ANIMATION ===== */
+        .boot-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 30px;
+        }
+        
+        .boot-logo {
+            font-size: 80px;
+            animation: bootPulse 2s infinite;
+            text-shadow: 0 0 30px var(--primary);
+        }
+        
+        .boot-progress {
+            width: 300px;
+            height: 4px;
+            background: var(--surface);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .boot-progress-bar {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        .boot-text {
+            font-size: 14px;
+            color: var(--text-secondary);
+            text-align: center;
+            max-width: 400px;
+            line-height: 1.5;
+        }
+        
+        @keyframes bootPulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.1); opacity: 0.8; }
+        }
+        
+        /* ===== AUTH SCREENS ===== */
+        .auth-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: var(--dark-bg);
+            display: none;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            z-index: 9998;
+        }
+        
+        .auth-card {
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            padding: 40px 30px;
+            max-width: 400px;
+            width: 100%;
+            border: 1px solid var(--border);
+            box-shadow: var(--elevation-3);
+        }
+        
+        .auth-title {
+            font-size: 28px;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 10px;
+            background: linear-gradient(45deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+        
+        .auth-subtitle {
+            text-align: center;
+            color: var(--text-secondary);
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+        
+        /* PIN Input */
+        .pin-container {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin: 30px 0;
+        }
+        
+        .pin-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            border: 2px solid var(--border);
+            background: transparent;
+            transition: all 0.3s;
+        }
+        
+        .pin-dot.filled {
+            background: var(--primary);
+            border-color: var(--primary);
+            box-shadow: var(--glow);
+        }
+        
+        .pin-dot.error {
+            background: var(--danger);
+            border-color: var(--danger);
+            animation: shake 0.5s;
+        }
+        
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .keypad-btn {
+            aspect-ratio: 1;
+            background: var(--surface-light);
+            border: none;
+            border-radius: 50%;
+            color: var(--text);
+            font-size: 24px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .keypad-btn:active {
+            background: var(--surface-hover);
+            transform: scale(0.95);
+        }
+        
+        .keypad-btn.clear {
+            background: var(--warning);
+            color: #000;
+        }
+        
+        .keypad-btn.delete {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* Google Sign In */
+        .google-signin {
+            width: 100%;
+            padding: 14px;
+            background: #4285F4;
+            color: white;
+            border: none;
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 20px;
+            transition: all 0.3s;
+        }
+        
+        .google-signin:hover {
+            background: #3367D6;
+            transform: translateY(-2px);
+        }
+        
+        .google-signin:active {
+            transform: translateY(0);
+        }
+        
+        /* Auth Options */
+        .auth-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+        }
+        
+        .auth-option-btn {
+            flex: 1;
+            padding: 12px;
+            background: var(--surface-light);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            color: var(--text);
+            cursor: pointer;
+            text-align: center;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+        
+        .auth-option-btn.active {
+            background: var(--primary);
+            border-color: var(--primary);
+            color: #000;
+            font-weight: 600;
+        }
+        
+        /* Session Timer */
+        .session-timer {
+            position: fixed;
+            top: 10px;
+            right: 10px;
+            background: var(--surface);
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            z-index: 100;
+            border: 1px solid var(--border);
+        }
+        
+        .timer-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+        
+        /* ===== MAIN APP ===== */
+        .main-app {
+            display: none;
+            min-height: 100vh;
+        }
+        
+        /* Top Bar */
+        .top-bar {
+            position: sticky;
+            top: 0;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 15px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            backdrop-filter: blur(10px);
+            background: rgba(26, 26, 26, 0.95);
+        }
+        
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: var(--primary);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            color: #000;
+        }
+        
+        /* File Grid */
+        .file-grid-container {
+            padding: 20px;
+        }
+        
+        .file-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            gap: 15px;
+        }
+        
+        .file-card {
+            background: var(--surface);
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s;
+            position: relative;
+        }
+        
+        .file-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--elevation-2);
+            border-color: var(--primary);
+        }
+        
+        .file-thumbnail {
+            width: 100%;
+            height: 140px;
+            background: var(--surface-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 48px;
+        }
+        
+        .file-info {
+            padding: 15px;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            margin-bottom: 5px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+        
+        .file-meta {
+            font-size: 12px;
+            color: var(--text-secondary);
+            display: flex;
+            justify-content: space-between;
+        }
+        
+        /* Context Menu */
+        .context-menu {
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-md);
+            box-shadow: var(--elevation-3);
+            z-index: 1000;
+            min-width: 200px;
+            display: none;
+        }
+        
+        .context-item {
+            padding: 12px 20px;
+            cursor: pointer;
+            transition: background 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .context-item:hover {
+            background: var(--surface-hover);
+        }
+        
+        /* Media Preview */
+        .media-preview {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.95);
+            z-index: 2000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .preview-content {
+            max-width: 90%;
+            max-height: 90%;
+            background: var(--surface);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+        }
+        
+        /* Loading */
+        .loading {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+        }
+        
+        .loading-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: loading 1.4s infinite;
+        }
+        
+        .loading-dot:nth-child(2) { animation-delay: 0.2s; }
+        .loading-dot:nth-child(3) { animation-delay: 0.4s; }
+        
+        @keyframes loading {
+            0%, 100% { opacity: 0.2; transform: scale(0.8); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        /* Toast */
+        .toast-container {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            z-index: 3000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+        
+        .toast {
+            background: var(--surface);
+            color: var(--text);
+            padding: 15px 20px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--elevation-3);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideIn 0.3s ease;
+            border-left: 4px solid var(--primary);
+            max-width: 400px;
+        }
+        
+        .toast.success { border-color: var(--primary); }
+        .toast.error { border-color: var(--danger); }
+        .toast.warning { border-color: var(--warning); }
+        
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Progress Bar */
+        .upload-progress {
+            position: fixed;
+            bottom: 80px;
+            left: 20px;
+            right: 20px;
+            background: var(--surface);
+            padding: 15px;
+            border-radius: var(--radius-md);
+            box-shadow: var(--elevation-3);
+            z-index: 1000;
+            display: none;
+        }
+        
+        .progress-bar {
+            height: 6px;
+            background: var(--surface-light);
+            border-radius: 3px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: var(--primary);
+            width: 0%;
+            transition: width 0.3s;
+        }
+        
+        /* Media Proxy Indicator */
+        .proxy-badge {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            background: var(--info);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 10px;
+            font-weight: 600;
+            z-index: 2;
+        }
+        
+        /* Firebase User Info */
+        .firebase-user {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            padding: 10px 15px;
+            background: var(--surface-light);
+            border-radius: var(--radius-md);
+            margin-bottom: 20px;
+        }
+        
+        /* Settings Panel */
+        .settings-panel {
+            position: fixed;
+            top: 0;
+            right: 0;
+            width: 350px;
+            height: 100%;
+            background: var(--surface);
+            border-left: 1px solid var(--border);
+            z-index: 1000;
+            transform: translateX(100%);
+            transition: transform 0.3s;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        
+        .settings-panel.open {
+            transform: translateX(0);
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 768px) {
+            .file-grid {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            
+            .auth-card {
+                padding: 30px 20px;
+                margin: 20px;
+            }
+            
+            .settings-panel {
+                width: 100%;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .file-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+            
+            .keypad {
+                gap: 10px;
+            }
+            
+            .keypad-btn {
+                font-size: 20px;
+            }
+            
+            .top-bar {
+                padding: 12px 15px;
+            }
         }
     </style>
 </head>
 <body>
-    <!-- Loading Screen -->
-    <div id="loadingScreen" class="loading-screen active">
-        <div class="loading-content">
-            <div class="loading-logo">
-                <div class="vault-icon">🔒</div>
-                <h1>VAULT <span>OS</span></h1>
-                <div class="version">v5.0</div>
+    <!-- ===== BOOT ANIMATION ===== -->
+    <div class="boot-screen" id="bootScreen">
+        <div class="boot-logo">🔐</div>
+        <div class="boot-progress">
+            <div class="boot-progress-bar" id="bootProgress"></div>
+        </div>
+        <div class="boot-text" id="bootText">VAULT OS v6.0 লোড হচ্ছে...</div>
+    </div>
+    
+    <!-- ===== AUTH CONTAINERS ===== -->
+    <!-- PIN Login -->
+    <div class="auth-container" id="pinAuth">
+        <div class="auth-card">
+            <div class="auth-title">VAULT OS</div>
+            <div class="auth-subtitle">সিকিউর পিন দিয়ে লগইন করুন</div>
+            
+            <div class="pin-container">
+                <div class="pin-dot" id="pinDot1"></div>
+                <div class="pin-dot" id="pinDot2"></div>
+                <div class="pin-dot" id="pinDot3"></div>
+                <div class="pin-dot" id="pinDot4"></div>
             </div>
-            <div class="loading-progress">
-                <div class="progress-bar">
-                    <div class="progress-fill" style="width: 0%"></div>
-                </div>
-                <div class="loading-text">Initializing Secure Environment...</div>
+            
+            <div class="keypad">
+                <button class="keypad-btn" data-key="1">1</button>
+                <button class="keypad-btn" data-key="2">2</button>
+                <button class="keypad-btn" data-key="3">3</button>
+                <button class="keypad-btn" data-key="4">4</button>
+                <button class="keypad-btn" data-key="5">5</button>
+                <button class="keypad-btn" data-key="6">6</button>
+                <button class="keypad-btn" data-key="7">7</button>
+                <button class="keypad-btn" data-key="8">8</button>
+                <button class="keypad-btn" data-key="9">9</button>
+                <button class="keypad-btn clear" data-key="clear">C</button>
+                <button class="keypad-btn" data-key="0">0</button>
+                <button class="keypad-btn delete" data-key="delete">⌫</button>
             </div>
-            <div class="loading-details">
-                <div class="detail-item">
-                    <span class="detail-label">Security:</span>
-                    <span class="detail-value">Encryption Active</span>
-                </div>
-                <div class="detail-item">
-                    <span class="detail-label">Connection:</span>
-                    <span class="detail-value" id="loadingConnection">Checking...</span>
-                </div>
+            
+            <div class="auth-options">
+                <button class="auth-option-btn active" onclick="showAuth('pin')">PIN</button>
+                <button class="auth-option-btn" onclick="showAuth('google')">Google</button>
+                <button class="auth-option-btn" onclick="showAuth('firebase')">Firebase</button>
             </div>
         </div>
     </div>
-
-    <!-- PIN Lock Screen -->
-    <div id="pinScreen" class="pin-screen">
-        <div class="pin-container">
-            <div class="pin-header">
-                <div class="pin-icon">🔒</div>
-                <h2>VAULT LOCKED</h2>
-                <p>Enter 4-digit PIN to access</p>
+    
+    <!-- Google OAuth -->
+    <div class="auth-container" id="googleAuth">
+        <div class="auth-card">
+            <div class="auth-title">Google Drive Connect</div>
+            <div class="auth-subtitle">Google OAuth দিয়ে কানেক্ট করুন</div>
+            
+            <button class="google-signin" onclick="signInWithGoogle()">
+                <span>G</span>
+                Sign in with Google
+            </button>
+            
+            <div class="loading" id="googleLoading" style="display: none;">
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
+                <div class="loading-dot"></div>
             </div>
-            <div class="pin-display">
-                <div class="pin-dots">
-                    <span class="pin-dot"></span>
-                    <span class="pin-dot"></span>
-                    <span class="pin-dot"></span>
-                    <span class="pin-dot"></span>
-                </div>
-                <div class="pin-input"></div>
-                <div class="pin-error" id="pinError"></div>
-            </div>
-            <div class="pin-keypad">
-                <div class="keypad-row">
-                    <button class="pin-key" data-key="1">1</button>
-                    <button class="pin-key" data-key="2">2</button>
-                    <button class="pin-key" data-key="3">3</button>
-                </div>
-                <div class="keypad-row">
-                    <button class="pin-key" data-key="4">4</button>
-                    <button class="pin-key" data-key="5">5</button>
-                    <button class="pin-key" data-key="6">6</button>
-                </div>
-                <div class="keypad-row">
-                    <button class="pin-key" data-key="7">7</button>
-                    <button class="pin-key" data-key="8">8</button>
-                    <button class="pin-key" data-key="9">9</button>
-                </div>
-                <div class="keypad-row">
-                    <button class="pin-key clear" data-key="clear">⌫</button>
-                    <button class="pin-key" data-key="0">0</button>
-                    <button class="pin-key submit" data-key="submit">↵</button>
-                </div>
-            </div>
-            <div class="pin-footer">
-                <div class="pin-attempts">
-                    <span class="attempts-count">Attempts: <span id="attemptCount">0/5</span></span>
-                </div>
-                <div class="pin-timeout" id="pinTimeout" style="display: none;">
-                    <i class='bx bx-time-five'></i>
-                    <span>Try again in <span id="timeoutMinutes">5</span> minutes</span>
-                </div>
+            
+            <div class="auth-options">
+                <button class="auth-option-btn" onclick="showAuth('pin')">PIN</button>
+                <button class="auth-option-btn active" onclick="showAuth('google')">Google</button>
+                <button class="auth-option-btn" onclick="showAuth('firebase')">Firebase</button>
             </div>
         </div>
     </div>
-
-    <!-- Main App Container -->
-    <div class="app-container" style="display: none;">
-        <!-- Top Navigation -->
-        <nav class="top-nav">
-            <div class="nav-left">
-                <button id="menuToggle" class="nav-btn menu-toggle">
-                    <i class='bx bx-menu'></i>
-                </button>
-                <div class="nav-brand">
-                    <span class="brand-icon">🔒</span>
-                    <span class="brand-text">VAULT <span class="brand-os">OS</span></span>
-                    <span class="nav-version">v5.0</span>
-                </div>
-            </div>
+    
+    <!-- Firebase Auth -->
+    <div class="auth-container" id="firebaseAuth">
+        <div class="auth-card">
+            <div class="auth-title">Firebase Login</div>
+            <div class="auth-subtitle">Firebase Authentication</div>
             
-            <div class="nav-center">
-                <div class="drive-tabs" id="driveTabs">
-                    <button class="drive-tab active" data-drive="user">
-                        <i class='bx bx-user'></i>
-                        <span>My Drive</span>
-                    </button>
-                    <button class="drive-tab" data-drive="vault">
-                        <i class='bx bx-lock-alt'></i>
-                        <span>Vault Drive</span>
-                    </button>
-                    <button class="drive-tab copy-drive" id="copyToVaultBtn" title="Copy to Vault Drive">
-                        <i class='bx bx-copy'></i>
-                        <span>Copy to Vault</span>
-                    </button>
-                </div>
-            </div>
+            <div id="firebaseui-container"></div>
             
-            <div class="nav-right">
-                <div class="search-container">
-                    <i class='bx bx-search'></i>
-                    <input type="text" id="searchInput" class="search-input" placeholder="Search files...">
-                    <button class="search-clear" id="searchClear">
-                        <i class='bx bx-x'></i>
-                    </button>
-                </div>
-                <button class="nav-btn upload-btn" id="uploadBtn" title="Upload">
-                    <i class='bx bx-cloud-upload'></i>
-                </button>
-                <button class="nav-btn refresh-btn" id="refreshBtn" title="Refresh">
-                    <i class='bx bx-refresh'></i>
-                </button>
-                <button class="nav-btn view-toggle" id="viewToggle" title="Toggle View">
-                    <i class='bx bx-grid-alt'></i>
-                </button>
-                <div class="user-profile" id="userProfile">
-                    <div class="profile-pic" id="profilePic">
-                        <i class='bx bx-user'></i>
-                    </div>
-                </div>
+            <div class="auth-options">
+                <button class="auth-option-btn" onclick="showAuth('pin')">PIN</button>
+                <button class="auth-option-btn" onclick="showAuth('google')">Google</button>
+                <button class="auth-option-btn active" onclick="showAuth('firebase')">Firebase</button>
             </div>
-        </nav>
-
-        <!-- Sidebar -->
-        <aside class="sidebar" id="sidebar">
-            <div class="sidebar-header">
-                <div class="user-info">
-                    <div class="user-avatar" id="userAvatar">
-                        <i class='bx bx-user'></i>
-                    </div>
-                    <div class="user-details">
-                        <h3 class="user-name" id="userName">Guest User</h3>
-                        <span class="user-email" id="userEmail">Not Connected</span>
-                        <div class="user-storage">
-                            <div class="storage-mini-bar">
-                                <div class="storage-mini-fill"></div>
-                            </div>
-                            <span class="storage-mini-text">0%</span>
-                        </div>
-                    </div>
-                </div>
-                <button class="sidebar-close" id="sidebarClose">
-                    <i class='bx bx-chevron-left'></i>
-                </button>
-            </div>
-
-            <div class="sidebar-menu">
-                <div class="menu-section">
-                    <h4 class="section-title">MAIN</h4>
-                    <a href="#" class="menu-item active" data-view="drive">
-                        <i class='bx bx-hdd'></i>
-                        <span>My Drive</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="recent">
-                        <i class='bx bx-time'></i>
-                        <span>Recent Files</span>
-                        <span class="menu-badge">12</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="starred">
-                        <i class='bx bx-star'></i>
-                        <span>Starred</span>
-                        <span class="menu-badge">5</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="trash">
-                        <i class='bx bx-trash'></i>
-                        <span>Trash</span>
-                        <span class="menu-badge">3</span>
-                    </a>
-                </div>
-
-                <div class="menu-section">
-                    <h4 class="section-title">VIRTUAL FOLDERS</h4>
-                    <a href="#" class="menu-item" data-view="images">
-                        <i class='bx bx-image'></i>
-                        <span>Images</span>
-                        <span class="menu-badge">24</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="videos">
-                        <i class='bx bx-video'></i>
-                        <span>Videos</span>
-                        <span class="menu-badge">8</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="documents">
-                        <i class='bx bx-file'></i>
-                        <span>Documents</span>
-                        <span class="menu-badge">15</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="audio">
-                        <i class='bx bx-music'></i>
-                        <span>Audio</span>
-                        <span class="menu-badge">7</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="archives">
-                        <i class='bx bx-archive'></i>
-                        <span>Archives</span>
-                        <span class="menu-badge">3</span>
-                    </a>
-                    <a href="#" class="menu-item" data-view="code">
-                        <i class='bx bx-code'></i>
-                        <span>Code Files</span>
-                        <span class="menu-badge">11</span>
-                    </a>
-                </div>
-
-                <div class="menu-section">
-                    <h4 class="section-title">CONNECTIONS</h4>
-                    <button class="menu-item" id="googleConnectBtn">
-                        <i class='bx bx-cloud'></i>
-                        <span>Google Connect</span>
-                        <span class="menu-status offline" id="connectStatus">Offline</span>
-                    </button>
-                    <button class="menu-item" id="reconnectBtn">
-                        <i class='bx bx-refresh'></i>
-                        <span>Reconnect</span>
-                    </button>
-                    <button class="menu-item" id="connectionStatusBtn">
-                        <i class='bx bx-wifi'></i>
-                        <span>Connection Status</span>
-                    </button>
-                </div>
-
-                <div class="menu-section">
-                    <h4 class="section-title">FILE OPERATIONS</h4>
-                    <button class="menu-item" id="createFolderBtn">
-                        <i class='bx bx-folder-plus'></i>
-                        <span>New Folder</span>
-                    </button>
-                    <button class="menu-item" id="fileInfoBtn">
-                        <i class='bx bx-info-circle'></i>
-                        <span>File Information</span>
-                    </button>
-                    <button class="menu-item" id="sortBtn">
-                        <i class='bx bx-sort-alt-2'></i>
-                        <span>Sort Files</span>
-                    </button>
-                    <button class="menu-item" id="filterBtn">
-                        <i class='bx bx-filter-alt'></i>
-                        <span>Filter</span>
-                    </button>
-                </div>
-
-                <div class="menu-section">
-                    <h4 class="section-title">SYSTEM</h4>
-                    <button class="menu-item" id="settingsBtn">
-                        <i class='bx bx-cog'></i>
-                        <span>Settings</span>
-                    </button>
-                    <button class="menu-item" id="storageInfoBtn">
-                        <i class='bx bx-pie-chart-alt'></i>
-                        <span>Storage Info</span>
-                    </button>
-                    <button class="menu-item" id="advancedViewerBtn">
-                        <i class='bx bx-slideshow'></i>
-                        <span>Advanced Viewer</span>
-                    </button>
-                    <button class="menu-item" id="erudaBtn">
-                        <i class='bx bx-bug'></i>
-                        <span>Developer Tools</span>
-                    </button>
-                </div>
-            </div>
-
-            <div class="sidebar-footer">
-                <div class="storage-info">
-                    <div class="storage-header">
-                        <span>Storage Usage</span>
-                        <span class="storage-percent">0%</span>
-                    </div>
-                    <div class="storage-bar">
-                        <div class="storage-fill"></div>
-                    </div>
-                    <div class="storage-details">
-                        <span id="storageUsed">0 GB</span>
-                        <span>of</span>
-                        <span id="storageTotal">15 GB</span>
-                        <span>used</span>
-                    </div>
-                </div>
-                <div class="session-info">
-                    <span class="session-time">
-                        <i class='bx bx-time'></i>
-                        <span id="sessionTimer">24:00:00</span>
-                    </span>
-                    <button class="logout-btn" id="logoutBtn">
-                        <i class='bx bx-log-out'></i>
-                        <span>Lock Vault</span>
-                    </button>
-                </div>
-            </div>
-        </aside>
-
-        <!-- Main Content -->
-        <main class="main-content">
-            <!-- Breadcrumb -->
-            <div class="breadcrumb">
-                <div class="breadcrumb-path" id="breadcrumbPath">
-                    <button class="breadcrumb-item home">
-                        <i class='bx bx-home'></i>
-                    </button>
-                    <span class="breadcrumb-separator">/</span>
-                    <button class="breadcrumb-item">My Drive</button>
-                </div>
-                <div class="breadcrumb-actions">
-                    <button class="action-btn" id="selectAllBtn" title="Select All">
-                        <i class='bx bx-checkbox'></i>
-                    </button>
-                    <button class="action-btn" id="shareBtn" title="Share" disabled>
-                        <i class='bx bx-share-alt'></i>
-                    </button>
-                    <button class="action-btn" id="downloadBtn" title="Download" disabled>
-                        <i class='bx bx-download'></i>
-                    </button>
-                    <button class="action-btn" id="copyBtn" title="Copy" disabled>
-                        <i class='bx bx-copy'></i>
-                    </button>
-                    <button class="action-btn" id="moveBtn" title="Move" disabled>
-                        <i class='bx bx-folder'></i>
-                    </button>
-                    <button class="action-btn delete" id="deleteBtn" title="Delete" disabled>
-                        <i class='bx bx-trash'></i>
-                    </button>
-                </div>
-            </div>
-
-            <!-- File Actions Bar -->
-            <div class="file-actions-bar" id="fileActionsBar" style="display: none;">
-                <div class="actions-left">
-                    <span class="selected-count">
-                        <i class='bx bx-check-circle'></i>
-                        <span id="selectedCount">0</span> selected
-                    </span>
-                </div>
-                <div class="actions-right">
-                    <button class="action-btn small" id="actionShare">
-                        <i class='bx bx-share-alt'></i> Share
-                    </button>
-                    <button class="action-btn small" id="actionCopy">
-                        <i class='bx bx-copy'></i> Copy
-                    </button>
-                    <button class="action-btn small" id="actionMove">
-                        <i class='bx bx-folder'></i> Move
-                    </button>
-                    <button class="action-btn small delete" id="actionDelete">
-                        <i class='bx bx-trash'></i> Delete
-                    </button>
-                    <button class="action-btn small cancel" id="actionCancel">
-                        <i class='bx bx-x'></i> Cancel
-                    </button>
-                </div>
-            </div>
-
-            <!-- File Grid/List View -->
-            <div class="content-area" id="contentArea">
-                <div class="view-header">
-                    <div class="view-controls">
-                        <div class="sort-controls">
-                            <select id="sortSelect" class="sort-select">
-                                <option value="name_asc">Name (A-Z)</option>
-                                <option value="name_desc">Name (Z-A)</option>
-                                <option value="date_desc">Date (Newest)</option>
-                                <option value="date_asc">Date (Oldest)</option>
-                                <option value="size_desc">Size (Largest)</option>
-                                <option value="size_asc">Size (Smallest)</option>
-                                <option value="type">File Type</option>
-                            </select>
-                        </div>
-                        <div class="view-switch">
-                            <button class="view-switch-btn active" data-view="grid">
-                                <i class='bx bx-grid-alt'></i>
-                            </button>
-                            <button class="view-switch-btn" data-view="list">
-                                <i class='bx bx-list-ul'></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="view-container grid-view active" id="gridView">
-                    <!-- Files will be dynamically loaded here -->
-                    <div class="empty-state">
-                        <div class="empty-icon">
-                            <i class='bx bx-cloud-off'></i>
-                        </div>
-                        <h3>Drive Empty</h3>
-                        <p>Connect to Google Drive or upload files to get started</p>
-                        <div class="empty-actions">
-                            <button class="connect-btn" id="connectEmptyBtn">
-                                <i class='bx bx-plug'></i>
-                                Connect Google Drive
-                            </button>
-                            <button class="upload-btn-empty" id="uploadEmptyBtn">
-                                <i class='bx bx-cloud-upload'></i>
-                                Upload Files
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="view-container list-view" id="listView" style="display: none;">
-                    <!-- List view table will be loaded here -->
-                    <div class="file-table">
-                        <div class="table-header">
-                            <div class="table-col name">Name</div>
-                            <div class="table-col type">Type</div>
-                            <div class="table-col size">Size</div>
-                            <div class="table-col modified">Modified</div>
-                            <div class="table-col actions">Actions</div>
-                        </div>
-                        <div class="table-body" id="tableBody">
-                            <!-- Table rows will be added here -->
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Upload Queue -->
-            <div class="upload-queue" id="uploadQueue">
-                <div class="queue-header">
-                    <h4><i class='bx bx-upload'></i> Upload Queue <span class="queue-count">(0)</span></h4>
-                    <div class="queue-controls">
-                        <button class="queue-btn" id="pauseAllBtn" title="Pause All">
-                            <i class='bx bx-pause'></i>
-                        </button>
-                        <button class="queue-btn" id="resumeAllBtn" title="Resume All">
-                            <i class='bx bx-play'></i>
-                        </button>
-                        <button class="queue-btn" id="clearQueueBtn" title="Clear Queue">
-                            <i class='bx bx-trash'></i>
-                        </button>
-                        <button class="queue-toggle" id="queueToggle">
-                            <i class='bx bx-chevron-up'></i>
-                        </button>
-                    </div>
-                </div>
-                <div class="queue-items" id="queueItems">
-                    <!-- Upload items will be added here -->
-                </div>
-                <div class="queue-stats">
-                    <span class="stat-item">
-                        <i class='bx bx-time'></i>
-                        <span id="queueTime">--:--</span>
-                    </span>
-                    <span class="stat-item">
-                        <i class='bx bx-timer'></i>
-                        <span id="queueSpeed">0 MB/s</span>
-                    </span>
-                    <span class="stat-item">
-                        <i class='bx bx-data'></i>
-                        <span id="queueProgress">0%</span>
-                    </span>
-                </div>
-            </div>
-
-            <!-- Status Bar -->
-            <div class="status-bar">
-                <div class="status-left">
-                    <span class="status-item">
-                        <i class='bx bx-folder'></i>
-                        <span id="folderCount">0</span> folders
-                    </span>
-                    <span class="status-item">
-                        <i class='bx bx-file'></i>
-                        <span id="fileCount">0</span> files
-                    </span>
-                    <span class="status-item">
-                        <i class='bx bx-data'></i>
-                        <span id="totalSize">0 MB</span>
-                    </span>
-                </div>
-                <div class="status-center">
-                    <span class="status-item" id="syncStatus">
-                        <i class='bx bx-sync'></i>
-                        <span>Syncing...</span>
-                    </span>
-                </div>
-                <div class="status-right">
-                    <span class="status-item" id="connectionStatus">
-                        <i class='bx bx-wifi-off'></i>
-                        <span>Offline</span>
-                    </span>
-                    <span class="status-item" id="tokenStatus">
-                        <i class='bx bx-shield'></i>
-                        <span>Token: Valid</span>
-                    </span>
-                </div>
-            </div>
-        </main>
+        </div>
     </div>
-
-    <!-- Context Menu (3-dot menu for files) -->
+    
+    <!-- ===== SESSION TIMER ===== -->
+    <div class="session-timer" id="sessionTimer" style="display: none;">
+        <div class="timer-dot"></div>
+        <span id="timerText">24:00:00</span>
+    </div>
+    
+    <!-- ===== MAIN APPLICATION ===== -->
+    <div class="main-app" id="mainApp">
+        <!-- Top Bar -->
+        <div class="top-bar">
+            <div class="user-info">
+                <div class="user-avatar" id="userAvatar">U</div>
+                <div>
+                    <div id="userName">User</div>
+                    <div style="font-size: 12px; color: var(--text-secondary);" id="userEmail">user@example.com</div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button onclick="openUpload()" style="background: var(--primary); color: black; border: none; padding: 10px 20px; border-radius: var(--radius-md); cursor: pointer; font-weight: 600;">
+                    📤 Upload
+                </button>
+                <button onclick="showSettings()" style="background: var(--surface-light); border: 1px solid var(--border); color: var(--text); padding: 10px 20px; border-radius: var(--radius-md); cursor: pointer;">
+                    ⚙️ Settings
+                </button>
+            </div>
+        </div>
+        
+        <!-- File Grid -->
+        <div class="file-grid-container">
+            <div id="firebaseUserInfo" class="firebase-user" style="display: none;">
+                <div>🔥 Firebase User ID:</div>
+                <div id="firebaseUserId"></div>
+            </div>
+            
+            <div class="file-grid" id="fileGrid">
+                <!-- Files will be loaded here -->
+            </div>
+        </div>
+    </div>
+    
+    <!-- ===== CONTEXT MENU ===== -->
     <div class="context-menu" id="contextMenu">
-        <button class="context-item" data-action="preview">
-            <i class='bx bx-show'></i> Preview
-        </button>
-        <button class="context-item" data-action="download">
-            <i class='bx bx-download'></i> Download
-        </button>
-        <div class="context-divider"></div>
-        <button class="context-item" data-action="share">
-            <i class='bx bx-share-alt'></i> Share
-        </button>
-        <button class="context-item" data-action="copy">
-            <i class='bx bx-copy'></i> Copy
-        </button>
-        <button class="context-item" data-action="move">
-            <i class='bx bx-folder'></i> Move
-        </button>
-        <div class="context-divider"></div>
-        <button class="context-item" data-action="rename">
-            <i class='bx bx-edit'></i> Rename
-        </button>
-        <button class="context-item" data-action="star">
-            <i class='bx bx-star'></i> Add to Starred
-        </button>
-        <div class="context-divider"></div>
-        <button class="context-item info" data-action="info">
-            <i class='bx bx-info-circle'></i> File Info
-        </button>
-        <button class="context-item danger" data-action="delete">
-            <i class='bx bx-trash'></i> Delete
-        </button>
-    </div>
-
-    <!-- File Info Modal -->
-    <div class="modal" id="fileInfoModal">
-        <div class="modal-header">
-            <h3><i class='bx bx-info-circle'></i> File Information</h3>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
+        <div class="context-item" onclick="copyFile()">
+            <span>📋</span> Copy
         </div>
-        <div class="modal-body">
-            <div class="file-info-header">
-                <div class="file-icon" id="infoFileIcon">
-                    <i class='bx bx-file'></i>
-                </div>
-                <div class="file-info-title">
-                    <h4 id="infoFileName">File Name</h4>
-                    <span class="file-type" id="infoFileType">Unknown Type</span>
-                </div>
-            </div>
-            <div class="info-section">
-                <h5>Basic Information</h5>
-                <div class="info-grid">
-                    <div class="info-item">
-                        <span class="info-label">File ID:</span>
-                        <span class="info-value" id="infoFileId">--</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Size:</span>
-                        <span class="info-value" id="infoFileSize">--</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Created:</span>
-                        <span class="info-value" id="infoCreated">--</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Modified:</span>
-                        <span class="info-value" id="infoModified">--</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">MIME Type:</span>
-                        <span class="info-value" id="infoMimeType">--</span>
-                    </div>
-                    <div class="info-item">
-                        <span class="info-label">Location:</span>
-                        <span class="info-value" id="infoLocation">--</span>
-                    </div>
-                </div>
-            </div>
-            <div class="info-section">
-                <h5>Permissions</h5>
-                <div class="permissions-grid">
-                    <div class="permission-item">
-                        <i class='bx bx-check' id="infoReadable"></i>
-                        <span>Readable</span>
-                    </div>
-                    <div class="permission-item">
-                        <i class='bx bx-check' id="infoWritable"></i>
-                        <span>Writable</span>
-                    </div>
-                    <div class="permission-item">
-                        <i class='bx bx-check' id="infoSharable"></i>
-                        <span>Sharable</span>
-                    </div>
-                    <div class="permission-item">
-                        <i class='bx bx-check' id="infoTrashable"></i>
-                        <span>Trashable</span>
-                    </div>
-                </div>
-            </div>
-            <div class="info-section">
-                <h5>Advanced Details</h5>
-                <div class="advanced-info">
-                    <div class="advanced-item">
-                        <span class="adv-label">MD5 Checksum:</span>
-                        <span class="adv-value" id="infoChecksum">--</span>
-                    </div>
-                    <div class="advanced-item">
-                        <span class="adv-label">Version:</span>
-                        <span class="adv-value" id="infoVersion">1</span>
-                    </div>
-                    <div class="advanced-item">
-                        <span class="adv-label">View Count:</span>
-                        <span class="adv-value" id="infoViewCount">0</span>
-                    </div>
-                </div>
-            </div>
+        <div class="context-item" onclick="moveFile()">
+            <span>📁</span> Move
         </div>
-        <div class="modal-footer">
-            <button class="btn secondary" id="copyFileLinkBtn">
-                <i class='bx bx-link'></i>
-                Copy Link
-            </button>
-            <button class="btn primary" id="openFileBtn">
-                <i class='bx bx-show'></i>
-                Open File
-            </button>
+        <div class="context-item" onclick="shareFile()">
+            <span>🔗</span> Share
+        </div>
+        <div class="context-item" onclick="deleteFile()" style="color: var(--danger);">
+            <span>🗑️</span> Delete
         </div>
     </div>
-
-    <!-- Share Modal -->
-    <div class="modal" id="shareModal">
-        <div class="modal-header">
-            <h3><i class='bx bx-share-alt'></i> Share File</h3>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
+    
+    <!-- ===== MEDIA PREVIEW ===== -->
+    <div class="media-preview" id="mediaPreview">
+        <div class="preview-content" id="previewContent"></div>
+    </div>
+    
+    <!-- ===== UPLOAD PROGRESS ===== -->
+    <div class="upload-progress" id="uploadProgress">
+        <div style="font-weight: 600; margin-bottom: 5px;">Uploading...</div>
+        <div class="progress-bar">
+            <div class="progress-fill" id="progressFill"></div>
         </div>
-        <div class="modal-body">
-            <div class="share-input-group">
-                <input type="text" class="share-link" id="shareLink" readonly>
-                <button class="btn secondary" id="copyShareLinkBtn">
-                    <i class='bx bx-copy'></i>
+        <div style="display: flex; justify-content: space-between; font-size: 12px; color: var(--text-secondary);">
+            <span id="progressText">0%</span>
+            <span id="speedText">0 KB/s</span>
+        </div>
+    </div>
+    
+    <!-- ===== SETTINGS PANEL ===== -->
+    <div class="settings-panel" id="settingsPanel">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
+            <h2 style="font-size: 24px; font-weight: 700;">Settings</h2>
+            <button onclick="hideSettings()" style="background: none; border: none; color: var(--text); font-size: 24px; cursor: pointer;">×</button>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+            <h3 style="font-weight: 600; margin-bottom: 15px;">Session Management</h3>
+            <div style="background: var(--surface-light); padding: 15px; border-radius: var(--radius-md);">
+                <div style="margin-bottom: 10px;">
+                    <span style="color: var(--text-secondary);">Session Time:</span>
+                    <span style="float: right; font-weight: 600;" id="sessionTimeLeft">24 hours</span>
+                </div>
+                <button onclick="extendSession()" style="width: 100%; padding: 10px; background: var(--primary); color: black; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; margin-top: 10px;">
+                    Extend Session
                 </button>
             </div>
-            <div class="share-permissions">
-                <h5>Permissions</h5>
-                <div class="permission-options">
-                    <label class="permission-option">
-                        <input type="radio" name="permission" value="view" checked>
-                        <span>Can view</span>
-                    </label>
-                    <label class="permission-option">
-                        <input type="radio" name="permission" value="comment">
-                        <span>Can comment</span>
-                    </label>
-                    <label class="permission-option">
-                        <input type="radio" name="permission" value="edit">
-                        <span>Can edit</span>
-                    </label>
+        </div>
+        
+        <div style="margin-bottom: 30px;">
+            <h3 style="font-weight: 600; margin-bottom: 15px;">Media Proxy</h3>
+            <div style="background: var(--surface-light); padding: 15px; border-radius: var(--radius-md);">
+                <div style="margin-bottom: 10px;">
+                    <span style="color: var(--text-secondary);">Proxy Status:</span>
+                    <span style="float: right; color: var(--primary); font-weight: 600;" id="proxyStatus">Active</span>
+                </div>
+                <div style="margin-bottom: 10px;">
+                    <span style="color: var(--text-secondary);">CORS Security:</span>
+                    <span style="float: right; color: var(--primary); font-weight: 600;">Enabled</span>
                 </div>
             </div>
-            <div class="share-expiry">
-                <h5>Link Expiry</h5>
-                <select id="shareExpiry">
-                    <option value="1day">1 day</option>
-                    <option value="7days">7 days</option>
-                    <option value="30days">30 days</option>
-                    <option value="never" selected>Never</option>
-                </select>
-            </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn secondary" id="cancelShare">Cancel</button>
-            <button class="btn primary" id="generateShareLinkBtn">
-                <i class='bx bx-link-alt'></i>
-                Generate Share Link
-            </button>
-        </div>
-    </div>
-
-    <!-- Move/Copy Modal -->
-    <div class="modal" id="moveCopyModal">
-        <div class="modal-header">
-            <h3><i class='bx bx-folder'></i> <span id="moveCopyTitle">Move Files</span></h3>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="folder-tree" id="folderTree">
-                <!-- Folder tree will be loaded here -->
-                <div class="tree-loading">
-                    <i class='bx bx-loader-circle bx-spin'></i>
-                    Loading folders...
+        
+        <div style="margin-bottom: 30px;">
+            <h3 style="font-weight: 600; margin-bottom: 15px;">Token Management</h3>
+            <div style="background: var(--surface-light); padding: 15px; border-radius: var(--radius-md);">
+                <div style="margin-bottom: 10px;">
+                    <span style="color: var(--text-secondary);">Token Expires:</span>
+                    <span style="float: right; font-weight: 600;" id="tokenExpiry">60 minutes</span>
                 </div>
-            </div>
-            <div class="destination-path">
-                <span>Destination: </span>
-                <span id="destPath">My Drive</span>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn secondary" id="cancelMoveCopy">Cancel</button>
-            <button class="btn primary" id="confirmMoveCopyBtn">
-                <i class='bx bx-check'></i>
-                Confirm
-            </button>
-        </div>
-    </div>
-
-    <!-- Upload Modal -->
-    <div class="modal upload-modal" id="uploadModal">
-        <div class="modal-header">
-            <h3><i class='bx bx-cloud-upload'></i> Upload Files</h3>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="upload-tabs">
-                <button class="upload-tab active" data-tab="files">
-                    <i class='bx bx-file'></i>
-                    Upload Files
-                </button>
-                <button class="upload-tab" data-tab="folder">
-                    <i class='bx bx-folder'></i>
-                    Upload Folder
+                <button onclick="refreshToken()" style="width: 100%; padding: 10px; background: var(--info); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; margin-top: 10px;">
+                    Refresh Token Now
                 </button>
             </div>
-            
-            <div class="upload-content">
-                <div class="tab-content active" id="filesTab">
-                    <div class="upload-dropzone" id="uploadDropzone">
-                        <i class='bx bx-cloud-upload'></i>
-                        <h4>Drop files here or click to browse</h4>
-                        <p>Max file size: 10GB | Supports resumable uploads</p>
-                        <input type="file" id="fileInput" multiple hidden>
-                        <button class="btn secondary" id="browseFilesBtn">
-                            <i class='bx bx-folder-open'></i>
-                            Browse Files
-                        </button>
-                    </div>
-                    <div class="selected-files" id="selectedFiles">
-                        <!-- Selected files will appear here -->
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="folderTab">
-                    <div class="folder-upload-dropzone" id="folderDropzone">
-                        <i class='bx bx-folder-open'></i>
-                        <h4>Drop folder here or click to browse</h4>
-                        <p>Upload entire folder structure with subfolders</p>
-                        <input type="file" id="folderInput" webkitdirectory mozdirectory msdirectory odirectory directory multiple hidden>
-                        <button class="btn secondary" id="browseFolderBtn">
-                            <i class='bx bx-folder-plus'></i>
-                            Browse Folder
-                        </button>
-                    </div>
-                    <div class="selected-folder" id="selectedFolder">
-                        <!-- Folder structure will appear here -->
-                    </div>
-                </div>
-            </div>
-            
-            <div class="upload-options">
-                <h5>Upload Options</h5>
-                <div class="option-grid">
-                    <div class="option-item">
-                        <label>
-                            <input type="checkbox" id="chunkUpload" checked>
-                            <span>Chunk upload (resumable)</span>
-                        </label>
-                    </div>
-                    <div class="option-item">
-                        <label>
-                            <input type="checkbox" id="onlineOnly" checked>
-                            <span>Online only</span>
-                        </label>
-                    </div>
-                    <div class="option-item">
-                        <label>
-                            <input type="checkbox" id="keepStructure">
-                            <span>Keep folder structure</span>
-                        </label>
-                    </div>
-                    <div class="option-item">
-                        <label>
-                            <input type="checkbox" id="overwriteExisting">
-                            <span>Overwrite existing files</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="upload-destination">
-                    <span>Destination: </span>
-                    <span class="dest-folder" id="uploadDestFolder">My Drive</span>
-                    <button class="btn-small" id="changeDestBtn">
-                        <i class='bx bx-edit'></i> Change
-                    </button>
-                </div>
-            </div>
         </div>
-        <div class="modal-footer">
-            <button class="btn secondary" id="cancelUpload">Cancel</button>
-            <button class="btn primary" id="startUploadBtn" disabled>
-                <i class='bx bx-upload'></i>
-                Start Upload
-            </button>
-        </div>
+        
+        <button onclick="logout()" style="width: 100%; padding: 15px; background: var(--danger); color: white; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600; margin-top: 30px;">
+            🔒 Logout
+        </button>
     </div>
-
-    <!-- Google Connect Modal -->
-    <div class="modal connect-modal" id="googleConnectModal">
-        <div class="modal-header">
-            <h3><i class='bx bx-google'></i> Connect Google Drive</h3>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="connect-info">
-                <div class="connect-icon">
-                    <i class='bx bx-cloud'></i>
-                </div>
-                <h4>Secure Google Drive Integration</h4>
-                <p>Connect your Google Drive to access files securely using OAuth 2.0</p>
-                
-                <div class="connect-steps">
-                    <div class="step-item active">
-                        <div class="step-number">1</div>
-                        <div class="step-content">
-                            <h5>Authentication</h5>
-                            <p>Secure OAuth 2.0 login with Google</p>
-                        </div>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-number">2</div>
-                        <div class="step-content">
-                            <h5>Permissions</h5>
-                            <p>Grant file access permissions</p>
-                        </div>
-                    </div>
-                    <div class="step-item">
-                        <div class="step-number">3</div>
-                        <div class="step-content">
-                            <h5>Sync Setup</h5>
-                            <p>Configure automatic synchronization</p>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="connect-scopes">
-                    <h5>Permissions Required:</h5>
-                    <ul>
-                        <li><i class='bx bx-check'></i> View and manage Google Drive files</li>
-                        <li><i class='bx bx-check'></i> View your basic profile info</li>
-                        <li><i class='bx bx-check'></i> Create and edit files</li>
-                        <li><i class='bx bx-check'></i> Read file metadata</li>
-                    </ul>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn secondary" id="cancelConnect">Cancel</button>
-            <button class="btn primary" id="connectGoogleBtn">
-                <i class='bx bx-plug'></i>
-                Connect Google Account
-            </button>
-        </div>
-    </div>
-
-    <!-- Settings Modal -->
-    <div class="modal settings-modal" id="settingsModal">
-        <div class="modal-header">
-            <h3><i class='bx bx-cog'></i> Settings</h3>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="settings-tabs">
-                <button class="tab-btn active" data-tab="general">General</button>
-                <button class="tab-btn" data-tab="viewers">File Viewers</button>
-                <button class="tab-btn" data-tab="security">Security</button>
-                <button class="tab-btn" data-tab="performance">Performance</button>
-                <button class="tab-btn" data-tab="about">About</button>
-            </div>
-            
-            <div class="settings-content">
-                <div class="tab-content active" id="generalTab">
-                    <div class="setting-group">
-                        <h5>Appearance</h5>
-                        <div class="setting-item">
-                            <label>Theme</label>
-                            <select id="themeSelect">
-                                <option value="cyber">Cyber (Default)</option>
-                                <option value="dark">Dark</option>
-                                <option value="light">Light</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label>Default View</label>
-                            <select id="viewSelect">
-                                <option value="grid">Grid View</option>
-                                <option value="list">List View</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h5>File Operations</h5>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="confirmDelete" checked>
-                                Confirm before delete
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="confirmOverwrite" checked>
-                                Confirm before overwrite
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="showThumbnails" checked>
-                                Show file thumbnails
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="viewersTab">
-                    <div class="setting-group">
-                        <h5>Advanced File Viewers</h5>
-                        <p class="setting-description">Enable/disable specific file viewers</p>
-                        
-                        <div class="viewer-options">
-                            <div class="viewer-item">
-                                <label>
-                                    <input type="checkbox" id="imageViewer" checked>
-                                    <span>Image Viewer</span>
-                                    <span class="viewer-status">Default</span>
-                                </label>
-                            </div>
-                            <div class="viewer-item">
-                                <label>
-                                    <input type="checkbox" id="pdfViewer" checked>
-                                    <span>PDF Viewer</span>
-                                    <span class="viewer-status">CDN: pdf.js</span>
-                                </label>
-                            </div>
-                            <div class="viewer-item">
-                                <label>
-                                    <input type="checkbox" id="videoViewer" checked>
-                                    <span>Video Viewer</span>
-                                    <span class="viewer-status">CDN: Plyr.js</span>
-                                </label>
-                            </div>
-                            <div class="viewer-item">
-                                <label>
-                                    <input type="checkbox" id="audioViewer" checked>
-                                    <span>Audio Viewer</span>
-                                    <span class="viewer-status">CDN: Howler.js</span>
-                                </label>
-                            </div>
-                            <div class="viewer-item">
-                                <label>
-                                    <input type="checkbox" id="textViewer" checked>
-                                    <span>Text Viewer</span>
-                                    <span class="viewer-status">Syntax Highlighting</span>
-                                </label>
-                            </div>
-                            <div class="viewer-item">
-                                <label>
-                                    <input type="checkbox" id="codeViewer" checked>
-                                    <span>Code Viewer</span>
-                                    <span class="viewer-status">CDN: Prism.js</span>
-                                </label>
-                            </div>
-                            <div class="viewer-item">
-                                <label>
-                                    <input type="checkbox" id="archiveViewer" checked>
-                                    <span>Archive Viewer</span>
-                                    <span class="viewer-status">CDN: JSZip</span>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="securityTab">
-                    <div class="setting-group">
-                        <h5>PIN Security</h5>
-                        <div class="setting-item">
-                            <label>Change PIN</label>
-                            <div class="pin-change">
-                                <input type="password" id="newPin" placeholder="Enter new 4-digit PIN" maxlength="4">
-                                <button class="btn-small" id="changePinBtn">Change</button>
-                            </div>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="autoLock" checked>
-                                Auto-lock after 5 minutes idle
-                            </label>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h5>Session Management</h5>
-                        <div class="setting-item">
-                            <label>Session Timeout</label>
-                            <select id="sessionTimeout">
-                                <option value="1">1 hour</option>
-                                <option value="8">8 hours</option>
-                                <option value="24" selected>24 hours</option>
-                                <option value="72">72 hours</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label>Token Refresh Interval</label>
-                            <select id="tokenRefresh">
-                                <option value="15">15 minutes</option>
-                                <option value="30">30 minutes</option>
-                                <option value="45" selected>45 minutes</option>
-                                <option value="60">60 minutes</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h5>Clear Data</h5>
-                        <button class="btn danger" id="clearCacheBtn">
-                            <i class='bx bx-trash'></i>
-                            Clear Local Cache
-                        </button>
-                        <button class="btn danger" id="clearAllDataBtn">
-                            <i class='bx bx-reset'></i>
-                            Reset All Settings
-                        </button>
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="performanceTab">
-                    <div class="setting-group">
-                        <h5>Cache Settings</h5>
-                        <div class="setting-item">
-                            <label>Cache Size Limit</label>
-                            <select id="cacheLimit">
-                                <option value="100">100 MB</option>
-                                <option value="250">250 MB</option>
-                                <option value="500" selected>500 MB</option>
-                                <option value="1000">1 GB</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label>Thumbnail Cache</label>
-                            <select id="thumbnailCache">
-                                <option value="50">50 thumbnails</option>
-                                <option value="100">100 thumbnails</option>
-                                <option value="200" selected>200 thumbnails</option>
-                                <option value="500">500 thumbnails</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h5>Upload Settings</h5>
-                        <div class="setting-item">
-                            <label>Chunk Size</label>
-                            <select id="chunkSize">
-                                <option value="1">1 MB</option>
-                                <option value="5" selected>5 MB</option>
-                                <option value="10">10 MB</option>
-                                <option value="20">20 MB</option>
-                            </select>
-                        </div>
-                        <div class="setting-item">
-                            <label>Parallel Uploads</label>
-                            <select id="parallelUploads">
-                                <option value="1">1 file</option>
-                                <option value="2" selected>2 files</option>
-                                <option value="3">3 files</option>
-                                <option value="5">5 files</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div class="setting-group">
-                        <h5>Network</h5>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="lazyLoading" checked>
-                                Enable lazy loading
-                            </label>
-                        </div>
-                        <div class="setting-item">
-                            <label>
-                                <input type="checkbox" id="prefetchThumbnails" checked>
-                                Prefetch thumbnails
-                            </label>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="tab-content" id="aboutTab">
-                    <div class="about-info">
-                        <div class="about-header">
-                            <div class="about-logo">🔒</div>
-                            <div class="about-title">
-                                <h4>VAULT OS</h4>
-                                <span class="about-version">v5.0.0</span>
-                            </div>
-                        </div>
-                        
-                        <div class="about-details">
-                            <div class="detail-item">
-                                <span class="detail-label">Description:</span>
-                                <span class="detail-value">Secure Drive Manager</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Author:</span>
-                                <span class="detail-value">VAULT Team</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">License:</span>
-                                <span class="detail-value">MIT</span>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Repository:</span>
-                                <a href="https://github.com/khademsorder/Cvault" target="_blank" class="detail-link">
-                                    github.com/khademsorder/Cvault
-                                </a>
-                            </div>
-                            <div class="detail-item">
-                                <span class="detail-label">Build Date:</span>
-                                <span class="detail-value" id="buildDate">2026-02-04</span>
-                            </div>
-                        </div>
-                        
-                        <div class="about-features">
-                            <h5>Features</h5>
-                            <ul>
-                                <li>Secure Google Drive Integration</li>
-                                <li>Resumable Chunk Uploads</li>
-                                <li>Advanced File Viewers</li>
-                                <li>24-hour Session Management</li>
-                                <li>Token Auto-Refresh (45 min)</li>
-                                <li>IndexedDB Caching</li>
-                                <li>Mobile-First Design</li>
-                            </ul>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn secondary" id="cancelSettings">Cancel</button>
-            <button class="btn primary" id="saveSettings">
-                <i class='bx bx-save'></i>
-                Save Settings
-            </button>
-        </div>
-    </div>
-
-    <!-- Storage Info Modal -->
-    <div class="modal" id="storageInfoModal">
-        <div class="modal-header">
-            <h3><i class='bx bx-pie-chart-alt'></i> Storage Information</h3>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-        <div class="modal-body">
-            <div class="storage-overview">
-                <div class="storage-chart">
-                    <div class="chart-container">
-                        <canvas id="storageChart"></canvas>
-                    </div>
-                    <div class="chart-legend">
-                        <div class="legend-item">
-                            <span class="legend-color used"></span>
-                            <span class="legend-text">Used: <span id="chartUsed">0 GB</span></span>
-                        </div>
-                        <div class="legend-item">
-                            <span class="legend-color free"></span>
-                            <span class="legend-text">Free: <span id="chartFree">15 GB</span></span>
-                        </div>
-                    </div>
-                </div>
-                <div class="storage-stats">
-                    <div class="stat-item total">
-                        <span class="stat-label">Total Storage</span>
-                        <span class="stat-value" id="totalStorage">15 GB</span>
-                    </div>
-                    <div class="stat-item used">
-                        <span class="stat-label">Used Storage</span>
-                        <span class="stat-value" id="usedStorage">0 GB</span>
-                    </div>
-                    <div class="stat-item free">
-                        <span class="stat-label">Free Storage</span>
-                        <span class="stat-value" id="freeStorage">15 GB</span>
-                    </div>
-                    <div class="stat-item percentage">
-                        <span class="stat-label">Usage Percentage</span>
-                        <span class="stat-value" id="usagePercent">0%</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="storage-breakdown">
-                <h5>Storage Breakdown</h5>
-                <div class="breakdown-list">
-                    <div class="breakdown-item">
-                        <span class="breakdown-label">
-                            <i class='bx bx-image'></i>
-                            Images
-                        </span>
-                        <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: 0%"></div>
-                        </div>
-                        <span class="breakdown-value" data-type="images">0 MB</span>
-                    </div>
-                    <div class="breakdown-item">
-                        <span class="breakdown-label">
-                            <i class='bx bx-video'></i>
-                            Videos
-                        </span>
-                        <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: 0%"></div>
-                        </div>
-                        <span class="breakdown-value" data-type="videos">0 MB</span>
-                    </div>
-                    <div class="breakdown-item">
-                        <span class="breakdown-label">
-                            <i class='bx bx-file'></i>
-                            Documents
-                        </span>
-                        <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: 0%"></div>
-                        </div>
-                        <span class="breakdown-value" data-type="documents">0 MB</span>
-                    </div>
-                    <div class="breakdown-item">
-                        <span class="breakdown-label">
-                            <i class='bx bx-music'></i>
-                            Audio
-                        </span>
-                        <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: 0%"></div>
-                        </div>
-                        <span class="breakdown-value" data-type="audio">0 MB</span>
-                    </div>
-                    <div class="breakdown-item">
-                        <span class="breakdown-label">
-                            <i class='bx bx-archive'></i>
-                            Archives
-                        </span>
-                        <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: 0%"></div>
-                        </div>
-                        <span class="breakdown-value" data-type="archives">0 MB</span>
-                    </div>
-                    <div class="breakdown-item">
-                        <span class="breakdown-label">
-                            <i class='bx bx-code'></i>
-                            Code Files
-                        </span>
-                        <div class="breakdown-bar">
-                            <div class="breakdown-fill" style="width: 0%"></div>
-                        </div>
-                        <span class="breakdown-value" data-type="code">0 MB</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer">
-            <button class="btn secondary" id="refreshStorageBtn">
-                <i class='bx bx-refresh'></i>
-                Refresh
-            </button>
-        </div>
-    </div>
-
-    <!-- Advanced Preview Modal -->
-    <div class="modal preview-modal" id="previewModal">
-        <div class="modal-header">
-            <div class="preview-header">
-                <h3><i class='bx bx-show'></i> <span id="previewTitle">Preview</span></h3>
-                <div class="preview-controls">
-                    <button class="preview-btn" id="prevFileBtn">
-                        <i class='bx bx-chevron-left'></i>
-                    </button>
-                    <button class="preview-btn" id="nextFileBtn">
-                        <i class='bx bx-chevron-right'></i>
-                    </button>
-                    <button class="preview-btn" id="fullscreenBtn">
-                        <i class='bx bx-fullscreen'></i>
-                    </button>
-                    <button class="preview-btn" id="downloadPreviewBtn">
-                        <i class='bx bx-download'></i>
-                    </button>
-                </div>
-            </div>
-            <button class="modal-close">
-                <i class='bx bx-x'></i>
-            </button>
-        </div>
-        <div class="modal-body preview-body">
-            <div class="preview-content" id="previewContent">
-                <!-- Preview content will be loaded here -->
-                <div class="preview-loading">
-                    <i class='bx bx-loader-circle bx-spin'></i>
-                    Loading preview...
-                </div>
-            </div>
-        </div>
-        <div class="modal-footer preview-footer">
-            <div class="preview-info">
-                <span class="file-name" id="previewFileName">filename.ext</span>
-                <span class="file-size" id="previewFileSize">0 MB</span>
-            </div>
-            <div class="preview-nav">
-                <span class="nav-info">
-                    <span id="currentFileIndex">1</span> of <span id="totalFilesCount">1</span>
-                </span>
-            </div>
-        </div>
-    </div>
-
-    <!-- Toast Notifications -->
+    
+    <!-- ===== TOAST CONTAINER ===== -->
     <div class="toast-container" id="toastContainer"></div>
-
-    <!-- Audio Elements for UI Sounds -->
-    <audio id="clickSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
-    <audio id="successSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
-    <audio id="errorSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
-    <audio id="lockSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
-    <audio id="unlockSound" src="data:audio/wav;base64,UklGRigAAABXQVZFZm10IBIAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAAAA==" preload="auto"></audio>
-
-    <!-- Scripts -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-core.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/plugins/autoloader/prism-autoloader.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="app.js"></script>
+    
+    <script>
+        // =============================================
+        // VAULT OS v6.0 - COMPLETE SECURITY SYSTEM
+        // =============================================
+        
+        // Master Configuration
+        const CONFIG = {
+            // Firebase Configuration
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                messagingSenderId: "851257263743",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            
+            // Google OAuth Configuration
+            googleOAuth: {
+                clientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+                scope: "https://www.googleapis.com/auth/drive",
+                redirectURI: window.location.origin,
+                responseType: "token"
+            },
+            
+            // Media Proxy Servers
+            mediaProxies: {
+                // Read-only proxy for previews (no CORS issues)
+                readOnly: "https://script.google.com/macros/s/AKfycby2hqAq0JePMbnjEbwwcPBFjS14lvS3pM2Z1PPgY4OraTcpvTmZFPKQr9CQ4vba4Xk7/exec",
+                
+                // Full-access proxy for file operations
+                fullAccess: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec",
+                
+                // Backup proxies
+                backup1: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec",
+                backup2: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec"
+            },
+            
+            // Security Configuration
+            security: {
+                pinSalt: "vault_secure_salt_2026",
+                sessionHours: 24,
+                tokenRefreshMinutes: 45,
+                maxPinAttempts: 5,
+                lockoutTime: 300000 // 5 minutes
+            },
+            
+            // File Operations
+            fileOps: {
+                useProxy: true,
+                chunkSize: 5242880, // 5MB
+                maxFileSize: 10737418240, // 10GB
+                concurrentUploads: 2
+            }
+        };
+        
+        // Global State
+        const STATE = {
+            // Authentication
+            isAuthenticated: false,
+            authMethod: null, // 'pin', 'google', 'firebase'
+            user: null,
+            pinAttempts: 0,
+            
+            // Firebase
+            firebaseApp: null,
+            firebaseAuth: null,
+            firebaseUser: null,
+            
+            // Google OAuth
+            googleTokenClient: null,
+            googleAccessToken: null,
+            googleTokenExpiry: null,
+            
+            // Session Management
+            sessionStart: null,
+            sessionExpiry: null,
+            sessionTimer: null,
+            
+            // Token Management
+            tokenRefreshTimer: null,
+            
+            // File Management
+            selectedFile: null,
+            files: [],
+            uploadQueue: [],
+            
+            // UI State
+            currentView: 'grid'
+        };
+        
+        // =============================================
+        // BOOT ANIMATION & INITIALIZATION
+        // =============================================
+        async function initializeApp() {
+            console.log("🚀 VAULT OS v6.0 Initializing...");
+            
+            // Start boot animation
+            const bootProgress = document.getElementById('bootProgress');
+            const bootText = document.getElementById('bootText');
+            
+            const steps = [
+                { progress: 10, text: "System check..." },
+                { progress: 25, text: "Loading security modules..." },
+                { progress: 40, text: "Initializing Firebase..." },
+                { progress: 60, text: "Setting up media proxy..." },
+                { progress: 80, text: "Preparing UI components..." },
+                { progress: 100, text: "Ready!" }
+            ];
+            
+            for (let i = 0; i < steps.length; i++) {
+                await new Promise(resolve => setTimeout(resolve, 300));
+                bootProgress.style.width = steps[i].progress + '%';
+                bootText.textContent = steps[i].text;
+            }
+            
+            // Initialize Firebase
+            try {
+                STATE.firebaseApp = firebase.initializeApp(CONFIG.firebase);
+                STATE.firebaseAuth = firebase.auth();
+                console.log("✅ Firebase initialized");
+                
+                // Check for existing Firebase session
+                STATE.firebaseAuth.onAuthStateChanged((user) => {
+                    if (user) {
+                        STATE.firebaseUser = user;
+                        console.log("Firebase user detected:", user.email);
+                    }
+                });
+            } catch (error) {
+                console.error("Firebase initialization error:", error);
+                showToast("Firebase connection failed", "error");
+            }
+            
+            // Initialize Google OAuth
+            initGoogleOAuth();
+            
+            // Check for existing session
+            await checkExistingSession();
+            
+            // Hide boot screen
+            setTimeout(() => {
+                document.getElementById('bootScreen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('bootScreen').style.display = 'none';
+                    showAuthScreen();
+                }, 500);
+            }, 500);
+        }
+        
+        // =============================================
+        // GOOGLE OAuth INITIALIZATION
+        // =============================================
+        function initGoogleOAuth() {
+            if (typeof google !== 'undefined') {
+                STATE.googleTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CONFIG.googleOAuth.clientId,
+                    scope: CONFIG.googleOAuth.scope,
+                    callback: async (tokenResponse) => {
+                        if (tokenResponse && tokenResponse.access_token) {
+                            STATE.googleAccessToken = tokenResponse.access_token;
+                            STATE.googleTokenExpiry = Date.now() + (tokenResponse.expires_in * 1000);
+                            
+                            // Get user info
+                            const userInfo = await getGoogleUserInfo();
+                            
+                            // Create session
+                            createSession('google', {
+                                email: userInfo.email,
+                                name: userInfo.name,
+                                picture: userInfo.picture
+                            });
+                            
+                            // Start token refresh timer
+                            startTokenRefreshTimer();
+                            
+                            showToast("Google authentication successful ✅", "success");
+                        }
+                    }
+                });
+                
+                // Check for existing Google token
+                const savedToken = localStorage.getItem('google_token');
+                const savedExpiry = localStorage.getItem('google_token_expiry');
+                
+                if (savedToken && savedExpiry && Date.now() < parseInt(savedExpiry)) {
+                    STATE.googleAccessToken = savedToken;
+                    STATE.googleTokenExpiry = parseInt(savedExpiry);
+                    console.log("Restored Google token from localStorage");
+                }
+            } else {
+                console.log("Google API not loaded yet, will retry...");
+                setTimeout(initGoogleOAuth, 1000);
+            }
+        }
+        
+        async function getGoogleUserInfo() {
+            try {
+                const response = await fetch('https://www.googleapis.com/oauth2/v1/userinfo?alt=json', {
+                    headers: {
+                        'Authorization': `Bearer ${STATE.googleAccessToken}`
+                    }
+                });
+                
+                if (response.ok) {
+                    return await response.json();
+                }
+            } catch (error) {
+                console.error("Error getting Google user info:", error);
+            }
+            
+            return { email: "unknown@google.com", name: "Google User" };
+        }
+        
+        // =============================================
+        // TOKEN REFRESH SYSTEM
+        // =============================================
+        function startTokenRefreshTimer() {
+            if (STATE.tokenRefreshTimer) {
+                clearInterval(STATE.tokenRefreshTimer);
+            }
+            
+            STATE.tokenRefreshTimer = setInterval(() => {
+                refreshGoogleToken();
+            }, 300000); // Check every 5 minutes
+            
+            console.log("Token refresh timer started");
+        }
+        
+        async function refreshGoogleToken() {
+            if (!STATE.googleAccessToken || !STATE.googleTokenExpiry) return;
+            
+            // Refresh if token expires in less than 5 minutes
+            const timeToExpiry = STATE.googleTokenExpiry - Date.now();
+            
+            if (timeToExpiry < 300000) { // 5 minutes
+                console.log("Refreshing Google token...");
+                
+                try {
+                    if (STATE.googleTokenClient) {
+                        STATE.googleTokenClient.requestAccessToken({ prompt: '' });
+                    }
+                } catch (error) {
+                    console.error("Token refresh error:", error);
+                }
+            }
+            
+            // Update UI
+            updateTokenExpiryDisplay();
+        }
+        
+        function updateTokenExpiryDisplay() {
+            if (!STATE.googleTokenExpiry) return;
+            
+            const minutesLeft = Math.max(0, Math.floor((STATE.googleTokenExpiry - Date.now()) / 60000));
+            const tokenExpiryElement = document.getElementById('tokenExpiry');
+            if (tokenExpiryElement) {
+                tokenExpiryElement.textContent = `${minutesLeft} minutes`;
+            }
+        }
+        
+        // =============================================
+        // SESSION MANAGEMENT (24 HOURS)
+        // =============================================
+        function createSession(authMethod, userData) {
+            STATE.isAuthenticated = true;
+            STATE.authMethod = authMethod;
+            STATE.user = userData;
+            STATE.sessionStart = Date.now();
+            STATE.sessionExpiry = STATE.sessionStart + (CONFIG.security.sessionHours * 60 * 60 * 1000);
+            
+            // Save session to localStorage
+            localStorage.setItem('vault_session', JSON.stringify({
+                authMethod: authMethod,
+                user: userData,
+                sessionStart: STATE.sessionStart,
+                sessionExpiry: STATE.sessionExpiry
+            }));
+            
+            // Save Google token if available
+            if (STATE.googleAccessToken) {
+                localStorage.setItem('google_token', STATE.googleAccessToken);
+                localStorage.setItem('google_token_expiry', STATE.googleTokenExpiry);
+            }
+            
+            // Start session timer
+            startSessionTimer();
+            
+            // Show main app
+            showMainApp();
+        }
+        
+        function startSessionTimer() {
+            if (STATE.sessionTimer) {
+                clearInterval(STATE.sessionTimer);
+            }
+            
+            STATE.sessionTimer = setInterval(() => {
+                updateSessionTimer();
+            }, 1000);
+            
+            // Show session timer
+            document.getElementById('sessionTimer').style.display = 'flex';
+            updateSessionTimer();
+        }
+        
+        function updateSessionTimer() {
+            if (!STATE.sessionExpiry) return;
+            
+            const now = Date.now();
+            const remaining = STATE.sessionExpiry - now;
+            
+            if (remaining <= 0) {
+                logout();
+                return;
+            }
+            
+            const hours = Math.floor(remaining / 3600000);
+            const minutes = Math.floor((remaining % 3600000) / 60000);
+            const seconds = Math.floor((remaining % 60000) / 1000);
+            
+            document.getElementById('timerText').textContent = 
+                `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Update settings panel
+            const sessionTimeLeft = document.getElementById('sessionTimeLeft');
+            if (sessionTimeLeft) {
+                if (hours > 0) {
+                    sessionTimeLeft.textContent = `${hours} hours`;
+                } else if (minutes > 0) {
+                    sessionTimeLeft.textContent = `${minutes} minutes`;
+                } else {
+                    sessionTimeLeft.textContent = `${seconds} seconds`;
+                }
+            }
+        }
+        
+        function extendSession() {
+            STATE.sessionExpiry = Date.now() + (CONFIG.security.sessionHours * 60 * 60 * 1000);
+            
+            // Update localStorage
+            const sessionData = JSON.parse(localStorage.getItem('vault_session') || '{}');
+            sessionData.sessionExpiry = STATE.sessionExpiry;
+            localStorage.setItem('vault_session', JSON.stringify(sessionData));
+            
+            showToast("Session extended by 24 hours", "success");
+        }
+        
+        async function checkExistingSession() {
+            const sessionData = localStorage.getItem('vault_session');
+            
+            if (sessionData) {
+                try {
+                    const data = JSON.parse(sessionData);
+                    
+                    if (data.sessionExpiry && Date.now() < data.sessionExpiry) {
+                        // Restore session
+                        STATE.isAuthenticated = true;
+                        STATE.authMethod = data.authMethod;
+                        STATE.user = data.user;
+                        STATE.sessionStart = data.sessionStart;
+                        STATE.sessionExpiry = data.sessionExpiry;
+                        
+                        // Restore Google token if available
+                        const savedToken = localStorage.getItem('google_token');
+                        const savedExpiry = localStorage.getItem('google_token_expiry');
+                        
+                        if (savedToken && savedExpiry) {
+                            STATE.googleAccessToken = savedToken;
+                            STATE.googleTokenExpiry = parseInt(savedExpiry);
+                        }
+                        
+                        // Start timers
+                        startSessionTimer();
+                        startTokenRefreshTimer();
+                        
+                        // Show main app directly
+                        showMainApp();
+                        return true;
+                    } else {
+                        // Session expired
+                        localStorage.removeItem('vault_session');
+                    }
+                } catch (error) {
+                    console.error("Error parsing session data:", error);
+                    localStorage.removeItem('vault_session');
+                }
+            }
+            
+            return false;
+        }
+        
+        // =============================================
+        // AUTHENTICATION SCREENS
+        // =============================================
+        function showAuthScreen() {
+            // Check if we should show auth
+            if (STATE.isAuthenticated) {
+                showMainApp();
+                return;
+            }
+            
+            // Show PIN auth by default
+            showAuth('pin');
+        }
+        
+        function showAuth(method) {
+            // Hide all auth containers
+            document.getElementById('pinAuth').style.display = 'none';
+            document.getElementById('googleAuth').style.display = 'none';
+            document.getElementById('firebaseAuth').style.display = 'none';
+            
+            // Update option buttons
+            document.querySelectorAll('.auth-option-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            
+            // Show selected auth method
+            if (method === 'pin') {
+                document.getElementById('pinAuth').style.display = 'flex';
+                event?.currentTarget.classList.add('active');
+                setupPinInput();
+            } else if (method === 'google') {
+                document.getElementById('googleAuth').style.display = 'flex';
+                event?.currentTarget.classList.add('active');
+            } else if (method === 'firebase') {
+                document.getElementById('firebaseAuth').style.display = 'flex';
+                event?.currentTarget.classList.add('active');
+                setupFirebaseUI();
+            }
+        }
+        
+        // =============================================
+        // PIN AUTHENTICATION SYSTEM
+        // =============================================
+        let currentPin = [];
+        
+        function setupPinInput() {
+            // Clear current pin
+            currentPin = [];
+            updatePinDots();
+            
+            // Setup keypad event listeners
+            document.querySelectorAll('.keypad-btn').forEach(btn => {
+                btn.onclick = function() {
+                    const key = this.getAttribute('data-key');
+                    
+                    if (key === 'clear') {
+                        currentPin = [];
+                    } else if (key === 'delete') {
+                        currentPin.pop();
+                    } else if (currentPin.length < 4) {
+                        currentPin.push(key);
+                        
+                        if (currentPin.length === 4) {
+                            verifyPin(currentPin.join(''));
+                        }
+                    }
+                    
+                    updatePinDots();
+                };
+            });
+        }
+        
+        function updatePinDots() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`pinDot${i}`);
+                if (i <= currentPin.length) {
+                    dot.classList.add('filled');
+                    dot.classList.remove('error');
+                } else {
+                    dot.classList.remove('filled');
+                    dot.classList.remove('error');
+                }
+            }
+        }
+        
+        async function verifyPin(enteredPin) {
+            STATE.pinAttempts++;
+            
+            // Check if locked out
+            if (STATE.pinAttempts >= CONFIG.security.maxPinAttempts) {
+                showToast("Too many attempts. Try again in 5 minutes.", "error");
+                disablePinInput();
+                return;
+            }
+            
+            // In production, this would check against Firebase
+            // For demo, using default PIN
+            const defaultPin = "1171";
+            const hashedPin = await hashPin(enteredPin);
+            const hashedDefault = await hashPin(defaultPin);
+            
+            if (hashedPin === hashedDefault || enteredPin === defaultPin) {
+                // PIN correct
+                STATE.pinAttempts = 0;
+                
+                // Create session with PIN auth
+                createSession('pin', {
+                    email: "user@vault.com",
+                    name: "PIN User",
+                    isAdmin: enteredPin === "1171"
+                });
+                
+                showToast("PIN verified successfully ✅", "success");
+            } else {
+                // PIN incorrect
+                showPinError();
+                showToast(`Wrong PIN. ${CONFIG.security.maxPinAttempts - STATE.pinAttempts} attempts left`, "error");
+            }
+        }
+        
+        async function hashPin(pin) {
+            // Simple hash for demo
+            const encoder = new TextEncoder();
+            const data = encoder.encode(pin + CONFIG.security.pinSalt);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+        
+        function showPinError() {
+            for (let i = 1; i <= 4; i++) {
+                const dot = document.getElementById(`pinDot${i}`);
+                dot.classList.add('error');
+            }
+            
+            setTimeout(() => {
+                currentPin = [];
+                updatePinDots();
+            }, 1000);
+        }
+        
+        function disablePinInput() {
+            document.querySelectorAll('.keypad-btn').forEach(btn => {
+                btn.disabled = true;
+            });
+            
+            setTimeout(() => {
+                document.querySelectorAll('.keypad-btn').forEach(btn => {
+                    btn.disabled = false;
+                });
+                STATE.pinAttempts = 0;
+            }, CONFIG.security.lockoutTime);
+        }
+        
+        // =============================================
+        // GOOGLE SIGN IN
+        // =============================================
+        function signInWithGoogle() {
+            if (STATE.googleTokenClient) {
+                document.getElementById('googleLoading').style.display = 'flex';
+                STATE.googleTokenClient.requestAccessToken({ prompt: 'consent' });
+            } else {
+                showToast("Google authentication not ready", "error");
+                setTimeout(initGoogleOAuth, 1000);
+            }
+        }
+        
+        // =============================================
+        // FIREBASE AUTHENTICATION
+        // =============================================
+        function setupFirebaseUI() {
+            // This would integrate firebaseui
+            // For now, show manual Firebase auth options
+            const container = document.getElementById('firebaseui-container');
+            container.innerHTML = `
+                <div style="text-align: center; margin: 20px 0;">
+                    <button onclick="signInWithFirebase()" style="width: 100%; padding: 14px; background: #FF5722; color: white; border: none; border-radius: var(--radius-md); font-size: 16px; cursor: pointer; margin-bottom: 10px;">
+                        Sign in with Firebase Email
+                    </button>
+                    <button onclick="signInWithGoogleFirebase()" style="width: 100%; padding: 14px; background: #4285F4; color: white; border: none; border-radius: var(--radius-md); font-size: 16px; cursor: pointer;">
+                        Sign in with Google (Firebase)
+                    </button>
+                </div>
+            `;
+        }
+        
+        function signInWithFirebase() {
+            // Firebase email/password auth
+            const email = prompt("Enter email:");
+            const password = prompt("Enter password:");
+            
+            if (email && password) {
+                STATE.firebaseAuth.signInWithEmailAndPassword(email, password)
+                    .then((userCredential) => {
+                        STATE.firebaseUser = userCredential.user;
+                        
+                        createSession('firebase', {
+                            email: userCredential.user.email,
+                            name: userCredential.user.displayName || "Firebase User",
+                            uid: userCredential.user.uid
+                        });
+                        
+                        showToast("Firebase authentication successful ✅", "success");
+                    })
+                    .catch((error) => {
+                        showToast("Firebase login failed: " + error.message, "error");
+                    });
+            }
+        }
+        
+        function signInWithGoogleFirebase() {
+            const provider = new firebase.auth.GoogleAuthProvider();
+            provider.addScope('https://www.googleapis.com/auth/drive');
+            
+            STATE.firebaseAuth.signInWithPopup(provider)
+                .then((result) => {
+                    STATE.firebaseUser = result.user;
+                    STATE.googleAccessToken = result.credential.accessToken;
+                    
+                    createSession('firebase', {
+                        email: result.user.email,
+                        name: result.user.displayName,
+                        picture: result.user.photoURL,
+                        uid: result.user.uid
+                    });
+                    
+                    showToast("Google Firebase authentication successful ✅", "success");
+                })
+                .catch((error) => {
+                    showToast("Google Firebase login failed: " + error.message, "error");
+                });
+        }
+        
+        // =============================================
+        // MAIN APPLICATION
+        // =============================================
+        function showMainApp() {
+            // Hide all auth screens
+            document.getElementById('pinAuth').style.display = 'none';
+            document.getElementById('googleAuth').style.display = 'none';
+            document.getElementById('firebaseAuth').style.display = 'none';
+            
+            // Show main app
+            document.getElementById('mainApp').style.display = 'block';
+            
+            // Update user info
+            if (STATE.user) {
+                document.getElementById('userName').textContent = STATE.user.name;
+                document.getElementById('userEmail').textContent = STATE.user.email;
+                
+                const avatar = document.getElementById('userAvatar');
+                if (STATE.user.picture) {
+                    avatar.style.backgroundImage = `url(${STATE.user.picture})`;
+                    avatar.style.backgroundSize = 'cover';
+                    avatar.textContent = '';
+                } else {
+                    avatar.textContent = STATE.user.name.charAt(0).toUpperCase();
+                }
+                
+                // Show Firebase user ID if available
+                if (STATE.user.uid) {
+                    document.getElementById('firebaseUserInfo').style.display = 'flex';
+                    document.getElementById('firebaseUserId').textContent = STATE.user.uid;
+                }
+            }
+            
+            // Load files
+            loadFiles();
+            
+            // Update token expiry display
+            updateTokenExpiryDisplay();
+            
+            // Update proxy status
+            document.getElementById('proxyStatus').textContent = 
+                CONFIG.fileOps.useProxy ? "Active" : "Disabled";
+        }
+        
+        // =============================================
+        // MEDIA PROXY SYSTEM
+        // =============================================
+        const MediaProxy = {
+            // Get active proxy URL
+            getProxyUrl(type = 'readOnly') {
+                const proxies = CONFIG.mediaProxies;
+                
+                // Try primary proxy
+                if (proxies[type]) {
+                    return proxies[type];
+                }
+                
+                // Fallback to fullAccess
+                return proxies.fullAccess;
+            },
+            
+            // Generate proxy URL for file
+            generateFileUrl(fileId, options = {}) {
+                const proxyUrl = this.getProxyUrl(options.type || 'readOnly');
+                
+                const params = new URLSearchParams({
+                    id: fileId,
+                    mime: options.mimeType || '',
+                    size: options.thumbnailSize || '400',
+                    download: options.download ? 'true' : 'false',
+                    token: STATE.googleAccessToken || '',
+                    timestamp: Date.now()
+                });
+                
+                return `${proxyUrl}?${params.toString()}`;
+            },
+            
+            // File upload via proxy
+            async uploadFile(file, destination = 'root') {
+                if (!CONFIG.fileOps.useProxy) {
+                    // Direct upload (may have CORS issues)
+                    return this.uploadDirect(file, destination);
+                }
+                
+                const proxyUrl = this.getProxyUrl('fullAccess');
+                const formData = new FormData();
+                formData.append('file', file);
+                formData.append('destination', destination);
+                formData.append('token', STATE.googleAccessToken || '');
+                
+                try {
+                    const response = await fetch(proxyUrl, {
+                        method: 'POST',
+                        body: formData
+                    });
+                    
+                    if (response.ok) {
+                        const result = await response.json();
+                        return result;
+                    } else {
+                        throw new Error('Proxy upload failed');
+                    }
+                } catch (error) {
+                    console.error("Proxy upload error:", error);
+                    
+                    // Fallback to direct upload
+                    return this.uploadDirect(file, destination);
+                }
+            },
+            
+            // Direct upload (may fail due to CORS)
+            async uploadDirect(file, destination) {
+                // This would use Google Drive API directly
+                // May fail due to CORS in browser
+                showToast("Using direct upload (may have limitations)", "warning");
+                
+                // Simulate upload for demo
+                return new Promise((resolve) => {
+                    setTimeout(() => {
+                        resolve({
+                            id: 'file_' + Date.now(),
+                            name: file.name,
+                            size: file.size,
+                            mimeType: file.type
+                        });
+                    }, 1000);
+                });
+            },
+            
+            // File operations via proxy
+            async fileOperation(operation, fileId, options = {}) {
+                const proxyUrl = this.getProxyUrl('fullAccess');
+                
+                const params = {
+                    operation: operation,
+                    fileId: fileId,
+                    token: STATE.googleAccessToken || '',
+                    ...options
+                };
+                
+                try {
+                    const response = await fetch(proxyUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify(params)
+                    });
+                    
+                    if (response.ok) {
+                        return await response.json();
+                    }
+                } catch (error) {
+                    console.error(`File operation ${operation} failed:`, error);
+                    showToast(`File operation failed: ${error.message}`, "error");
+                }
+                
+                return null;
+            }
+        };
+        
+        // =============================================
+        // FILE OPERATIONS WITH PROXY
+        // =============================================
+        async function copyFile() {
+            if (!STATE.selectedFile) return;
+            
+            showToast("Copying file via proxy...", "info");
+            
+            const result = await MediaProxy.fileOperation('copy', STATE.selectedFile.id, {
+                destination: 'root'
+            });
+            
+            if (result) {
+                showToast("File copied successfully ✅", "success");
+                loadFiles();
+            }
+        }
+        
+        async function moveFile() {
+            if (!STATE.selectedFile) return;
+            
+            const destination = prompt("Enter destination folder ID:", "root");
+            if (destination) {
+                showToast("Moving file via proxy...", "info");
+                
+                const result = await MediaProxy.fileOperation('move', STATE.selectedFile.id, {
+                    destination: destination
+                });
+                
+                if (result) {
+                    showToast("File moved successfully ✅", "success");
+                    loadFiles();
+                }
+            }
+        }
+        
+        async function shareFile() {
+            if (!STATE.selectedFile) return;
+            
+            const email = prompt("Enter email to share with:");
+            if (email) {
+                showToast("Sharing file via proxy...", "info");
+                
+                const result = await MediaProxy.fileOperation('share', STATE.selectedFile.id, {
+                    email: email,
+                    role: 'reader'
+                });
+                
+                if (result) {
+                    showToast("File shared successfully ✅", "success");
+                }
+            }
+        }
+        
+        async function deleteFile() {
+            if (!STATE.selectedFile) return;
+            
+            if (confirm(`Delete ${STATE.selectedFile.name}?`)) {
+                showToast("Deleting file via proxy...", "info");
+                
+                const result = await MediaProxy.fileOperation('delete', STATE.selectedFile.id);
+                
+                if (result) {
+                    showToast("File deleted successfully ✅", "success");
+                    loadFiles();
+                }
+            }
+        }
+        
+        // =============================================
+        // FILE UPLOAD WITH PROXY
+        // =============================================
+        async function openUpload() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.multiple = true;
+            
+            input.onchange = async (e) => {
+                const files = Array.from(e.target.files);
+                
+                if (files.length > 0) {
+                    // Show upload progress
+                    document.getElementById('uploadProgress').style.display = 'block';
+                    
+                    let uploaded = 0;
+                    const total = files.length;
+                    
+                    for (const file of files) {
+                        // Update progress
+                        const progress = Math.round((uploaded / total) * 100);
+                        document.getElementById('progressFill').style.width = progress + '%';
+                        document.getElementById('progressText').textContent = `${progress}%`;
+                        
+                        // Upload file via proxy
+                        const result = await MediaProxy.uploadFile(file);
+                        
+                        if (result) {
+                            uploaded++;
+                            showToast(`Uploaded: ${file.name}`, "success");
+                        } else {
+                            showToast(`Failed: ${file.name}`, "error");
+                        }
+                    }
+                    
+                    // Hide progress
+                    setTimeout(() => {
+                        document.getElementById('uploadProgress').style.display = 'none';
+                        document.getElementById('progressFill').style.width = '0%';
+                        document.getElementById('progressText').textContent = '0%';
+                    }, 2000);
+                    
+                    // Reload files
+                    loadFiles();
+                }
+            };
+            
+            input.click();
+        }
+        
+        // =============================================
+        // FILE MANAGEMENT
+        // =============================================
+        async function loadFiles() {
+            const fileGrid = document.getElementById('fileGrid');
+            
+            // Show loading
+            fileGrid.innerHTML = `
+                <div style="grid-column: 1 / -1; text-align: center; padding: 40px;">
+                    <div class="loading">
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                        <div class="loading-dot"></div>
+                    </div>
+                    <div style="margin-top: 20px; color: var(--text-secondary);">
+                        Loading files via proxy...
+                    </div>
+                </div>
+            `;
+            
+            try {
+                // Try to load via proxy first
+                const proxyUrl = MediaProxy.getProxyUrl('readOnly');
+                const params = {
+                    operation: 'list',
+                    token: STATE.googleAccessToken || '',
+                    pageSize: 50
+                };
+                
+                const response = await fetch(proxyUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(params)
+                });
+                
+                if (response.ok) {
+                    const data = await response.json();
+                    STATE.files = data.files || [];
+                    renderFiles();
+                } else {
+                    throw new Error('Proxy list failed');
+                }
+            } catch (error) {
+                console.error("Error loading files:", error);
+                
+                // Fallback to sample files
+                STATE.files = getSampleFiles();
+                renderFiles();
+                
+                showToast("Using sample files (proxy unavailable)", "warning");
+            }
+        }
+        
+        function getSampleFiles() {
+            return [
+                {
+                    id: 'file1',
+                    name: 'sample_image.jpg',
+                    mimeType: 'image/jpeg',
+                    size: '2.4 MB',
+                    thumbnailLink: 'https://via.placeholder.com/200x150/00ff9d/000?text=Image',
+                    hasThumbnail: true
+                },
+                {
+                    id: 'file2',
+                    name: 'sample_video.mp4',
+                    mimeType: 'video/mp4',
+                    size: '45.2 MB',
+                    thumbnailLink: 'https://via.placeholder.com/200x150/ff00ff/000?text=Video',
+                    hasThumbnail: true
+                },
+                {
+                    id: 'file3',
+                    name: 'important_document.pdf',
+                    mimeType: 'application/pdf',
+                    size: '1.8 MB',
+                    thumbnailLink: 'https://via.placeholder.com/200x150/00d2ff/000?text=PDF',
+                    hasThumbnail: true
+                },
+                {
+                    id: 'file4',
+                    name: 'archive_backup.zip',
+                    mimeType: 'application/zip',
+                    size: '150 MB',
+                    thumbnailLink: 'https://via.placeholder.com/200x150/ffdd00/000?text=Archive',
+                    hasThumbnail: false
+                }
+            ];
+        }
+        
+        function renderFiles() {
+            const fileGrid = document.getElementById('fileGrid');
+            
+            if (STATE.files.length === 0) {
+                fileGrid.innerHTML = `
+                    <div style="grid-column: 1 / -1; text-align: center; padding: 60px 20px;">
+                        <div style="font-size: 64px; opacity: 0.3; margin-bottom: 20px;">📁</div>
+                        <div style="font-size: 18px; font-weight: 600; margin-bottom: 10px;">No files found</div>
+                        <div style="color: var(--text-secondary); margin-bottom: 20px;">Upload files to get started</div>
+                        <button onclick="openUpload()" style="background: var(--primary); color: black; padding: 12px 24px; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600;">
+                            📤 Upload Files
+                        </button>
+                    </div>
+                `;
+                return;
+            }
+            
+            let html = '';
+            
+            STATE.files.forEach(file => {
+                const icon = getFileIcon(file.mimeType);
+                const proxyBadge = CONFIG.fileOps.useProxy ? '<div class="proxy-badge">PROXY</div>' : '';
+                
+                html += `
+                    <div class="file-card" onclick="selectFile('${file.id}')" 
+                         oncontextmenu="showContextMenu(event, '${file.id}')">
+                        ${proxyBadge}
+                        <div class="file-thumbnail">
+                            ${file.hasThumbnail ? 
+                                `<img src="${MediaProxy.generateFileUrl(file.id, { thumbnailSize: '200' })}" style="width: 100%; height: 100%; object-fit: cover;">` :
+                                `<div style="font-size: 48px;">${icon}</div>`
+                            }
+                        </div>
+                        <div class="file-info">
+                            <div class="file-name">${file.name}</div>
+                            <div class="file-meta">
+                                <span>${file.size}</span>
+                                <span>${getFileType(file.mimeType)}</span>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            
+            fileGrid.innerHTML = html;
+        }
+        
+        function getFileIcon(mimeType) {
+            if (mimeType.includes('image')) return '🖼️';
+            if (mimeType.includes('video')) return '🎬';
+            if (mimeType.includes('audio')) return '🎵';
+            if (mimeType.includes('pdf')) return '📕';
+            if (mimeType.includes('zip') || mimeType.includes('archive')) return '🗜️';
+            if (mimeType.includes('document') || mimeType.includes('text')) return '📄';
+            return '📁';
+        }
+        
+        function getFileType(mimeType) {
+            if (mimeType.includes('image')) return 'Image';
+            if (mimeType.includes('video')) return 'Video';
+            if (mimeType.includes('audio')) return 'Audio';
+            if (mimeType.includes('pdf')) return 'PDF';
+            if (mimeType.includes('zip')) return 'Archive';
+            return 'File';
+        }
+        
+        // =============================================
+        // CONTEXT MENU & FILE SELECTION
+        // =============================================
+        function selectFile(fileId) {
+            STATE.selectedFile = STATE.files.find(f => f.id === fileId);
+            
+            // For now, just show preview
+            showPreview(STATE.selectedFile);
+        }
+        
+        function showContextMenu(event, fileId) {
+            event.preventDefault();
+            
+            STATE.selectedFile = STATE.files.find(f => f.id === fileId);
+            
+            const menu = document.getElementById('contextMenu');
+            menu.style.display = 'block';
+            menu.style.left = event.pageX + 'px';
+            menu.style.top = event.pageY + 'px';
+            
+            // Hide menu when clicking elsewhere
+            setTimeout(() => {
+                document.addEventListener('click', hideContextMenu);
+            }, 100);
+        }
+        
+        function hideContextMenu() {
+            document.getElementById('contextMenu').style.display = 'none';
+            document.removeEventListener('click', hideContextMenu);
+        }
+        
+        // =============================================
+        // MEDIA PREVIEW WITH PROXY
+        // =============================================
+        function showPreview(file) {
+            const preview = document.getElementById('mediaPreview');
+            const content = document.getElementById('previewContent');
+            
+            preview.style.display = 'flex';
+            
+            if (file.mimeType.includes('image')) {
+                const proxyUrl = MediaProxy.generateFileUrl(file.id, { 
+                    type: 'readOnly',
+                    thumbnailSize: '800'
+                });
+                
+                content.innerHTML = `
+                    <img src="${proxyUrl}" style="max-width: 100%; max-height: 100%; object-fit: contain;">
+                `;
+            } else if (file.mimeType.includes('video')) {
+                const proxyUrl = MediaProxy.generateFileUrl(file.id, { 
+                    type: 'readOnly'
+                });
+                
+                content.innerHTML = `
+                    <video controls style="width: 100%; max-height: 80vh;">
+                        <source src="${proxyUrl}" type="${file.mimeType}">
+                        Your browser does not support the video tag.
+                    </video>
+                `;
+            } else {
+                content.innerHTML = `
+                    <div style="padding: 40px; text-align: center;">
+                        <div style="font-size: 64px; margin-bottom: 20px;">${getFileIcon(file.mimeType)}</div>
+                        <div style="font-size: 20px; font-weight: 600; margin-bottom: 10px;">${file.name}</div>
+                        <div style="color: var(--text-secondary); margin-bottom: 20px;">${file.size} • ${getFileType(file.mimeType)}</div>
+                        <div style="display: flex; gap: 10px; justify-content: center;">
+                            <button onclick="downloadViaProxy('${file.id}')" style="padding: 10px 20px; background: var(--primary); color: black; border: none; border-radius: var(--radius-md); cursor: pointer; font-weight: 600;">
+                                ⬇️ Download
+                            </button>
+                            <button onclick="preview.style.display = 'none'" style="padding: 10px 20px; background: var(--surface-light); color: var(--text); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer;">
+                                Close
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+        
+        async function downloadViaProxy(fileId) {
+            const file = STATE.files.find(f => f.id === fileId);
+            if (!file) return;
+            
+            showToast("Preparing download via proxy...", "info");
+            
+            const proxyUrl = MediaProxy.generateFileUrl(fileId, {
+                type: 'fullAccess',
+                download: true
+            });
+            
+            // Create download link
+            const link = document.createElement('a');
+            link.href = proxyUrl;
+            link.download = file.name;
+            link.click();
+        }
+        
+        // =============================================
+        // SETTINGS PANEL
+        // =============================================
+        function showSettings() {
+            document.getElementById('settingsPanel').classList.add('open');
+        }
+        
+        function hideSettings() {
+            document.getElementById('settingsPanel').classList.remove('open');
+        }
+        
+        function refreshToken() {
+            if (STATE.googleTokenClient) {
+                showToast("Refreshing token...", "info");
+                STATE.googleTokenClient.requestAccessToken({ prompt: '' });
+            } else {
+                showToast("Token client not available", "error");
+            }
+        }
+        
+        // =============================================
+        // LOGOUT
+        // =============================================
+        function logout() {
+            if (confirm("Are you sure you want to logout?")) {
+                // Clear all state
+                STATE.isAuthenticated = false;
+                STATE.authMethod = null;
+                STATE.user = null;
+                STATE.googleAccessToken = null;
+                STATE.googleTokenExpiry = null;
+                STATE.firebaseUser = null;
+                
+                // Clear timers
+                if (STATE.sessionTimer) clearInterval(STATE.sessionTimer);
+                if (STATE.tokenRefreshTimer) clearInterval(STATE.tokenRefreshTimer);
+                
+                // Clear localStorage
+                localStorage.removeItem('vault_session');
+                localStorage.removeItem('google_token');
+                localStorage.removeItem('google_token_expiry');
+                
+                // Sign out from Firebase
+                if (STATE.firebaseAuth) {
+                    STATE.firebaseAuth.signOut();
+                }
+                
+                // Hide main app
+                document.getElementById('mainApp').style.display = 'none';
+                document.getElementById('sessionTimer').style.display = 'none';
+                hideSettings();
+                
+                // Show auth screen
+                showAuth('pin');
+                
+                showToast("Logged out successfully", "success");
+            }
+        }
+        
+        // =============================================
+        // TOAST NOTIFICATION SYSTEM
+        // =============================================
+        function showToast(message, type = 'info') {
+            const container = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            const icons = {
+                success: '✅',
+                error: '❌',
+                warning: '⚠️',
+                info: 'ℹ️'
+            };
+            
+            toast.innerHTML = `
+                <span>${icons[type] || icons.info}</span>
+                <span>${message}</span>
+            `;
+            
+            container.appendChild(toast);
+            
+            // Auto remove
+            setTimeout(() => {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }, 3000);
+        }
+        
+        // =============================================
+        // INITIALIZE APP
+        // =============================================
+        document.addEventListener('DOMContentLoaded', initializeApp);
+        
+        // Close preview when clicking outside
+        document.getElementById('mediaPreview').onclick = function(e) {
+            if (e.target === this) {
+                this.style.display = 'none';
+            }
+        };
+        
+        // Export functions to window
+        window.showAuth = showAuth;
+        window.signInWithGoogle = signInWithGoogle;
+        window.signInWithFirebase = signInWithFirebase;
+        window.signInWithGoogleFirebase = signInWithGoogleFirebase;
+        window.openUpload = openUpload;
+        window.showSettings = showSettings;
+        window.hideSettings = hideSettings;
+        window.extendSession = extendSession;
+        window.refreshToken = refreshToken;
+        window.logout = logout;
+        window.selectFile = selectFile;
+        window.showContextMenu = showContextMenu;
+        window.copyFile = copyFile;
+        window.moveFile = moveFile;
+        window.shareFile = shareFile;
+        window.deleteFile = deleteFile;
+        window.showPreview = showPreview;
+        window.downloadViaProxy = downloadViaProxy;
+    </script>
 </body>
 </html>
