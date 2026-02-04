@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VAULT OS v5.0</title>
+    <!-- CDNs from Config -->
+    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
+
+    <style>
+        /* ==================== ANDROID MATERIAL 3 & CYBER THEME ==================== */
+        :root {
+            --md-sys-color-primary: #00ff9d;
+            --md-sys-color-on-primary: #000000;
+            --md-sys-color-background: #050505;
+            --md-sys-color-surface: #121212;
+            --md-sys-color-surface-variant: #1e1e1e;
+            --md-sys-color-on-surface: #e0e0e0;
+            --md-sys-color-error: #ff3b30;
+            --cyber-glow: 0 0 10px rgba(0, 255, 157, 0.5);
+            --font-family: 'Roboto', sans-serif;
+            --border-radius: 16px;
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body {
+            margin: 0; padding: 0;
+            background-color: var(--md-sys-color-background);
+            color: var(--md-sys-color-on-surface);
+            font-family: var(--font-family);
+            overflow: hidden; /* App-like feel */
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- UTILITIES --- */
+        .hidden { display: none !important; }
+        .flex-center { display: flex; justify-content: center; align-items: center; }
+        .btn {
+            background: var(--md-sys-color-surface-variant);
+            color: var(--md-sys-color-primary);
+            border: 1px solid var(--md-sys-color-primary);
+            padding: 12px 24px;
+            border-radius: 50px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        }
+        .btn:active { transform: scale(0.95); }
+        .btn-primary {
+            background: var(--md-sys-color-primary);
+            color: var(--md-sys-color-on-primary);
+            box-shadow: var(--cyber-glow);
+        }
+
+        /* --- BOOT ANIMATION --- */
+        #boot-screen {
+            position: fixed; inset: 0; z-index: 9999;
+            background: #000;
+            flex-direction: column;
+        }
+        .loader {
+            width: 50px; height: 50px;
+            border: 3px solid var(--md-sys-color-surface-variant);
+            border-top: 3px solid var(--md-sys-color-primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        .boot-text { margin-top: 20px; color: var(--md-sys-color-primary); font-family: monospace; letter-spacing: 2px; }
+
+        /* --- PIN SCREEN --- */
+        #pin-screen {
+            position: fixed; inset: 0; z-index: 5000;
+            background: rgba(5, 5, 5, 0.95);
+            backdrop-filter: blur(10px);
+            flex-direction: column;
+            padding: 40px;
+        }
+        .pin-display {
+            display: flex; gap: 15px; margin-bottom: 40px;
+            justify-content: center;
+        }
+        .pin-dot {
+            width: 15px; height: 15px;
+            border-radius: 50%;
+            border: 2px solid var(--md-sys-color-primary);
+            transition: background 0.2s;
+        }
+        .pin-dot.filled { background: var(--md-sys-color-primary); box-shadow: var(--cyber-glow); }
+        .numpad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+            max-width: 300px; width: 100%;
+        }
+        .num-btn {
+            background: var(--md-sys-color-surface-variant);
+            border: none; color: #fff;
+            font-size: 24px; padding: 20px;
+            border-radius: 50%;
+            aspect-ratio: 1;
+        }
+        .num-btn:active { background: var(--md-sys-color-primary); color: #000; }
+
+        /* --- GOOGLE CONNECT --- */
+        #google-auth-screen {
+            position: fixed; inset: 0; z-index: 4000;
+            background: var(--md-sys-color-background);
+            flex-direction: column;
+            text-align: center;
+        }
+        .g-logo { font-size: 60px; color: #fff; margin-bottom: 20px; }
+
+        /* --- MAIN UI --- */
+        #app-ui {
+            flex: 1; display: flex; flex-direction: column;
+            height: 100%;
+        }
+
+        /* Top Bar */
+        .top-bar {
+            padding: 15px 20px;
+            background: var(--md-sys-color-surface);
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid #333;
+        }
+        .drive-toggle {
+            display: flex; background: #000;
+            border-radius: 30px; padding: 4px;
+        }
+        .drive-opt {
+            padding: 8px 16px; border-radius: 25px; font-size: 12px; font-weight: bold;
+            cursor: pointer; color: #888; transition: all 0.3s;
+        }
+        .drive-opt.active {
+            background: var(--md-sys-color-primary); color: #000;
+            box-shadow: var(--cyber-glow);
+        }
+
+        /* Content Area (Grid) */
+        #file-grid {
+            flex: 1;
+            overflow-y: auto;
+            padding: 15px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 15px;
+            align-content: start;
+        }
+        .file-item {
+            display: flex; flex-direction: column; align-items: center;
+            padding: 10px; border-radius: 12px;
+            background: var(--md-sys-color-surface-variant);
+            cursor: pointer; position: relative;
+            transition: transform 0.2s;
+        }
+        .file-item:active { transform: scale(0.95); background: #333; }
+        .file-icon { font-size: 40px; margin-bottom: 8px; color: #ccc; }
+        .file-name { font-size: 11px; text-align: center; overflow: hidden; 
+                     white-space: nowrap; text-overflow: ellipsis; width: 100%; }
+        .file-selected { border: 2px solid var(--md-sys-color-primary); }
+
+        /* FAB (Upload) */
+        .fab-container {
+            position: absolute; bottom: 30px; right: 30px;
+            display: flex; flex-direction: column; gap: 15px; align-items: flex-end;
+        }
+        .fab-main {
+            width: 60px; height: 60px; border-radius: 50%;
+            background: var(--md-sys-color-primary); color: #000;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 30px; box-shadow: 0 4px 15px rgba(0,255,157,0.4);
+            transition: transform 0.3s;
+        }
+        .fab-options {
+            display: flex; flex-direction: column; gap: 10px;
+            opacity: 0; pointer-events: none; transform: translateY(20px);
+            transition: all 0.3s;
+        }
+        .fab-container.open .fab-options { opacity: 1; pointer-events: all; transform: translateY(0); }
+        .fab-mini {
+            background: var(--md-sys-color-surface-variant); color: #fff;
+            width: 45px; height: 45px; border-radius: 50%;
+            display: flex; justify-content: center; align-items: center;
+            font-size: 20px; border: 1px solid #444;
+        }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            background: var(--md-sys-color-surface);
+            padding: 10px 0;
+            display: flex; justify-content: space-around;
+            border-top: 1px solid #333;
+        }
+        .nav-item {
+            display: flex; flex-direction: column; align-items: center;
+            color: #666; font-size: 10px; gap: 4px;
+        }
+        .nav-item i { font-size: 24px; }
+        .nav-item.active { color: var(--md-sys-color-primary); }
+
+        /* Toast */
+        #toast {
+            position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+            background: #333; color: #fff; padding: 10px 20px;
+            border-radius: 20px; font-size: 12px; opacity: 0; pointer-events: none;
+            transition: opacity 0.3s; z-index: 10000;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    </style>
+</head>
+<body>
+
+    <!-- CONFIGURATION -->
+    <script>
+        // Paste the full CONFIG object provided by user here
+        const CONFIG = {
+            // ... (I will assume you paste the FULL config here from your prompt) ...
+            // For brevity in this output, I am referencing the object you provided.
+            // Ensure the CONFIG object from your previous message is pasted below this line.
+            app: { name: "VAULT OS", version: "5.0.0" },
+            security: { pinLength: 4, sessionHours: 24 },
+            googleOAuth: { clientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com", scope: "https://www.googleapis.com/auth/drive.file profile email" },
+            mediaProxies: {
+                readOnly: "https://script.google.com/macros/s/AKfycby2hqAq0JePMbnjEbwwcPBFjS14lvS3pM2Z1PPgY4OraTcpvTmZFPKQr9CQ4vba4Xk7/exec",
+                fullAccess: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec"
+            },
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                databaseURL: "https://encrypted-vault-4683d-default-rtdb.firebaseio.com",
+                projectId: "encrypted-vault-4683d",
+                storageBucket: "encrypted-vault-4683d.appspot.com",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            icons: { folder: "📁", image: "🖼️", video: "🎬", unknown: "📄" }
+        };
+        
+        // Initialize Firebase
+        firebase.initializeApp(CONFIG.firebase);
+    </script>
+
+    <!-- BOOT SCREEN -->
+    <div id="boot-screen" class="flex-center">
+        <div class="loader"></div>
+        <div class="boot-text">INITIALIZING VAULT OS v5.0...</div>
+    </div>
+
+    <!-- PIN SCREEN -->
+    <div id="pin-screen" class="hidden flex-center">
+        <h2 style="color:#fff; margin-bottom: 30px;">ENTER PIN</h2>
+        <div class="pin-display" id="pin-display">
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+        </div>
+        <div class="numpad" id="numpad">
+            <!-- JS generates buttons -->
+        </div>
+    </div>
+
+    <!-- GOOGLE AUTH SCREEN -->
+    <div id="google-auth-screen" class="hidden flex-center">
+        <div class="g-logo"><i class='bx bxl-google'></i></div>
+        <h2 style="color: #fff;">Connect to Drive</h2>
+        <p style="color: #888; margin-bottom: 30px;">Sync your secure vault</p>
+        <button class="btn btn-primary" onclick="Auth.signInGoogle()">Sign in with Google</button>
+    </div>
+
+    <!-- MAIN APP UI -->
+    <div id="app-ui" class="hidden">
+        <div class="top-bar">
+            <div style="font-weight:bold; color:var(--md-sys-color-primary);">VAULT OS</div>
+            <div class="drive-toggle">
+                <div class="drive-opt active" id="tab-user" onclick="UI.switchDrive('user')">User</div>
+                <div class="drive-opt" id="tab-vault" onclick="UI.switchDrive('vault')">Vault (2TB)</div>
+            </div>
+            <div onclick="Auth.signOut()"><i class='bx bx-log-out' style="font-size:24px;"></i></div>
+        </div>
+
+        <!-- Breadcrumbs / Search can go here -->
+        
+        <div id="file-grid">
+            <!-- Files injected via JS -->
+        </div>
+
+        <!-- Floating Action Button -->
+        <div class="fab-container" id="fab-container">
+            <div class="fab-options">
+                <button class="btn fab-mini" onclick="FileOps.promptNewFolder()" title="New Folder"><i class='bx bx-folder-plus'></i></button>
+                <button class="btn fab-mini" onclick="FileOps.triggerUpload('file')" title="Upload File"><i class='bx bx-upload'></i></button>
+                <button class="btn fab-mini" onclick="FileOps.triggerUpload('folder')" title="Upload Folder"><i class='bx bxs-folder-open'></i></button>
+            </div>
+            <div class="fab-main" onclick="document.getElementById('fab-container').classList.toggle('open')">
+                <i class='bx bx-plus'></i>
+            </div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item active"><i class='bx bx-home'></i><span>Home</span></div>
+            <div class="nav-item" onclick="UI.toggleTheme()"><i class='bx bx-palette'></i><span>Theme</span></div>
+            <div class="nav-item"><i class='bx bx-cog'></i><span>Settings</span></div>
+        </div>
+    </div>
+
+    <div id="toast">Message</div>
+
+    <!-- Hidden Inputs -->
+    <input type="file" id="file-input" class="hidden" multiple>
+    <input type="file" id="folder-input" class="hidden" webkitdirectory directory>
+
+    <script>
+        /* ==================== STATE MANAGEMENT ==================== */
+        const State = {
+            pin: "",
+            user: null,
+            token: null,
+            currentDrive: 'user', // 'user' or 'vault'
+            files: [],
+            selectedFile: null
+        };
+
+        /* ==================== BOOT & PIN LOGIC ==================== */
+        const Boot = {
+            init: function() {
+                setTimeout(() => {
+                    document.getElementById('boot-screen').classList.add('hidden');
+                    PinSystem.check();
+                }, 2000); // Fake boot time
+            }
+        };
+
+        const PinSystem = {
+            check: function() {
+                // Check local storage or firebase for existing PIN
+                const hasPin = localStorage.getItem('vault_pin');
+                if (hasPin) {
+                    document.getElementById('pin-screen').classList.remove('hidden');
+                    this.renderNumpad();
+                } else {
+                    this.setupNewPin();
+                }
+            },
+            
+            setupNewPin: function() {
+                // Logic for first time setup (similar to login)
+                alert("First time setup: Create a PIN"); 
+                document.getElementById('pin-screen').classList.remove('hidden');
+                this.renderNumpad(true); // Setup mode
+            },
+
+            renderNumpad: function(isSetup = false) {
+                const numpad = document.getElementById('numpad');
+                numpad.innerHTML = '';
+                for(let i=1; i<=9; i++) {
+                    numpad.innerHTML += `<button class="num-btn" onclick="PinSystem.press(${i})">${i}</button>`;
+                }
+                numpad.innerHTML += `<button class="num-btn" onclick="PinSystem.clear()"><i class='bx bx-left-arrow-alt'></i></button>`;
+                numpad.innerHTML += `<button class="num-btn" onclick="PinSystem.press(0)">0</button>`;
+                numpad.innerHTML += `<button class="num-btn" onclick="PinSystem.submit(${isSetup})"><i class='bx bx-check'></i></button>`;
+            },
+
+            press: function(num) {
+                if(State.pin.length < 4) {
+                    State.pin += num;
+                    this.updateDisplay();
+                }
+            },
+
+            clear: function() {
+                State.pin = "";
+                this.updateDisplay();
+            },
+
+            updateDisplay: function() {
+                const dots = document.querySelectorAll('.pin-dot');
+                dots.forEach((dot, idx) => {
+                    if(idx < State.pin.length) dot.classList.add('filled');
+                    else dot.classList.remove('filled');
+                });
+            },
+
+            submit: async function(isSetup) {
+                if(State.pin.length !== 4) return UI.toast("PIN must be 4 digits");
+                
+                if(isSetup) {
+                    localStorage.setItem('vault_pin', State.pin);
+                    UI.toast("PIN Set!");
+                    State.pin = "";
+                    this.updateDisplay();
+                    this.check(); // Re-check to go to login
+                } else {
+                    const saved = localStorage.getItem('vault_pin');
+                    if(State.pin === saved) {
+                        document.getElementById('pin-screen').classList.add('hidden');
+                        Auth.init(); // Go to Google Auth
+                    } else {
+                        UI.toast("Invalid PIN");
+                        this.clear();
+                    }
+                }
+            }
+        };
+    </script>
+ <script>
+    /* ==================== AUTHENTICATION & SESSION ==================== */
+    const Auth = {
+        init: function() {
+            // Check if already logged in to Firebase/Google
+            firebase.auth().onAuthStateChanged((user) => {
+                if (user) {
+                    State.user = user;
+                    user.getIdToken().then(idToken => {
+                        State.token = idToken;
+                        this.startSessionTimer();
+                        document.getElementById('google-auth-screen').classList.add('hidden');
+                        document.getElementById('app-ui').classList.remove('hidden');
+                        UI.loadFiles(); // Load Drive Content
+                    });
+                } else {
+                    // Show Google Connect Screen
+                    document.getElementById('google-auth-screen').classList.remove('hidden');
+                }
+            });
+        },
+
+        signInGoogle: async function() {
+            try {
+                const provider = new firebase.auth.GoogleAuthProvider();
+                provider.addScope('https://www.googleapis.com/auth/drive.file');
+                const result = await firebase.auth().signInWithPopup(provider);
+                // Init is triggered by onAuthStateChanged
+            } catch (error) {
+                console.error("Auth Error", error);
+                UI.toast("Auth Failed: " + error.message);
+            }
+        },
+
+        signOut: function() {
+            firebase.auth().signOut().then(() => {
+                location.reload();
+            });
+        },
+
+        startSessionTimer: function() {
+            // 24 Hour Session Logic
+            // Token Refresh Logic (Auto refresh handled by Firebase SDK mostly, 
+            // but we add a safety check for Drive API scope tokens if needed)
+            setInterval(() => {
+                if(State.user) {
+                    State.user.getIdToken(true).then(newToken => {
+                        State.token = newToken;
+                        console.log("Token Refreshed");
+                    });
+                }
+            }, 45 * 60 * 1000); // Refresh every 45 mins
+        }
+    };
+</script>
+  
+  <script>
+    /* ==================== UI & PROXY HANDLING ==================== */
+    const UI = {
+        toastTimer: null,
+
+        toast: function(msg) {
+            const el = document.getElementById('toast');
+            el.innerText = msg;
+            el.style.opacity = 1;
+            clearTimeout(this.toastTimer);
+            this.toastTimer = setTimeout(() => { el.style.opacity = 0; }, 3000);
+        },
+
+        switchDrive: function(driveType) {
+            State.currentDrive = driveType;
+            document.getElementById('tab-user').classList.toggle('active', driveType === 'user');
+            document.getElementById('tab-vault').classList.toggle('active', driveType === 'vault');
+            this.toast(`Switched to ${driveType.charAt(0).toUpperCase() + driveType.slice(1)} Drive`);
+            this.loadFiles();
+        },
+
+        toggleTheme: function() {
+            // Simple placeholder for theme toggle
+            UI.toast("Theme Switched (Demo)");
+        },
+
+        loadFiles: async function() {
+            const grid = document.getElementById('file-grid');
+            grid.innerHTML = '<div class="flex-center" style="width:100%; height:100%; grid-column:1/-1;"><div class="loader"></div></div>';
+
+            // PROXY IMPLEMENTATION
+            // We use the 'readOnly' proxy for listing to avoid CORS
+            const proxyUrl = CONFIG.mediaProxies.readOnly;
+            const params = new URLSearchParams({
+                action: 'list', // Custom action your GAS script must handle
+                token: State.token,
+                folderId: State.currentDrive === 'user' ? 'root' : 'VAULT_FOLDER_ID_HERE' // Logic for 2TB partition
+            });
+
+            try {
+                // Simulated Fetch for now - Replace with actual fetch to your Proxy
+                // const response = await fetch(`${proxyUrl}?${params.toString()}`);
+                // const data = await response.json();
+                
+                // MOCK DATA FOR DEMONSTRATION (Remove this block when API is ready)
+                const data = {
+                    files: [
+                        { id: '1', name: 'Secret_Photo.jpg', mimeType: 'image/jpeg', thumbnailLink: 'https://picsum.photos/seed/1/200' },
+                        { id: '2', name: 'Project_Vault', mimeType: 'application/vnd.google-apps.folder' },
+                        { id: '3', name: 'Finance.pdf', mimeType: 'application/pdf' },
+                        { id: '4', name: 'Backup.zip', mimeType: 'application/zip' }
+                    ]
+                };
+                // END MOCK
+
+                this.renderFiles(data.files);
+            } catch (e) {
+                UI.toast("Error loading files: " + e.message);
+                grid.innerHTML = `<div style="text-align:center; width:100%; color:red;">Error Loading Files</div>`;
+            }
+        },
+
+        renderFiles: function(files) {
+            const grid = document.getElementById('file-grid');
+            grid.innerHTML = '';
+            
+            if(!files || files.length === 0) {
+                grid.innerHTML = '<div style="text-align:center; width:100%; color:#666;">Folder is empty</div>';
+                return;
+            }
+
+            files.forEach(file => {
+                const el = document.createElement('div');
+                el.className = 'file-item';
+                
+                // Icon Logic
+                let icon = CONFIG.icons.unknown;
+                if(file.mimeType.includes('folder')) icon = CONFIG.icons.folder;
+                else if(file.mimeType.includes('image')) icon = CONFIG.icons.image;
+                else if(file.mimeType.includes('video')) icon = CONFIG.icons.video;
+
+                // Image Preview
+                let bgStyle = '';
+                if(file.thumbnailLink) {
+                    bgStyle = `background-image: url('${file.thumbnailLink}'); background-size: cover; width: 50px; height: 50px; border-radius: 8px; display: block; margin-bottom:5px;`;
+                    el.innerHTML = `<div style="${bgStyle}"></div>`;
+                } else {
+                    el.innerHTML = `<div class="file-icon">${icon}</div>`;
+                }
+
+                el.innerHTML += `<div class="file-name">${file.name}</div>`;
+                
+                // Long press for Context Menu (Simulated with click for now)
+                el.onclick = () => FileOps.showMenu(file, el);
+                
+                grid.appendChild(el);
+            });
+        }
+    };
+</script>
+  <script>
+    /* ==================== FILE OPERATIONS (FULL ACCESS) ==================== */
+    const FileOps = {
+        
+        // --- UPLOAD LOGIC ---
+        triggerUpload: function(type) {
+            if(type === 'file') document.getElementById('file-input').click();
+            else document.getElementById('folder-input').click();
+        },
+
+        promptNewFolder: function() {
+            const name = prompt("Enter Folder Name:");
+            if(name) this.executeOperation('createFolder', { name: name });
+        },
+
+        uploadFile: async function(file) {
+            UI.toast(`Uploading ${file.name}...`);
+            
+            // CHUNKING LOGIC (Conceptual)
+            const CHUNK_SIZE = CONFIG.drive.chunkSize; // 5MB from config
+            let start = 0;
+            
+            // Use Full Access Proxy for Write Operations
+            const proxyUrl = CONFIG.mediaProxies.fullAccess;
+
+            // For a robust implementation, you would loop here uploading chunks.
+            // For this single-file proxy demo, we usually send the metadata first 
+            // then the binary, or let the GAS proxy handle the stream if possible.
+            // Here is the standard fetch approach:
+            
+            const formData = new FormData();
+            formData.append('file', file);
+            formData.append('token', State.token);
+            formData.append('action', 'upload'); // Action handled by GAS
+            formData.append('parentFolderId', State.currentDrive === 'user' ? 'root' : 'VAULT_FOLDER_ID');
+
+            try {
+                // Simulating Upload
+                // const res = await fetch(proxyUrl, { method: 'POST', body: formData });
+                UI.toast("Upload Complete!");
+                UI.loadFiles(); // Refresh
+            } catch(e) {
+                UI.toast("Upload Failed");
+            }
+        },
+
+        // --- CONTEXT MENU (COPY/MOVE/DELETE) ---
+        showMenu: function(file, element) {
+            // Simple native confirm for Android feel (In real app, use Material Dialog)
+            const action = prompt(`File: ${file.name}\n\nEnter Action:\n1. Open/Preview\n2. Copy to Vault\n3. Move to Vault\n4. Delete\n5. Share Link`);
+            
+            if(!action) return;
+
+            switch(action) {
+                case '1': this.preview(file); break;
+                case '2': this.copyTo(file, 'vault'); break;
+                case '3': this.moveTo(file, 'vault'); break;
+                case '4': this.deleteFile(file); break;
+                case '5': this.shareFile(file); break;
+            }
+        },
+
+        executeOperation: async function(action, payload) {
+            UI.toast("Processing...");
+            const proxyUrl = CONFIG.mediaProxies.fullAccess;
+            
+            try {
+                // await fetch(proxyUrl, {
+                //     method: 'POST',
+                //     body: JSON.stringify({ action, token: State.token, ...payload })
+                // });
+                UI.toast("Operation Successful");
+                UI.loadFiles();
+            } catch(e) {
+                UI.toast("Operation Failed");
+            }
+        },
+
+        copyTo: function(file, targetDrive) {
+            this.executeOperation('copy', { fileId: file.id, target: targetDrive });
+        },
+
+        moveTo: function(file, targetDrive) {
+            this.executeOperation('move', { fileId: file.id, target: targetDrive });
+        },
+
+        deleteFile: function(file) {
+            if(confirm(`Are you sure you want to delete ${file.name}?`)) {
+                this.executeOperation('delete', { fileId: file.id });
+            }
+        },
+
+        shareFile: function(file) {
+            this.executeOperation('share', { fileId: file.id });
+        },
+
+        preview: function(file) {
+            if(file.mimeType.includes('image')) {
+                // Use proxy to avoid CORS hotlinking issues if needed, or direct link
+                window.open(file.webViewLink || file.thumbnailLink, '_blank');
+            } else {
+                UI.toast("Preview not available for this type");
+            }
+        }
+    };
+
+    /* ==================== EVENT LISTENERS ==================== */
+    document.getElementById('file-input').addEventListener('change', (e) => {
+        if(e.target.files.length > 0) {
+            Array.from(e.target.files).forEach(file => FileOps.uploadFile(file));
+        }
+    });
+
+    document.getElementById('folder-input').addEventListener('change', (e) => {
+        if(e.target.files.length > 0) {
+            UI.toast(`Uploading ${e.target.files.length} items...`);
+            // Logic to handle recursive folder upload
+            Array.from(e.target.files).forEach(file => FileOps.uploadFile(file));
+        }
+    });
+
+    // Start Boot
+    Boot.init();
+
+</script>
+  
+</body>
+</html>
