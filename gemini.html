@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="cyber">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="description" content="VAULT OS v5.0 - Secure Enterprise Cloud Storage">
+    <meta name="theme-color" content="#050505">
+    <title>VAULT OS | SYSTEM v5.0</title>
+
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <script src="https://accounts.google.com/gsi/client"></script>
+
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+    <div id="boot-layer">
+        <div class="terminal-loader">
+            <div class="cmd-line">> KERNEL_INIT... <span class="blink">OK</span></div>
+            <div class="cmd-line">> MOUNTING_DRIVE... <span class="blink">OK</span></div>
+            <div class="cmd-line">> CHECKING_SECURITY... <span class="blink">OK</span></div>
+            <div class="cmd-line">> ESTABLISHING UPLINK... <span class="blink">...</span></div>
+        </div>
+        <div class="boot-logo">
+            <i class="fa-solid fa-fingerprint"></i>
+            <div class="ring"></div>
+        </div>
+        <div class="loading-bar-track">
+            <div class="loading-bar-fill"></div>
+        </div>
+    </div>
+
+    <section id="auth-layer" class="screen hidden">
+        <div class="glass-panel auth-container">
+            <div class="auth-header">
+                <div class="icon-box"><i class="fa-solid fa-shield-halved"></i></div>
+                <h2>SECURE VAULT</h2>
+                <p>Identity Verification Required</p>
+            </div>
+
+            <div class="pin-system">
+                <div class="pin-dots" id="pin-display">
+                    <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+                </div>
+                <div class="numpad">
+                    <button class="num-btn" onclick="Auth.typePin(1)">1</button>
+                    <button class="num-btn" onclick="Auth.typePin(2)">2</button>
+                    <button class="num-btn" onclick="Auth.typePin(3)">3</button>
+                    <button class="num-btn" onclick="Auth.typePin(4)">4</button>
+                    <button class="num-btn" onclick="Auth.typePin(5)">5</button>
+                    <button class="num-btn" onclick="Auth.typePin(6)">6</button>
+                    <button class="num-btn" onclick="Auth.typePin(7)">7</button>
+                    <button class="num-btn" onclick="Auth.typePin(8)">8</button>
+                    <button class="num-btn" onclick="Auth.typePin(9)">9</button>
+                    <button class="action-btn" onclick="Auth.signIn()">
+                        <i class="fa-brands fa-google"></i>
+                    </button>
+                    <button class="num-btn" onclick="Auth.typePin(0)">0</button>
+                    <button class="action-btn delete" onclick="Auth.clearPin()">
+                        <i class="fa-solid fa-backspace"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="auth-msg" class="status-msg">System Locked</div>
+        </div>
+    </section>
+
+    <section id="app-layer" class="screen hidden">
+        
+        <div id="search-overlay" class="search-layer hidden">
+            <div class="search-container glass-panel">
+                <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                <input type="text" id="search-input" placeholder="Search files, folders..." autocomplete="off">
+                <button class="close-search" onclick="UI.toggleSearch()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div id="search-results" class="results-grid"></div>
+        </div>
+
+        <div id="sidebar-overlay" class="sidebar-backdrop hidden" onclick="UI.toggleSidebar()"></div>
+        <aside id="app-sidebar" class="sidebar glass-panel">
+            <div class="sidebar-header">
+                <div class="brand">
+                    <i class="fa-solid fa-shield-cat"></i>
+                    <span>VAULT OS</span>
+                </div>
+                <div class="sidebar-user">
+                    <small id="side-user-email">Connecting...</small>
+                </div>
+            </div>
+            <nav class="sidebar-nav">
+                <button class="nav-item active" id="nav-my" onclick="Drive.switchMode('my'); UI.toggleSidebar()">
+                    <i class="fa-solid fa-hard-drive"></i> My Drive
+                </button>
+                <button class="nav-item" id="nav-vault" onclick="Drive.switchMode('vault'); UI.toggleSidebar()">
+                    <i class="fa-solid fa-users-viewfinder"></i> Shared Vault
+                </button>
+                <button class="nav-item" id="nav-starred" onclick="Drive.switchMode('starred'); UI.toggleSidebar()">
+                    <i class="fa-solid fa-star"></i> Starred
+                </button>
+                <button class="nav-item" id="nav-trash" onclick="Drive.switchMode('trash'); UI.toggleSidebar()">
+                    <i class="fa-solid fa-trash"></i> Trash
+                </button>
+                <div class="divider"></div>
+                <button class="nav-item" onclick="UI.toggleSettings(); UI.toggleSidebar()">
+                    <i class="fa-solid fa-sliders"></i> Settings
+                </button>
+                <button class="nav-item" onclick="Auth.logout()">
+                    <i class="fa-solid fa-power-off"></i> Logout
+                </button>
+            </nav>
+            <div class="sidebar-footer">
+                <span>System v5.0.0 (Stable)</span>
+            </div>
+        </aside>
+
+        <header class="status-bar">
+            <div class="header-left">
+                <div class="user-profile">
+                    <div class="avatar-ring">
+                        <img id="user-avatar" src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7" alt="User">
+                    </div>
+                    <div class="user-details">
+                        <span id="user-name">Guest User</span>
+                        <span class="user-email" id="user-email">Offline</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="system-controls">
+                <button class="icon-btn" onclick="Drive.list(State.currentFolder)" title="Refresh">
+                    <i class="fa-solid fa-rotate"></i>
+                </button>
+                <button class="icon-btn" onclick="UI.toggleSettings()" title="Settings">
+                    <i class="fa-solid fa-gear"></i>
+                </button>
+            </div>
+        </header>
+
+        <main class="viewport">
+            
+            <div class="widget-storage glass-panel">
+                <div class="widget-header">
+                    <span><i class="fa-brands fa-google-drive"></i> Cloud Storage</span>
+                    <span id="storage-text" style="color:var(--primary)">Calculated...</span>
+                </div>
+                <div class="progress-track">
+                    <div id="storage-bar" class="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="storage-meta">
+                    <span id="storage-used">0 GB</span> / <span id="storage-total">2 TB</span>
+                </div>
+            </div>
+
+            <div class="nav-toolbar">
+                <div class="breadcrumbs" id="path-display">
+                    <span class="crumb active"><i class="fa-solid fa-hdd"></i> Root</span>
+                </div>
+            </div>
+
+            <div id="file-manager" class="file-grid-container">
+                </div>
+        </main>
+
+        <div class="fab-wrapper">
+            <div class="fab-options" id="fab-menu">
+                <div class="fab-item" onclick="Drive.createFolder()"> <span class="label">New Folder</span>
+                    <button><i class="fa-solid fa-folder-plus"></i></button>
+                </div>
+                
+                <div class="fab-item" onclick="document.getElementById('upload-folder').click()">
+                    <span class="label">Upload Folder</span>
+                    <button><i class="fa-solid fa-upload"></i></button>
+                </div>
+                
+                <div class="fab-item" onclick="document.getElementById('upload-file').click()">
+                    <span class="label">Upload File</span>
+                    <button><i class="fa-solid fa-file-import"></i></button>
+                </div>
+            </div>
+            
+            <button class="fab-main" onclick="UI.toggleFab()">
+                <i class="fa-solid fa-plus" id="fab-icon"></i>
+            </button>
+        </div>
+
+        <input type="file" id="upload-file" multiple hidden onchange="Transfer.handleFiles(this.files)">
+        <input type="file" id="upload-folder" webkitdirectory multiple hidden onchange="Transfer.handleFiles(this.files)">
+    </section>
+
+    <div id="settings-modal" class="modal-overlay hidden">
+        <div class="modal-window glass-panel">
+            <div class="modal-header">
+                <h3>SYSTEM CONFIG</h3>
+                <button class="close-btn" onclick="UI.toggleSettings()">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="settings-content">
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-palette"></i>
+                        <div>
+                            <h4>Interface Theme</h4>
+                            <p>Select visual system style</p>
+                        </div>
+                    </div>
+                    <select id="theme-selector" onchange="UI.applyTheme(this.value)">
+                        <option value="cyber">Cyberpunk (Default)</option>
+                        <option value="dark">OLED Dark</option>
+                        <option value="light">Material Light</option>
+                    </select>
+                </div>
+
+                <div class="setting-row">
+                    <div class="setting-info">
+                        <i class="fa-solid fa-server"></i>
+                        <div>
+                            <h4>Media Proxy</h4>
+                            <p>Bypass CORS for Previews</p>
+                        </div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="proxy-toggle" 
+                               onchange="State.settings.useProxy = this.checked; localStorage.setItem('vault_settings', JSON.stringify(State.settings))" 
+                               checked>
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                
+                <div class="setting-row">
+                    <button class="btn-danger full-width" onclick="Auth.logout()">
+                        <i class="fa-solid fa-power-off"></i> SYSTEM SHUTDOWN
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="upload-panel" class="upload-tray hidden">
+        <div class="tray-header">
+            <span>Upload Queue</span>
+            <button onclick="document.getElementById('upload-panel').classList.add('hidden')">
+                <i class="fa-solid fa-minus"></i>
+            </button>
+        </div>
+        <div id="upload-list" class="tray-body"></div>
+    </div>
+
+    <div id="toast-area"></div>
+
+    <div id="ctx-menu" class="context-menu">
+        <div class="ctx-item" onclick="Ops.preview()">
+            <i class="fa-solid fa-eye"></i> Preview
+        </div>
+        <div class="ctx-item" onclick="Ops.download()">
+            <i class="fa-solid fa-download"></i> Download
+        </div>
+        <div class="ctx-item" onclick="Ops.share()">
+            <i class="fa-solid fa-share-nodes"></i> Share Link
+        </div>
+        <div class="ctx-item" onclick="Ops.copy()">
+            <i class="fa-solid fa-copy"></i> Copy File
+        </div>
+        <div class="ctx-item" onclick="Ops.move()">
+            <i class="fa-solid fa-arrow-right-to-bracket"></i> Move
+        </div>
+        <div class="ctx-divider"></div>
+        <div class="ctx-item delete" onclick="Ops.delete()">
+            <i class="fa-solid fa-trash-can"></i> Delete
+        </div>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
