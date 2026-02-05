@@ -3,61 +3,71 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VAULT DIAGNOSTIC | DRIVE PRO</title>
+    <title>VAULT OS | AUTO DRIVE</title>
     <script src="https://accounts.google.com/gsi/client"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 
     <style>
         :root { --bg: #050505; --surface: #121212; --border: #333; --primary: #00f3ff; }
-        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; padding-top: 80px; }
+        body { background: var(--bg); color: #fff; font-family: 'Inter', sans-serif; margin: 0; padding-top: 80px; }
         
-        /* Fixed Header */
-        .top { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(0,0,0,0.95); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 10px; z-index: 100; flex-wrap: wrap; }
-        .btn { padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: #fff; cursor: pointer; font-size: 12px; font-weight: bold; text-transform: uppercase; }
-        .btn:hover { background: #222; border-color: #666; }
-        .btn-main { background: var(--primary); color: #000; border: none; }
-        .btn-main:hover { background: #00d2df; }
+        /* Navbar */
+        .top { position: fixed; top: 0; left: 0; right: 0; height: 70px; background: rgba(5,5,5,0.95); backdrop-filter: blur(10px); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 15px; z-index: 100; }
         
-        /* Photo Grid Layout */
-        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 15px; padding: 20px; }
-        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; transition: transform 0.2s; position: relative; }
-        .card:hover { transform: translateY(-3px); border-color: var(--primary); }
+        /* Buttons */
+        .btn { padding: 10px 20px; border-radius: 8px; border: 1px solid var(--border); background: var(--surface); color: #ccc; cursor: pointer; font-size: 13px; font-weight: 600; display: flex; align-items: center; gap: 8px; transition: 0.2s; }
+        .btn:hover { background: #222; border-color: #666; color: #fff; }
+        .btn-active { background: rgba(0, 243, 255, 0.15); color: var(--primary); border-color: var(--primary); }
+        .btn-auth { background: var(--primary); color: #000; border: none; }
+        .btn-auth:hover { background: #00d2df; box-shadow: 0 0 15px rgba(0, 243, 255, 0.4); }
+
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 15px; padding: 20px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; cursor: pointer; transition: transform 0.2s; position: relative; }
+        .card:hover { transform: translateY(-4px); border-color: var(--primary); box-shadow: 0 5px 15px rgba(0,0,0,0.5); }
         
-        /* Image Preview */
-        .preview-box { width: 100%; height: 120px; background: #000; display: flex; align-items: center; justify-content: center; overflow: hidden; }
-        .img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.3s; }
-        .card:hover .img { transform: scale(1.1); }
-        .icon { font-size: 40px; color: #555; }
+        .preview { height: 100px; background: #080808; display: flex; align-items: center; justify-content: center; font-size: 40px; color: #444; }
+        .preview img { width: 100%; height: 100%; object-fit: cover; }
         
-        /* Metadata */
-        .meta { padding: 10px; }
-        .name { font-size: 11px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ddd; margin-bottom: 4px; }
-        .type { font-size: 9px; color: #777; text-transform: uppercase; }
+        .meta { padding: 12px; }
+        .name { font-size: 12px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #eee; }
+        .type { font-size: 10px; color: #777; margin-top: 4px; text-transform: uppercase; }
+
+        /* Status */
+        .status-badge { margin-left: auto; font-size: 11px; padding: 5px 10px; border-radius: 20px; background: #1a1a1a; border: 1px solid #333; color: #666; }
+        .online { color: #00ff9d; border-color: #00ff9d; background: rgba(0, 255, 157, 0.1); }
     </style>
 </head>
 <body>
 
     <div class="top">
-        <button class="btn btn-main" onclick="connect()">1. FULL AUTH</button>
-        <button class="btn" onclick="load('root', 'Root')"><i class="fa-solid fa-hard-drive"></i> User Root</button>
-        <button class="btn" onclick="askAndLoad()"><i class="fa-solid fa-vault"></i> Load Vault ID</button>
+        <button class="btn btn-auth" onclick="connect()">
+            <i class="fa-solid fa-bolt"></i> CONNECT
+        </button>
         
-        <div style="margin-left: auto; text-align: right;">
-            <div id="status" style="font-size: 10px; color: #666; font-weight: bold;">DISCONNECTED</div>
-            <div id="folder-name" style="font-size: 12px; color: var(--primary);">No Folder Loaded</div>
-        </div>
+        <div style="width: 1px; height: 30px; background: #333; margin: 0 5px;"></div>
+
+        <button class="btn" id="btn-user" onclick="Drive.loadUserRoot()">
+            <i class="fa-solid fa-user"></i> My Drive
+        </button>
+        
+        <button class="btn" id="btn-vault" onclick="Drive.loadSharedDrives()">
+            <i class="fa-solid fa-users-viewfinder"></i> Vaults
+        </button>
+
+        <div id="status" class="status-badge">OFFLINE</div>
     </div>
 
     <div id="grid" class="grid"></div>
 
     <script>
+        // CONFIG
         const CLIENT_ID = "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com";
-        
-        // ➤ FIXED: Full Scope for accessing all drives/files
-        const SCOPES = "https://www.googleapis.com/auth/drive"; 
+        const SCOPES = "https://www.googleapis.com/auth/drive"; // FULL ACCESS
         
         let token = null;
 
+        // AUTHENTICATION
         function connect() {
             const client = google.accounts.oauth2.initTokenClient({
                 client_id: CLIENT_ID,
@@ -65,83 +75,151 @@
                 callback: (r) => {
                     if(r.access_token) {
                         token = r.access_token;
-                        document.getElementById('status').innerText = "CONNECTED (FULL ACCESS)";
-                        document.getElementById('status').style.color = "#0f0";
-                    } else {
-                        alert("Auth Failed!");
+                        updateStatus(true);
+                        Drive.loadUserRoot(); // Auto load My Drive on connect
                     }
                 }
             });
             client.requestAccessToken();
         }
 
-        function askAndLoad() {
-            // ➤ FIX: Prompt for specific Vault Folder ID
-            const vid = prompt("Enter Vault Folder ID / Shared Drive ID:", ""); 
-            if(vid && vid.length > 5) {
-                load(vid, "Vault Drive");
+        function updateStatus(isOnline) {
+            const el = document.getElementById('status');
+            if(isOnline) {
+                el.innerText = "SYSTEM ONLINE";
+                el.classList.add('online');
             }
         }
 
-        async function load(id, label) {
-            if(!token) return alert("Please AUTH first!");
-            
-            const g = document.getElementById('grid');
-            const title = document.getElementById('folder-name');
-            
-            g.innerHTML = '<div style="color:white; padding:20px;">Loading Files...</div>';
-            title.innerText = `Loading ${label}...`;
-            
-            // ➤ FIX: Added 'supportsAllDrives' and 'includeItemsFromAllDrives' for Shared Drive/Vault access
-            // ➤ FIX: Increased thumbnail size (s220 -> s800) for better photo view
-            const url = `https://www.googleapis.com/drive/v3/files?q='${id}' in parents and trashed=false&fields=files(id,name,mimeType,thumbnailLink)&pageSize=50&orderBy=folder,createdTime desc&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+        // DRIVE ENGINE
+        const Drive = {
+            activeMode: 'user', // 'user' or 'vault'
 
-            try {
-                const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
-                const data = await res.json();
+            // 1. Load User's "My Drive" Root
+            loadUserRoot: () => {
+                Drive.setActiveBtn('btn-user');
+                Drive.listFiles('root', 'My Drive');
+            },
 
-                if(data.error) {
-                    throw new Error(data.error.message);
-                }
+            // 2. Load List of Available Shared Drives (Vaults)
+            loadSharedDrives: async () => {
+                if(!token) return alert("Connect First!");
+                Drive.setActiveBtn('btn-vault');
+                
+                const grid = document.getElementById('grid');
+                grid.innerHTML = '<div style="color:var(--primary); padding:20px;">Scanning for Vaults...</div>';
 
-                g.innerHTML = '';
-                title.innerText = `${label} (${data.files ? data.files.length : 0} items)`;
-
-                if(!data.files || data.files.length === 0) {
-                    g.innerHTML = '<div style="color:gray; padding:20px;">Empty Folder</div>';
-                    return;
-                }
-
-                data.files.forEach(f => {
-                    // Photo Logic: Get High Res Thumbnail
-                    const isImg = f.mimeType.includes('image') && f.thumbnailLink;
-                    let imgUrl = "";
-                    if(isImg) {
-                        // Requesting larger thumbnail (s800)
-                        imgUrl = f.thumbnailLink.replace('s220', 's800'); 
+                // API Call to get Drives list
+                const url = `https://www.googleapis.com/drive/v3/drives?pageSize=20`;
+                
+                try {
+                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const data = await res.json();
+                    
+                    grid.innerHTML = '';
+                    if(!data.drives || data.drives.length === 0) {
+                        grid.innerHTML = '<div style="color:gray; padding:20px;">No Shared Vaults Found in this Account.</div>';
+                        return;
                     }
 
-                    // Icon Logic
-                    let iconHtml = '<i class="fa-solid fa-file icon"></i>';
-                    if(f.mimeType.includes('folder')) iconHtml = '<i class="fa-solid fa-folder icon" style="color:#ffcc00"></i>';
-                    else if(f.mimeType.includes('video')) iconHtml = '<i class="fa-solid fa-film icon" style="color:#ff2a6d"></i>';
-                    
-                    g.innerHTML += `
-                        <div class="card" title="${f.name}">
-                            <div class="preview-box">
-                                ${isImg ? `<img src="${imgUrl}" class="img" referrerpolicy="no-referrer">` : iconHtml}
+                    // Render Drives as Cards
+                    data.drives.forEach(drive => {
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        card.onclick = () => Drive.listFiles(drive.id, drive.name); // Click to enter
+                        card.innerHTML = `
+                            <div class="preview">
+                                <i class="fa-solid fa-server" style="color:var(--primary)"></i>
                             </div>
                             <div class="meta">
-                                <div class="name">${f.name}</div>
-                                <div class="type">${f.mimeType.split('/').pop().toUpperCase()}</div>
+                                <div class="name">${drive.name}</div>
+                                <div class="type">SHARED VAULT</div>
                             </div>
-                        </div>`;
-                });
-            } catch(e) {
-                g.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
-                title.innerText = "Error Loading";
+                        `;
+                        grid.appendChild(card);
+                    });
+
+                } catch(e) {
+                    console.error(e);
+                    grid.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
+                }
+            },
+
+            // 3. Common File Lister (Handles both Files & Folders)
+            listFiles: async (folderId, folderName) => {
+                if(!token) return alert("Connect First!");
+                
+                const grid = document.getElementById('grid');
+                grid.innerHTML = `<div style="color:white; padding:20px;">Loading ${folderName}...</div>`;
+
+                // Query: Search in Parent, Not Trashed
+                // Params: supportsAllDrives=true (CRITICAL for Vaults)
+                const q = `'${folderId}' in parents and trashed=false`;
+                const fields = "files(id,name,mimeType,thumbnailLink,iconLink)";
+                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${fields}&pageSize=50&orderBy=folder,createdTime desc&supportsAllDrives=true&includeItemsFromAllDrives=true`;
+
+                try {
+                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+                    const data = await res.json();
+                    
+                    grid.innerHTML = '';
+                    if(!data.files || data.files.length === 0) {
+                        grid.innerHTML = '<div style="color:gray; padding:20px;">Folder is Empty</div>';
+                        return;
+                    }
+
+                    data.files.forEach(f => {
+                        // High Res Thumbnail Logic
+                        const isImg = f.mimeType.includes('image') && f.thumbnailLink;
+                        const imgUrl = isImg ? f.thumbnailLink.replace('s220', 's800') : '';
+                        
+                        // Icon Logic
+                        let icon = '<i class="fa-solid fa-file"></i>';
+                        let color = '#555';
+                        
+                        if(f.mimeType.includes('folder')) { icon = '<i class="fa-solid fa-folder"></i>'; color = '#ffcc00'; }
+                        else if(f.mimeType.includes('video')) { icon = '<i class="fa-solid fa-film"></i>'; color = '#ff2a6d'; }
+                        else if(f.mimeType.includes('pdf')) { icon = '<i class="fa-solid fa-file-pdf"></i>'; color = '#ff4d4d'; }
+
+                        const content = isImg 
+                            ? `<img src="${imgUrl}" loading="lazy">` 
+                            : `<div style="color:${color}">${icon}</div>`;
+
+                        // Card
+                        const card = document.createElement('div');
+                        card.className = 'card';
+                        
+                        // Click Logic: If folder -> Open, Else -> Log/Preview
+                        card.onclick = () => {
+                            if(f.mimeType.includes('folder')) {
+                                Drive.listFiles(f.id, f.name);
+                            } else {
+                                alert(`Opening File: ${f.name}`);
+                            }
+                        };
+
+                        card.innerHTML = `
+                            <div class="preview">${content}</div>
+                            <div class="meta">
+                                <div class="name">${f.name}</div>
+                                <div class="type">${f.mimeType.split('.').pop()}</div>
+                            </div>
+                        `;
+                        grid.appendChild(card);
+                    });
+
+                } catch(e) {
+                    grid.innerHTML = `<div style="color:red; padding:20px;">Error: ${e.message}</div>`;
+                }
+            },
+
+            // Helper: Toggle Button State
+            setActiveBtn: (id) => {
+                document.querySelectorAll('.btn').forEach(b => b.classList.remove('btn-active'));
+                const btn = document.getElementById(id);
+                if(btn) btn.classList.add('btn-active');
             }
-        }
+        };
     </script>
 </body>
 </html>
