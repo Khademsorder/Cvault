@@ -1,73 +1,80 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="cyber">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VAULT DIAGNOSTIC | LIBS</title>
-    
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+    <title>VAULT DIAGNOSTIC | DRIVE</title>
     <script src="https://accounts.google.com/gsi/client"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
 
     <style>
-        :root { --bg: #050505; --surface: #111; --border: #333; --primary: #00f3ff; --success: #00ff9d; --danger: #ff2a6d; --text: #fff; --text-sec: #888; }
-        body { background: var(--bg); color: var(--text); font-family: 'Courier New', monospace; padding: 20px; max-width: 800px; margin: 0 auto; }
-        h2 { border-bottom: 1px solid var(--border); padding-bottom: 10px; color: var(--primary); }
-        .card { background: var(--surface); border: 1px solid var(--border); padding: 15px; margin-bottom: 10px; border-radius: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .status { font-weight: bold; }
-        .pass { color: var(--success); }
-        .fail { color: var(--danger); }
-        .info { font-size: 12px; color: var(--text-sec); margin-top: 5px; }
+        :root { --bg: #050505; --surface: #121212; --border: #333; --primary: #00f3ff; }
+        body { background: var(--bg); color: #fff; font-family: sans-serif; margin: 0; padding-top: 70px; }
+        
+        /* Fixed Header */
+        .top { position: fixed; top: 0; left: 0; right: 0; height: 60px; background: rgba(0,0,0,0.9); border-bottom: 1px solid var(--border); display: flex; align-items: center; padding: 0 20px; gap: 10px; z-index: 100; }
+        .btn { padding: 8px 15px; border-radius: 6px; border: 1px solid var(--border); background: var(--surface); color: #fff; cursor: pointer; font-size: 12px; }
+        .btn-main { background: var(--primary); color: #000; border: none; font-weight: bold; }
+        
+        /* Grid */
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; padding: 20px; }
+        .card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 10px; text-align: center; overflow: hidden; }
+        .icon { font-size: 30px; margin-bottom: 10px; color: #888; }
+        .img { width: 100%; height: 80px; object-fit: cover; border-radius: 5px; margin-bottom: 5px; }
+        .name { font-size: 10px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #ccc; }
     </style>
 </head>
 <body>
 
-    <h2><i class="fa-solid fa-microchip"></i> SYSTEM CHECK</h2>
-    <div id="logs"></div>
+    <div class="top">
+        <button class="btn btn-main" onclick="connect()">1. AUTH</button>
+        <button class="btn" onclick="load('root')">LOAD ROOT</button>
+        <button class="btn" onclick="load('root')">LOAD VAULT</button>
+        <span id="status" style="font-size: 12px; color: #666; margin-left: auto;">Offline</span>
+    </div>
+
+    <div id="grid" class="grid"></div>
 
     <script>
-        // CONFIG CHECK
-        const CONFIG = { app: "VAULT OS", version: "5.0" }; // Simulated Config
+        const CLIENT_ID = "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com";
+        let token = null;
 
-        const log = (name, status, msg) => {
-            const el = document.createElement('div');
-            el.className = 'card';
-            el.innerHTML = `
-                <div>
-                    <strong>${name}</strong>
-                    <div class="info">${msg}</div>
-                </div>
-                <div class="status ${status ? 'pass' : 'fail'}">
-                    ${status ? 'PASSED' : 'FAILED'}
-                </div>
-            `;
-            document.getElementById('logs').appendChild(el);
-        };
+        function connect() {
+            const client = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: "https://www.googleapis.com/auth/drive.readonly",
+                callback: (r) => {
+                    if(r.access_token) {
+                        token = r.access_token;
+                        document.getElementById('status').innerText = "ONLINE";
+                        document.getElementById('status').style.color = "#0f0";
+                    }
+                }
+            });
+            client.requestAccessToken();
+        }
 
-        window.onload = () => {
-            // 1. Firebase
-            try {
-                if(typeof firebase !== 'undefined') log("Firebase SDK", true, `v${firebase.SDK_VERSION}`);
-                else throw new Error("Missing");
-            } catch(e) { log("Firebase SDK", false, "Script failed to load"); }
+        async function load(id) {
+            if(!token) return alert("Auth First!");
+            const g = document.getElementById('grid');
+            g.innerHTML = 'Loading...';
+            
+            const url = `https://www.googleapis.com/drive/v3/files?q='${id}' in parents and trashed=false&fields=files(id,name,mimeType,thumbnailLink)&pageSize=20`;
+            const res = await fetch(url, { headers: { 'Authorization': `Bearer ${token}` } });
+            const data = await res.json();
 
-            // 2. Google GIS
-            try {
-                if(typeof google !== 'undefined' && google.accounts) log("Google Identity", true, "GIS Client Ready");
-                else throw new Error("Missing");
-            } catch(e) { log("Google Identity", false, "Script failed to load"); }
-
-            // 3. LocalStorage
-            try {
-                localStorage.setItem('test', '1'); localStorage.removeItem('test');
-                log("Local Storage", true, "Read/Write OK");
-            } catch(e) { log("Local Storage", false, "Access Denied"); }
-
-            // 4. Internet
-            log("Network Status", navigator.onLine, navigator.onLine ? "Online" : "Offline");
-        };
+            g.innerHTML = '';
+            if(data.files) {
+                data.files.forEach(f => {
+                    const isImg = f.mimeType.includes('image') && f.thumbnailLink;
+                    g.innerHTML += `
+                        <div class="card">
+                            ${isImg ? `<img src="${f.thumbnailLink}" class="img">` : '<div class="icon">📄</div>'}
+                            <div class="name">${f.name}</div>
+                        </div>`;
+                });
+            }
+        }
     </script>
 </body>
 </html>
