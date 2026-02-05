@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Vault OS - Debug & Reference Build</title>
+    <title>Vault OS - Light Theme Build</title>
     
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
@@ -13,21 +13,24 @@
     <!-- Google Identity Services (OAuth) -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
     
-    <!-- Google Picker API (Optional helper) -->
+    <!-- Google Picker API -->
     <script src="https://apis.google.com/js/api.js"></script>
 
     <style>
         :root {
-            --bg-color: #121212;
-            --surface-color: #1e1e1e;
-            --primary-color: #00e676; /* Android Green */
-            --text-color: #ffffff;
-            --text-secondary: #b0b0b0;
-            --danger-color: #ff5252;
+            /* --- LIGHT THEME VARIABLES --- */
+            --bg-color: #f0f2f5;
+            --surface-color: #ffffff;
+            --primary-color: #00897b; /* Teal Green */
+            --text-color: #333333;
+            --text-secondary: #757575;
+            --danger-color: #d32f2f;
+            --border-color: #e0e0e0;
             --nav-height: 60px;
+            --shadow: 0 2px 5px rgba(0,0,0,0.1);
         }
 
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; -webkit-tap-highlight-color: transparent; }
         
         body {
             background-color: var(--bg-color);
@@ -52,14 +55,15 @@
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 4px;
+            border-radius: 6px;
             cursor: pointer;
             font-weight: 600;
-            transition: opacity 0.2s;
+            transition: opacity 0.2s, transform 0.1s;
+            box-shadow: var(--shadow);
         }
-        .btn:active { opacity: 0.7; }
-        .btn-primary { background-color: var(--primary-color); color: #000; }
-        .btn-outline { border: 1px solid var(--text-secondary); background: transparent; color: var(--text-secondary); }
+        .btn:active { transform: scale(0.98); opacity: 0.8; }
+        .btn-primary { background-color: var(--primary-color); color: #fff; }
+        .btn-outline { border: 1px solid var(--border-color); background: var(--surface-color); color: var(--text-color); }
 
         /* --- Screens --- */
         .screen {
@@ -73,29 +77,42 @@
         }
 
         /* 1. PIN Screen */
-        #pin-screen { z-index: 100; }
+        #pin-screen { z-index: 100; background-color: var(--surface-color); }
         .pin-display {
-            font-size: 2rem;
-            letter-spacing: 10px;
-            margin: 20px 0;
+            font-size: 2.5rem;
+            letter-spacing: 12px;
+            margin: 30px 0;
             height: 50px;
-        }
-        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 300px; margin: 0 auto; }
-        .num-btn {
-            background: var(--surface-color);
             color: var(--text-color);
-            font-size: 1.5rem;
-            padding: 20px;
-            border-radius: 50%;
-            border: none;
+            border-bottom: 2px solid var(--border-color);
+            width: 200px;
+            text-align: center;
         }
+        .numpad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; max-width: 320px; margin: 0 auto; width: 100%; padding: 0 20px;}
+        
+        /* Fix: Ensuring buttons are clickable on mobile */
+        .num-btn {
+            background: var(--bg-color);
+            color: var(--text-color);
+            font-size: 1.8rem;
+            padding: 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--shadow);
+            cursor: pointer;
+            user-select: none;
+            position: relative;
+            z-index: 102; /* Higher z-index */
+        }
+        .num-btn:active { background: #e0e0e0; transform: scale(0.95); }
 
         /* 2. Login Screen */
-        #login-screen { z-index: 90; }
+        #login-screen { z-index: 90; background-color: var(--bg-color); }
         .login-card {
             background: var(--surface-color);
             padding: 30px;
-            border-radius: 8px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             width: 90%;
             max-width: 400px;
             text-align: center;
@@ -107,38 +124,48 @@
         header {
             padding: 15px;
             background: var(--surface-color);
-            border-bottom: 1px solid #333;
+            border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
         }
 
         .drive-switch {
-            background: #333;
-            border-radius: 20px;
+            background: var(--bg-color);
+            border-radius: 25px;
             padding: 4px;
             display: flex;
+            border: 1px solid var(--border-color);
         }
         .switch-opt {
-            padding: 5px 15px;
-            border-radius: 16px;
+            padding: 6px 18px;
+            border-radius: 20px;
             cursor: pointer;
             font-size: 0.85rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            transition: all 0.3s;
         }
-        .switch-opt.active { background: var(--primary-color); color: #000; font-weight: bold; }
+        .switch-opt.active { background: var(--surface-color); color: var(--primary-color); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
 
         .file-list { flex: 1; overflow-y: auto; padding: 10px; }
         
         .file-item {
             display: flex;
             align-items: center;
-            padding: 12px;
-            border-bottom: 1px solid #333;
+            padding: 15px;
+            background: var(--surface-color);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
             cursor: pointer;
+            border: 1px solid transparent;
         }
-        .file-icon { width: 40px; height: 40px; margin-right: 15px; display: flex; align-items: center; justify-content: center; background: #333; border-radius: 4px; font-size: 1.2rem; }
+        .file-item:active { background-color: #f5f5f5; border-color: var(--primary-color); }
+        .file-icon { width: 45px; height: 45px; margin-right: 15px; display: flex; align-items: center; justify-content: center; background: #f0f0f0; border-radius: 8px; font-size: 1.4rem; }
         .file-info { flex: 1; }
-        .file-name { font-weight: 500; margin-bottom: 2px; }
+        .file-name { font-weight: 600; margin-bottom: 4px; color: #2c3e50; }
         .file-meta { font-size: 0.75rem; color: var(--text-secondary); }
 
         /* Bottom Nav */
@@ -150,12 +177,13 @@
             display: flex;
             justify-content: space-around;
             align-items: center;
-            border-top: 1px solid #333;
+            border-top: 1px solid var(--border-color);
             z-index: 200;
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.05);
         }
-        .nav-item { font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); cursor: pointer; }
+        .nav-item { font-size: 0.7rem; display: flex; flex-direction: column; align-items: center; color: var(--text-secondary); cursor: pointer; width: 100%; padding: 5px 0;}
         .nav-item.active { color: var(--primary-color); }
-        .nav-icon { font-size: 1.2rem; margin-bottom: 2px; }
+        .nav-icon { font-size: 1.4rem; margin-bottom: 3px; }
 
         /* 4. Debug/Bug Console */
         #debug-drawer {
@@ -163,18 +191,19 @@
             top: 0; right: -400px;
             width: 350px;
             height: 100%;
-            background: #000;
+            background: #1e1e1e; /* Debug console stays dark for contrast */
             z-index: 300;
             border-left: 1px solid #333;
             transition: right 0.3s;
             display: flex;
             flex-direction: column;
             font-family: 'Courier New', monospace;
+            color: #ccc;
         }
         #debug-drawer.open { right: 0; }
-        .debug-header { padding: 10px; background: #222; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
+        .debug-header { padding: 10px; background: #252525; border-bottom: 1px solid #444; display: flex; justify-content: space-between; align-items: center; }
         .debug-content { flex: 1; overflow-y: auto; padding: 10px; font-size: 0.8rem; }
-        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #111; padding-bottom: 2px; }
+        .log-entry { margin-bottom: 5px; border-bottom: 1px solid #333; padding-bottom: 2px; word-wrap: break-word; }
         .log-time { color: #888; margin-right: 5px; }
         .log-info { color: #4caf50; }
         .log-error { color: #ff5252; }
@@ -192,13 +221,13 @@
             pointer-events: none;
         }
         .toast {
-            background: rgba(30, 30, 30, 0.95);
+            background: rgba(40, 40, 40, 0.95);
             color: #fff;
             padding: 12px 20px;
-            border-radius: 4px;
+            border-radius: 8px;
             margin-top: 10px;
             text-align: center;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
             animation: fadeIn 0.3s, fadeOut 0.3s 2.7s forwards;
             border-left: 4px solid var(--primary-color);
         }
@@ -208,7 +237,7 @@
         @keyframes fadeOut { from { opacity: 1; } to { opacity: 0; } }
 
         /* Loader */
-        .loader { border: 3px solid #333; border-top: 3px solid var(--primary-color); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid var(--primary-color); border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; margin: 0 auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
     </style>
@@ -220,8 +249,8 @@
 
     <!-- --- 1. PIN SCREEN --- -->
     <section id="pin-screen" class="screen center">
-        <div style="text-align: center;">
-            <h2>VAULT OS</h2>
+        <div style="text-align: center; width: 100%;">
+            <h2 style="color: var(--text-color);">VAULT OS</h2>
             <p class="text-sm">Enter PIN to Unlock</p>
             <div id="pin-display" class="pin-display"></div>
             <div class="numpad">
@@ -236,7 +265,7 @@
                 <button class="num-btn" onclick="addPin(9)">9</button>
                 <button class="num-btn" onclick="clearPin()">C</button>
                 <button class="num-btn" onclick="addPin(0)">0</button>
-                <button class="num-btn" style="background:var(--primary-color);color:#000" onclick="verifyPin()">OK</button>
+                <button class="num-btn" style="background:var(--primary-color);color:#fff; border:none;" onclick="verifyPin()">OK</button>
             </div>
             <p class="text-sm mt-2">Default PIN: 0000</p>
         </div>
@@ -265,18 +294,18 @@
                 <div id="switch-vault" class="switch-opt" onclick="switchDrive('VAULT')">Vault</div>
             </div>
 
-            <div style="font-size: 1.2rem; cursor:pointer;" onclick="toggleDebug()">🐞</div>
+            <div style="font-size: 1.2rem; cursor:pointer; padding: 5px;" onclick="toggleDebug()">🐞</div>
         </header>
 
         <!-- Breadcrumb -->
-        <div style="padding: 10px; background: #1a1a1a; font-size: 0.9rem; color: #888; white-space: nowrap; overflow-x: auto;">
+        <div style="padding: 12px 15px; background: var(--surface-color); font-size: 0.9rem; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); white-space: nowrap; overflow-x: auto;">
             <span id="breadcrumb">Root</span>
         </div>
 
         <!-- File List -->
         <div id="file-list" class="file-list">
             <!-- Items injected via JS -->
-            <div class="text-center" style="margin-top: 50px; color: #555;">
+            <div class="text-center" style="margin-top: 50px; color: #999;">
                 Loading files...
             </div>
         </div>
@@ -306,14 +335,15 @@
     <div id="debug-drawer">
         <div class="debug-header">
             <span>DEBUG LOGS</span>
-            <span onclick="clearLogs()" style="cursor:pointer; color:var(--danger-color)">Clear</span>
+            <span onclick="clearLogs()" style="cursor:pointer; color:#ff5252">Clear</span>
             <span onclick="toggleDebug()" style="margin-left:10px; cursor:pointer;">✖</span>
         </div>
         <div id="debug-content" class="debug-content">
             <!-- Logs go here -->
+        console initialized...
         </div>
         <div style="padding:10px; border-top:1px solid #333;">
-            <button class="btn btn-outline w-full" onclick="testConfig()">Test Configs</button>
+            <button class="btn btn-outline w-full" style="border-color:#555; color:#ccc;" onclick="testConfig()">Test Configs</button>
         </div>
     </div>
 
@@ -424,9 +454,16 @@
         /* --- PIN Logic --- */
         let inputPin = "";
         function addPin(num) {
+            // Visual feedback
+            const btn = event.target;
+            
             if (inputPin.length < 4) {
                 inputPin += num;
                 updatePinDisplay();
+                // Haptic feedback if available (Mobile)
+                if (navigator.vibrate) navigator.vibrate(20);
+            } else {
+                showToast("Max 4 digits", "warn");
             }
         }
         function clearPin() {
@@ -448,6 +485,7 @@
                 showToast("Wrong PIN!", "error");
                 inputPin = "";
                 updatePinDisplay();
+                if (navigator.vibrate) navigator.vibrate(200); // Error vibration
             }
         }
 
@@ -561,9 +599,7 @@
                 } else {
                     // PROXY CALL (Vault Admin)
                     url = `${CONFIG.proxy.fullAccess}?action=list&folderId=${state.currentFolderId}`;
-                    headers = {}; // Proxy handles auth via token in header or url param? 
-                    // Assuming proxy expects Authorization header or token param. 
-                    // Based on standard gas proxy, we usually send token in header.
+                    headers = {}; 
                     headers['Authorization'] = `Bearer ${state.token}`;
                 }
 
@@ -682,7 +718,7 @@
             consoleEl.scrollTop = consoleEl.scrollHeight;
             
             // Also log to browser console
-            console.log(`[VaultOS ${type.toUpperCase()}] ${msg}`);
+            console.log(`[VaultOS ${type.toUpperCase()}]` + msg);
         }
 
         function clearLogs() {
