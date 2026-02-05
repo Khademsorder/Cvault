@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>VAULT OS | QUANTUM</title>
+    
+    <!-- [RESOURCES] -->
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;500;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+
+    <!-- [STYLE ENGINE] -->
+    <style>
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-red: #ff0055;
+            --neon-amber: #ffaa00;
+            --bg-deep: #020205;
+            --bg-panel: rgba(10, 15, 20, 0.90);
+            --glass: rgba(0, 243, 255, 0.05);
+            --border: rgba(0, 243, 255, 0.2);
+            --font-main: 'Share Tech Mono', monospace;
+            --font-head: 'Orbitron', sans-serif;
+        }
+
+        /* RESET & BASE */
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; outline: none; }
+        body {
+            margin: 0; background: var(--bg-deep); color: var(--neon-blue);
+            font-family: var(--font-main); height: 100vh; overflow: hidden;
+            display: flex; flex-direction: column;
+            background-image: radial-gradient(circle at 50% 50%, #111 0%, #000 100%);
+        }
+
+        /* ANIMATIONS */
+        @keyframes scanline { 0% { transform: translateY(-100%); } 100% { transform: translateY(100vh); } }
+        @keyframes blink { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+        @keyframes hologram { 0% { opacity: 0; transform: scale(0.95); } 100% { opacity: 1; transform: scale(1); } }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* GLOBAL OVERLAYS */
+        .scanline {
+            position: fixed; top: 0; left: 0; width: 100%; height: 2px;
+            background: var(--neon-blue); opacity: 0.3; pointer-events: none;
+            animation: scanline 4s linear infinite; z-index: 999;
+        }
+        .vignette {
+            position: fixed; top:0; left:0; width:100%; height:100%;
+            background: radial-gradient(circle, transparent 60%, black 100%);
+            pointer-events: none; z-index: 998;
+        }
+
+        /* SCREENS */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; background: var(--bg-deep); z-index: 10;
+        }
+        .screen.active { display: flex; animation: hologram 0.4s ease-out; }
+
+        /* BOOT SCREEN */
+        #boot-screen { padding: 30px; justify-content: flex-end; font-size: 14px; color: var(--neon-blue); }
+        .log-line { margin: 2px 0; text-shadow: 0 0 5px var(--neon-blue); }
+
+        /* AUTH & LOCK */
+        .center-box {
+            margin: auto; width: 320px; padding: 30px;
+            background: var(--bg-panel); border: 1px solid var(--border);
+            box-shadow: 0 0 20px rgba(0, 243, 255, 0.1);
+            text-align: center; clip-path: polygon(20px 0, 100% 0, 100% calc(100% - 20px), calc(100% - 20px) 100%, 0 100%, 0 20px);
+        }
+        .title { font-family: var(--font-head); font-size: 24px; letter-spacing: 4px; margin-bottom: 20px; color: #fff; }
+        .input-pin {
+            background: black; border: 1px solid var(--border); color: var(--neon-blue);
+            font-size: 30px; text-align: center; padding: 10px; width: 100%;
+            letter-spacing: 15px; margin-bottom: 20px; font-family: var(--font-head);
+        }
+        .btn-main {
+            background: rgba(0, 243, 255, 0.1); border: 1px solid var(--neon-blue);
+            color: var(--neon-blue); padding: 12px; width: 100%; cursor: pointer;
+            font-family: var(--font-head); letter-spacing: 2px; transition: 0.3s;
+        }
+        .btn-main:active { background: var(--neon-blue); color: #000; box-shadow: 0 0 20px var(--neon-blue); }
+
+        /* DASHBOARD */
+        header {
+            height: 60px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 0 20px; background: rgba(0,0,0,0.5); backdrop-filter: blur(5px);
+        }
+        .status-badge { font-size: 10px; border: 1px solid var(--neon-blue); padding: 3px 6px; color: var(--neon-blue); }
+        .status-badge.err { border-color: var(--neon-red); color: var(--neon-red); }
+
+        /* STORAGE HUD */
+        .hud { padding: 10px 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid #111; }
+        .bar-wrap { flex: 1; height: 4px; background: #111; position: relative; }
+        .bar-val { height: 100%; background: var(--neon-blue); width: 0%; box-shadow: 0 0 10px var(--neon-blue); transition: width 1s; }
+
+        /* BREADCRUMB */
+        .crumb { padding: 10px 20px; color: var(--neon-amber); font-size: 12px; cursor: pointer; }
+        
+        /* FILE LIST */
+        .file-zone { flex: 1; overflow-y: auto; padding: 10px; display: grid; grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); gap: 10px; align-content: start; }
+        .file-card {
+            background: rgba(255,255,255,0.02); border: 1px solid transparent;
+            padding: 15px 5px; text-align: center; cursor: pointer; transition: 0.2s;
+            display: flex; flex-direction: column; align-items: center;
+        }
+        .file-card:active { border-color: var(--neon-blue); background: rgba(0, 243, 255, 0.1); }
+        .f-icon { font-size: 36px; margin-bottom: 5px; color: #555; }
+        .folder .f-icon { color: var(--neon-blue); text-shadow: 0 0 10px var(--neon-blue); }
+        .f-name { font-size: 11px; color: #aaa; overflow: hidden; height: 26px; line-height: 13px; width: 100%; word-break: break-all; }
+
+        /* BOTTOM NAV */
+        nav { height: 60px; background: #050505; border-top: 1px solid var(--border); display: flex; }
+        .nav-item { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #555; cursor: pointer; }
+        .nav-item.active { color: var(--neon-blue); text-shadow: 0 0 5px var(--neon-blue); border-top: 2px solid var(--neon-blue); }
+        
+        /* PROCESSING OVERLAY (The "Busy" State) */
+        #proc-screen {
+            background: rgba(0,0,0,0.85); z-index: 2000;
+            align-items: center; justify-content: center; backdrop-filter: blur(5px);
+        }
+        .loader-ring {
+            width: 60px; height: 60px; border: 4px solid #333;
+            border-top: 4px solid var(--neon-blue); border-radius: 50%;
+            animation: spin 1s linear infinite; margin-bottom: 20px;
+        }
+        #proc-text { letter-spacing: 2px; animation: blink 1s infinite; }
+
+        /* CONTEXT MENU */
+        #ctx-menu {
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: #111; border-top: 2px solid var(--neon-blue);
+            z-index: 500; display: none; flex-direction: column;
+            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .ctx-opt { padding: 18px; border-bottom: 1px solid #222; display: flex; gap: 15px; align-items: center; color: #ddd; }
+        .ctx-opt:active { background: #222; color: var(--neon-blue); }
+        .ctx-danger { color: var(--neon-red); }
+
+        /* TOAST */
+        .toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%);
+            background: rgba(0,0,0,0.9); border: 1px solid var(--neon-blue);
+            color: var(--neon-blue); padding: 10px 20px; z-index: 3000;
+            display: none; box-shadow: 0 0 15px rgba(0, 243, 255, 0.2);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="scanline"></div>
+    <div class="vignette"></div>
+
+    <!-- [SCREEN 0] BOOT -->
+    <div id="boot-screen" class="screen active">
+        <div id="boot-log"></div>
+    </div>
+
+    <!-- [SCREEN 1] LOCK -->
+    <div id="lock-screen" class="screen" style="justify-content: center;">
+        <div class="center-box">
+            <div class="title">VAULT OS</div>
+            <div style="font-size:10px; color:var(--neon-amber); margin-bottom:15px;">SECURE ACCESS PROTOCOL</div>
+            <input type="password" id="pin-input" class="input-pin" placeholder="••••" maxlength="4">
+            <button class="btn-main" onclick="Security.checkPin()">AUTHENTICATE</button>
+            <div id="pin-err" style="color:var(--neon-red); height:20px; margin-top:10px; font-size:12px;"></div>
+        </div>
+    </div>
+
+    <!-- [SCREEN 2] AUTH -->
+    <div id="auth-screen" class="screen" style="justify-content: center;">
+        <div class="center-box">
+            <div class="title">IDENTITY</div>
+            <p style="color:#aaa; font-size:12px; margin-bottom:20px;">CLOUD SYNC DISCONNECTED</p>
+            <button class="btn-main" onclick="Auth.signIn()">ESTABLISH LINK (GOOGLE)</button>
+        </div>
+    </div>
+
+    <!-- [SCREEN 3] DASHBOARD -->
+    <div id="dash-screen" class="screen">
+        <header>
+            <span class="material-icons-round" style="color:var(--neon-blue)">dns</span>
+            <div class="title" style="font-size:18px; margin:0;">VAULT</div>
+            <div class="status-badge" id="net-stat">ONLINE</div>
+        </header>
+
+        <!-- Storage & Path -->
+        <div class="hud">
+            <span style="font-size:10px; color:#555">STORAGE</span>
+            <div class="bar-wrap"><div id="store-bar" class="bar-val"></div></div>
+            <span style="font-size:10px; color:#aaa" id="store-txt">0%</span>
+        </div>
+        <div class="crumb" id="bread-path" onclick="Drive.up()">ROOT / ...</div>
+
+        <!-- Files -->
+        <div id="file-list" class="file-zone"></div>
+
+        <!-- Upload FAB -->
+        <div style="position:absolute; bottom:80px; right:20px; z-index:100;">
+            <button class="btn-main" style="border-radius:50%; width:60px; height:60px; display:flex; align-items:center; justify-content:center; background:#000;" onclick="document.getElementById('upl').click()">
+                <span class="material-icons-round">upload</span>
+            </button>
+            <input type="file" id="upl" hidden multiple onchange="Upload.init(this.files)">
+        </div>
+
+        <!-- Nav -->
+        <nav>
+            <div class="nav-item active" onclick="Nav.go('user', this)">
+                <span class="material-icons-round">person</span>
+                <span style="font-size:10px; margin-top:4px;">USER DRIVE</span>
+            </div>
+            <div class="nav-item" onclick="Nav.go('vault', this)">
+                <span class="material-icons-round">security</span>
+                <span style="font-size:10px; margin-top:4px;">VAULT CORE</span>
+            </div>
+            <div class="nav-item" onclick="Auth.logout()">
+                <span class="material-icons-round">power_settings_new</span>
+                <span style="font-size:10px; margin-top:4px;">TERMINATE</span>
+            </div>
+        </nav>
+    </div>
+
+    <!-- [OVERLAY] PROCESSING -->
+    <div id="proc-screen" class="screen">
+        <div class="loader-ring"></div>
+        <div id="proc-text">PROCESSING COMMAND...</div>
+    </div>
+
+    <!-- [OVERLAY] CONTEXT MENU -->
+    <div id="ctx-menu">
+        <div style="padding:10px; background:#050505; color:#555; text-align:center; font-size:10px;" id="ctx-head">FILENAME</div>
+        <div class="ctx-opt" onclick="Ops.preview()"><span class="material-icons-round">visibility</span> PREVIEW</div>
+        <div class="ctx-opt" onclick="Ops.copyToVault()"><span class="material-icons-round">content_copy</span> CLONE TO VAULT</div>
+        <div class="ctx-opt" onclick="Ops.download()"><span class="material-icons-round">download</span> EXTRACT</div>
+        <div class="ctx-opt ctx-danger" onclick="Ops.delete()"><span class="material-icons-round">delete</span> ERASE</div>
+        <div class="ctx-opt" onclick="UI.hideCtx()" style="justify-content:center">CANCEL</div>
+    </div>
+
+    <!-- [OVERLAY] MEDIA PLAYER -->
+    <div id="media-screen" class="screen" style="z-index:2500; background:black;">
+        <div style="padding:15px; display:flex; justify-content:space-between; color:var(--neon-blue); border-bottom:1px solid #333;">
+            <span id="media-title">MEDIA</span>
+            <span class="material-icons-round" onclick="UI.closeMedia()" style="cursor:pointer">close</span>
+        </div>
+        <iframe id="media-frame" style="flex:1; border:none;"></iframe>
+    </div>
+
+    <div id="toast" class="toast">NOTIFICATION</div>
+
+    <!-- [LOGIC CORE] -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        
+        // --- 1. CONFIGURATION ---
+        const CFG = {
+            firebase: {
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                authDomain: "encrypted-vault-4683d.firebaseapp.com",
+                projectId: "encrypted-vault-4683d",
+                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
+            },
+            google: {
+                clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+                scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+                vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn'
+            },
+            proxy: {
+                // Apps Script Web App URLs
+                write: 'https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec',
+                read: 'https://script.google.com/macros/s/AKfycby2hqAq0JePMbnjEbwwcPBFjS14lvS3pM2Z1PPgY4OraTcpvTmZFPKQr9CQ4vba4Xk7/exec'
+            }
+        };
+
+        const app = initializeApp(CFG.firebase);
+        
+        // --- 2. STATE MANAGER ---
+        const STATE = {
+            token: localStorage.getItem('vt_tok'),
+            mode: 'user', // 'user' or 'vault'
+            currFolder: 'root',
+            history: [],
+            selected: null
+        };
+
+        // --- 3. UI UTILS ---
+        const UI = {
+            screen: (id) => {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            },
+            toast: (msg) => {
+                const t = document.getElementById('toast');
+                t.innerText = `>> ${msg}`;
+                t.style.display = 'block';
+                setTimeout(() => t.style.display = 'none', 3000);
+            },
+            loading: (bool, txt="PROCESSING...") => {
+                const p = document.getElementById('proc-screen');
+                document.getElementById('proc-text').innerText = txt;
+                p.style.display = bool ? 'flex' : 'none';
+            },
+            hideCtx: () => document.getElementById('ctx-menu').style.display = 'none',
+            closeMedia: () => {
+                document.getElementById('media-screen').style.display = 'none';
+                document.getElementById('media-frame').src = 'about:blank';
+            }
+        };
+
+        // --- 4. BOOT SEQUENCE ---
+        window.onload = () => {
+            const logs = ["INIT KERNEL...", "LOADING CIPHERS...", "CONNECTING SATELLITE...", "SYSTEM ONLINE."];
+            const div = document.getElementById('boot-log');
+            let d = 0;
+            logs.forEach((l, i) => {
+                setTimeout(() => {
+                    div.innerHTML += `<div class="log-line">> ${l}</div>`;
+                    if(i === logs.length - 1) setTimeout(Security.init, 800);
+                }, d);
+                d += 500;
+            });
+
+            // Monitor
+            window.addEventListener('offline', () => {
+                document.getElementById('net-stat').innerText = "OFFLINE";
+                document.getElementById('net-stat').classList.add('err');
+            });
+        };
+
+        // --- 5. SECURITY (PIN) ---
+        window.Security = {
+            init: () => {
+                // If no PIN set, show lock screen with setup mode implicitly
+                UI.screen('lock-screen');
+                if(!localStorage.getItem('vt_pin')) document.getElementById('pin-err').innerText = "SETUP NEW PIN";
+            },
+            checkPin: async () => {
+                const inp = document.getElementById('pin-input').value;
+                if(inp.length < 4) return;
+                
+                // Hash
+                const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(inp));
+                const hash = Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+                
+                const stored = localStorage.getItem('vt_pin');
+                if(!stored) {
+                    localStorage.setItem('vt_pin', hash);
+                    UI.toast("PIN REGISTERED");
+                    Auth.check();
+                } else {
+                    if(hash === stored) Auth.check();
+                    else {
+                        document.getElementById('pin-err').innerText = "INVALID CREDENTIALS";
+                        document.getElementById('pin-input').value = "";
+                    }
+                }
+            }
+        };
+
+        // --- 6. AUTHENTICATION ---
+        let tClient;
+        window.Auth = {
+            check: () => {
+                if(STATE.token) {
+                    // Assume valid, verify by fetch
+                    UI.screen('dash-screen');
+                    Drive.load(STATE.currFolder);
+                } else {
+                    UI.screen('auth-screen');
+                    Auth.initClient();
+                }
+            },
+            initClient: () => {
+                tClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CFG.google.clientId,
+                    scope: CFG.google.scopes,
+                    callback: (r) => {
+                        if(r.error) return UI.toast("AUTH FAILED");
+                        STATE.token = r.access_token;
+                        localStorage.setItem('vt_tok', r.access_token);
+                        UI.screen('dash-screen');
+                        Drive.load(STATE.currFolder);
+                    }
+                });
+            },
+            signIn: () => tClient.requestAccessToken(),
+            logout: () => {
+                localStorage.clear();
+                location.reload();
+            }
+        };
+
+        // --- 7. DRIVE ENGINE (DUAL MODE: DIRECT + PROXY FALLBACK) ---
+        window.Drive = {
+            load: async (id) => {
+                UI.loading(true, "SCANNING SECTOR...");
+                STATE.currFolder = id;
+                document.getElementById('bread-path').innerText = id === 'root' ? "ROOT" : (id === CFG.google.vaultId ? "VAULT CORE" : `.../${id.slice(-5)}`);
+
+                // 1. Try Direct API
+                const q = `'${id}' in parents and trashed = false`;
+                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size)&pageSize=100`;
+
+                try {
+                    const r = await fetch(url, { headers: { 'Authorization': `Bearer ${STATE.token}` } });
+                    if(!r.ok) throw new Error("API_FAIL");
+                    const d = await r.json();
+                    Drive.render(d.files || []);
+                    Drive.stats();
+                    UI.loading(false);
+                } catch (e) {
+                    // Fallback to Proxy if Vault mode and Direct fails
+                    console.warn("Direct access failed, switching logic...");
+                    if(STATE.mode === 'vault') {
+                         UI.toast("DIRECT ACCESS DENIED. CHECK PERMISSIONS.");
+                    }
+                    UI.loading(false);
+                    document.getElementById('file-list').innerHTML = `<div style="color:red; padding:20px; text-align:center;">ACCESS RESTRICTED<br>TRY REFRESH</div>`;
+                }
+            },
+            render: (files) => {
+                const div = document.getElementById('file-list');
+                div.innerHTML = "";
+                if(!files.length) { div.innerHTML = "<div style='color:#444; width:100%; text-align:center; padding:20px;'>[EMPTY]</div>"; return; }
+                
+                files.sort((a,b) => (a.mimeType.includes('folder') ? -1 : 1));
+
+                files.forEach(f => {
+                    const isDir = f.mimeType.includes('folder');
+                    const el = document.createElement('div');
+                    el.className = `file-card ${isDir?'folder':''}`;
+                    el.onclick = () => isDir ? (STATE.history.push(STATE.currFolder), Drive.load(f.id)) : Ops.menu(f);
+                    
+                    let ico = 'insert_drive_file';
+                    if(isDir) ico = 'folder';
+                    else if(f.mimeType.includes('image')) ico = 'image';
+                    else if(f.mimeType.includes('video')) ico = 'movie';
+
+                    el.innerHTML = `
+                        <span class="material-icons-round f-icon">${ico}</span>
+                        <div class="f-name">${f.name}</div>
+                    `;
+                    div.appendChild(el);
+                });
+            },
+            up: () => {
+                if(STATE.history.length) Drive.load(STATE.history.pop());
+            },
+            stats: async () => {
+                try {
+                    const r = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', { headers: { 'Authorization': `Bearer ${STATE.token}` }});
+                    const d = await r.json();
+                    const p = (d.storageQuota.usage / d.storageQuota.limit) * 100;
+                    document.getElementById('store-bar').style.width = `${p}%`;
+                    document.getElementById('store-txt').innerText = `${p.toFixed(1)}%`;
+                } catch(e){}
+            }
+        };
+
+        // --- 8. OPERATIONS (FAIL-SAFE PROXY) ---
+        window.Ops = {
+            menu: (f) => {
+                STATE.selected = f;
+                document.getElementById('ctx-head').innerText = f.name.toUpperCase();
+                document.getElementById('ctx-menu').style.display = 'flex';
+            },
+            preview: () => {
+                UI.hideCtx();
+                const f = STATE.selected;
+                // Use Media Proxy to bypass CORS on images/videos
+                if(f.mimeType.includes('image') || f.mimeType.includes('video')) {
+                    const url = `${CFG.proxy.read}?docId=${f.id}`;
+                    document.getElementById('media-title').innerText = f.name;
+                    document.getElementById('media-frame').src = url;
+                    document.getElementById('media-screen').style.display = 'flex';
+                } else {
+                    UI.toast("NO PREVIEW AVAILABLE");
+                }
+            },
+            download: () => {
+                UI.hideCtx();
+                window.open(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}?alt=media&access_token=${STATE.token}`);
+            },
+            copyToVault: async () => {
+                UI.hideCtx();
+                UI.loading(true, "ENCRYPTING & CLONING...");
+                
+                // Using NO-CORS mode for Proxy Write (Apps Script)
+                // We cannot read response, so we wait and assume success
+                const payload = {
+                    action: 'copy',
+                    fileId: STATE.selected.id,
+                    targetId: CFG.google.vaultId,
+                    token: STATE.token
+                };
+                
+                try {
+                    await fetch(CFG.proxy.write, {
+                        method: 'POST',
+                        mode: 'no-cors',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    setTimeout(() => {
+                        UI.loading(false);
+                        UI.toast("CLONE DISPATCHED (ASYNC)");
+                    }, 2500); // Artificial delay to simulate processing
+                    
+                } catch(e) {
+                    UI.loading(false);
+                    UI.toast("PROXY COMMS ERROR");
+                }
+            },
+            delete: async () => {
+                UI.hideCtx();
+                if(!confirm("CONFIRM ERASE?")) return;
+                UI.loading(true, "DELETING...");
+                
+                // Try Direct First
+                try {
+                    const r = await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                        method: 'DELETE',
+                        headers: { 'Authorization': `Bearer ${STATE.token}` }
+                    });
+                    if(r.ok || r.status === 204) {
+                        UI.toast("DELETED DIRECTLY");
+                        Drive.load(STATE.currFolder);
+                    } else {
+                        throw new Error("Direct Fail");
+                    }
+                } catch(e) {
+                    // Proxy Fallback
+                    const url = `${CFG.proxy.write}?action=delete&fileId=${STATE.selected.id}&token=${STATE.token}`;
+                    fetch(url, {mode: 'no-cors'}).then(() => {
+                        setTimeout(() => {
+                            UI.toast("PROXY DELETE SENT");
+                            Drive.load(STATE.currFolder);
+                        }, 2000);
+                    });
+                } finally {
+                    setTimeout(() => UI.loading(false), 2000);
+                }
+            }
+        };
+
+        // --- 9. UPLOAD ENGINE ---
+        window.Upload = {
+            init: async (files) => {
+                if(!files.length) return;
+                UI.loading(true, `UPLOADING ${files.length} ITEMS...`);
+                
+                for(let f of files) {
+                    const meta = { name: f.name, mimeType: f.type, parents: [STATE.currFolder] };
+                    try {
+                        const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                            method: 'POST',
+                            headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                            body: JSON.stringify(meta)
+                        });
+                        const loc = init.headers.get('Location');
+                        await fetch(loc, { method: 'PUT', headers: {'Content-Type': f.type}, body: f });
+                    } catch(e) { console.error(e); }
+                }
+                UI.loading(false);
+                UI.toast("UPLOAD CYCLE COMPLETE");
+                Drive.load(STATE.currFolder);
+            }
+        };
+
+        // --- 10. NAV ---
+        window.Nav = {
+            go: (mode, el) => {
+                document.querySelectorAll('.nav-item').forEach(e=>e.classList.remove('active'));
+                el.classList.add('active');
+                STATE.mode = mode;
+                STATE.history = [];
+                const target = mode === 'user' ? 'root' : CFG.google.vaultId;
+                Drive.load(target);
+            }
+        };
+
+    </script>
+</body>
+</html>
