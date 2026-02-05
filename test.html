@@ -3,353 +3,305 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>VAULT OS | HYBRID TEST</title>
+    <title>Vault OS - Production Ready</title>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
     
-    <script src="https://accounts.google.com/gsi/client"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
-
     <style>
+        /* [Source 1] Android-style UI CSS */
         :root {
-            --bg: #050505;
-            --surface: #121212;
-            --surface-hover: #1e1e1e;
-            --primary: #00f3ff;
-            --text: #ffffff;
-            --text-sec: #888888;
-            --border: #333333;
+            --bg-color: #121212;
+            --card-color: #1e1e1e;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --accent-color: #bb86fc;
+            --nav-bg: #2c2c2c;
         }
 
         body {
-            background-color: var(--bg);
-            color: var(--text);
-            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: 'Roboto', sans-serif;
             margin: 0;
-            padding-top: 80px; /* Space for fixed header */
-        }
-
-        /* HEADER */
-        .header {
-            position: fixed;
-            top: 0; left: 0; right: 0;
-            height: 70px;
-            background: rgba(5, 5, 5, 0.95);
-            backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
+            padding: 0;
             display: flex;
-            align-items: center;
-            padding: 0 20px;
-            gap: 15px;
-            z-index: 1000;
-        }
-
-        /* BUTTONS */
-        .btn {
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: 1px solid var(--border);
-            background: var(--surface);
-            color: var(--text-sec);
-            cursor: pointer;
-            font-size: 13px;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.2s;
-        }
-
-        .btn:hover {
-            background: var(--surface-hover);
-            color: var(--text);
-            border-color: #555;
-        }
-
-        .btn.active {
-            background: rgba(0, 243, 255, 0.1);
-            color: var(--primary);
-            border-color: var(--primary);
-        }
-
-        .btn-connect {
-            background: var(--primary);
-            color: #000;
-            border: none;
-        }
-        .btn-connect:hover {
-            box-shadow: 0 0 15px rgba(0, 243, 255, 0.4);
-        }
-
-        /* GRID LAYOUT */
-        .grid-container {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 15px;
-            padding: 20px;
-        }
-
-        .card {
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: 12px;
+            flex-direction: column;
+            height: 100vh;
             overflow: hidden;
-            cursor: pointer;
-            transition: transform 0.2s, border-color 0.2s;
-            position: relative;
         }
 
-        .card:hover {
-            transform: translateY(-5px);
-            border-color: var(--primary);
-        }
-
-        .thumb {
-            height: 120px;
-            width: 100%;
-            background: #000;
+        /* Login Screen */
+        #auth-screen {
             display: flex;
-            align-items: center;
+            flex-direction: column;
             justify-content: center;
-            overflow: hidden;
-        }
-
-        .thumb img {
-            width: 100%;
+            align-items: center;
             height: 100%;
-            object-fit: cover;
+            z-index: 1000;
+            background-color: var(--bg-color);
         }
 
-        .thumb i {
-            font-size: 40px;
-            color: var(--text-sec);
-        }
-
-        .meta {
-            padding: 12px;
-        }
-
-        .filename {
-            font-size: 12px;
-            font-weight: 500;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            color: #eee;
-        }
-
-        .filetype {
-            font-size: 10px;
-            color: var(--text-sec);
-            margin-top: 4px;
-            text-transform: uppercase;
-        }
-
-        /* STATUS BADGE */
-        .status {
-            margin-left: auto;
-            font-size: 11px;
-            font-family: 'JetBrains Mono', monospace;
-            padding: 5px 10px;
+        .btn-login {
+            background-color: #4285F4;
+            color: white;
+            padding: 12px 24px;
+            border: none;
             border-radius: 4px;
-            background: #111;
-            border: 1px solid #333;
-            color: #555;
-        }
-        .status.online {
-            color: #00ff9d;
-            border-color: #00ff9d;
+            font-size: 16px;
+            cursor: pointer;
+            font-weight: bold;
         }
 
-        /* LOADING & EMPTY STATES */
-        .msg-box {
-            grid-column: 1 / -1;
-            text-align: center;
-            padding: 50px;
-            color: var(--text-sec);
-            font-size: 14px;
+        /* Main Dashboard */
+        #dashboard {
+            display: none; /* Hidden by default */
+            flex-direction: column;
+            height: 100%;
         }
+
+        header {
+            background-color: var(--nav-bg);
+            padding: 15px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h2 { margin: 0; font-size: 18px; }
+
+        /* File List Area */
+        #content-area {
+            flex: 1;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .file-card {
+            background-color: var(--card-color);
+            padding: 15px;
+            margin-bottom: 10px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            border-bottom: 1px solid #333;
+        }
+
+        .file-icon { font-size: 24px; margin-right: 15px; }
+        .file-info { flex: 1; }
+        .file-name { font-weight: bold; font-size: 14px; display: block; }
+        .file-meta { font-size: 12px; color: var(--text-secondary); }
+
+        /* Bottom Navigation */
+        .bottom-nav {
+            background-color: var(--nav-bg);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            border-top: 1px solid #333;
+        }
+
+        .nav-item {
+            color: var(--text-secondary);
+            text-align: center;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        .nav-item.active { color: var(--accent-color); font-weight: bold; }
+        .nav-icon { display: block; font-size: 20px; margin-bottom: 4px; }
+        
+        .loading { text-align: center; color: var(--text-secondary); margin-top: 20px; }
     </style>
 </head>
 <body>
 
-    <header class="header">
-        <button class="btn btn-connect" onclick="Auth.connect()">
-            <i class="fa-solid fa-bolt"></i> CONNECT
-        </button>
+    <div id="auth-screen">
+        <h1>Vault OS</h1>
+        <p style="color:#888;">Production Config Ready</p>
+        <button class="btn-login" onclick="handleAuthClick()">Sign in with Google</button>
+    </div>
 
-        <div style="width:1px; height:30px; background:var(--border); margin:0 5px;"></div>
+    <div id="dashboard">
+        <header>
+            <span id="view-title">User Drive</span>
+            <span id="user-email" style="font-size:12px; color:#aaa;"></span>
+        </header>
 
-        <button class="btn" id="btn-user" onclick="Drive.switch('user')">
-            <i class="fa-solid fa-hard-drive"></i> My Drive
-        </button>
-        <button class="btn" id="btn-vault" onclick="Drive.switch('vault')">
-            <i class="fa-solid fa-server"></i> Vault
-        </button>
+        <div id="content-area">
+            <div class="loading">Select a drive to view files</div>
+        </div>
 
-        <div id="status-badge" class="status">DISCONNECTED</div>
-    </header>
-
-    <main id="file-grid" class="grid-container">
-        <div class="msg-box">Please Connect to Google Account First</div>
-    </main>
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="switchView('user')" id="nav-user">
+                <span class="nav-icon">📁</span> My Drive
+            </div>
+            <div class="nav-item" onclick="switchView('vault')" id="nav-vault">
+                <span class="nav-icon">🔐</span> Vault Drive
+            </div>
+        </div>
+    </div>
 
     <script>
-        // ================= CONFIGURATION =================
+        // ==========================================
+        // [Source 7 & 10] REAL PRODUCTION CONFIG
+        // ==========================================
         const CONFIG = {
-            // Your Client ID
-            clientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+            // [Source 10] Firebase / API Key
+            API_KEY: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4", 
             
-            // Your Script URL (Admin Access)
-            scriptUrl: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec",
+            // [Source 7] Client ID
+            CLIENT_ID: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
             
-            // Scopes
-            scopes: "https://www.googleapis.com/auth/drive"
+            // [Source 7] Vault Root ID
+            VAULT_FOLDER_ID: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn",
+            
+            // [Source 7] Scopes
+            SCOPES: "https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email",
+            
+            // [Source 7] Proxy URL (For future upload/move logic)
+            PROXY_URL: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec"
         };
-        // =================================================
 
         // GLOBAL STATE
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
         let accessToken = null;
-        let currentMode = 'user'; // 'user' or 'vault'
 
-        // AUTH MODULE
-        const Auth = {
-            connect: () => {
-                const client = google.accounts.oauth2.initTokenClient({
-                    client_id: CONFIG.clientId,
-                    scope: CONFIG.scopes,
-                    callback: (response) => {
-                        if (response.access_token) {
-                            accessToken = response.access_token;
-                            Auth.updateStatus(true);
-                            Drive.switch('user'); // Auto load user drive
-                        }
-                    }
+        // [1] INITIALIZATION
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: CONFIG.API_KEY,
+                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"],
+            });
+            gapiInited = true;
+            checkAuth();
+        }
+
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CONFIG.CLIENT_ID,
+                scope: CONFIG.SCOPES,
+                callback: '', // defined later
+            });
+            gisInited = true;
+            checkAuth();
+        }
+
+        function checkAuth() {
+            if (gapiInited && gisInited) {
+                // Ready to auth
+                console.log("Vault OS System Ready");
+            }
+        }
+
+        // [2] AUTH LOGIC
+        function handleAuthClick() {
+            tokenClient.callback = async (resp) => {
+                if (resp.error) {
+                    throw resp;
+                }
+                accessToken = resp.access_token;
+                document.getElementById('auth-screen').style.display = 'none';
+                document.getElementById('dashboard').style.display = 'flex';
+                
+                // Fetch User Email
+                const userInfo = await fetch(`https://www.googleapis.com/oauth2/v3/userinfo?access_token=${accessToken}`);
+                const user = await userInfo.json();
+                document.getElementById('user-email').innerText = user.email;
+
+                // Load User Drive by default
+                switchView('user');
+            };
+
+            if (gapi.client.getToken() === null) {
+                tokenClient.requestAccessToken({prompt: 'consent'});
+            } else {
+                tokenClient.requestAccessToken({prompt: ''});
+            }
+        }
+
+        // [3] DRIVE LOGIC (USER vs VAULT)
+        async function listFiles(folderId, isVault) {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = '<div class="loading">Loading files...</div>';
+
+            let query = `'${folderId}' in parents and trashed = false`;
+            
+            try {
+                // Using Standard API for listing (Fastest)
+                // Note: For Vault, if you don't have direct permission, 
+                // you would need to use the PROXY_URL fetch method here instead.
+                // Assuming "Sign in" user has access to Vault Folder or is Admin.
+                
+                const response = await gapi.client.drive.files.list({
+                    'pageSize': 20,
+                    'fields': "nextPageToken, files(id, name, mimeType, size, iconLink)",
+                    'q': query
                 });
-                client.requestAccessToken();
-            },
 
-            updateStatus: (isOnline) => {
-                const badge = document.getElementById('status-badge');
-                if(isOnline) {
-                    badge.innerText = "SYSTEM ONLINE";
-                    badge.classList.add('online');
-                }
+                const files = response.result.files;
+                renderFiles(files);
+
+            } catch (err) {
+                console.error("Drive API Error", err);
+                contentArea.innerHTML = `<div class="loading" style="color:red">Error loading files.<br> Check console or permissions.</div>`;
             }
-        };
+        }
 
-        // DRIVE ENGINE
-        const Drive = {
-            switch: (mode) => {
-                if (!accessToken) return alert("Please Click Connect First!");
-                
-                currentMode = mode;
-                
-                // UI Toggle
-                document.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-                document.getElementById(mode === 'user' ? 'btn-user' : 'btn-vault').classList.add('active');
+        // [4] RENDER UI
+        function renderFiles(files) {
+            const contentArea = document.getElementById('content-area');
+            contentArea.innerHTML = '';
 
-                // Load Data
-                if (mode === 'user') {
-                    Drive.loadFromAPI('root');
-                } else {
-                    Drive.loadFromScript();
-                }
-            },
-
-            // CASE 1: USER DRIVE (Direct Google API)
-            loadFromAPI: async (folderId) => {
-                UI.loading(`Loading User Drive...`);
-                
-                const q = `'${folderId}' in parents and trashed=false`;
-                const fields = "files(id,name,mimeType,thumbnailLink,iconLink,webViewLink)";
-                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${fields}&pageSize=100`;
-
-                try {
-                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${accessToken}` } });
-                    const data = await res.json();
-                    UI.render(data.files || []);
-                } catch (e) {
-                    UI.error(e.message);
-                }
-            },
-
-            // CASE 2: VAULT DRIVE (Via Google Apps Script)
-            loadFromScript: async () => {
-                UI.loading(`Connecting to Secure Vault...`);
-
-                // We send 'action=list' to your script
-                const url = `${CONFIG.scriptUrl}?action=list`;
-
-                try {
-                    // Script handles the admin auth internally
-                    const res = await fetch(url); 
-                    const data = await res.json();
-                    
-                    if (data.error) throw new Error(data.error);
-                    UI.render(data.files || []);
-                } catch (e) {
-                    UI.error("Script Error: " + e.message);
-                }
+            if (!files || files.length === 0) {
+                contentArea.innerHTML = '<div class="loading">No files found.</div>';
+                return;
             }
-        };
 
-        // UI RENDERER
-        const UI = {
-            grid: document.getElementById('file-grid'),
-
-            loading: (msg) => {
-                UI.grid.innerHTML = `<div class="msg-box"><i class="fa-solid fa-circle-notch fa-spin"></i><br><br>${msg}</div>`;
-            },
-
-            error: (msg) => {
-                UI.grid.innerHTML = `<div class="msg-box" style="color:#ff4444"><i class="fa-solid fa-triangle-exclamation"></i><br><br>${msg}</div>`;
-            },
-
-            render: (files) => {
-                UI.grid.innerHTML = '';
-
-                if (files.length === 0) {
-                    UI.grid.innerHTML = `<div class="msg-box">Folder is Empty</div>`;
-                    return;
-                }
-
-                files.forEach(f => {
-                    // Helper to get High Res Image
-                    const getThumb = () => {
-                        if (f.mimeType.includes('image') && f.thumbnailLink) {
-                            return `<img src="${f.thumbnailLink.replace('s220', 's800')}" loading="lazy">`;
-                        }
-                        if (f.mimeType.includes('folder')) return `<i class="fa-solid fa-folder" style="color:#ffcc00"></i>`;
-                        if (f.mimeType.includes('video')) return `<i class="fa-solid fa-film" style="color:#ff2a6d"></i>`;
-                        if (f.mimeType.includes('pdf')) return `<i class="fa-solid fa-file-pdf" style="color:#ff4d4d"></i>`;
-                        return `<i class="fa-solid fa-file" style="color:#888"></i>`;
-                    };
-
-                    const card = document.createElement('div');
-                    card.className = 'card';
-                    card.innerHTML = `
-                        <div class="thumb">${getThumb()}</div>
-                        <div class="meta">
-                            <div class="filename">${f.name}</div>
-                            <div class="filetype">${f.mimeType.split('/').pop()}</div>
+            files.forEach(file => {
+                const size = file.size ? (file.size / 1024 / 1024).toFixed(2) + ' MB' : '';
+                const icon = file.mimeType.includes('folder') ? '📁' : '📄';
+                
+                const html = `
+                    <div class="file-card">
+                        <div class="file-icon">${icon}</div>
+                        <div class="file-info">
+                            <span class="file-name">${file.name}</span>
+                            <span class="file-meta">${file.mimeType} • ${size}</span>
                         </div>
-                    `;
+                    </div>
+                `;
+                contentArea.innerHTML += html;
+            });
+        }
 
-                    // Click Action
-                    card.onclick = () => {
-                        if (f.mimeType.includes('folder')) {
-                            // If user mode, drill down. If vault mode, drill down via script (need id support in script)
-                            if (currentMode === 'user') Drive.loadFromAPI(f.id);
-                            else alert("Folder navigation in Vault Mode requires script update. Showing root.");
-                        } else {
-                            window.open(f.webViewLink, '_blank');
-                        }
-                    };
+        // [5] VIEW SWITCHER
+        function switchView(view) {
+            // Update UI
+            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+            document.getElementById(`nav-${view}`).classList.add('active');
 
-                    UI.grid.appendChild(card);
-                });
+            if (view === 'user') {
+                document.getElementById('view-title').innerText = "My Drive";
+                listFiles('root', false); // 'root' is magic alias for User Drive
+            } else {
+                document.getElementById('view-title').innerText = "Vault Drive (Admin)";
+                // [Source 7] Using Real Vault ID
+                listFiles(CONFIG.VAULT_FOLDER_ID, true); 
             }
-        };
+        }
+
+        // Initialize libraries
+        gapiLoaded();
+        gisLoaded();
+
     </script>
 </body>
 </html>
