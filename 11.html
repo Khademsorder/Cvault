@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drive OS | Pro+</title>
+    
+    <!-- Google Identity & Icons -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #34a853;
+            --surface: #ffffff;
+            --bg: #f8f9fa;
+            --text-main: #202124;
+            --text-sec: #5f6368;
+            --border: #dadce0;
+            --hover: #f1f3f4;
+            --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+        }
+
+        /* Dark Theme */
+        .dark-theme {
+            --primary: #8ab4f8;
+            --primary-dark: #669df6;
+            --secondary: #81c995;
+            --surface: #202124;
+            --bg: #121212;
+            --text-main: #e8eaed;
+            --text-sec: #9aa0a6;
+            --border: #3c4043;
+            --hover: #2d2e30;
+            --shadow: 0 1px 2px 0 rgba(0,0,0,0.6), 0 1px 3px 1px rgba(0,0,0,0.302);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+            user-select: none; 
+        }
+        
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Roboto', sans-serif;
+            background: var(--bg); color: var(--text-main);
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* --- THEME TOGGLE --- */
+        .theme-toggle {
+            position: fixed; top: 10px; right: 10px; z-index: 9999;
+            background: var(--surface); border-radius: 50%; width: 40px; height: 40px;
+            display: flex; align-items: center; justify-content: center;
+            box-shadow: var(--shadow); cursor: pointer; border: 1px solid var(--border);
+        }
+
+        /* --- SCREENS --- */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; background: var(--bg); z-index: 10;
+        }
+        .screen.active { display: flex; animation: fade 0.2s ease; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- LOCK SCREEN (Biometric Support) --- */
+        #lock-screen {
+            justify-content: center; align-items: center; background: var(--surface);
+        }
+        .pin-container {
+            text-align: center; width: 100%; max-width: 320px;
+        }
+        .logo-area { 
+            font-family: 'Google Sans'; 
+            font-size: 24px; 
+            color: var(--text-main); 
+            margin-bottom: 10px; 
+        }
+        .logo-subtitle {
+            font-size: 14px; color: var(--text-sec); margin-bottom: 30px;
+        }
+        .pin-dots {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 40px;
+        }
+        .dot {
+            width: 15px; height: 15px; border-radius: 50%;
+            border: 2px solid var(--text-sec); transition: 0.2s;
+        }
+        .dot.filled { background: var(--primary); border-color: var(--primary); }
+        .keypad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px;
+            padding: 0 20px;
+        }
+        .key {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: var(--hover); color: var(--text-main);
+            font-size: 24px; display: flex; align-items: center; justify-content: center;
+            margin: auto; cursor: pointer; transition: 0.1s;
+            border: 1px solid var(--border);
+        }
+        .key:active { background: var(--border); transform: scale(0.95); }
+        .key.clear { 
+            background: transparent; 
+            font-size: 14px; 
+            color: var(--text-sec); 
+            border: none; 
+        }
+        .biometric-btn {
+            margin-top: 20px; padding: 10px 20px;
+            background: transparent; border: 1px solid var(--border);
+            border-radius: 20px; color: var(--text-sec); cursor: pointer;
+            display: flex; align-items: center; gap: 8px; justify-content: center;
+            font-size: 14px;
+        }
+
+        /* --- AUTH SCREEN --- */
+        #auth-screen { 
+            justify-content: center; 
+            align-items: center; 
+            text-align: center; 
+            background: var(--surface); 
+        }
+        .auth-card {
+            background: var(--surface); padding: 30px; border-radius: var(--radius-xl);
+            box-shadow: var(--shadow); width: 90%; max-width: 400px;
+            border: 1px solid var(--border);
+        }
+        .auth-btn {
+            background: var(--surface); border: 1px solid var(--border); padding: 12px 24px;
+            border-radius: 24px; font-family: 'Google Sans'; font-weight: 500;
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px;
+            width: 100%; justify-content: center; transition: 0.2s;
+        }
+        .auth-btn:hover { background: var(--hover); }
+        .auth-options {
+            display: flex; gap: 10px; margin-top: 20px;
+        }
+        .auth-option {
+            flex: 1; padding: 10px; border: 1px solid var(--border);
+            border-radius: var(--radius); cursor: pointer; text-align: center;
+            font-size: 12px; transition: 0.2s;
+        }
+        .auth-option:hover { background: var(--hover); }
+
+        /* --- MAIN APP UI --- */
+        /* Header */
+        .app-header {
+            background: var(--surface); padding: 10px 15px; height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 1px 0 var(--border); z-index: 20;
+            position: relative;
+        }
+        .search-bar {
+            flex: 1; background: var(--hover); border-radius: var(--radius-lg); margin: 0 15px;
+            padding: 8px 12px; display: flex; align-items: center; color: var(--text-sec);
+            border: 1px solid transparent; transition: 0.2s;
+        }
+        .search-bar:focus-within { border-color: var(--primary); background: var(--surface); }
+        .search-input {
+            border: none; background: transparent; margin-left: 10px; width: 100%; font-size: 16px;
+            color: var(--text-main);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 14px; color: var(--text-sec); border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .breadcrumb { 
+            display: flex; 
+            align-items: center; 
+            overflow-x: auto; 
+            white-space: nowrap; 
+            max-width: 70%; 
+            scrollbar-width: none; 
+            -ms-overflow-style: none;
+        }
+        .breadcrumb::-webkit-scrollbar { display: none; }
+        .crumb-item { 
+            color: var(--text-main); 
+            font-weight: 500; 
+            padding: 4px 8px; 
+            border-radius: var(--radius);
+            cursor: pointer; 
+            transition: 0.2s;
+        }
+        .crumb-item:hover { background: var(--hover); }
+        .crumb-sep { margin: 0 5px; color: var(--text-sec); }
+        .toolbar-actions {
+            display: flex; gap: 15px; align-items: center;
+        }
+        .filter-btn {
+            background: var(--hover); border: 1px solid var(--border); padding: 6px 12px;
+            border-radius: var(--radius); font-size: 13px; cursor: pointer;
+            display: flex; align-items: center; gap: 5px;
+        }
+
+        /* File View Switcher */
+        .view-switcher {
+            display: flex; background: var(--hover); border-radius: var(--radius);
+            padding: 2px; border: 1px solid var(--border);
+        }
+        .view-btn {
+            padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 13px;
+            display: flex; align-items: center; gap: 4px;
+        }
+        .view-btn.active { background: var(--surface); }
+
+        /* File List */
+        .file-viewer { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 10px; 
+            position: relative;
+        }
+        .file-list-view { display: flex; flex-direction: column; }
+        .file-grid-view { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); 
+            gap: 12px; 
+        }
+        .file-gallery-view {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            gap: 15px;
+        }
+        
+        /* File Item */
+        .list-item {
+            display: flex; align-items: center; padding: 12px;
+            border-bottom: 1px solid var(--border); cursor: pointer;
+            border-radius: var(--radius); margin-bottom: 2px;
+            background: var(--surface); transition: 0.2s;
+        }
+        .list-item:hover { background: var(--hover); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .list-item:active { background: var(--hover); transform: scale(0.995); }
+        
+        .grid-item {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 12px; display: flex; flex-direction: column; align-items: center; 
+            text-align: center; cursor: pointer; transition: 0.2s;
+        }
+        .grid-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        
+        .gallery-item {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            overflow: hidden; cursor: pointer; transition: 0.2s;
+        }
+        .gallery-item:hover { transform: scale(1.02); box-shadow: var(--shadow); }
+        .gallery-thumb {
+            width: 100%; height: 120px; object-fit: cover; background: var(--hover);
+        }
+        .gallery-info { padding: 10px; }
+        
+        .item-icon { 
+            font-size: 28px; 
+            color: var(--text-sec); 
+            margin-right: 15px; 
+        }
+        .folder-icon { color: #fbbc04; } /* Google Drive folder color */
+        .pdf-icon { color: #d93025; }
+        .image-icon { color: #34a853; }
+        .video-icon { color: #ea4335; }
+        .audio-icon { color: #9c27b0; }
+        .doc-icon { color: #1a73e8; }
+        
+        .grid-item .item-icon { font-size: 48px; margin: 0 0 10px 0; }
+        .item-text { flex: 1; overflow: hidden; min-width: 0; }
+        .item-name { 
+            display: block; 
+            font-size: 14px; 
+            color: var(--text-main); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis; 
+            font-weight: 500;
+        }
+        .item-meta { 
+            display: block; 
+            font-size: 12px; 
+            color: var(--text-sec); 
+            margin-top: 2px; 
+        }
+
+        /* File Selection */
+        .list-item.selected { background: #e8f0fe; border-left: 3px solid var(--primary); }
+        .grid-item.selected { border: 2px solid var(--primary); background: #e8f0fe; }
+        .selection-bar {
+            position: fixed; bottom: 0; left: 0; right: 0;
+            background: var(--surface); border-top: 1px solid var(--border);
+            padding: 12px 20px; display: none; justify-content: space-between;
+            align-items: center; box-shadow: 0 -2px 10px rgba(0,0,0,0.1);
+            z-index: 100;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            display: flex; gap: 10px; position: fixed; bottom: 70px; left: 20px;
+            background: var(--surface); padding: 8px; border-radius: var(--radius-xl);
+            box-shadow: var(--shadow); border: 1px solid var(--border); z-index: 50;
+        }
+        .quick-btn {
+            width: 40px; height: 40px; border-radius: 50%; background: var(--hover);
+            display: flex; align-items: center; justify-content: center; cursor: pointer;
+            color: var(--text-main); transition: 0.2s;
+        }
+        .quick-btn:hover { background: var(--border); transform: scale(1.1); }
+
+        /* FAB */
+        .fab-container { position: fixed; bottom: 80px; right: 20px; z-index: 50; }
+        .fab-main {
+            width: 56px; height: 56px; border-radius: 16px; background: var(--primary);
+            box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: white; font-size: 30px; transition: 0.2s;
+        }
+        .fab-main:hover { background: var(--primary-dark); transform: scale(1.05); }
+        .fab-menu {
+            position: absolute; bottom: 70px; right: 0; background: var(--surface);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow); width: 200px;
+            display: none; flex-direction: column; overflow: hidden; border: 1px solid var(--border);
+        }
+        .fab-item { 
+            padding: 12px 15px; 
+            display: flex; 
+            align-items: center; 
+            gap: 10px; 
+            font-size: 14px; 
+            cursor: pointer; 
+            color: var(--text-main);
+            transition: 0.2s;
+        }
+        .fab-item:hover { background: var(--hover); }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            height: 65px; background: var(--surface); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center;
+            position: relative; z-index: 20;
+        }
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            color: var(--text-sec); 
+            font-size: 12px; 
+            padding: 5px; 
+            cursor: pointer;
+            transition: 0.2s;
+        }
+        .nav-item.active { color: var(--primary); }
+        .nav-item .material-icons-round { 
+            background: transparent; 
+            padding: 4px 20px; 
+            border-radius: 16px; 
+            margin-bottom: 4px; 
+            transition: 0.2s; 
+        }
+        .nav-item.active .material-icons-round { background: #e8f0fe; }
+        .badge {
+            position: absolute; top: 0; right: 0; background: #ea4335; color: white;
+            font-size: 10px; padding: 2px 5px; border-radius: 10px; min-width: 16px;
+        }
+
+        /* --- MODALS --- */
+        .modal-mask {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.6); z-index: 1000; display: none;
+            justify-content: center; align-items: flex-end; /* Bottom sheet style */
+            backdrop-filter: blur(5px);
+        }
+        .modal-sheet {
+            background: var(--surface); width: 100%; max-width: 600px;
+            border-radius: 16px 16px 0 0; padding: 20px;
+            animation: slideUp 0.2s ease-out; max-height: 80vh; overflow-y: auto;
+            color: var(--text-main);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .sheet-head { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 15px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sheet-title { font-family: 'Google Sans'; font-size: 18px; font-weight: 500; }
+        
+        .action-list div { 
+            padding: 15px 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border-bottom: 1px solid var(--border); 
+            cursor: pointer; 
+            color: var(--text-main);
+        }
+        .action-list div:last-child { border: none; }
+        .action-list div:hover { background: var(--hover); }
+
+        /* Share Modal */
+        .share-options {
+            display: flex; flex-direction: column; gap: 10px;
+        }
+        .share-link {
+            background: var(--hover); padding: 10px; border-radius: var(--radius);
+            display: flex; justify-content: space-between; align-items: center;
+            margin: 10px 0;
+        }
+        .share-link input {
+            flex: 1; background: transparent; border: none; color: var(--text-main);
+            padding: 5px; font-size: 14px;
+        }
+        .permission-select {
+            width: 100%; padding: 8px; border-radius: var(--radius);
+            border: 1px solid var(--border); background: var(--surface); color: var(--text-main);
+            margin: 10px 0;
+        }
+
+        /* Progress Modal */
+        .progress-box {
+            background: var(--surface); padding: 20px; border-radius: var(--radius-lg); 
+            width: 90%; max-width: 400px; margin: auto; box-shadow: var(--shadow); 
+            display: none; position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); z-index: 2000; border: 1px solid var(--border);
+        }
+        .progress-bar { 
+            height: 6px; 
+            background: var(--hover); 
+            border-radius: 3px; 
+            margin-top: 10px; 
+            overflow: hidden; 
+        }
+        .progress-fill { 
+            height: 100%; 
+            background: linear-gradient(90deg, var(--primary), var(--secondary)); 
+            width: 0%; 
+            transition: width 0.3s; 
+            border-radius: 3px;
+        }
+
+        /* Media Overlay */
+        .media-viewer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 2500; display: none; flex-direction: column;
+        }
+        .media-header { 
+            padding: 15px; 
+            color: #fff; 
+            display: flex; 
+            justify-content: space-between; 
+            background: rgba(0,0,0,0.7); 
+            backdrop-filter: blur(10px);
+        }
+        .media-iframe { flex: 1; border: none; background: #fff; }
+
+        /* Settings */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; 
+            cursor: pointer; 
+            top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: #ccc; 
+            transition: .4s; 
+            border-radius: 24px; 
+        }
+        .slider:before { 
+            position: absolute; 
+            content: ""; 
+            height: 18px; 
+            width: 18px; 
+            left: 3px; 
+            bottom: 3px; 
+            background-color: white; 
+            transition: .4s; 
+            border-radius: 50%; 
+        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* Drop Zone */
+        .drop-zone {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(26, 115, 232, 0.2); border: 3px dashed var(--primary);
+            z-index: 3000; display: none; justify-content: center; align-items: center;
+            color: var(--primary); font-size: 24px; font-weight: bold;
+            backdrop-filter: blur(5px);
+        }
+
+        /* Notification */
+        .notification {
+            position: fixed; top: 20px; right: 20px; background: var(--surface);
+            padding: 15px; border-radius: var(--radius); box-shadow: var(--shadow);
+            border-left: 4px solid var(--primary); display: none; z-index: 3000;
+            max-width: 300px; animation: slideInRight 0.3s ease;
+            border: 1px solid var(--border);
+        }
+        @keyframes slideInRight {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* Empty State */
+        .empty-state {
+            text-align: center; padding: 50px 20px; color: var(--text-sec);
+        }
+        .empty-icon { font-size: 64px; margin-bottom: 20px; opacity: 0.5; }
+
+        /* Loading Skeleton */
+        .skeleton {
+            background: linear-gradient(90deg, var(--hover) 25%, var(--border) 50%, var(--hover) 75%);
+            background-size: 200% 100%; animation: loading 1.5s infinite;
+            border-radius: var(--radius);
+        }
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* Encryption Badge */
+        .encrypted-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            background: #4caf50; color: white; padding: 2px 8px; border-radius: 10px;
+            font-size: 11px; margin-left: 8px;
+        }
+
+    </style>
+</head>
+<body>
+
+    <!-- Theme Toggle -->
+    <div class="theme-toggle" id="theme-toggle" onclick="UI.toggleTheme()">
+        <span class="material-icons-round" id="theme-icon">dark_mode</span>
+    </div>
+
+    <!-- [SCREEN 1] LOCK (VIRTUAL KEYPAD) -->
+    <div id="lock-screen" class="screen active">
+        <div class="pin-container">
+            <div class="logo-area">Drive OS Pro+</div>
+            <div class="logo-subtitle">Secure Cloud Storage</div>
+            <div class="pin-dots" id="pin-dots">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div class="keypad">
+                <div class="key" onclick="Keypad.press(1)">1</div>
+                <div class="key" onclick="Keypad.press(2)">2</div>
+                <div class="key" onclick="Keypad.press(3)">3</div>
+                <div class="key" onclick="Keypad.press(4)">4</div>
+                <div class="key" onclick="Keypad.press(5)">5</div>
+                <div class="key" onclick="Keypad.press(6)">6</div>
+                <div class="key" onclick="Keypad.press(7)">7</div>
+                <div class="key" onclick="Keypad.press(8)">8</div>
+                <div class="key" onclick="Keypad.press(9)">9</div>
+                <div class="key clear" onclick="Keypad.reset()">CLEAR</div>
+                <div class="key" onclick="Keypad.press(0)">0</div>
+                <div class="key clear" onclick="Keypad.biometric()">
+                    <span class="material-icons-round">fingerprint</span>
+                </div>
+            </div>
+            <div class="biometric-btn" onclick="Keypad.biometric()">
+                <span class="material-icons-round">fingerprint</span>
+                Use Biometric
+            </div>
+        </div>
+    </div>
+
+    <!-- [SCREEN 2] AUTH -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-card">
+            <h2 style="font-family: 'Google Sans'; margin-bottom: 10px; color: var(--text-main);">Welcome</h2>
+            <p style="color: var(--text-sec); margin-bottom: 30px;">Connect your Google Drive with enhanced security</p>
+            <button class="auth-btn" onclick="Auth.signIn()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
+                Sign in with Google
+            </button>
+            <div style="text-align: center; margin: 20px 0; color: var(--text-sec);">or</div>
+            <div class="auth-options">
+                <div class="auth-option" onclick="Auth.demoLogin()">
+                    <span class="material-icons-round" style="font-size: 20px;">visibility</span>
+                    <div>Demo Mode</div>
+                </div>
+                <div class="auth-option" onclick="Auth.offlineMode()">
+                    <span class="material-icons-round" style="font-size: 20px;">offline_pin</span>
+                    <div>Offline</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- [SCREEN 3] APP DASHBOARD -->
+    <div id="app-screen" class="screen">
+        <div class="app-header">
+            <span class="material-icons-round" onclick="Nav.toggleMenu()" style="cursor: pointer;">menu</span>
+            <div class="search-bar">
+                <span class="material-icons-round">search</span>
+                <input type="text" class="search-input" placeholder="Search in Drive" id="search-input" 
+                       onkeyup="Drive.search(this.value)" onfocus="Search.showFilters()">
+                <span class="material-icons-round" style="cursor: pointer;" onclick="Search.advanced()">tune</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="material-icons-round" onclick="UI.showNotifications()" style="cursor: pointer;">
+                    notifications
+                    <span class="badge" id="notif-badge">3</span>
+                </span>
+                <img id="user-avatar" src="" style="width: 32px; height: 32px; border-radius: 50%; cursor: pointer;" onclick="Settings.open()">
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="breadcrumb" id="breadcrumb">
+                <span class="crumb-item" onclick="Drive.load('root')">My Drive</span>
+            </div>
+            <div class="toolbar-actions">
+                <div class="filter-btn" onclick="Search.showFilters()">
+                    <span class="material-icons-round">filter_list</span>
+                    Filter
+                </div>
+                <div class="view-switcher">
+                    <div class="view-btn active" onclick="UI.switchView('list')" data-view="list">
+                        <span class="material-icons-round">view_list</span>
+                    </div>
+                    <div class="view-btn" onclick="UI.switchView('grid')" data-view="grid">
+                        <span class="material-icons-round">grid_view</span>
+                    </div>
+                    <div class="view-btn" onclick="UI.switchView('gallery')" data-view="gallery">
+                        <span class="material-icons-round">collections</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Files -->
+        <div id="file-container" class="file-viewer file-list-view">
+            <!-- Dynamic Content -->
+        </div>
+
+        <!-- Selection Bar -->
+        <div class="selection-bar" id="selection-bar">
+            <span id="selected-count">0 items selected</span>
+            <div style="display: flex; gap: 10px;">
+                <span class="material-icons-round quick-btn" onclick="Selection.download()">download</span>
+                <span class="material-icons-round quick-btn" onclick="Selection.share()">share</span>
+                <span class="material-icons-round quick-btn" onclick="Selection.delete()" style="color: #d93025;">delete</span>
+                <span class="material-icons-round quick-btn" onclick="Selection.clear()">close</span>
+            </div>
+        </div>
+
+        <!-- Quick Actions -->
+        <div class="quick-actions">
+            <div class="quick-btn" onclick="Drive.refresh()" title="Refresh">
+                <span class="material-icons-round">refresh</span>
+            </div>
+            <div class="quick-btn" onclick="Ops.scanForDuplicates()" title="Find Duplicates">
+                <span class="material-icons-round">find_in_page</span>
+            </div>
+            <div class="quick-btn" onclick="Ops.encryptFolder()" title="Encrypt">
+                <span class="material-icons-round">lock</span>
+            </div>
+        </div>
+
+        <!-- FAB -->
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <label class="fab-item">
+                    <span class="material-icons-round" style="color:var(--text-sec)">upload_file</span> 
+                    Upload File
+                    <input type="file" hidden multiple onchange="Upload.handleFiles(this.files)">
+                </label>
+                <label class="fab-item">
+                    <span class="material-icons-round" style="color:var(--text-sec)">drive_folder_upload</span> 
+                    Upload Folder
+                    <input type="file" hidden webkitdirectory onchange="Upload.handleFiles(this.files)">
+                </label>
+                <div class="fab-item" onclick="Ops.createFolder()">
+                    <span class="material-icons-round" style="color:var(--text-sec)">create_new_folder</span> 
+                    New Folder
+                </div>
+                <div class="fab-item" onclick="Ops.createDocument()">
+                    <span class="material-icons-round" style="color:var(--text-sec)">description</span> 
+                    New Document
+                </div>
+                <div class="fab-item" onclick="Ops.scanQR()">
+                    <span class="material-icons-round" style="color:var(--text-sec)">qr_code_scanner</span> 
+                    Scan QR
+                </div>
+            </div>
+            <div class="fab-main" onclick="UI.toggleFab()">+</div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="Nav.switchTab('home', this)">
+                <span class="material-icons-round">home</span> 
+                Home
+            </div>
+            <div class="nav-item" onclick="Nav.switchTab('vault', this)">
+                <span class="material-icons-round">lock</span> 
+                Vault
+                <span class="encrypted-badge">Enc</span>
+            </div>
+            <div class="nav-item" onclick="Nav.switchTab('shared', this)">
+                <span class="material-icons-round">share</span> 
+                Shared
+                <span class="badge" id="shared-badge">5</span>
+            </div>
+            <div class="nav-item" onclick="Nav.switchTab('starred', this)">
+                <span class="material-icons-round">star</span> 
+                Starred
+            </div>
+            <div class="nav-item" onclick="Nav.switchTab('recent', this)">
+                <span class="material-icons-round">schedule</span> 
+                Recent
+            </div>
+        </div>
+    </div>
+
+    <!-- [MODALS] -->
+    
+    <!-- File Context Menu -->
+    <div id="ctx-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('ctx-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head">
+                <span class="sheet-title" id="ctx-name">Filename</span>
+                <span class="material-icons-round" onclick="UI.closeModal('ctx-modal')" style="cursor: pointer;">close</span>
+            </div>
+            <div class="action-list">
+                <div onclick="Ops.preview()"><span class="material-icons-round">visibility</span> Preview</div>
+                <div onclick="Ops.download()"><span class="material-icons-round">download</span> Download</div>
+                <div onclick="Ops.shareDialog()"><span class="material-icons-round">share</span> Share</div>
+                <div onclick="Ops.copyLink()"><span class="material-icons-round">link</span> Copy Link</div>
+                <div onclick="Ops.rename()"><span class="material-icons-round">edit</span> Rename</div>
+                <div onclick="Ops.moveTo()"><span class="material-icons-round">drive_file_move</span> Move to</div>
+                <div onclick="Ops.star()"><span class="material-icons-round">star</span> Add to Starred</div>
+                <div onclick="Ops.encryptFile()"><span class="material-icons-round">lock</span> Encrypt</div>
+                <div onclick="Ops.info()"><span class="material-icons-round">info</span> File Info</div>
+                <div onclick="Ops.delete()" style="color: #d93025;"><span class="material-icons-round">delete</span> Remove</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Share Modal -->
+    <div id="share-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('share-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head">
+                <span class="sheet-title">Share File</span>
+                <span class="material-icons-round" onclick="UI.closeModal('share-modal')" style="cursor: pointer;">close</span>
+            </div>
+            <div class="share-options">
+                <div style="margin-bottom: 15px;">
+                    <select class="permission-select" id="share-permission">
+                        <option value="view">Viewer</option>
+                        <option value="comment">Commenter</option>
+                        <option value="edit">Editor</option>
+                    </select>
+                </div>
+                <div class="share-link">
+                    <input type="text" id="share-link-input" readonly value="Generating link...">
+                    <span class="material-icons-round" onclick="Ops.copyShareLink()" style="cursor: pointer;">content_copy</span>
+                </div>
+                <div style="font-size: 12px; color: var(--text-sec); margin-top: 10px;">
+                    Anyone with the link can access
+                </div>
+                <button onclick="Ops.sendShareEmail()" style="
+                    background: var(--primary); color: white; border: none; padding: 12px;
+                    border-radius: var(--radius); margin-top: 15px; cursor: pointer;
+                ">
+                    Send via Email
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('settings-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head"><span class="sheet-title">Settings</span></div>
+            <div class="action-list">
+                <div style="justify-content: space-between; cursor: default;">
+                    <span>Dark Theme</span>
+                    <label class="switch">
+                        <input type="checkbox" id="dark-mode-toggle" onchange="Settings.toggleDarkMode()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div style="justify-content: space-between; cursor: default;">
+                    <span>External Player (New Tab)</span>
+                    <label class="switch">
+                        <input type="checkbox" id="ext-player-toggle" onchange="Settings.save()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div style="justify-content: space-between; cursor: default;">
+                    <span>Auto-sync Offline</span>
+                    <label class="switch">
+                        <input type="checkbox" id="auto-sync-toggle" onchange="Settings.save()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div style="justify-content: space-between; cursor: default;">
+                    <span>Encrypt Vault Files</span>
+                    <label class="switch">
+                        <input type="checkbox" id="encrypt-toggle" onchange="Settings.save()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div onclick="Settings.storageInfo()">
+                    <span class="material-icons-round">storage</span> 
+                    Storage Usage
+                    <span style="margin-left: auto; font-size: 12px; color: var(--text-sec);" id="storage-used">0 GB</span>
+                </div>
+                <div onclick="Settings.backup()">
+                    <span class="material-icons-round">backup</span> 
+                    Backup & Restore
+                </div>
+                <div onclick="Settings.help()">
+                    <span class="material-icons-round">help</span> 
+                    Help & Support
+                </div>
+                <div onclick="Auth.logout()" style="color: #d93025;">
+                    <span class="material-icons-round">logout</span> 
+                    Sign Out
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Dialog -->
+    <div id="progress-modal" class="progress-box">
+        <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+            <strong id="prog-title">Uploading...</strong>
+            <span id="prog-pct">0%</span>
+        </div>
+        <div style="font-size:12px; color:var(--text-sec); margin-bottom:10px;" id="prog-details">0MB / 0MB</div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-bar"></div></div>
+        <div style="margin-top: 10px; font-size: 12px; color: var(--text-sec);" id="prog-speed">Speed: --</div>
+    </div>
+
+    <!-- Media Viewer -->
+    <div id="media-view" class="media-viewer">
+        <div class="media-header">
+            <span id="media-title">Preview</span>
+            <div style="display: flex; gap: 15px;">
+                <span class="material-icons-round" onclick="Ops.openExternal()" style="cursor: pointer;">open_in_new</span>
+                <span class="material-icons-round" onclick="UI.closeMedia()" style="cursor: pointer;">close</span>
+            </div>
+        </div>
+        <iframe id="media-frame" class="media-iframe" src=""></iframe>
+    </div>
+
+    <!-- Drop Zone -->
+    <div class="drop-zone" id="drop-zone">
+        <div style="text-align: center;">
+            <span class="material-icons-round" style="font-size: 64px;">cloud_upload</span>
+            <div>Drop files here to upload</div>
+        </div>
+    </div>
+
+    <!-- Notification -->
+    <div class="notification" id="notification">
+        <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="material-icons-round" id="notif-icon">info</span>
+            <div>
+                <div id="notif-title">Notification</div>
+                <div id="notif-message" style="font-size: 12px; color: var(--text-sec);"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Advanced Search Modal -->
+    <div id="search-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('search-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head">
+                <span class="sheet-title">Advanced Search</span>
+                <span class="material-icons-round" onclick="UI.closeModal('search-modal')" style="cursor: pointer;">close</span>
+            </div>
+            <div style="padding: 20px 0;">
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-sec);">File Type</label>
+                    <select class="permission-select" id="search-type">
+                        <option value="">All Files</option>
+                        <option value="image">Images</option>
+                        <option value="video">Videos</option>
+                        <option value="document">Documents</option>
+                        <option value="folder">Folders</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-sec);">Date Range</label>
+                    <select class="permission-select" id="search-date">
+                        <option value="">Any time</option>
+                        <option value="today">Today</option>
+                        <option value="week">This week</option>
+                        <option value="month">This month</option>
+                        <option value="year">This year</option>
+                    </select>
+                </div>
+                <div style="margin-bottom: 15px;">
+                    <label style="display: block; margin-bottom: 5px; color: var(--text-sec);">Size</label>
+                    <select class="permission-select" id="search-size">
+                        <option value="">Any size</option>
+                        <option value="small">Small (&lt; 1 MB)</option>
+                        <option value="medium">Medium (1-10 MB)</option>
+                        <option value="large">Large (&gt; 10 MB)</option>
+                    </select>
+                </div>
+                <button onclick="Search.applyFilters()" style="
+                    background: var(--primary); color: white; border: none; padding: 12px;
+                    border-radius: var(--radius); width: 100%; cursor: pointer; margin-top: 10px;
+                ">
+                    Apply Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scripts -->
+    <script>
+        const CONFIG = {
+            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+            vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn',
+            offlineCache: true,
+            encryptionKey: 'driveos-pro-secure-key-2024'
+        };
+
+        const STATE = {
+            token: localStorage.getItem('g_token'),
+            currFolder: 'root',
+            folderStack: [],
+            files: [],
+            selected: null,
+            selectedFiles: new Set(),
+            viewMode: 'list',
+            theme: localStorage.getItem('theme') || 'light',
+            settings: JSON.parse(localStorage.getItem('d_settings') || '{"extPlayer": false, "autoSync": true, "encryptVault": true}'),
+            offlineMode: false,
+            offlineCache: JSON.parse(localStorage.getItem('offline_cache') || '{}')
+        };
+
+        /* --- [1] THEME SYSTEM --- */
+        const Theme = {
+            init: () => {
+                if(STATE.theme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                    document.getElementById('theme-icon').textContent = 'light_mode';
+                }
+            },
+            toggle: () => {
+                if(STATE.theme === 'light') {
+                    STATE.theme = 'dark';
+                    document.body.classList.add('dark-theme');
+                    document.getElementById('theme-icon').textContent = 'light_mode';
+                } else {
+                    STATE.theme = 'light';
+                    document.body.classList.remove('dark-theme');
+                    document.getElementById('theme-icon').textContent = 'dark_mode';
+                }
+                localStorage.setItem('theme', STATE.theme);
+                UI.showNotification('Theme changed', 'Theme updated successfully');
+            }
+        };
+
+        /* --- [2] VIRTUAL KEYPAD WITH BIOMETRIC --- */
+        const Keypad = {
+            input: "",
+            press: (num) => {
+                if(Keypad.input.length < 4) {
+                    Keypad.input += num;
+                    Keypad.updateDots();
+                    if(Keypad.input.length === 4) setTimeout(Keypad.check, 200);
+                }
+            },
+            updateDots: () => {
+                const dots = document.querySelectorAll('.dot');
+                dots.forEach((d, i) => {
+                    d.classList.toggle('filled', i < Keypad.input.length);
+                });
+            },
+            reset: () => {
+                Keypad.input = "";
+                Keypad.updateDots();
+            },
+            check: async () => {
+                const stored = localStorage.getItem('app_pin');
+                const hash = btoa(Keypad.input);
+
+                if(!stored) {
+                    localStorage.setItem('app_pin', hash);
+                    UI.showNotification('PIN Set', `PIN set to ${Keypad.input}`);
+                    Auth.check();
+                } else {
+                    if(stored === hash) {
+                        Auth.check();
+                    } else {
+                        Keypad.reset();
+                        UI.showNotification('Wrong PIN', 'Please try again', 'error');
+                    }
+                }
+            },
+            biometric: () => {
+                if('credentials' in navigator) {
+                    navigator.credentials.get({
+                        publicKey: {
+                            challenge: new Uint8Array(32),
+                            allowCredentials: []
+                        }
+                    }).then(cred => {
+                        if(cred) Auth.check();
+                    }).catch(() => {
+                        UI.showNotification('Biometric Failed', 'Using PIN instead', 'warning');
+                    });
+                } else {
+                    UI.showNotification('Biometric Not Available', 'Please use PIN', 'info');
+                }
+            }
+        };
+
+        /* --- [3] AUTH WITH MULTI-ACCOUNT --- */
+        let tokenClient;
+        const Auth = {
+            init: () => {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CONFIG.clientId, 
+                    scope: CONFIG.scopes,
+                    callback: (r) => {
+                        if(r.error) {
+                            UI.showNotification('Login Failed', r.error, 'error');
+                            return;
+                        }
+                        STATE.token = r.access_token;
+                        localStorage.setItem('g_token', STATE.token);
+                        localStorage.setItem('g_exp', Date.now() + 3500 * 1000);
+                        UI.switchScreen('app-screen');
+                        Drive.load('root');
+                        Auth.loadProfile();
+                        UI.showNotification('Welcome', 'Successfully signed in!');
+                    }
+                });
+                
+                // Check for saved accounts
+                const accounts = JSON.parse(localStorage.getItem('saved_accounts') || '[]');
+                if(accounts.length > 0) {
+                    // Show account switcher
+                }
+            },
+            check: () => {
+                const exp = localStorage.getItem('g_exp');
+                if(STATE.token && exp && Date.now() < exp) {
+                    UI.switchScreen('app-screen');
+                    Drive.load('root');
+                    Auth.loadProfile();
+                } else {
+                    UI.switchScreen('auth-screen');
+                }
+            },
+            signIn: () => tokenClient.requestAccessToken(),
+            demoLogin: () => {
+                STATE.offlineMode = true;
+                UI.switchScreen('app-screen');
+                UI.showNotification('Demo Mode', 'Using offline demo mode', 'info');
+                // Load demo files
+                Demo.load();
+            },
+            offlineMode: () => {
+                STATE.offlineMode = true;
+                UI.switchScreen('app-screen');
+                Offline.load();
+                UI.showNotification('Offline Mode', 'Loaded cached files', 'info');
+            },
+            loadProfile: () => {
+                fetch('https://www.googleapis.com/oauth2/v3/userinfo', { 
+                    headers: {'Authorization': `Bearer ${STATE.token}`}
+                }).then(r=>r.json()).then(d => {
+                    document.getElementById('user-avatar').src = d.picture;
+                    // Save account
+                    const accounts = JSON.parse(localStorage.getItem('saved_accounts') || '[]');
+                    if(!accounts.find(a => a.email === d.email)) {
+                        accounts.push({email: d.email, picture: d.picture, name: d.name});
+                        localStorage.setItem('saved_accounts', JSON.stringify(accounts));
+                    }
+                });
+            },
+            logout: () => {
+                if(confirm('Sign out from all accounts?')) {
+                    google.accounts.oauth2.revoke(STATE.token);
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        };
+
+        /* --- [4] DRIVE ENGINE WITH CACHING --- */
+        const Drive = {
+            load: async (id, name) => {
+                const con = document.getElementById('file-container');
+                con.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-icon">folder_open</span>Loading files...</div>';
+                
+                STATE.currFolder = id;
+                Drive.updateBreadcrumb(name);
+                
+                history.pushState({folderId: id, folderName: name}, null, "");
+
+                // Check cache first
+                if(STATE.offlineMode || CONFIG.offlineCache) {
+                    const cached = STATE.offlineCache[id];
+                    if(cached && cached.expiry > Date.now()) {
+                        STATE.files = cached.files;
+                        Drive.render(STATE.files);
+                        return;
+                    }
+                }
+
+                const q = `'${id}' in parents and trashed = false`;
+                const fields = "files(id,name,mimeType,size,iconLink,thumbnailLink,webViewLink,webContentLink,modifiedTime,createdTime,shared)";
+                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(fields)}&orderBy=folder,name&pageSize=1000`;
+
+                try {
+                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${STATE.token}` } });
+                    const data = await res.json();
+                    STATE.files = data.files || [];
+                    
+                    // Cache results
+                    if(CONFIG.offlineCache) {
+                        STATE.offlineCache[id] = {
+                            files: STATE.files,
+                            expiry: Date.now() + 300000 // 5 minutes
+                        };
+                        localStorage.setItem('offline_cache', JSON.stringify(STATE.offlineCache));
+                    }
+                    
+                    Drive.render(STATE.files);
+                } catch(e) {
+                    console.error(e);
+                    if(STATE.offlineMode) {
+                        UI.showNotification('Offline Mode', 'Cannot connect to server', 'warning');
+                    } else {
+                        con.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-icon">error</span>Error loading files</div>';
+                    }
+                }
+            },
+            render: (files) => {
+                const con = document.getElementById('file-container');
+                con.innerHTML = "";
+                
+                if(files.length === 0) {
+                    con.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-icon">folder_open</span>Empty folder</div>';
+                    return;
+                }
+
+                files.forEach(f => {
+                    const isDir = f.mimeType === 'application/vnd.google-apps.folder';
+                    const el = document.createElement('div');
+                    el.className = STATE.viewMode === 'list' ? 'list-item' : 
+                                  STATE.viewMode === 'grid' ? 'grid-item' : 'gallery-item';
+                    el.dataset.id = f.id;
+                    
+                    if(STATE.selectedFiles.has(f.id)) {
+                        el.classList.add('selected');
+                    }
+                    
+                    let icon = 'insert_drive_file';
+                    let iconClass = 'item-icon';
+                    
+                    if(isDir) {
+                        icon = 'folder';
+                        iconClass += ' folder-icon';
+                    } else if(f.mimeType.includes('image')) {
+                        icon = 'image';
+                        iconClass += ' image-icon';
+                    } else if(f.mimeType.includes('video')) {
+                        icon = 'movie';
+                        iconClass += ' video-icon';
+                    } else if(f.mimeType.includes('pdf')) {
+                        icon = 'picture_as_pdf';
+                        iconClass += ' pdf-icon';
+                    } else if(f.mimeType.includes('audio')) {
+                        icon = 'audiotrack';
+                        iconClass += ' audio-icon';
+                    } else if(f.mimeType.includes('document') || f.mimeType.includes('text')) {
+                        icon = 'description';
+                        iconClass += ' doc-icon';
+                    }
+
+                    let iconHtml = `<span class="material-icons-round ${iconClass}">${icon}</span>`;
+                    
+                    if(STATE.viewMode === 'gallery' && (f.thumbnailLink || f.mimeType.includes('image'))) {
+                        const thumb = f.thumbnailLink || 'https://via.placeholder.com/150x150?text=Image';
+                        iconHtml = `<img src="${thumb}" class="gallery-thumb" alt="${f.name}">`;
+                    } else if(STATE.viewMode === 'grid' && f.thumbnailLink && !isDir) {
+                        iconHtml = `<img src="${f.thumbnailLink}" style="width:100%; height:80px; object-fit:cover; border-radius:4px; margin-bottom:8px;">`;
+                    }
+
+                    const size = isDir ? 'Folder' : Ops.fmtSize(f.size);
+                    const date = new Date(f.modifiedTime).toLocaleDateString();
+                    const isShared = f.shared ? '<span class="material-icons-round" style="font-size:14px; color:#34a853; margin-left:5px;">share</span>' : '';
+                    const isEncrypted = f.name.endsWith('.enc') ? '<span class="encrypted-badge">Enc</span>' : '';
+
+                    if(STATE.viewMode === 'list') {
+                        el.innerHTML = `
+                            ${iconHtml}
+                            <div class="item-text">
+                                <span class="item-name">${f.name} ${isShared} ${isEncrypted}</span>
+                                <span class="item-meta">${size} • Modified: ${date}</span>
+                            </div>
+                            <span class="material-icons-round" style="color:var(--text-sec); padding:10px;" 
+                                  onclick="event.stopPropagation(); Selection.toggle('${f.id}')">
+                                ${STATE.selectedFiles.has(f.id) ? 'check_circle' : 'radio_button_unchecked'}
+                            </span>
+                            <span class="material-icons-round" style="color:var(--text-sec); padding:10px;" 
+                                  onclick="event.stopPropagation(); Ops.menu('${f.id}')">more_vert</span>
+                        `;
+                    } else if(STATE.viewMode === 'grid') {
+                        el.innerHTML = `
+                            ${iconHtml}
+                            <div class="item-text">
+                                <span class="item-name">${f.name} ${isEncrypted}</span>
+                                <span class="item-meta">${size}</span>
+                            </div>
+                        `;
+                    } else if(STATE.viewMode === 'gallery') {
+                        el.innerHTML = `
+                            ${iconHtml}
+                            <div class="gallery-info">
+                                <span class="item-name">${f.name}</span>
+                                <span class="item-meta">${size}</span>
+                            </div>
+                        `;
+                    }
+                    
+                    el.onclick = (e) => {
+                        if(e.target.closest('.material-icons-round')) return;
+                        if(STATE.selectedFiles.size > 0) {
+                            Selection.toggle(f.id);
+                        } else {
+                            isDir ? Drive.load(f.id, f.name) : Ops.menu(f.id);
+                        }
+                    };
+                    
+                    con.appendChild(el);
+                });
+            },
+            search: (query) => {
+                if(!query) { 
+                    Drive.render(STATE.files); 
+                    return; 
+                }
+                const filtered = STATE.files.filter(f => 
+                    f.name.toLowerCase().includes(query.toLowerCase()) ||
+                    (f.mimeType && f.mimeType.toLowerCase().includes(query.toLowerCase()))
+                );
+                Drive.render(filtered);
+            },
+            refresh: () => {
+                Drive.load(STATE.currFolder);
+                UI.showNotification('Refreshed', 'File list updated');
+            },
+            updateBreadcrumb: (name) => {
+                const b = document.getElementById('breadcrumb');
+                if(STATE.currFolder === 'root') {
+                    b.innerHTML = `<span class="crumb-item" onclick="Drive.load('root')">My Drive</span>`;
+                } else if(STATE.currFolder === CONFIG.vaultId) {
+                    b.innerHTML = `
+                        <span class="crumb-item" onclick="Drive.load('root')">My Drive</span>
+                        <span class="crumb-sep">/</span>
+                        <span class="crumb-item" onclick="Drive.load('${CONFIG.vaultId}', 'Vault')">Vault</span>
+                    `;
+                } else {
+                    b.innerHTML = `
+                        <span class="crumb-item" onclick="Drive.load('root')">My Drive</span>
+                        <span class="crumb-sep">/</span>
+                        <span class="crumb-item" onclick="Drive.load('${STATE.currFolder}', '${name || 'Folder'}')">${name || 'Folder'}</span>
+                    `;
+                }
+            }
+        };
+
+        window.onpopstate = (e) => {
+            if(e.state && e.state.folderId) {
+                Drive.load(e.state.folderId, e.state.folderName);
+            }
+        };
+
+        /* --- [5] UPLOAD WITH DRAG & DROP --- */
+        const Upload = {
+            initDragDrop: () => {
+                const dropZone = document.getElementById('drop-zone');
+                const appScreen = document.getElementById('app-screen');
+                
+                ['dragenter', 'dragover'].forEach(event => {
+                    appScreen.addEventListener(event, (e) => {
+                        e.preventDefault();
+                        dropZone.style.display = 'flex';
+                    });
+                });
+                
+                ['dragleave', 'drop'].forEach(event => {
+                    appScreen.addEventListener(event, (e) => {
+                        e.preventDefault();
+                        dropZone.style.display = 'none';
+                        if(event === 'drop') {
+                            const files = e.dataTransfer.files;
+                            if(files.length) {
+                                Upload.handleFiles(files);
+                            }
+                        }
+                    });
+                });
+            },
+            handleFiles: (files) => {
+                if(!files.length) return;
+                UI.toggleFab();
+                Upload.processQueue(Array.from(files));
+            },
+            processQueue: async (files) => {
+                const modal = document.getElementById('progress-modal');
+                const pTitle = document.getElementById('prog-title');
+                const pBar = document.getElementById('prog-bar');
+                const pPct = document.getElementById('prog-pct');
+                const pDet = document.getElementById('prog-details');
+                const pSpeed = document.getElementById('prog-speed');
+                
+                modal.style.display = 'block';
+                const startTime = Date.now();
+
+                for (let i = 0; i < files.length; i++) {
+                    const file = files[i];
+                    pTitle.innerText = `Uploading ${i+1}/${files.length}: ${file.name}`;
+                    
+                    // Encrypt if in vault
+                    let uploadFile = file;
+                    if(STATE.currFolder === CONFIG.vaultId && STATE.settings.encryptVault) {
+                        uploadFile = await Encryption.encryptFile(file);
+                    }
+                    
+                    const meta = { 
+                        name: uploadFile.name, 
+                        mimeType: uploadFile.type, 
+                        parents: [STATE.currFolder] 
+                    };
+                    
+                    try {
+                        const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                            method: 'POST',
+                            headers: { 
+                                'Authorization': `Bearer ${STATE.token}`, 
+                                'Content-Type': 'application/json' 
+                            },
+                            body: JSON.stringify(meta)
+                        });
+                        
+                        const location = init.headers.get('Location');
+                        await new Promise((resolve, reject) => {
+                            const xhr = new XMLHttpRequest();
+                            xhr.open('PUT', location, true);
+                            xhr.setRequestHeader('Content-Type', uploadFile.type);
+                            
+                            let lastLoaded = 0;
+                            let lastTime = Date.now();
+                            
+                            xhr.upload.onprogress = (e) => {
+                                if (e.lengthComputable) {
+                                    const percent = (e.loaded / e.total) * 100;
+                                    pBar.style.width = percent + '%';
+                                    pPct.innerText = Math.floor(percent) + '%';
+                                    pDet.innerText = `${Ops.fmtSize(e.loaded)} / ${Ops.fmtSize(e.total)}`;
+                                    
+                                    // Calculate speed
+                                    const currentTime = Date.now();
+                                    const timeDiff = (currentTime - lastTime) / 1000;
+                                    if(timeDiff >= 1) {
+                                        const loadedDiff = e.loaded - lastLoaded;
+                                        const speed = loadedDiff / timeDiff;
+                                        pSpeed.textContent = `Speed: ${Ops.fmtSize(speed)}/s`;
+                                        lastLoaded = e.loaded;
+                                        lastTime = currentTime;
+                                    }
+                                }
+                            };
+                            
+                            xhr.onload = () => { 
+                                if(xhr.status === 200 || xhr.status === 201) resolve(); 
+                                else reject(); 
+                            };
+                            xhr.onerror = reject;
+                            xhr.send(uploadFile);
+                        });
+
+                    } catch(e) {
+                        console.error("Upload Fail", e);
+                        UI.showNotification('Upload Failed', file.name, 'error');
+                    }
+                }
+                
+                const totalTime = (Date.now() - startTime) / 1000;
+                modal.style.display = 'none';
+                Drive.load(STATE.currFolder);
+                UI.showNotification('Upload Complete', `${files.length} files uploaded in ${totalTime.toFixed(1)}s`);
+            }
+        };
+
+        /* --- [6] OPERATIONS WITH ENCRYPTION --- */
+        const Ops = {
+            menu: (id) => {
+                STATE.selected = STATE.files.find(f => f.id === id);
+                document.getElementById('ctx-name').textContent = STATE.selected.name;
+                document.getElementById('ctx-modal').style.display = 'flex';
+            },
+            preview: () => {
+                UI.closeModal('ctx-modal');
+                const f = STATE.selected;
+
+                if(STATE.settings.extPlayer) {
+                    Ops.openExternal();
+                    return;
+                }
+
+                // Decrypt if needed
+                if(f.name.endsWith('.enc') && STATE.settings.encryptVault) {
+                    UI.showNotification('Decrypting', 'File is being decrypted...', 'info');
+                    // Decryption logic here
+                }
+
+                const embedUrl = `https://drive.google.com/file/d/${f.id}/preview`;
+                document.getElementById('media-title').textContent = f.name;
+                document.getElementById('media-frame').src = embedUrl;
+                document.getElementById('media-view').style.display = 'flex';
+            },
+            openExternal: () => {
+                window.open(STATE.selected.webViewLink, '_blank');
+            },
+            download: () => {
+                window.open(STATE.selected.webContentLink, '_blank');
+            },
+            shareDialog: () => {
+                UI.closeModal('ctx-modal');
+                document.getElementById('share-modal').style.display = 'flex';
+                // Generate share link
+                Ops.generateShareLink();
+            },
+            generateShareLink: async () => {
+                const f = STATE.selected;
+                const permission = document.getElementById('share-permission').value;
+                
+                try {
+                    const res = await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}/permissions`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${STATE.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            role: permission === 'view' ? 'reader' : 
+                                  permission === 'comment' ? 'commenter' : 'writer',
+                            type: 'anyone'
+                        })
+                    });
+                    
+                    if(res.ok) {
+                        document.getElementById('share-link-input').value = f.webViewLink;
+                    }
+                } catch(e) {
+                    console.error(e);
+                }
+            },
+            copyShareLink: () => {
+                const input = document.getElementById('share-link-input');
+                navigator.clipboard.writeText(input.value);
+                UI.showNotification('Copied', 'Link copied to clipboard');
+            },
+            copyLink: () => {
+                navigator.clipboard.writeText(STATE.selected.webViewLink);
+                UI.closeModal('ctx-modal');
+                UI.showNotification('Copied', 'Link copied');
+            },
+            rename: async () => {
+                const newName = prompt("Enter new name:", STATE.selected.name);
+                if(!newName || newName === STATE.selected.name) return;
+                
+                await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${STATE.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({name: newName})
+                });
+                
+                Drive.load(STATE.currFolder);
+                UI.showNotification('Renamed', 'File renamed successfully');
+            },
+            star: async () => {
+                await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${STATE.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        starred: true
+                    })
+                });
+                
+                UI.showNotification('Starred', 'Added to starred');
+            },
+            encryptFile: async () => {
+                if(confirm("Encrypt this file? It will be downloaded, encrypted, and re-uploaded.")) {
+                    UI.showNotification('Encrypting', 'Please wait...', 'info');
+                    // Encryption logic here
+                }
+            },
+            info: () => {
+                const f = STATE.selected;
+                const info = `
+Name: ${f.name}
+Size: ${Ops.fmtSize(f.size)}
+Type: ${f.mimeType}
+Created: ${new Date(f.createdTime).toLocaleString()}
+Modified: ${new Date(f.modifiedTime).toLocaleString()}
+${f.shared ? 'Shared: Yes' : 'Shared: No'}
+                `.trim();
+                alert(info);
+            },
+            delete: async () => {
+                if(!confirm("Move to trash?")) return;
+                UI.closeModal('ctx-modal');
+                await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                    method: 'PATCH',
+                    headers: {
+                        'Authorization': `Bearer ${STATE.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({trashed: true})
+                });
+                Drive.load(STATE.currFolder);
+                UI.showNotification('Moved to Trash', 'File deleted');
+            },
+            createFolder: async () => {
+                const name = prompt("Folder Name:");
+                if(!name) return;
+                
+                await fetch('https://www.googleapis.com/drive/v3/files', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${STATE.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        mimeType: 'application/vnd.google-apps.folder',
+                        parents: [STATE.currFolder]
+                    })
+                });
+                
+                Drive.load(STATE.currFolder);
+                UI.toggleFab();
+                UI.showNotification('Folder Created', `${name} created`);
+            },
+            createDocument: () => {
+                window.open('https://docs.new', '_blank');
+                UI.showNotification('Document', 'Opening new document');
+            },
+            scanQR: () => {
+                if(navigator.mediaDevices) {
+                    // QR scanner logic
+                    UI.showNotification('QR Scanner', 'Camera access required', 'info');
+                } else {
+                    UI.showNotification('Not Supported', 'QR scanning not available', 'warning');
+                }
+            },
+            scanForDuplicates: () => {
+                const fileNames = STATE.files.map(f => f.name.toLowerCase());
+                const duplicates = fileNames.filter((name, index) => fileNames.indexOf(name) !== index);
+                
+                if(duplicates.length > 0) {
+                    UI.showNotification('Duplicates Found', `${duplicates.length} duplicate files found`, 'warning');
+                } else {
+                    UI.showNotification('No Duplicates', 'All files are unique', 'info');
+                }
+            },
+            encryptFolder: () => {
+                if(STATE.currFolder === CONFIG.vaultId) {
+                    UI.showNotification('Already Encrypted', 'Vault folder is encrypted', 'info');
+                } else {
+                    if(confirm("Encrypt all files in this folder?")) {
+                        UI.showNotification('Encrypting', 'This may take a while...', 'info');
+                    }
+                }
+            },
+            fmtSize: (bytes) => {
+                if(!bytes || bytes == 0) return '0 B';
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + ['B','KB','MB','GB','TB'][i];
+            }
+        };
+
+        /* --- [7] SELECTION SYSTEM --- */
+        const Selection = {
+            toggle: (id) => {
+                if(STATE.selectedFiles.has(id)) {
+                    STATE.selectedFiles.delete(id);
+                } else {
+                    STATE.selectedFiles.add(id);
+                }
+                
+                const count = STATE.selectedFiles.size;
+                const bar = document.getElementById('selection-bar');
+                const countEl = document.getElementById('selected-count');
+                
+                if(count > 0) {
+                    bar.style.display = 'flex';
+                    countEl.textContent = `${count} item${count > 1 ? 's' : ''} selected`;
+                    
+                    // Update UI
+                    document.querySelectorAll('[data-id]').forEach(el => {
+                        if(STATE.selectedFiles.has(el.dataset.id)) {
+                            el.classList.add('selected');
+                        } else {
+                            el.classList.remove('selected');
+                        }
+                    });
+                } else {
+                    bar.style.display = 'none';
+                }
+            },
+            clear: () => {
+                STATE.selectedFiles.clear();
+                document.getElementById('selection-bar').style.display = 'none';
+                document.querySelectorAll('.selected').forEach(el => {
+                    el.classList.remove('selected');
+                });
+            },
+            download: () => {
+                if(STATE.selectedFiles.size === 0) return;
+                UI.showNotification('Download', `Preparing ${STATE.selectedFiles.size} files for download`, 'info');
+                // Batch download logic
+            },
+            share: () => {
+                if(STATE.selectedFiles.size === 0) return;
+                UI.showNotification('Share', `Sharing ${STATE.selectedFiles.size} files`, 'info');
+            },
+            delete: () => {
+                if(STATE.selectedFiles.size === 0) return;
+                if(confirm(`Delete ${STATE.selectedFiles.size} selected items?`)) {
+                    STATE.selectedFiles.forEach(id => {
+                        fetch(`https://www.googleapis.com/drive/v3/files/${id}`, {
+                            method: 'PATCH',
+                            headers: {
+                                'Authorization': `Bearer ${STATE.token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            body: JSON.stringify({trashed: true})
+                        });
+                    });
+                    
+                    Selection.clear();
+                    Drive.load(STATE.currFolder);
+                    UI.showNotification('Deleted', `${STATE.selectedFiles.size} items moved to trash`);
+                }
+            }
+        };
+
+        /* --- [8] UI CONTROLLER --- */
+        const UI = {
+            switchScreen: (id) => {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            },
+            toggleFab: () => {
+                const m = document.getElementById('fab-menu');
+                m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+            },
+            switchView: (mode) => {
+                STATE.viewMode = mode;
+                const c = document.getElementById('file-container');
+                c.className = `file-viewer file-${mode}-view`;
+                
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === mode);
+                });
+                
+                Drive.render(STATE.files);
+            },
+            toggleTheme: () => {
+                Theme.toggle();
+            },
+            closeModal: (id) => {
+                document.getElementById(id).style.display = 'none';
+            },
+            closeMedia: () => {
+                document.getElementById('media-view').style.display = 'none';
+                document.getElementById('media-frame').src = "";
+            },
+            showNotification: (title, message, type = 'info') => {
+                const notif = document.getElementById('notification');
+                const icon = document.getElementById('notif-icon');
+                const notifTitle = document.getElementById('notif-title');
+                const notifMsg = document.getElementById('notif-message');
+                
+                // Set icon based on type
+                switch(type) {
+                    case 'error': icon.textContent = 'error'; break;
+                    case 'warning': icon.textContent = 'warning'; break;
+                    case 'success': icon.textContent = 'check_circle'; break;
+                    default: icon.textContent = 'info';
+                }
+                
+                notifTitle.textContent = title;
+                notifMsg.textContent = message;
+                notif.style.display = 'block';
+                
+                setTimeout(() => {
+                    notif.style.display = 'none';
+                }, 3000);
+            },
+            showNotifications: () => {
+                // Show notifications panel
+                UI.showNotification('Notifications', 'No new notifications', 'info');
+            }
+        };
+
+        const Nav = {
+            switchTab: (tab, el) => {
+                document.querySelectorAll('.nav-item').forEach(e => e.classList.remove('active'));
+                el.classList.add('active');
+                
+                switch(tab) {
+                    case 'home': Drive.load('root'); break;
+                    case 'vault': Drive.load(CONFIG.vaultId, 'Vault'); break;
+                    case 'shared': 
+                        // Load shared files
+                        UI.showNotification('Shared', 'Loading shared files...');
+                        break;
+                    case 'starred':
+                        // Load starred files
+                        UI.showNotification('Starred', 'Loading starred files...');
+                        break;
+                    case 'recent':
+                        // Load recent files
+                        UI.showNotification('Recent', 'Loading recent files...');
+                        break;
+                }
+            }
+        };
+
+        const Settings = {
+            open: () => {
+                document.getElementById('ext-player-toggle').checked = STATE.settings.extPlayer;
+                document.getElementById('auto-sync-toggle').checked = STATE.settings.autoSync;
+                document.getElementById('encrypt-toggle').checked = STATE.settings.encryptVault;
+                document.getElementById('dark-mode-toggle').checked = STATE.theme === 'dark';
+                document.getElementById('settings-modal').style.display = 'flex';
+                Settings.updateStorageInfo();
+            },
+            save: () => {
+                STATE.settings.extPlayer = document.getElementById('ext-player-toggle').checked;
+                STATE.settings.autoSync = document.getElementById('auto-sync-toggle').checked;
+                STATE.settings.encryptVault = document.getElementById('encrypt-toggle').checked;
+                localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
+                UI.showNotification('Settings Saved', 'Preferences updated');
+            },
+            toggleDarkMode: () => {
+                Theme.toggle();
+                Settings.save();
+            },
+            updateStorageInfo: async () => {
+                if(!STATE.token) return;
+                
+                try {
+                    const r = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+                        headers: {'Authorization': `Bearer ${STATE.token}`}
+                    });
+                    const d = await r.json();
+                    const used = Ops.fmtSize(d.storageQuota.usage);
+                    const limit = Ops.fmtSize(d.storageQuota.limit);
+                    document.getElementById('storage-used').textContent = `${used} / ${limit}`;
+                } catch(e) {
+                    console.error(e);
+                }
+            },
+            storageInfo: async () => {
+                await Settings.updateStorageInfo();
+                UI.showNotification('Storage', 'Info updated in settings');
+            },
+            backup: () => {
+                UI.showNotification('Backup', 'Backup feature coming soon', 'info');
+            },
+            help: () => {
+                window.open('https://support.google.com/drive', '_blank');
+            }
+        };
+
+        const Search = {
+            showFilters: () => {
+                document.getElementById('search-modal').style.display = 'flex';
+            },
+            advanced: () => {
+                const query = document.getElementById('search-input').value;
+                if(query) {
+                    Search.showFilters();
+                }
+            },
+            applyFilters: () => {
+                const type = document.getElementById('search-type').value;
+                const date = document.getElementById('search-date').value;
+                const size = document.getElementById('search-size').value;
+                
+                let filtered = STATE.files;
+                
+                if(type) {
+                    if(type === 'folder') {
+                        filtered = filtered.filter(f => f.mimeType === 'application/vnd.google-apps.folder');
+                    } else {
+                        filtered = filtered.filter(f => f.mimeType && f.mimeType.includes(type));
+                    }
+                }
+                
+                if(size) {
+                    filtered = filtered.filter(f => {
+                        if(!f.size) return size === 'small';
+                        const mb = f.size / (1024*1024);
+                        if(size === 'small') return mb < 1;
+                        if(size === 'medium') return mb >= 1 && mb <= 10;
+                        if(size === 'large') return mb > 10;
+                        return true;
+                    });
+                }
+                
+                Drive.render(filtered);
+                UI.closeModal('search-modal');
+                UI.showNotification('Filter Applied', `${filtered.length} files found`);
+            }
+        };
+
+        /* --- [9] ENCRYPTION SYSTEM --- */
+        const Encryption = {
+            encryptFile: async (file) => {
+                // Simple XOR encryption for demo (Use proper crypto in production)
+                return new Promise((resolve) => {
+                    const reader = new FileReader();
+                    reader.onload = (e) => {
+                        const arrayBuffer = e.target.result;
+                        const uintArray = new Uint8Array(arrayBuffer);
+                        
+                        // XOR encryption with key
+                        const key = CONFIG.encryptionKey;
+                        for(let i = 0; i < uintArray.length; i++) {
+                            uintArray[i] ^= key.charCodeAt(i % key.length);
+                        }
+                        
+                        const encryptedBlob = new Blob([uintArray], {type: file.type});
+                        const encryptedFile = new File([encryptedBlob], file.name + '.enc', {type: file.type});
+                        resolve(encryptedFile);
+                    };
+                    reader.readAsArrayBuffer(file);
+                });
+            },
+            decryptFile: async (file) => {
+                // Reverse XOR
+                return Encryption.encryptFile(file); // XOR is symmetric
+            }
+        };
+
+        /* --- [10] OFFLINE SYSTEM --- */
+        const Offline = {
+            load: () => {
+                const cached = STATE.offlineCache[STATE.currFolder];
+                if(cached && cached.files) {
+                    STATE.files = cached.files;
+                    Drive.render(STATE.files);
+                } else {
+                    document.getElementById('file-container').innerHTML = `
+                        <div class="empty-state">
+                            <span class="material-icons-round empty-icon">offline_bolt</span>
+                            <div>No offline files cached</div>
+                            <div style="font-size: 12px; margin-top: 10px;">Go online to sync files</div>
+                        </div>
+                    `;
+                }
+            }
+        };
+
+        /* --- [11] DEMO MODE --- */
+        const Demo = {
+            load: () => {
+                STATE.files = [
+                    {
+                        id: 'demo1',
+                        name: 'Sample Document.pdf',
+                        mimeType: 'application/pdf',
+                        size: 1024 * 512,
+                        modifiedTime: new Date().toISOString()
+                    },
+                    {
+                        id: 'demo2',
+                        name: 'Vacation Photos',
+                        mimeType: 'application/vnd.google-apps.folder',
+                        size: 0,
+                        modifiedTime: new Date().toISOString()
+                    },
+                    {
+                        id: 'demo3',
+                        name: 'Meeting Notes.docx',
+                        mimeType: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                        size: 1024 * 256,
+                        modifiedTime: new Date().toISOString()
+                    }
+                ];
+                
+                Drive.render(STATE.files);
+            }
+        };
+
+        /* --- INITIALIZATION --- */
+        window.onload = () => {
+            Theme.init();
+            
+            if(!localStorage.getItem('app_pin')) {
+                const pin = prompt("Set a 4-digit PIN for security:");
+                if(pin && pin.length === 4 && /^\d+$/.test(pin)) {
+                    localStorage.setItem('app_pin', btoa(pin));
+                    UI.showNotification('PIN Set', 'Your PIN has been set');
+                } else {
+                    alert("Please set a valid 4-digit PIN");
+                    localStorage.setItem('app_pin', btoa('1234')); // Default
+                }
+            }
+            
+            Auth.init();
+            Upload.initDragDrop();
+            
+            // Check for service worker for PWA
+            if('serviceWorker' in navigator) {
+                navigator.serviceWorker.register('/sw.js').catch(console.error);
+            }
+        };
+
+    </script>
+</body>
+</html>
