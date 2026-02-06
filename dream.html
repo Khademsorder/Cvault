@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dream Vault OS</title>
+    <link rel="stylesheet" href="dream.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/howler/2.2.4/howler.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+</head>
+<body>
+    <div id="app">
+        <!-- PIN Lock Screen -->
+        <div id="pinScreen" class="screen">
+            <div class="pin-container">
+                <div class="vault-logo">
+                    <div class="logo-icon">DV</div>
+                    <h1>Dream Vault</h1>
+                </div>
+                <div class="pin-input-container">
+                    <input type="password" id="pinInput" maxlength="6" placeholder="Enter 6-digit PIN" autocomplete="off">
+                    <div class="pin-dots">
+                        <span class="pin-dot"></span>
+                        <span class="pin-dot"></span>
+                        <span class="pin-dot"></span>
+                        <span class="pin-dot"></span>
+                        <span class="pin-dot"></span>
+                        <span class="pin-dot"></span>
+                    </div>
+                </div>
+                <div class="pin-error" id="pinError"></div>
+                <button id="pinSubmit" class="btn-primary">Unlock</button>
+                <div class="pin-cooldown" id="pinCooldown"></div>
+            </div>
+        </div>
+
+        <!-- Main Interface -->
+        <div id="mainScreen" class="screen hidden">
+            <!-- Top Navigation -->
+            <header class="top-nav">
+                <div class="nav-left">
+                    <button id="menuToggle" class="nav-btn">
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M3 18h18v-2H3v2zm0-5h18v-2H3v2zm0-7v2h18V6H3z"/>
+                        </svg>
+                    </button>
+                    <div class="breadcrumb" id="breadcrumb"></div>
+                </div>
+                <div class="nav-center">
+                    <div class="search-container">
+                        <input type="text" id="searchInput" placeholder="Search files..." autocomplete="off">
+                        <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                        </svg>
+                    </div>
+                    <div class="view-controls">
+                        <button class="view-btn active" data-view="grid">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M4 8h4V4H4v4zm6 12h4v-4h-4v4zm-6 0h4v-4H4v4zm0-6h4v-4H4v4zm6 0h4v-4h-4v4zm6-10v4h4V4h-4zm-6 4h4V4h-4v4zm6 6h4v-4h-4v4zm0 6h4v-4h-4v4z"/>
+                            </svg>
+                        </button>
+                        <button class="view-btn" data-view="list">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M3 13h2v-2H3v2zm0 4h2v-2H3v2zm0-8h2V7H3v2zm4 4h14v-2H7v2zm0 4h14v-2H7v2zM7 7v2h14V7H7z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="nav-right">
+                    <div class="network-status" id="networkStatus">
+                        <div class="status-indicator online"></div>
+                    </div>
+                    <button id="themeToggle" class="nav-btn">
+                        <svg id="themeIcon" width="20" height="20" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M12 3c-4.97 0-9 4.03-9 9s4.03 9 9 9 9-4.03 9-9c0-.46-.04-.92-.1-1.36-.98 1.37-2.58 2.26-4.4 2.26-3.03 0-5.5-2.47-5.5-5.5 0-1.82.89-3.42 2.26-4.4-.44-.06-.9-.1-1.36-.1z"/>
+                        </svg>
+                    </button>
+                    <div class="user-dropdown">
+                        <button id="userMenu" class="nav-btn">
+                            <div class="user-avatar" id="userAvatar">U</div>
+                        </button>
+                        <div class="dropdown-content hidden">
+                            <div class="user-info">
+                                <div class="user-name" id="userName">User</div>
+                                <div class="user-email" id="userEmail">user@example.com</div>
+                            </div>
+                            <div class="dropdown-divider"></div>
+                            <button id="modeToggle" class="dropdown-item">Switch to Vault</button>
+                            <button id="lockApp" class="dropdown-item">Lock App</button>
+                            <button id="logout" class="dropdown-item">Sign Out</button>
+                            <div class="dropdown-divider admin-only hidden"></div>
+                            <button id="adminPanel" class="dropdown-item admin-only hidden">Admin Panel</button>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Sidebar -->
+            <aside class="sidebar">
+                <div class="sidebar-header">
+                    <h3>Drive Explorer</h3>
+                    <button id="newFolder" class="btn-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M20 6h-8l-2-2H4c-1.11 0-1.99.89-1.99 2L2 18c0 1.11.89 2 2 2h16c1.11 0 2-.89 2-2V8c0-1.11-.89-2-2-2zm-5 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3z"/>
+                        </svg>
+                        New Folder
+                    </button>
+                </div>
+                <div class="sidebar-content">
+                    <div class="nav-group">
+                        <button class="nav-item active" data-folder="root">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                            </svg>
+                            My Drive
+                        </button>
+                        <button class="nav-item" data-folder="vault">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/>
+                            </svg>
+                            Vault Drive
+                        </button>
+                        <button class="nav-item" data-folder="recent">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9z"/>
+                            </svg>
+                            Recent
+                        </button>
+                        <button class="nav-item" data-folder="starred">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 17.27L18.18 21l-1.64-7.03L22 9.24l-7.19-.61L12 2 9.19 8.63 2 9.24l5.46 4.73L5.82 21z"/>
+                            </svg>
+                            Starred
+                        </button>
+                    </div>
+                    <div class="nav-group">
+                        <div class="nav-group-title">Queues</div>
+                        <button class="nav-item" id="uploadQueueBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16v-6H5l7-7 7 7h-4v6H9z"/>
+                            </svg>
+                            Uploads <span class="queue-badge" id="uploadBadge">0</span>
+                        </button>
+                        <button class="nav-item" id="transferQueueBtn">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                            </svg>
+                            Transfers <span class="queue-badge" id="transferBadge">0</span>
+                        </button>
+                    </div>
+                    <div class="sidebar-footer">
+                        <div class="storage-info">
+                            <div class="storage-bar">
+                                <div class="storage-fill" id="storageFill"></div>
+                            </div>
+                            <div class="storage-text">Storage: <span id="storageUsed">0</span> / <span id="storageTotal">15 GB</span></div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="main-content">
+                <div class="content-header">
+                    <div class="header-left">
+                        <button id="backBtn" class="btn-icon" disabled>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+                            </svg>
+                        </button>
+                        <button id="forwardBtn" class="btn-icon" disabled>
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12 4l-1.41 1.41L16.17 11H4v2h12.17l-5.58 5.59L12 20l8-8z"/>
+                            </svg>
+                        </button>
+                        <button id="refreshBtn" class="btn-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M17.65 6.35C16.2 4.9 14.21 4 12 4c-4.42 0-7.99 3.58-7.99 8s3.57 8 7.99 8c3.73 0 6.84-2.55 7.73-6h-2.08c-.82 2.33-3.04 4-5.65 4-3.31 0-6-2.69-6-6s2.69-6 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4l-2.35 2.35z"/>
+                            </svg>
+                        </button>
+                        <div class="sort-controls">
+                            <select id="sortSelect">
+                                <option value="name">Name A-Z</option>
+                                <option value="name-desc">Name Z-A</option>
+                                <option value="modified">Last Modified</option>
+                                <option value="size">Size</option>
+                                <option value="type">Type</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="header-right">
+                        <button id="uploadBtn" class="btn-primary">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M9 16v-6H5l7-7 7 7h-4v6H9z"/>
+                            </svg>
+                            Upload
+                        </button>
+                        <button id="selectAll" class="btn-icon">Select All</button>
+                        <button id="deselectAll" class="btn-icon hidden">Cancel</button>
+                        <div class="selection-actions hidden" id="selectionActions">
+                            <button id="downloadSelected" class="btn-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                                </svg>
+                            </button>
+                            <button id="moveSelected" class="btn-icon">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M10 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V8c0-1.1-.9-2-2-2h-8l-2-2z"/>
+                                </svg>
+                            </button>
+                            <button id="deleteSelected" class="btn-icon danger">
+                                <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                    <path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/>
+                                </svg>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- File Grid -->
+                <div class="file-container" id="fileContainer">
+                    <div class="file-grid" id="fileGrid"></div>
+                    <div class="empty-state" id="emptyState">
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M14 2H6c-1.1 0-1.99.9-1.99 2L4 20c0 1.1.89 2 1.99 2H18c1.1 0 2-.9 2-2V8l-6-6zm2 16H8v-2h8v2zm0-4H8v-2h8v2zm-3-5V3.5L18.5 9H13z"/>
+                        </svg>
+                        <h3>No files found</h3>
+                        <p>Upload files or switch to a different folder</p>
+                    </div>
+                </div>
+
+                <!-- Loading Overlay -->
+                <div class="loading-overlay hidden" id="loadingOverlay">
+                    <div class="spinner"></div>
+                    <div class="loading-text" id="loadingText">Loading...</div>
+                </div>
+            </main>
+
+            <!-- Upload Panel -->
+            <div class="upload-panel hidden" id="uploadPanel">
+                <div class="panel-header">
+                    <h4>Upload Queue</h4>
+                    <button id="closeUploadPanel" class="btn-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="panel-content">
+                    <div class="upload-list" id="uploadList"></div>
+                </div>
+            </div>
+
+            <!-- Media Viewer -->
+            <div class="media-viewer hidden" id="mediaViewer">
+                <div class="viewer-header">
+                    <div class="viewer-title" id="viewerTitle"></div>
+                    <div class="viewer-actions">
+                        <button id="downloadViewer" class="btn-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 9h-4V3H9v6H5l7 7 7-7zM5 18v2h14v-2H5z"/>
+                            </svg>
+                        </button>
+                        <button id="closeViewer" class="btn-icon">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                            </svg>
+                        </button>
+                    </div>
+                </div>
+                <div class="viewer-content" id="viewerContent"></div>
+            </div>
+
+            <!-- Toast Container -->
+            <div class="toast-container" id="toastContainer"></div>
+        </div>
+
+        <!-- Admin Panel Modal -->
+        <div class="modal hidden" id="adminModal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3>Admin Panel</h3>
+                    <button id="closeAdminModal" class="btn-icon">
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                        </svg>
+                    </button>
+                </div>
+                <div class="modal-body">
+                    <div class="admin-tabs">
+                        <button class="tab-btn active" data-tab="activity">Activity Log</button>
+                        <button class="tab-btn" data-tab="queues">Queues</button>
+                        <button class="tab-btn" data-tab="system">System</button>
+                    </div>
+                    <div class="tab-content">
+                        <div class="tab-pane active" id="activityTab">
+                            <div class="log-container" id="activityLog"></div>
+                        </div>
+                        <div class="tab-pane" id="queuesTab">
+                            <div class="queue-monitor">
+                                <h4>Upload Queue</h4>
+                                <div id="adminUploadQueue"></div>
+                                <h4>Transfer Queue</h4>
+                                <div id="adminTransferQueue"></div>
+                            </div>
+                        </div>
+                        <div class="tab-pane" id="systemTab">
+                            <div class="system-stats">
+                                <div class="stat-item">
+                                    <span class="stat-label">API Calls:</span>
+                                    <span id="apiCallCount">0</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Online:</span>
+                                    <span id="onlineStatus">Yes</span>
+                                </div>
+                                <div class="stat-item">
+                                    <span class="stat-label">Read-Only:</span>
+                                    <button id="toggleReadOnly" class="btn-small">Enable</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="dream.js"></script>
+</body>
+</html>
