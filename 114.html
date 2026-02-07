@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drive OS | Pro+ Ultimate</title>
+    
+    <!-- Google Identity & Icons -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <style>
+        :root {
+            --primary: #1a73e8; --primary-dark: #0d47a1; --secondary: #34a853; --surface: #ffffff;
+            --bg: #f8f9fa; --text-main: #202124; --text-sec: #5f6368; --border: #dadce0;
+            --hover: #f1f3f4; --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            --radius: 8px; --radius-lg: 12px; --radius-xl: 16px; --danger: #d93025;
+        }
+        .dark-theme {
+            --primary: #8ab4f8; --primary-dark: #669df6; --secondary: #81c995; --surface: #202124;
+            --bg: #121212; --text-main: #e8eaed; --text-sec: #9aa0a6; --border: #3c4043;
+            --hover: #2d2e30; --shadow: 0 1px 2px 0 rgba(0,0,0,0.6), 0 1px 3px 1px rgba(0,0,0,0.302);
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+        body { margin: 0; padding: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; transition: background-color 0.3s, color 0.3s; }
+        .screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; display: none; flex-direction: column; background: var(--bg); z-index: 10; }
+        .screen.active { display: flex; animation: fade 0.2s ease; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- LOCK & AUTH --- */
+        #lock-screen, #auth-screen { justify-content: center; align-items: center; background: var(--surface); text-align: center; }
+        .pin-container { width: 100%; max-width: 320px; padding: 20px; }
+        .logo-area { font-family: 'Google Sans'; font-size: 24px; color: var(--text-main); margin-bottom: 10px; }
+        .pin-dots { display: flex; justify-content: center; gap: 15px; margin-bottom: 40px; }
+        .dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--text-sec); transition: 0.2s; }
+        .dot.filled { background: var(--primary); border-color: var(--primary); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        .key { width: 65px; height: 65px; border-radius: 50%; background: var(--hover); color: var(--text-main); font-size: 22px; display: flex; align-items: center; justify-content: center; margin: auto; cursor: pointer; transition: 0.1s; border: 1px solid var(--border); }
+        .key:active { background: var(--border); transform: scale(0.95); }
+        .auth-card { background: var(--surface); padding: 30px; border-radius: var(--radius-xl); box-shadow: var(--shadow); width: 90%; max-width: 400px; border: 1px solid var(--border); }
+        .auth-btn { background: var(--surface); border: 1px solid var(--border); padding: 12px 24px; border-radius: 24px; font-family: 'Google Sans'; font-weight: 500; display: flex; align-items: center; gap: 10px; cursor: pointer; width: 100%; justify-content: center; }
+
+        /* --- MAIN UI & FILE VIEWER --- */
+        .app-header { background: var(--surface); padding: 10px 15px; height: 60px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 1px 0 var(--border); z-index: 20; flex-shrink: 0; }
+        .search-bar { flex: 1; background: var(--hover); border-radius: var(--radius-lg); margin: 0 15px; padding: 8px 12px; display: flex; align-items: center; color: var(--text-sec); border: 1px solid transparent; }
+        .search-input { border: none; background: transparent; margin-left: 10px; width: 100%; font-size: 16px; color: var(--text-main); }
+        .toolbar { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); background: var(--surface); flex-shrink: 0; }
+        .breadcrumb { display: flex; align-items: center; overflow-x: auto; white-space: nowrap; flex: 1; min-width: 0; }
+        .back-btn { background: var(--hover); border: 1px solid var(--border); border-radius: var(--radius); width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; cursor: pointer; margin-right: 10px; flex-shrink: 0; }
+        .crumb-item { color: var(--text-main); font-weight: 500; padding: 4px 8px; border-radius: var(--radius); cursor: pointer; text-overflow: ellipsis; max-width: 150px; overflow: hidden; }
+        .crumb-sep { margin: 0 5px; color: var(--text-sec); }
+        .view-switcher { display: flex; background: var(--hover); border-radius: var(--radius); padding: 2px; border: 1px solid var(--border); }
+        .view-btn { padding: 6px 10px; border-radius: 6px; cursor: pointer; }
+        .view-btn.active { background: var(--surface); }
+        .file-viewer { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+        .file-list-view { display: flex; flex-direction: column; gap: 2px; }
+        .file-grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+        .file-gallery-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; }
+        .list-item, .grid-item, .gallery-item { background: var(--surface); cursor: pointer; transition: 0.2s; overflow: hidden; position: relative; }
+        .list-item { display: flex; align-items: center; padding: 12px 15px; border-radius: var(--radius); margin-bottom: 2px; }
+        .grid-item { border: 1px solid var(--border); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; align-items: center; text-align: center; height: 140px; }
+        .gallery-item { border-radius: var(--radius); height: 150px; }
+        .gallery-thumb { width: 100%; height: 100%; object-fit: cover; }
+        .item-icon { font-size: 24px; margin-right: 15px; flex-shrink: 0; }
+        .grid-item .item-icon { font-size: 40px; margin: 0 0 8px 0; }
+        .item-text { flex: 1; overflow: hidden; min-width: 0; }
+        .item-name { font-size: 14px; font-weight: 500; color: var(--text-main); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .item-meta { font-size: 11px; color: var(--text-sec); }
+
+        /* --- SIDEBAR, FAB, BOTTOM NAV --- */
+        .sidebar { position: fixed; top: 0; left: -280px; width: 280px; height: 100%; background: var(--surface); box-shadow: 2px 0 10px rgba(0,0,0,0.1); z-index: 1000; transition: left 0.3s ease; display: flex; flex-direction: column; border-right: 1px solid var(--border); }
+        .sidebar.active { left: 0; }
+        .sidebar-user { display: flex; align-items: center; gap: 10px; padding: 15px 20px; border-bottom: 1px solid var(--border); }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; }
+        .sidebar-nav { flex: 1; padding: 10px 0; overflow-y: auto; }
+        .nav-section { padding: 10px 0; }
+        .nav-title { padding: 0 20px; font-size: 12px; color: var(--text-sec); text-transform: uppercase; margin-bottom: 10px; }
+        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 20px; color: var(--text-main); cursor: pointer; }
+        .nav-item:hover { background: var(--hover); }
+        .fab-container { position: fixed; bottom: 80px; right: 20px; z-index: 50; }
+        .fab-main { width: 56px; height: 56px; border-radius: 50%; background: var(--primary); box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center; cursor: pointer; color: white; font-size: 28px; }
+        .fab-menu { position: absolute; bottom: 70px; right: 0; background: var(--surface); border-radius: var(--radius-lg); box-shadow: var(--shadow); width: 220px; display: none; flex-direction: column; overflow: hidden; border: 1px solid var(--border); }
+        .fab-item { padding: 12px 15px; display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .bottom-nav { height: 60px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; z-index: 20; flex-shrink: 0; }
+        .nav-item-b { display: flex; flex-direction: column; align-items: center; color: var(--text-sec); font-size: 11px; padding: 5px; cursor: pointer; flex: 1; }
+        .nav-item-b.active { color: var(--primary); }
+
+        /* --- MODALS & OVERLAYS --- */
+        .modal-mask { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; display: none; justify-content: center; align-items: flex-end; backdrop-filter: blur(5px); }
+        .modal-sheet { background: var(--surface); width: 100%; max-width: 600px; border-radius: 16px 16px 0 0; padding: 20px; animation: slideUp 0.2s ease-out; max-height: 80vh; overflow-y: auto; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .sheet-title { font-family: 'Google Sans'; font-size: 18px; }
+        .action-list div { padding: 15px 10px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .action-list div:last-child { border: none; }
+        .progress-box { background: var(--surface); padding: 20px; border-radius: var(--radius-lg); width: 90%; max-width: 400px; box-shadow: var(--shadow); display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 2000; }
+        .progress-bar { height: 6px; background: var(--hover); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.3s; }
+        .media-viewer { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: #000; z-index: 2500; display: none; flex-direction: column; }
+        .media-header { padding: 15px; color: #fff; display: flex; justify-content: space-between; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); }
+        .media-iframe { flex: 1; border: none; }
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-sec); }
+        .toast { position: fixed; bottom: -100px; left: 50%; transform: translateX(-50%); background: #323232; color: white; padding: 12px 20px; border-radius: 24px; z-index: 9999; opacity: 0; transition: all 0.4s ease; }
+        .toast.show { opacity: 1; bottom: 80px; }
+        .info-row { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border); font-size: 14px; }
+        .info-label { color: var(--text-sec); }
+        .info-value { font-weight: 500; text-align: right; word-break: break-all; }
+        .full-page-modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: var(--bg); z-index: 1100; display: none; flex-direction: column; }
+        .full-page-content { flex: 1; overflow-y: auto; padding: 15px; }
+        .button { background: var(--primary); color: white; border: 0; padding: 10px 15px; border-radius: var(--radius); cursor: pointer; font-weight: 500; }
+        .duplicate-group, .large-file-item { margin-bottom: 15px; background: var(--surface); border-radius: var(--radius); border: 1px solid var(--border); }
+        .duplicate-header { padding: 12px; border-bottom: 1px solid var(--border); font-weight: 500; }
+        .duplicate-file { padding: 10px; display: flex; align-items: center; gap: 10px; font-size: 13px; }
+    </style>
+</head>
+<body>
+
+    <!-- Sidebar Menu -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-user">
+            <img id="sidebar-avatar" class="user-avatar" alt="User">
+            <div>
+                <h3 id="sidebar-name" style="margin:0; font-size: 16px;"></h3>
+                <p id="sidebar-email" style="margin:2px 0 0; font-size: 12px; color: var(--text-sec);"></p>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+             <div class="nav-section">
+                <div class="nav-title">Smart Tools</div>
+                <div class="nav-item" onclick="Tools.runOrganizer()"><span class="material-icons-round">auto_awesome</span> Smart Organize</div>
+                <div class="nav-item" onclick="Tools.findDuplicates()"><span class="material-icons-round">control_point_duplicate</span> Find Duplicates</div>
+                 <div class="nav-item" onclick="Tools.findLargeFiles()"><span class="material-icons-round">donut_large</span> Large File Finder</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-title">App</div>
+                <div class="nav-item" onclick="Settings.open()"><span class="material-icons-round">settings</span> Settings</div>
+                 <div class="nav-item" onclick="Tools.getSystemInfo()"><span class="material-icons-round">info</span> About</div>
+                <div class="nav-item" onclick="Auth.logout()" style="color: var(--danger);"><span class="material-icons-round">logout</span> Sign Out</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SCREENS -->
+    <div id="lock-screen" class="screen active"></div>
+    <div id="auth-screen" class="screen"></div>
+
+    <!-- MAIN APP SCREEN -->
+    <div id="app-screen" class="screen">
+        <div class="app-header">
+            <span class="material-icons-round" onclick="UI.toggleSidebar()" style="cursor: pointer;">menu</span>
+            <div class="search-bar">
+                <span class="material-icons-round">search</span>
+                <input type="text" class="search-input" placeholder="Search files..." id="search-input" onkeyup="Drive.search(this.value)">
+            </div>
+            <img id="user-avatar" style="width: 32px; height: 32px; border-radius: 50%; cursor: pointer;" onclick="UI.toggleSidebar()">
+        </div>
+
+        <div class="toolbar">
+            <div class="back-btn" id="back-btn" onclick="Drive.goBack()" style="display: none;"><span class="material-icons-round">arrow_back</span></div>
+            <div class="breadcrumb" id="breadcrumb"></div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <span class="material-icons-round" onclick="UI.openModal('sort-modal')" style="cursor: pointer;">sort</span>
+                <div class="view-switcher">
+                    <div class="view-btn active" onclick="UI.switchView('list')" data-view="list"><span class="material-icons-round">view_list</span></div>
+                    <div class="view-btn" onclick="UI.switchView('grid')" data-view="grid"><span class="material-icons-round">grid_view</span></div>
+                    <div class="view-btn" onclick="UI.switchView('gallery')" data-view="gallery"><span class="material-icons-round">collections</span></div>
+                </div>
+            </div>
+        </div>
+
+        <div id="file-container" class="file-viewer file-list-view"></div>
+
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <label class="fab-item"><span class="material-icons-round">upload_file</span> Upload File <input type="file" hidden multiple onchange="Upload.handleFiles(this.files)"></label>
+                <label class="fab-item"><span class="material-icons-round">drive_folder_upload</span> Upload Folder <input type="file" hidden webkitdirectory onchange="Upload.handleFiles(this.files)"></label>
+                <div class="fab-item" onclick="Ops.createFolder()"><span class="material-icons-round">create_new_folder</span> New Folder</div>
+            </div>
+            <div class="fab-main" onclick="UI.toggleFab()"><span class="material-icons-round">add</span></div>
+        </div>
+
+        <div class="bottom-nav">
+            <div class="nav-item-b active" data-drive="user" onclick="Nav.switchTab(this)"><span class="material-icons-round">home</span> Home</div>
+            <div class="nav-item-b" data-drive="user" data-view="gallery" onclick="Nav.switchTab(this)"><span class="material-icons-round">photo</span> Photos</div>
+            <div class="nav-item-b" data-drive="vault" onclick="Nav.switchTab(this)"><span class="material-icons-round">lock</span> Vault</div>
+            <div class="nav-item-b" data-drive="shared" onclick="Nav.switchTab(this)"><span class="material-icons-round">share</span> Shared</div>
+            <div class="nav-item-b" data-drive="user" data-sort="modifiedTime desc" onclick="Nav.switchTab(this)"><span class="material-icons-round">schedule</span> Recent</div>
+        </div>
+    </div>
+
+    <!-- MODALS & OVERLAYS -->
+    <div id="ctx-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('ctx-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head"><span class="sheet-title" id="ctx-name"></span><span class="material-icons-round" onclick="UI.closeModal('ctx-modal')" style="cursor: pointer;">close</span></div>
+            <div class="action-list" id="ctx-action-list"></div>
+        </div>
+    </div>
+
+    <div id="info-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('info-modal')">
+        <div class="modal-sheet" id="info-sheet"></div>
+    </div>
+
+    <div id="sort-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('sort-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head"><span class="sheet-title">Sort By</span></div>
+            <div id="sort-options" class="action-list"></div>
+        </div>
+    </div>
+
+    <div id="settings-modal" class="modal-mask" onclick="if(event.target === this) UI.closeModal('settings-modal')"></div>
+    
+    <div id="progress-modal" class="progress-box"></div>
+    <div id="media-view" class="media-viewer"></div>
+    <div class="toast" id="toast"></div>
+
+    <!-- FULL PAGE MODALS -->
+    <div id="duplicates-modal" class="full-page-modal"></div>
+    <div id="large-files-modal" class="full-page-modal"></div>
+
+    <script>
+        const CONFIG = {
+            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+            vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn',
+            scriptUrl: 'https://script.google.com/macros/s/AKfycbyuLeEKJkCLQ1mdVTzsJjUYQlZIzrekepQ2bl8Ju_sgLy8PiV-SqezaNQF_0qot9uqKvA/exec',
+            apiKey: 'AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo'
+        };
+
+        const STATE = {
+            token: localStorage.getItem('g_token'),
+            currFolder: { id: 'root', name: 'My Drive' },
+            folderStack: [],
+            files: [],
+            selected: null,
+            viewMode: 'list',
+            sortBy: 'name',
+            sortOrder: 'asc',
+            currentDriveType: 'user'
+        };
+        
+        /* --- [0] API HANDLER --- */
+        const API = {
+            request: async (action, params = {}, method = 'POST') => {
+                UI.showLoading(true);
+                const allParams = { action, apiKey: CONFIG.apiKey, drive: STATE.currentDriveType, ...params };
+
+                try {
+                    const res = await fetch(CONFIG.scriptUrl, {
+                        method: 'POST', // Always POST to Apps Script Web App
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8', 'Authorization': `Bearer ${STATE.token}` },
+                        body: JSON.stringify(allParams),
+                        redirect: "follow"
+                    });
+                    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+                    const result = await res.json();
+                    if (!result.success) throw new Error(result.error || 'API request failed');
+                    UI.showLoading(false);
+                    return result;
+                } catch (error) {
+                    UI.showLoading(false);
+                    console.error(`API Error (${action}):`, error);
+                    UI.showToast(`Error: ${error.message}`, 'error');
+                    return null;
+                }
+            }
+        };
+
+        /* --- [1] AUTH & INIT --- */
+        let tokenClient;
+        const Auth = {
+            init: () => {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CONFIG.clientId, scope: CONFIG.scopes,
+                    callback: (r) => {
+                        if (r.error) { UI.showToast("Login failed: " + r.error); return; }
+                        STATE.token = r.access_token;
+                        localStorage.setItem('g_token', STATE.token);
+                        localStorage.setItem('g_exp', Date.now() + 3500 * 1000);
+                        UI.switchScreen('app-screen');
+                        Drive.load('root');
+                        Auth.loadProfile();
+                    }
+                });
+            },
+            check: () => {
+                const exp = localStorage.getItem('g_exp');
+                if (STATE.token && exp && Date.now() < exp) {
+                    UI.switchScreen('app-screen');
+                    Drive.load('root');
+                    Auth.loadProfile();
+                } else {
+                    UI.switchScreen('auth-screen');
+                }
+            },
+            signIn: () => tokenClient.requestAccessToken(),
+            loadProfile: async () => {
+                const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { 'Authorization': `Bearer ${STATE.token}` } });
+                const d = await res.json();
+                ['user-avatar', 'sidebar-avatar'].forEach(id => document.getElementById(id).src = d.picture);
+                document.getElementById('sidebar-name').textContent = d.name || 'User';
+                document.getElementById('sidebar-email').textContent = d.email || 'user@example.com';
+            },
+            logout: () => {
+                if (confirm('Sign out?')) {
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        };
+        const Keypad = { /* ... Original Keypad Logic ... */ };
+
+
+        /* --- [2] DRIVE ENGINE --- */
+        const Drive = {
+            load: async (folderId = 'root', folderName = 'My Drive', orderBy = 'name asc') => {
+                if (STATE.currFolder.id !== folderId) {
+                    if(STATE.currFolder.id !== 'root' && folderId === 'root') STATE.folderStack = [];
+                    else if (folderId !== 'root') STATE.folderStack.push(STATE.currFolder);
+                }
+                STATE.currFolder = { id: folderId, name: folderName };
+                UI.updateUI();
+
+                const [sortBy, sortOrder] = orderBy.split(' ');
+                STATE.sortBy = sortBy;
+                STATE.sortOrder = sortOrder;
+
+                const result = await API.request('files_list', { folderId, orderBy });
+                if (result) {
+                    STATE.files = result.files || [];
+                    Drive.render();
+                }
+            },
+            render: () => {
+                const con = document.getElementById('file-container');
+                con.innerHTML = "";
+                if (STATE.files.length === 0) {
+                    con.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-icon">folder_open</span>No files found</div>';
+                    return;
+                }
+                STATE.files.forEach(f => con.appendChild(UI.createFileElement(f)));
+            },
+            search: async (query) => {
+                 if (!query.trim()) { Drive.render(); return; }
+                 const result = await API.request('files_list', { folderId: STATE.currFolder.id, search: query });
+                 if(result) { Drive.render(result.files); }
+            },
+            goBack: () => {
+                if (STATE.folderStack.length > 0) {
+                    const prev = STATE.folderStack.pop();
+                    Drive.load(prev.id, prev.name);
+                }
+            },
+            refresh: () => Drive.load(STATE.currFolder.id, STATE.currFolder.name, `${STATE.sortBy} ${STATE.sortOrder}`)
+        };
+        
+        /* --- [3] OPERATIONS (FILE ACTIONS) --- */
+        const Ops = {
+            menu: async (fileId) => {
+                STATE.selected = STATE.files.find(f => f.id === fileId);
+                const f = STATE.selected;
+                document.getElementById('ctx-name').textContent = f.name;
+
+                let actions = `
+                    <div onclick="Ops.preview()"><span class="material-icons-round">visibility</span> Preview</div>
+                    <div onclick="Ops.rename()"><span class="material-icons-round">edit</span> Rename</div>
+                    <div onclick="Ops.info()"><span class="material-icons-round">info</span> File Info</div>
+                `;
+                if(STATE.currentDriveType === 'user' && f.type !== 'folder'){
+                    actions += `<div onclick="Ops.moveToVault()"><span class="material-icons-round">lock</span> Move to Vault</div>`;
+                }
+                if (f.type === 'image') {
+                    actions += `<div onclick="Tools.runOCR()"><span class="material-icons-round">text_fields</span> Extract Text (OCR)</div>`;
+                }
+                actions += `<div onclick="Ops.delete()" style="color: var(--danger);"><span class="material-icons-round">delete</span> Delete</div>`;
+
+                document.getElementById('ctx-action-list').innerHTML = actions;
+                UI.openModal('ctx-modal');
+            },
+            preview: () => { window.open(`https://drive.google.com/file/d/${STATE.selected.id}/preview`, '_blank'); },
+            rename: async () => { 
+                const newName = prompt("Enter new name:", STATE.selected.name);
+                if (!newName) return;
+                const result = await API.request('file_rename', { fileId: STATE.selected.id, newName });
+                if(result) { UI.showToast("File renamed"); Drive.refresh(); }
+            },
+            info: async () => {
+                const result = await API.request('file_get', { fileId: STATE.selected.id });
+                if (result) UI.showInfo(result.file);
+            },
+            delete: async () => {
+                if (!confirm("Move this file to trash?")) return;
+                const result = await API.request('file_delete', { fileId: STATE.selected.id });
+                if(result) { UI.showToast("File moved to trash"); Drive.refresh(); }
+            },
+            createFolder: async () => {
+                const name = prompt("Enter folder name:");
+                if (!name) return;
+                const result = await API.request('folder_create', { name, parentId: STATE.currFolder.id });
+                if(result) { UI.showToast("Folder created"); Drive.refresh(); }
+            },
+            moveToVault: async () => {
+                 if (!confirm(`Move "${STATE.selected.name}" to the secure Vault? This action cannot be easily undone.`)) return;
+                 const result = await API.request('file_move', { fileId: STATE.selected.id, targetParentId: CONFIG.vaultId });
+                 if(result) { UI.showToast("File moved to Vault"); Drive.refresh(); }
+            },
+            formatSize: (b) => {
+                if(!b||b==0)return'0 B';const k=1024,s=['B','KB','MB','GB'],i=Math.floor(Math.log(b)/Math.log(k));
+                return parseFloat((b/Math.pow(k,i)).toFixed(1))+' '+s[i];
+            }
+        };
+
+        /* --- [4] SMART TOOLS --- */
+        const Tools = {
+            runOrganizer: async () => {
+                UI.toggleSidebar();
+                if (!confirm("Organize all files in the current folder into categories?")) return;
+                const result = await API.request('auto_organize', { folderId: STATE.currFolder.id });
+                if (result) {
+                    alert(`Organization Complete!\n- Moved: ${result.stats.moved} / ${result.stats.total} files`);
+                    Drive.refresh();
+                }
+            },
+            findDuplicates: async () => {
+                UI.toggleSidebar();
+                const result = await API.request('find_duplicates', { folderId: STATE.currFolder.id });
+                if (result) UI.showDuplicates(result);
+            },
+            removeDuplicates: async (groups) => {
+                 if (!confirm(`Delete ${groups.reduce((s,g)=>s+g.count-1,0)} duplicate files? This cannot be undone.`)) return;
+                 const result = await API.request('remove_duplicates', { duplicateGroups: groups });
+                 if(result) {
+                     UI.showToast(`${result.results.removed} duplicates removed, ${result.summary.spaceFreed} freed.`);
+                     UI.closeFullPageModal();
+                     Drive.refresh();
+                 }
+            },
+            findLargeFiles: async () => {
+                 UI.toggleSidebar();
+                 const threshold = prompt("Find files larger than (MB):", "100");
+                 if (!threshold || isNaN(threshold)) return;
+                 const result = await API.request('find_large_files', { folderId: STATE.currFolder.id, threshold });
+                 if (result) UI.showLargeFiles(result);
+            },
+            runOCR: async () => {
+                 UI.closeModal('ctx-modal');
+                 const result = await API.request('extract_text', { fileId: STATE.selected.id });
+                 if(result) {
+                     const sheet = document.getElementById('info-sheet');
+                     sheet.innerHTML = `<div class="sheet-head"><span class="sheet-title">Extracted Text</span></div><div style="padding: 15px; white-space: pre-wrap; font-size: 13px;">${result.text || 'No text found.'}</div>`;
+                     UI.openModal('info-modal');
+                 }
+            },
+            getSystemInfo: async () => {
+                const result = await API.request('system_info');
+                if(result) alert(`${result.app} v${result.version}\nFeatures: ${result.features.join(', ')}`);
+            }
+        };
+
+        /* --- [5] UI CONTROLLER --- */
+        const UI = {
+            init: () => { /* ... populate static UI elements on load ... */ },
+            showLoading: (isLoading) => {
+                let loader = document.getElementById('main-loader');
+                if (isLoading && !loader) {
+                    loader = document.createElement('div');
+                    loader.id = 'main-loader';
+                    loader.innerHTML = '<div style="background:var(--surface); padding:20px; border-radius:var(--radius); box-shadow:var(--shadow); display:flex; align-items:center; gap:15px;"><span class="material-icons-round" style="font-size: 32px; animation: spin 1.5s linear infinite;">sync</span><span>Processing...</span></div>';
+                    loader.style.cssText = 'position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.1); z-index:9999; display:flex; justify-content:center; align-items:center; backdrop-filter:blur(2px);';
+                    document.body.appendChild(loader);
+                    // Add keyframe for spin animation
+                    if(!document.getElementById('spin-anim')) {
+                        const style = document.createElement('style');
+                        style.id = 'spin-anim';
+                        style.innerHTML = `@keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }`;
+                        document.head.appendChild(style);
+                    }
+                } else if (!isLoading && loader) {
+                    loader.remove();
+                }
+            },
+            showToast: (msg, type = 'success') => {
+                const toast = document.getElementById('toast');
+                toast.textContent = msg;
+                toast.style.background = type === 'error' ? 'var(--danger)' : '#323232';
+                toast.classList.add('show');
+                setTimeout(() => toast.classList.remove('show'), 3000);
+            },
+            updateUI: () => {
+                document.getElementById('back-btn').style.display = STATE.folderStack.length > 0 ? 'flex' : 'none';
+                const b = document.getElementById('breadcrumb');
+                let path = `<span class="crumb-item" onclick="Drive.load('root', 'My Drive')">My Drive</span>`;
+                if(STATE.currFolder.id !== 'root') path += `<span class="crumb-sep">/</span><span class="crumb-item">${STATE.currFolder.name}</span>`;
+                b.innerHTML = path;
+            },
+            switchView: (mode) => {
+                STATE.viewMode = mode;
+                document.getElementById('file-container').className = `file-viewer file-${mode}-view`;
+                document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === mode));
+                Drive.render();
+            },
+            showInfo: (file) => {
+                const sheet = document.getElementById('info-sheet');
+                sheet.innerHTML = `
+                    <div class="sheet-head"><span class="sheet-title">File Information</span></div>
+                    <div style="padding: 10px;">
+                        <div class="info-row"><span class="info-label">Name:</span><span class="info-value">${file.name}</span></div>
+                        <div class="info-row"><span class="info-label">Size:</span><span class="info-value">${file.sizeFormatted}</span></div>
+                        <div class="info-row"><span class="info-label">Type:</span><span class="info-value">${file.mimeType}</span></div>
+                        <div class="info-row"><span class="info-label">Modified:</span><span class="info-value">${new Date(file.modifiedTime).toLocaleString()}</span></div>
+                        <div class="info-row"><span class="info-label">ID:</span><span class="info-value">${file.id}</span></div>
+                    </div>
+                `;
+                UI.openModal('info-modal');
+            },
+            showDuplicates: (data) => {
+                const modal = document.getElementById('duplicates-modal');
+                let html = `<div class="app-header">
+                    <span class="material-icons-round" style="cursor:pointer;" onclick="UI.closeFullPageModal()">arrow_back</span>
+                    <h3 style="margin:0; flex:1; text-align:center;">Duplicate Files</h3>
+                    <button class="button" style="background:var(--danger)" onclick='Tools.removeDuplicates(${JSON.stringify(data.duplicates)})'>Clean All</button>
+                 </div>
+                 <div style="padding:15px; text-align:center; background:var(--surface);">
+                    Found <strong>${data.stats.duplicateGroups} groups</strong>. Potential savings: <strong>${data.stats.totalSavings}</strong>.
+                 </div>
+                 <div class="full-page-content">`;
+                data.duplicates.forEach(group => {
+                    html += `<div class="duplicate-group">
+                        <div class="duplicate-header">${group.files[0].name} (${group.count} copies)</div>
+                        ${group.files.map((f, i) => `<div class="duplicate-file">${i === 0 ? '✅' : '❌'} <span>${f.id.slice(0,15)}... (Created: ${new Date(f.createdTime).toLocaleDateString()}) ${i === 0 ? '<strong>(Keeping)</strong>' : ''}</span></div>`).join('')}
+                     </div>`;
+                });
+                modal.innerHTML = html + `</div>`;
+                modal.style.display = 'flex';
+            },
+            showLargeFiles: (data) => { /* Similar implementation to showDuplicates */ },
+            toggleSidebar: () => document.getElementById('sidebar').classList.toggle('active'),
+            toggleFab: () => { const m = document.getElementById('fab-menu'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; },
+            openModal: (id) => document.getElementById(id).style.display = 'flex',
+            closeModal: (id) => document.getElementById(id).style.display = 'none',
+            closeFullPageModal: () => document.querySelectorAll('.full-page-modal').forEach(m => m.style.display = 'none'),
+            createFileElement: (f) => { /* ... Original createFileElement logic from your html file ... */ return document.createElement('div'); }
+        };
+        
+        /* --- [6] NAVIGATION --- */
+        const Nav = {
+            switchTab: (el) => {
+                document.querySelectorAll('.nav-item-b').forEach(e => e.classList.remove('active'));
+                el.classList.add('active');
+                STATE.currentDriveType = el.dataset.drive || 'user';
+                
+                let folderId = 'root';
+                let folderName = 'My Drive';
+                let orderBy = el.dataset.sort || 'name asc';
+                
+                if (STATE.currentDriveType === 'vault') {
+                    folderId = CONFIG.vaultId;
+                    folderName = 'Vault';
+                } else if (STATE.currentDriveType === 'shared') {
+                    // Requires a specific query, placeholder for now
+                    UI.showToast("Shared drive view not fully implemented.");
+                    STATE.files = []; Drive.render();
+                    return;
+                }
+                
+                if (el.dataset.view) {
+                    UI.switchView(el.dataset.view);
+                }
+                
+                Drive.load(folderId, folderName, orderBy);
+            }
+        };
+
+        /* --- [7] UPLOAD (Client-Side) --- */
+        const Upload = { /* ... Original Upload Logic (XMLHttpRequest) ... */ };
+        
+        /* --- [8] SETTINGS --- */
+        const Settings = { /* ... Original Settings Logic ... */ };
+        
+        /* --- [9] INITIALIZATION --- */
+        window.onload = () => { /* ... Original Initialization logic, calling Auth.init() etc ... */ };
+    </script>
+</body>
+</html>
