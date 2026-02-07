@@ -3,271 +3,409 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>VAULT OS | Titanium Hybrid v5.0</title>
+    <title>Drive OS | Ultimate Pro</title>
     
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-    <link href="https://cdn.jsdelivr.net/npm/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
     <style>
-        /* [আগের সাইবার থিম CSS বজায় থাকবে, সাথে নতুন কিছু হাইব্রিড এলিমেন্ট] */
         :root {
-            --bg-main: #05070a;
-            --surface: rgba(10, 15, 25, 0.8);
-            --accent: #00f2ff;
-            --accent-glow: rgba(0, 242, 255, 0.4);
-            --text-primary: #e0f2fe;
-            --text-secondary: #94a3b8;
-            --border: rgba(0, 242, 255, 0.2);
-            --panel-clip: polygon(5% 0, 100% 0, 100% 90%, 95% 100%, 0 100%, 0 10%);
+            --primary: #1a73e8; --primary-dark: #0d47a1; --surface: #ffffff;
+            --bg: #f8f9fa; --text-main: #202124; --text-sec: #5f6368;
+            --border: #dadce0; --hover: #f1f3f4; --radius: 12px;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12);
         }
+        .dark-theme {
+            --primary: #8ab4f8; --primary-dark: #669df6; --surface: #202124;
+            --bg: #121212; --text-main: #e8eaed; --text-sec: #9aa0a6;
+            --border: #3c4043; --hover: #2d2e30;
+        }
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
+        body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
 
-        body { background: var(--bg-main); color: var(--text-primary); font-family: 'Inter', sans-serif; height: 100vh; overflow: hidden; }
+        /* SCREENS */
+        .screen { position: absolute; inset: 0; background: var(--bg); display: none; z-index: 10; flex-direction: column; }
+        .screen.active { display: flex; animation: fadeIn 0.3s; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        /* 1. LOCK SCREEN (PIN) */
+        #lock-screen { justify-content: center; align-items: center; background: var(--surface); }
+        .pin-display { display: flex; gap: 15px; margin: 30px 0; }
+        .pin-dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--text-sec); transition: 0.2s; }
+        .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
+        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
+        .key { width: 70px; height: 70px; border-radius: 50%; background: var(--hover); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: 1px solid var(--border); }
+        .key:active { transform: scale(0.95); }
+
+        /* 2. AUTH SCREEN */
+        #auth-screen { justify-content: center; align-items: center; text-align: center; background: var(--surface); }
+        .auth-card { background: var(--surface); padding: 40px; border-radius: 16px; box-shadow: var(--shadow); width: 90%; max-width: 400px; border: 1px solid var(--border); }
+        .auth-btn { background: var(--surface); border: 1px solid var(--border); padding: 12px 24px; border-radius: 24px; font-family: 'Google Sans'; font-weight: 500; display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 20px auto; width: 100%; justify-content: center; transition: 0.2s; }
+        .auth-btn:hover { background: var(--hover); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+        /* 3. MAIN APP UI */
+        .header { height: 60px; background: var(--surface); padding: 0 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
+        .search-box { flex: 1; background: var(--hover); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
+        .search-box input { border: none; background: transparent; width: 100%; font-size: 16px; color: var(--text-main); }
         
-        /* Layout */
-        .app-shell { display: flex; width: 100%; height: 100%; }
-        .sidebar { width: 260px; background: var(--surface); backdrop-filter: blur(20px); border-right: 1px solid var(--border); display: flex; flex-direction: column; padding: 25px 15px; }
-        .main-view { flex: 1; display: flex; flex-direction: column; position: relative; }
+        .toolbar { padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; font-size: 14px; color: var(--text-sec); }
         
-        .nav-item { display: flex; align-items: center; gap: 15px; padding: 12px 18px; border-radius: 12px; color: var(--text-secondary); cursor: pointer; transition: 0.3s; margin-bottom: 5px; }
-        .nav-item.active { background: var(--accent-glow); color: var(--accent); border: 1px solid var(--border); }
-        .nav-badge { background: var(--accent); color: #000; font-size: 9px; padding: 2px 6px; border-radius: 4px; font-weight: 800; margin-left: auto; }
+        /* File List */
+        .file-list { flex: 1; overflow-y: auto; padding: 10px; display: grid; align-content: start; gap: 5px; }
+        .file-list.list { grid-template-columns: 1fr; }
+        .file-list.grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
+        
+        .file-item { background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer; position: relative; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
+        .file-list.grid .file-item { flex-direction: column; text-align: center; height: 130px; justify-content: center; padding: 10px; }
+        .file-item:hover { background: var(--hover); border-color: var(--primary); }
+        
+        .file-icon { font-size: 24px; color: var(--text-sec); }
+        .file-list.grid .file-icon { font-size: 40px; margin-bottom: 5px; }
+        .file-info { flex: 1; overflow: hidden; }
+        .file-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .file-meta { font-size: 11px; color: var(--text-sec); margin-top: 2px; }
+        .file-action { padding: 5px; border-radius: 50%; color: var(--text-sec); }
 
-        .file-grid { flex: 1; padding: 30px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 20px; }
-        .file-card { background: rgba(15, 23, 42, 0.6); border: 1px solid var(--border); padding: 20px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; cursor: pointer; transition: 0.3s; clip-path: var(--panel-clip); }
-        .file-card:hover { transform: translateY(-5px); border-color: var(--accent); }
+        /* FAB & NAV */
+        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--primary); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 50; }
+        .bottom-nav { height: 60px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; }
+        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-sec); gap: 2px; padding: 5px 15px; cursor: pointer; }
+        .nav-item.active { color: var(--primary); }
 
-        /* Hybrid Context Menu */
-        #ctx-menu { position: fixed; background: #0f172a; border: 1px solid var(--accent); width: 200px; z-index: 6000; display: none; padding: 10px; border-radius: 8px; box-shadow: 0 0 20px rgba(0,0,0,0.5); }
-        .ctx-item { padding: 10px; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 13px; color: var(--text-secondary); }
-        .ctx-item:hover { background: var(--accent-glow); color: var(--accent); }
+        /* MODALS */
+        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: flex-end; backdrop-filter: blur(2px); }
+        .modal-content { background: var(--surface); width: 100%; max-width: 500px; border-radius: 16px 16px 0 0; padding: 20px; margin: 0 auto; animation: slideUp 0.3s; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .menu-item { padding: 15px 0; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); color: var(--text-main); cursor: pointer; }
+        
+        /* SETTINGS TOGGLES */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; margin-left: auto; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
 
-        #boot-loader { position: fixed; inset: 0; background: #000; z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .hidden { display: none !important; }
-        .screen { position: fixed; inset: 0; background: var(--bg-main); z-index: 1000; display: flex; align-items: center; justify-content: center; }
     </style>
 </head>
-<body class="theme-cyber">
+<body>
 
-    <!-- [1] BOOT SCREEN -->
-    <div id="boot-loader">
-        <div style="color:var(--accent); font-family:'JetBrains Mono'; font-size:24px; letter-spacing:5px;">HYBRID BOOTING...</div>
+    <script>
+        const CONFIG = {
+            // ⚠️ আপনার Web App URL এখানে বসান
+            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwZ10LXbPwx4DAKVn77TX33M9t741Cv1N50UOhq0ct-Fs6COIXhCWOfPa3WPHVnNjQo/exec',
+        };
+    </script>
+
+    <div id="lock-screen" class="screen active">
+        <div style="font-family: 'Google Sans'; font-size: 24px; margin-bottom: 10px;">Security Check</div>
+        <div style="color: var(--text-sec); font-size: 14px;">Enter PIN to continue</div>
+        
+        <div class="pin-display">
+            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
+        </div>
+        
+        <div class="keypad">
+            <div class="key" onclick="Pin.press(1)">1</div><div class="key" onclick="Pin.press(2)">2</div><div class="key" onclick="Pin.press(3)">3</div>
+            <div class="key" onclick="Pin.press(4)">4</div><div class="key" onclick="Pin.press(5)">5</div><div class="key" onclick="Pin.press(6)">6</div>
+            <div class="key" onclick="Pin.press(7)">7</div><div class="key" onclick="Pin.press(8)">8</div><div class="key" onclick="Pin.press(9)">9</div>
+            <div class="key" onclick="Pin.clear()" style="font-size:14px; color:#d93025; background:transparent; border:none;">CLR</div>
+            <div class="key" onclick="Pin.press(0)">0</div>
+            <div class="key" onclick="Pin.back()" style="background:transparent; border:none;"><span class="material-icons-round">backspace</span></div>
+        </div>
     </div>
 
-    <!-- [2] PIN SCREEN -->
-    <div id="pin-screen" class="screen hidden">
-        <div style="text-align:center;">
-            <h2 style="color:var(--accent); margin-bottom:20px;">VAULT SECURITY</h2>
-            <div id="pin-dots" style="display:flex; gap:10px; justify-content:center; margin-bottom:20px;">
-                <div style="width:15px; height:15px; border:2px solid var(--accent); border-radius:50%;"></div>
-                <div style="width:15px; height:15px; border:2px solid var(--accent); border-radius:50%;"></div>
-                <div style="width:15px; height:15px; border:2px solid var(--accent); border-radius:50%;"></div>
-                <div style="width:15px; height:15px; border:2px solid var(--accent); border-radius:50%;"></div>
+    <div id="auth-screen" class="screen">
+        <div class="auth-card">
+            <h2 style="font-family: 'Google Sans'; margin-bottom: 10px;">Welcome Back</h2>
+            <p style="color: var(--text-sec); margin-bottom: 30px;">Sign in to access Drive OS</p>
+            <button class="auth-btn" onclick="Auth.login()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
+                Sign in with Google
+            </button>
+            <div style="margin-top:20px; font-size:12px; color:var(--text-sec)">Secure Connection via Google Drive API</div>
+        </div>
+    </div>
+
+    <div id="app-screen" class="screen">
+        <div class="header">
+            <span class="material-icons-round" style="color:var(--text-sec)">menu</span>
+            <div class="search-box">
+                <span class="material-icons-round" style="font-size: 20px; color:var(--text-sec)">search</span>
+                <input type="text" placeholder="Search Drive..." onkeyup="Drive.search(this.value)">
             </div>
-            <div style="display:grid; grid-template-columns: repeat(3, 70px); gap:10px;">
-                <!-- JS handles pin input -->
-                <button onclick="enterPin('1')" style="height:70px; background:var(--surface); border:1px solid var(--border); color:#fff; cursor:pointer;">1</button>
-                <!-- ... বাকি বাটনগুলো নিচে JS এ জেনারেট হবে ... -->
+            <span class="material-icons-round" onclick="Drive.refresh()" style="cursor:pointer">refresh</span>
+        </div>
+
+        <div class="toolbar">
+            <div class="breadcrumb" id="breadcrumb" onclick="Drive.home()" style="display:flex; align-items:center; gap:5px; font-weight:500;">
+                <span class="material-icons-round" style="font-size:18px;">home</span> Home
+            </div>
+            <span class="material-icons-round" onclick="UI.toggleView()" style="cursor:pointer">grid_view</span>
+        </div>
+
+        <div id="file-list" class="file-list list">
+            <div style="text-align:center; padding:50px; color:var(--text-sec)">Loading files...</div>
+        </div>
+
+        <div class="fab" onclick="document.getElementById('upload-input').click()">
+            <span class="material-icons-round">add</span>
+        </div>
+        <input type="file" id="upload-input" multiple hidden onchange="Upload.start(this.files)">
+
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="Nav.go('home', this)">
+                <span class="material-icons-round">home</span>Home
+            </div>
+            <div class="nav-item" onclick="Nav.go('vault', this)">
+                <span class="material-icons-round">lock</span>Vault
+            </div>
+            <div class="nav-item" onclick="Nav.go('settings', this)">
+                <span class="material-icons-round">settings</span>Settings
             </div>
         </div>
     </div>
 
-    <!-- [3] MAIN APP -->
-    <div id="app-shell" class="app-shell hidden">
-        <aside class="sidebar">
-            <div style="font-size:22px; font-weight:900; color:var(--accent); margin-bottom:40px;"><i class='bx bxs-shield-quarter'></i> VAULT OS</div>
-            
-            <nav>
-                <div class="nav-item active" onclick="Hybrid.switchMode('user', this)">
-                    <i class='bx bxs-user-circle'></i> My Drive <span class="nav-badge">PERSONAL</span>
-                </div>
-                <div class="nav-item" onclick="Hybrid.switchMode('vault', this)">
-                    <i class='bx bxs-cloud-upload'></i> Vault Drive <span class="nav-badge" style="background:var(--accent-glow)">2TB ADMIN</span>
-                </div>
-                <div class="nav-item"><i class='bx bxs-cog'></i> Settings</div>
-            </nav>
-
-            <div style="margin-top:auto; padding:15px; background:rgba(255,255,255,0.02); border:1px solid var(--border); border-radius:10px;">
-                <div style="font-size:11px; margin-bottom:8px;" id="mode-label">USER STORAGE</div>
-                <div style="height:4px; background:rgba(255,255,255,0.1); border-radius:5px; overflow:hidden;">
-                    <div id="storage-bar" style="height:100%; background:var(--accent); width:0%;"></div>
-                </div>
-                <div id="storage-text" style="font-size:10px; color:var(--text-secondary); margin-top:5px;">Loading...</div>
+    <div id="ctx-modal" class="modal" onclick="if(event.target===this)UI.closeModal('ctx-modal')">
+        <div class="modal-content">
+            <h3 id="ctx-title" style="margin:0 0 15px 0; font-size:18px;">Options</h3>
+            <div class="menu-item" onclick="Ops.action('preview')">
+                <span class="material-icons-round">visibility</span> Preview
             </div>
-        </aside>
+            <div class="menu-item" onclick="Ops.action('download')">
+                <span class="material-icons-round">download</span> Download
+            </div>
+            <div class="menu-item" onclick="Ops.action('copy')">
+                <span class="material-icons-round">content_copy</span> Make a Copy
+            </div>
+            <div class="menu-item" onclick="Ops.action('move')">
+                <span class="material-icons-round">drive_file_move</span> Move to Folder...
+            </div>
+            <div class="menu-item" onclick="Ops.action('share')">
+                <span class="material-icons-round">share</span> Share
+            </div>
+            <div class="menu-item" onclick="Ops.action('delete')" style="color:#d93025">
+                <span class="material-icons-round">delete</span> Delete
+            </div>
+        </div>
+    </div>
 
-        <main class="main-view">
-            <header style="height:70px; padding:0 30px; display:flex; align-items:center; justify-content:space-between; border-bottom:1px solid var(--border);">
-                <div style="color:var(--accent); font-size:14px; font-weight:700;" id="current-folder-path">HOME / MY DRIVE</div>
-                <div style="display:flex; gap:15px;">
-                    <button onclick="document.getElementById('up-input').click()" style="padding:10px 20px; background:var(--accent); color:#000; border:none; font-weight:800; border-radius:5px; cursor:pointer;">UPLOAD</button>
-                    <img id="user-pic" src="" style="width:40px; height:40px; border-radius:50%; border:2px solid var(--accent);">
+    <div id="settings-modal" class="modal" onclick="if(event.target===this)UI.closeModal('settings-modal')">
+        <div class="modal-content">
+            <h3 style="margin:0 0 20px 0;">Settings</h3>
+            
+            <div class="menu-item" style="cursor:default">
+                <div style="flex:1">
+                    <div>Dark Mode</div>
+                    <div style="font-size:12px; color:var(--text-sec)">Switch app theme</div>
                 </div>
-            </header>
+                <label class="switch"><input type="checkbox" onchange="UI.toggleTheme(this)"><span class="slider"></span></label>
+            </div>
+            
+            <div class="menu-item" style="cursor:default">
+                <div style="flex:1">
+                    <div>CDN Libraries</div>
+                    <div style="font-size:12px; color:var(--text-sec)">Load external scripts</div>
+                </div>
+                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
+            </div>
 
-            <div id="file-grid" class="file-grid"></div>
-        </main>
+            <div class="menu-item" onclick="Auth.logout()" style="color:#d93025; border-top:1px solid var(--border); margin-top:10px;">
+                <span class="material-icons-round">logout</span> Sign Out
+            </div>
+        </div>
     </div>
 
-    <!-- Context Menu -->
-    <div id="ctx-menu">
-        <div class="ctx-item" onclick="Ops.preview()"><i class='bx bx-show'></i> Preview</div>
-        <div class="ctx-item" onclick="Ops.moveToVault()" id="move-vault-btn"><i class='bx bx-transfer-alt'></i> Move to Vault</div>
-        <div class="ctx-item" onclick="Ops.download()"><i class='bx bx-download'></i> Download</div>
-        <div class="ctx-item" style="color:red;" onclick="Ops.delete()"><i class='bx bx-trash'></i> Delete</div>
-    </div>
-
-    <!-- Logic Engine -->
     <script>
-        const CONFIG = {
-            clientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
-            vaultId: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn", // আপনার ভল্ট ফোল্ডার আইডি
-            proxies: {
-                read: "https://script.google.com/macros/s/AKfycby2hqAq0JePMbnjEbwwcPBFjS14lvS3pM2Z1PPgY4OraTcpvTmZFPKQr9CQ4vba4Xk7/exec",
-                full: "https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec"
-            }
+        const STATE = { 
+            folderId: 'root', 
+            view: 'list', 
+            files: [], 
+            selected: null, 
+            isVault: false 
         };
 
-        let STATE = {
-            token: localStorage.getItem('v_token'),
-            mode: 'user', // 'user' or 'vault'
-            selectedFile: null,
-            pinBuffer: ""
-        };
-
-        // --- [1] HYBRID ENGINE ---
-        const Hybrid = {
-            switchMode(mode, el) {
-                STATE.mode = mode;
-                document.querySelectorAll('.nav-item').forEach(i => i.classList.remove('active'));
-                el.classList.add('active');
-                document.getElementById('mode-label').innerText = mode.toUpperCase() + " STORAGE";
-                Drive.load();
-            }
-        };
-
-        // --- [2] DRIVE LOGIC ---
-        const Drive = {
-            async load(folderId = (STATE.mode === 'user' ? 'root' : CONFIG.vaultId)) {
-                const url = `https://www.googleapis.com/drive/v3/files?q='${folderId}' in parents and trashed=false&fields=files(id,name,mimeType,size,thumbnailLink,webViewLink)&key=${CONFIG.clientId}`;
-                
-                try {
-                    const res = await fetch(url, { headers: { Authorization: `Bearer ${STATE.token}` } });
-                    const data = await res.json();
-                    this.render(data.files);
-                    this.updateStorage();
-                } catch (e) {
-                    console.log("Auth Expired");
-                    Auth.login();
+        // --- AUTH & PIN SYSTEM ---
+        const Pin = {
+            input: '', saved: localStorage.getItem('drive_pin') || '1234',
+            press: (n) => {
+                if(Pin.input.length < 4) {
+                    Pin.input += n; Pin.update();
+                    if(Pin.input.length === 4) setTimeout(Pin.check, 200);
                 }
             },
-
-            render(files) {
-                const grid = document.getElementById('file-grid');
-                grid.innerHTML = "";
-                files.forEach(f => {
-                    const card = document.createElement('div');
-                    card.className = 'file-card';
-                    card.innerHTML = `
-                        <div style="font-size:40px; margin-bottom:10px;">${f.mimeType.includes('folder') ? '📁' : '📄'}</div>
-                        <div style="font-size:12px; font-weight:600; text-align:center;">${f.name}</div>
-                    `;
-                    card.oncontextmenu = (e) => {
-                        e.preventDefault();
-                        Ops.showMenu(e, f);
-                    };
-                    card.onclick = () => {
-                        if(f.mimeType.includes('folder')) this.load(f.id);
-                        else Ops.previewFile(f);
-                    };
-                    grid.appendChild(card);
+            clear: () => { Pin.input = ''; Pin.update(); },
+            back: () => { Pin.input = Pin.input.slice(0,-1); Pin.update(); },
+            update: () => {
+                document.querySelectorAll('.pin-dot').forEach((d,i) => {
+                    if(i < Pin.input.length) d.classList.add('filled');
+                    else d.classList.remove('filled');
                 });
             },
-
-            async updateStorage() {
-                const res = await fetch(`https://www.googleapis.com/drive/v3/about?fields=storageQuota`, {
-                    headers: { Authorization: `Bearer ${STATE.token}` }
-                });
-                const { storageQuota } = await res.json();
-                const pct = (storageQuota.usage / storageQuota.limit) * 100;
-                document.getElementById('storage-bar').style.width = pct + '%';
-                document.getElementById('storage-text').innerText = (storageQuota.usage / 1e9).toFixed(2) + " GB / 2 TB";
-            }
-        };
-
-        // --- [3] CROSS-DRIVE OPERATIONS ---
-        const Ops = {
-            showMenu(e, file) {
-                STATE.selectedFile = file;
-                const menu = document.getElementById('ctx-menu');
-                menu.style.display = 'block';
-                menu.style.left = e.pageX + 'px';
-                menu.style.top = e.pageY + 'px';
-                
-                // ভল্টে থাকলে 'Move to Vault' হাইড করো
-                document.getElementById('move-vault-btn').style.display = STATE.mode === 'user' ? 'flex' : 'none';
-            },
-
-            async moveToVault() {
-                alert("Transferring to Admin Vault...");
-                // আপনার Full Access Proxy ব্যবহার করে ফাইল কপি হবে
-                const proxyUrl = `${CONFIG.proxies.full}?action=copy&id=${STATE.selectedFile.id}&target=${CONFIG.vaultId}&token=${STATE.token}`;
-                const res = await fetch(proxyUrl);
-                const data = await res.json();
-                if(data.success) {
-                    alert("Moved to Vault successfully!");
-                    Drive.load();
-                }
-            },
-
-            previewFile(f) {
-                window.open(f.webViewLink, '_blank');
-            }
-        };
-
-        // --- [4] AUTH & BOOT ---
-        const Auth = {
-            login() {
-                const url = `https://accounts.google.com/o/oauth2/v2/auth?client_id=${CONFIG.clientId}&redirect_uri=${window.location.href.split('#')[0]}&response_type=token&scope=https://www.googleapis.com/auth/drive`;
-                window.location.href = url;
-            },
-            handleHash() {
-                const hash = window.location.hash.substring(1);
-                const params = new URLSearchParams(hash);
-                const token = params.get('access_token');
-                if (token) {
-                    localStorage.setItem('v_token', token);
-                    STATE.token = token;
-                    window.location.hash = "";
-                    this.boot();
-                }
-            },
-            boot() {
-                setTimeout(() => {
-                    document.getElementById('boot-loader').classList.add('hidden');
-                    if(STATE.token) {
-                        document.getElementById('app-shell').classList.remove('hidden');
-                        Drive.load();
+            check: () => {
+                if(Pin.input === Pin.saved) {
+                    document.getElementById('lock-screen').classList.remove('active');
+                    // Check if logged in locally (simulated)
+                    if(localStorage.getItem('is_logged_in')) {
+                        document.getElementById('app-screen').classList.add('active');
+                        Drive.load('root');
                     } else {
-                        Auth.login();
+                        document.getElementById('auth-screen').classList.add('active');
                     }
-                }, 2000);
+                } else {
+                    alert('Wrong PIN (Default: 1234)'); Pin.clear();
+                }
             }
         };
 
-        window.onload = () => {
-            if (window.location.hash) Auth.handleHash();
-            else Auth.boot();
+        const Auth = {
+            login: () => {
+                // Simulate Google Sign In visual flow
+                localStorage.setItem('is_logged_in', 'true');
+                document.getElementById('auth-screen').classList.remove('active');
+                document.getElementById('app-screen').classList.add('active');
+                Drive.load('root');
+            },
+            logout: () => {
+                localStorage.removeItem('is_logged_in');
+                location.reload();
+            }
         };
 
-        // পিন এন্ট্রি লজিক (সিম্পল)
-        function enterPin(n) {
-            STATE.pinBuffer += n;
-            if(STATE.pinBuffer.length === 4) {
-                // পিন ভেরিফাই করে অ্যাপ ওপেন
-                document.getElementById('pin-screen').classList.add('hidden');
-                document.getElementById('app-shell').classList.remove('hidden');
+        // --- API & DRIVE ---
+        const API = {
+            call: async (action, params = {}, body = null) => {
+                let url = `${CONFIG.SCRIPT_URL}?action=${action}`;
+                for(let k in params) url += `&${k}=${encodeURIComponent(params[k])}`;
+                try {
+                    const res = await fetch(url, body ? {method:'POST', body:JSON.stringify(body)} : {method:'GET'});
+                    return await res.json();
+                } catch(e) { return null; }
             }
-        }
+        };
+
+        const Drive = {
+            load: async (id = 'root', name = 'Home') => {
+                STATE.folderId = id; STATE.isVault = (id === 'vault');
+                document.getElementById('breadcrumb').innerHTML = `<span class="material-icons-round" style="font-size:18px;">${STATE.isVault?'lock':'home'}</span> ${name}`;
+                document.getElementById('file-list').innerHTML = '<div style="text-align:center; padding:50px;">Loading...</div>';
+
+                const action = STATE.isVault ? 'vault_list' : 'files_list';
+                const data = await API.call(action, STATE.isVault ? {} : {folderId: id});
+                
+                STATE.files = data?.files || [];
+                UI.render();
+            },
+            refresh: () => Drive.load(STATE.folderId),
+            search: (q) => {
+                const filtered = STATE.files.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
+                UI.render(filtered);
+            }
+        };
+
+        // --- UI & OPERATIONS ---
+        const UI = {
+            render: (files = STATE.files) => {
+                const con = document.getElementById('file-list');
+                con.innerHTML = '';
+                con.className = `file-list ${STATE.view}`;
+                
+                if(!files.length) { con.innerHTML = '<div style="text-align:center; padding:50px;">No files</div>'; return; }
+
+                files.forEach(f => {
+                    const el = document.createElement('div');
+                    el.className = 'file-item';
+                    
+                    let icon = 'insert_drive_file', col = '#5f6368';
+                    if(f.isFolder) { icon='folder'; col='#fbbc04'; }
+                    else if(f.mimeType.includes('image')) { icon='image'; col='#34a853'; }
+                    
+                    el.innerHTML = `
+                        <span class="material-icons-round file-icon" style="color:${col}">${icon}</span>
+                        <div class="file-info">
+                            <div class="file-name">${f.name}</div>
+                            <div class="file-meta">${f.isFolder ? 'Folder' : f.sizeFormatted}</div>
+                        </div>
+                        <div class="file-action" onclick="event.stopPropagation(); Ops.menu('${f.id}')">more_vert</div>
+                    `;
+                    el.onclick = () => f.isFolder ? Drive.load(f.id, f.name) : Ops.action('preview', f);
+                    con.appendChild(el);
+                });
+            },
+            toggleView: () => { STATE.view = STATE.view === 'list' ? 'grid' : 'list'; UI.render(); },
+            toggleTheme: (el) => document.body.classList.toggle('dark-theme', el.checked),
+            closeModal: (id) => document.getElementById(id).style.display = 'none'
+        };
+
+        const Ops = {
+            menu: (id) => {
+                STATE.selected = STATE.files.find(f => f.id === id);
+                document.getElementById('ctx-title').innerText = STATE.selected.name;
+                document.getElementById('ctx-modal').style.display = 'flex';
+            },
+            action: async (type, file = STATE.selected) => {
+                UI.closeModal('ctx-modal');
+                if(!file) return;
+
+                if(type === 'preview') window.open(file.webViewLink, '_blank');
+                if(type === 'download') window.open(file.webContentLink, '_blank');
+                
+                if(type === 'delete') {
+                    if(confirm('Delete file?')) {
+                        await API.call('file_delete', {fileId: file.id});
+                        Drive.refresh();
+                    }
+                }
+                if(type === 'copy') {
+                    await API.call('file_copy', {fileId: file.id});
+                    alert('File copied'); Drive.refresh();
+                }
+                if(type === 'move') {
+                    const target = prompt('Enter Target Folder ID:');
+                    if(target) {
+                        await API.call('file_move', {fileId: file.id, targetId: target});
+                        Drive.refresh();
+                    }
+                }
+                if(type === 'share') {
+                    const email = prompt('Enter email to share:');
+                    if(email) await API.call('file_share', {fileId: file.id, email: email});
+                }
+            }
+        };
+
+        const Nav = {
+            go: (t, el) => {
+                document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
+                el.classList.add('active');
+                if(t==='home') Drive.load('root');
+                if(t==='vault') Drive.load('vault');
+                if(t==='settings') document.getElementById('settings-modal').style.display = 'flex';
+            }
+        };
+
+        // --- UPLOAD ---
+        const Upload = {
+            start: async (files) => {
+                alert('Upload started in background...');
+                const f = files[0];
+                const init = await API.call('upload_initiate', {
+                    fileName: f.name, mimeType: f.type, fileSize: f.size, 
+                    parentId: STATE.isVault ? '' : STATE.folderId
+                });
+                
+                if(init && init.sessionId) {
+                    await API.call('upload_chunk', {
+                        sessionId: init.sessionId, offset: 0, fileSize: f.size
+                    }, {contents: Array.from(new Uint8Array(await f.arrayBuffer()))});
+                    alert('Upload Complete!'); Drive.refresh();
+                }
+            }
+        };
+
+        window.onload = () => { if(!localStorage.getItem('drive_pin')) alert('Default PIN: 1234'); };
     </script>
 </body>
 </html>
