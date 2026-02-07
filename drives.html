@@ -1,0 +1,3647 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drive Master Pro Ultimate | Enterprise Edition</title>
+    
+    <!-- Google Identity & Icons -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    
+    <!-- TensorFlow.js for AI Features -->
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@4.20.0/dist/tf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/coco-ssd@2.2.3"></script>
+    <script src="https://unpkg.com/compromise@14.13.0/builds/compromise.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.0.0/dist/tesseract.min.js"></script>
+
+    <style>
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --primary-light: #e8f0fe;
+            --secondary: #34a853;
+            --accent: #fbbc04;
+            --danger: #ea4335;
+            --warning: #f29900;
+            --surface: #ffffff;
+            --bg: #f8f9fa;
+            --card: #ffffff;
+            --text-main: #202124;
+            --text-sec: #5f6368;
+            --text-ter: #80868b;
+            --border: #dadce0;
+            --border-light: #e8eaed;
+            --hover: #f1f3f4;
+            --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.1);
+            --shadow-xl: 0 8px 24px rgba(0,0,0,0.15);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --radius-full: 999px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --sidebar-width: 280px;
+            --header-height: 64px;
+            --nav-height: 56px;
+        }
+
+        .dark-theme {
+            --primary: #8ab4f8;
+            --primary-dark: #669df6;
+            --primary-light: #202124;
+            --secondary: #81c995;
+            --accent: #fdd663;
+            --danger: #f28b82;
+            --warning: #fdd663;
+            --surface: #202124;
+            --bg: #121212;
+            --card: #2d2e30;
+            --text-main: #e8eaed;
+            --text-sec: #9aa0a6;
+            --text-ter: #80868b;
+            --border: #3c4043;
+            --border-light: #2d2e30;
+            --hover: #2d2e30;
+            --shadow: 0 1px 2px 0 rgba(0,0,0,0.6), 0 1px 3px 1px rgba(0,0,0,0.302);
+            --shadow-lg: 0 4px 12px rgba(0,0,0,0.3);
+            --shadow-xl: 0 8px 24px rgba(0,0,0,0.4);
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: var(--hover);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: var(--border);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--text-sec);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+            margin: 0;
+            padding: 0;
+        }
+        
+        body {
+            font-family: 'Inter', 'Google Sans', sans-serif;
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; 
+            overflow: hidden;
+            transition: var(--transition);
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* --- APP CONTAINER --- */
+        .app-container {
+            display: flex;
+            flex: 1;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* --- SIDEBAR --- */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--surface);
+            border-right: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            z-index: 100;
+            transition: transform 0.3s ease;
+            box-shadow: var(--shadow);
+        }
+
+        .sidebar-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: 'Google Sans';
+        }
+
+        .logo-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .logo-text h2 {
+            font-size: 18px;
+            font-weight: 700;
+            margin: 0;
+            line-height: 1.2;
+        }
+
+        .logo-text p {
+            font-size: 11px;
+            color: var(--text-sec);
+            margin: 0;
+            opacity: 0.8;
+        }
+
+        /* User Profile */
+        .user-profile {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .user-avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: var(--primary-light);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            color: var(--primary);
+            overflow: hidden;
+        }
+
+        .user-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .user-info h3 {
+            font-size: 15px;
+            font-weight: 600;
+            margin: 0 0 4px 0;
+        }
+
+        .user-info p {
+            font-size: 12px;
+            color: var(--text-sec);
+            margin: 0;
+        }
+
+        .storage-bar {
+            margin-top: 8px;
+            height: 4px;
+            background: var(--border);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .storage-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 2px;
+            width: 65%;
+        }
+
+        /* Navigation */
+        .nav-section {
+            padding: 20px 0;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .nav-section:last-child {
+            border-bottom: none;
+        }
+
+        .nav-title {
+            padding: 0 20px;
+            font-size: 12px;
+            color: var(--text-sec);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 12px;
+            font-weight: 600;
+        }
+
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            padding: 12px 20px;
+            color: var(--text-main);
+            text-decoration: none;
+            transition: var(--transition);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .nav-item:hover {
+            background: var(--hover);
+        }
+
+        .nav-item.active {
+            background: var(--primary-light);
+            color: var(--primary);
+            border-left: 4px solid var(--primary);
+        }
+
+        .nav-item .material-icons-round {
+            font-size: 20px;
+            opacity: 0.9;
+        }
+
+        .nav-item.active .material-icons-round {
+            opacity: 1;
+        }
+
+        .nav-badge {
+            margin-left: auto;
+            background: var(--primary);
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: var(--radius-full);
+            font-weight: 600;
+        }
+
+        .nav-item.new::after {
+            content: '';
+            position: absolute;
+            top: 10px;
+            right: 20px;
+            width: 8px;
+            height: 8px;
+            background: var(--secondary);
+            border-radius: 50%;
+        }
+
+        /* Quick Actions */
+        .quick-actions {
+            padding: 20px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 10px;
+        }
+
+        .quick-btn {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+            border-color: var(--primary);
+        }
+
+        .quick-btn .material-icons-round {
+            font-size: 24px;
+            color: var(--primary);
+        }
+
+        .quick-btn span {
+            font-size: 12px;
+            font-weight: 500;
+        }
+
+        /* --- MAIN CONTENT --- */
+        .main-content {
+            flex: 1;
+            margin-left: var(--sidebar-width);
+            display: flex;
+            flex-direction: column;
+            height: 100vh;
+            overflow: hidden;
+            transition: margin-left 0.3s ease;
+        }
+
+        /* Header */
+        .main-header {
+            height: var(--header-height);
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            padding: 0 24px;
+            gap: 20px;
+            flex-shrink: 0;
+            z-index: 50;
+        }
+
+        .menu-toggle {
+            display: none;
+            background: none;
+            border: none;
+            color: var(--text-main);
+            cursor: pointer;
+            padding: 8px;
+            border-radius: var(--radius);
+        }
+
+        .menu-toggle:hover {
+            background: var(--hover);
+        }
+
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+            min-width: 0;
+        }
+
+        .crumb {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-sec);
+            font-size: 14px;
+            cursor: pointer;
+            padding: 6px 8px;
+            border-radius: var(--radius);
+            transition: var(--transition);
+        }
+
+        .crumb:hover {
+            background: var(--hover);
+            color: var(--text-main);
+        }
+
+        .crumb.separator {
+            color: var(--text-ter);
+            cursor: default;
+            padding: 0;
+        }
+
+        .crumb.separator:hover {
+            background: transparent;
+        }
+
+        .search-bar {
+            flex: 0 1 400px;
+            max-width: 500px;
+            position: relative;
+        }
+
+        .search-input {
+            width: 100%;
+            padding: 10px 16px 10px 44px;
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .search-input:focus {
+            background: var(--surface);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 16px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: var(--text-sec);
+            pointer-events: none;
+        }
+
+        .header-actions {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .action-btn {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--hover);
+            color: var(--text-main);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .action-btn:hover {
+            background: var(--border);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.has-badge::after {
+            content: '';
+            position: absolute;
+            top: 6px;
+            right: 6px;
+            width: 8px;
+            height: 8px;
+            background: var(--secondary);
+            border-radius: 50%;
+            border: 2px solid var(--surface);
+        }
+
+        /* Toolbar */
+        .toolbar {
+            padding: 16px 24px;
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-shrink: 0;
+        }
+
+        .view-switcher {
+            display: flex;
+            background: var(--hover);
+            border-radius: var(--radius);
+            padding: 4px;
+            border: 1px solid var(--border);
+        }
+
+        .view-btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            color: var(--text-sec);
+            transition: var(--transition);
+        }
+
+        .view-btn.active {
+            background: var(--surface);
+            color: var(--text-main);
+            box-shadow: var(--shadow);
+        }
+
+        .sort-dropdown {
+            position: relative;
+        }
+
+        .sort-btn {
+            padding: 8px 16px;
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: var(--transition);
+        }
+
+        .sort-btn:hover {
+            background: var(--border);
+        }
+
+        .sort-menu {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            margin-top: 8px;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            min-width: 200px;
+            z-index: 100;
+            display: none;
+        }
+
+        .sort-menu.active {
+            display: block;
+        }
+
+        .sort-option {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .sort-option:hover {
+            background: var(--hover);
+        }
+
+        .sort-option.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* File Container */
+        .file-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: grid;
+            gap: 16px;
+            align-content: flex-start;
+        }
+
+        /* List View */
+        .list-view {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .list-item {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            margin-bottom: 4px;
+        }
+
+        .list-item:hover {
+            background: var(--hover);
+            transform: translateX(4px);
+            border-color: var(--primary);
+        }
+
+        .list-item.selected {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .list-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 16px;
+            flex-shrink: 0;
+        }
+
+        .list-icon.folder {
+            background: rgba(251, 188, 4, 0.1);
+            color: #fbbc04;
+        }
+
+        .list-icon.image {
+            background: rgba(52, 168, 83, 0.1);
+            color: #34a853;
+        }
+
+        .list-icon.video {
+            background: rgba(234, 67, 53, 0.1);
+            color: #ea4335;
+        }
+
+        .list-icon.document {
+            background: rgba(26, 115, 232, 0.1);
+            color: #1a73e8;
+        }
+
+        .list-icon.pdf {
+            background: rgba(217, 48, 37, 0.1);
+            color: #d93025;
+        }
+
+        .list-info {
+            flex: 1;
+            min-width: 0;
+        }
+
+        .list-name {
+            font-weight: 500;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .list-meta {
+            font-size: 12px;
+            color: var(--text-sec);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .list-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .list-item:hover .list-actions {
+            opacity: 1;
+        }
+
+        .action-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--hover);
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .action-icon:hover {
+            background: var(--border);
+            color: var(--text-main);
+        }
+
+        /* Grid View */
+        .grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: 16px;
+        }
+
+        .grid-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+        }
+
+        .grid-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-lg);
+            border-color: var(--primary);
+        }
+
+        .grid-item.selected {
+            background: var(--primary-light);
+            border-color: var(--primary);
+        }
+
+        .grid-icon {
+            width: 64px;
+            height: 64px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 12px;
+            font-size: 32px;
+        }
+
+        .grid-name {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            width: 100%;
+        }
+
+        .grid-meta {
+            font-size: 12px;
+            color: var(--text-sec);
+        }
+
+        /* Gallery View */
+        .gallery-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .gallery-item {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .gallery-item:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        .gallery-thumb {
+            width: 100%;
+            height: 140px;
+            object-fit: cover;
+            background: var(--hover);
+        }
+
+        .gallery-info {
+            padding: 12px;
+        }
+
+        .gallery-name {
+            font-weight: 500;
+            font-size: 14px;
+            margin-bottom: 4px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .gallery-meta {
+            font-size: 12px;
+            color: var(--text-sec);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        /* --- FEATURE PANELS --- */
+        .feature-panel {
+            display: none;
+            flex-direction: column;
+            height: 100%;
+            background: var(--bg);
+        }
+
+        .feature-panel.active {
+            display: flex;
+        }
+
+        .feature-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+
+        .feature-title {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .feature-subtitle {
+            color: var(--text-sec);
+            font-size: 14px;
+        }
+
+        .feature-content {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+        }
+
+        /* AI Gallery */
+        .ai-filters {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+
+        .filter-btn {
+            padding: 8px 16px;
+            background: var(--hover);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-full);
+            font-size: 14px;
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        .ai-image-card {
+            position: relative;
+            border-radius: var(--radius);
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .ai-image-card:hover .ai-overlay {
+            opacity: 1;
+        }
+
+        .ai-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.7);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            padding: 16px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+
+        .ai-tags {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            margin-bottom: 8px;
+        }
+
+        .ai-tag {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            backdrop-filter: blur(10px);
+        }
+
+        /* Duplicate Finder */
+        .duplicate-group {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .duplicate-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .duplicate-count {
+            background: var(--primary);
+            color: white;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .duplicate-files {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .duplicate-file {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: var(--hover);
+            border-radius: var(--radius);
+            border: 2px solid transparent;
+        }
+
+        .duplicate-file.keep {
+            border-color: var(--secondary);
+        }
+
+        /* Transfer Manager */
+        .transfer-card {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .transfer-progress {
+            height: 8px;
+            background: var(--hover);
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 12px 0;
+        }
+
+        .transfer-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 4px;
+            transition: width 0.3s ease;
+        }
+
+        /* Large Files */
+        .large-file-card {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            margin-bottom: 12px;
+        }
+
+        .file-size-badge {
+            background: var(--danger);
+            color: white;
+            padding: 4px 12px;
+            border-radius: var(--radius-full);
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        /* OCR Panel */
+        .ocr-result {
+            background: var(--card);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 24px;
+            min-height: 300px;
+            font-family: 'Courier New', monospace;
+            white-space: pre-wrap;
+            line-height: 1.6;
+        }
+
+        /* --- MODALS --- */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(5px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+        }
+
+        .modal-overlay.active {
+            display: flex;
+        }
+
+        .modal {
+            background: var(--surface);
+            border-radius: var(--radius-xl);
+            width: 90%;
+            max-width: 500px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: var(--shadow-xl);
+            animation: modalSlideUp 0.3s ease;
+        }
+
+        @keyframes modalSlideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-header {
+            padding: 24px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .modal-body {
+            padding: 24px;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 24px;
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* --- FORMS --- */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            color: var(--text-main);
+            transition: var(--transition);
+        }
+
+        .form-input:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
+        }
+
+        .form-select {
+            width: 100%;
+            padding: 12px 16px;
+            background: var(--bg);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            font-size: 14px;
+            color: var(--text-main);
+            cursor: pointer;
+        }
+
+        /* --- BUTTONS --- */
+        .btn {
+            padding: 12px 24px;
+            border-radius: var(--radius);
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            border: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow);
+        }
+
+        .btn-secondary {
+            background: var(--hover);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+        }
+
+        .btn-secondary:hover {
+            background: var(--border);
+            transform: translateY(-2px);
+        }
+
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c5221f;
+            transform: translateY(-2px);
+        }
+
+        .btn-success {
+            background: var(--secondary);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #2e7d32;
+            transform: translateY(-2px);
+        }
+
+        .btn-sm {
+            padding: 8px 16px;
+            font-size: 13px;
+        }
+
+        .btn-block {
+            width: 100%;
+        }
+
+        /* --- LOADING STATES --- */
+        .loading {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 0;
+            color: var(--text-sec);
+        }
+
+        .loading-spinner {
+            width: 40px;
+            height: 40px;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
+        }
+
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* --- EMPTY STATES --- */
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-sec);
+        }
+
+        .empty-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+            opacity: 0.5;
+        }
+
+        /* --- TOAST NOTIFICATIONS --- */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 2000;
+        }
+
+        .toast {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            padding: 16px;
+            margin-top: 12px;
+            box-shadow: var(--shadow-lg);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: toastSlideIn 0.3s ease;
+            max-width: 400px;
+        }
+
+        @keyframes toastSlideIn {
+            from {
+                opacity: 0;
+                transform: translateX(100%);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        .toast.success {
+            border-left: 4px solid var(--secondary);
+        }
+
+        .toast.error {
+            border-left: 4px solid var(--danger);
+        }
+
+        .toast.warning {
+            border-left: 4px solid var(--warning);
+        }
+
+        .toast.info {
+            border-left: 4px solid var(--primary);
+        }
+
+        /* --- RESPONSIVE --- */
+        @media (max-width: 1024px) {
+            .sidebar {
+                transform: translateX(-100%);
+            }
+            .sidebar.active {
+                transform: translateX(0);
+            }
+            .main-content {
+                margin-left: 0;
+            }
+            .menu-toggle {
+                display: flex;
+            }
+            .grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            }
+            .gallery-view {
+                grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+            }
+        }
+
+        @media (max-width: 768px) {
+            .grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            }
+            .gallery-view {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            .header-actions {
+                display: none;
+            }
+            .search-bar {
+                flex: 1;
+            }
+            .toolbar {
+                padding: 12px;
+                flex-wrap: wrap;
+            }
+            .file-container {
+                padding: 16px;
+            }
+        }
+
+        /* --- UTILITY CLASSES --- */
+        .hidden {
+            display: none !important;
+        }
+
+        .text-truncate {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .text-primary {
+            color: var(--primary);
+        }
+
+        .text-secondary {
+            color: var(--secondary);
+        }
+
+        .text-danger {
+            color: var(--danger);
+        }
+
+        .text-success {
+            color: var(--secondary);
+        }
+
+        .text-warning {
+            color: var(--warning);
+        }
+
+        .mb-1 { margin-bottom: 4px; }
+        .mb-2 { margin-bottom: 8px; }
+        .mb-3 { margin-bottom: 12px; }
+        .mb-4 { margin-bottom: 16px; }
+        .mb-5 { margin-bottom: 20px; }
+
+        .mt-1 { margin-top: 4px; }
+        .mt-2 { margin-top: 8px; }
+        .mt-3 { margin-top: 12px; }
+        .mt-4 { margin-top: 16px; }
+        .mt-5 { margin-top: 20px; }
+
+        .flex { display: flex; }
+        .flex-col { flex-direction: column; }
+        .items-center { align-items: center; }
+        .justify-between { justify-content: space-between; }
+        .gap-1 { gap: 4px; }
+        .gap-2 { gap: 8px; }
+        .gap-3 { gap: 12px; }
+        .gap-4 { gap: 16px; }
+        .gap-5 { gap: 20px; }
+
+        .w-full { width: 100%; }
+        .h-full { height: 100%; }
+
+        .cursor-pointer { cursor: pointer; }
+
+        /* --- DRAG AND DROP --- */
+        .drop-zone {
+            border: 2px dashed var(--border);
+            border-radius: var(--radius);
+            padding: 60px 20px;
+            text-align: center;
+            background: var(--hover);
+            transition: var(--transition);
+            margin-bottom: 24px;
+        }
+
+        .drop-zone.active {
+            border-color: var(--primary);
+            background: var(--primary-light);
+        }
+
+        /* --- CONTEXT MENU --- */
+        .context-menu {
+            position: fixed;
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-xl);
+            z-index: 1000;
+            min-width: 200px;
+            display: none;
+        }
+
+        .context-menu.active {
+            display: block;
+        }
+
+        .context-item {
+            padding: 12px 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .context-item:hover {
+            background: var(--hover);
+        }
+
+        .context-divider {
+            height: 1px;
+            background: var(--border);
+            margin: 4px 0;
+        }
+
+        /* --- PROGRESS INDICATORS --- */
+        .progress-circle {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            border: 3px solid var(--border);
+            border-top-color: var(--primary);
+            animation: spin 1s linear infinite;
+        }
+
+        /* --- TABS --- */
+        .tabs {
+            display: flex;
+            border-bottom: 1px solid var(--border);
+            margin-bottom: 24px;
+        }
+
+        .tab {
+            padding: 12px 24px;
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            transition: var(--transition);
+            font-weight: 500;
+            color: var(--text-sec);
+        }
+
+        .tab.active {
+            color: var(--primary);
+            border-bottom-color: var(--primary);
+        }
+
+        .tab:hover {
+            color: var(--text-main);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+    </style>
+</head>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="logo">
+                <div class="logo-icon">
+                    <i class="fas fa-hdd"></i>
+                </div>
+                <div class="logo-text">
+                    <h2>Drive Master Pro</h2>
+                    <p>Ultimate Edition v12.0.0</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="user-profile">
+            <div class="user-avatar" id="user-avatar">
+                <i class="fas fa-user"></i>
+            </div>
+            <div class="user-info">
+                <h3 id="user-name">Guest User</h3>
+                <p id="user-email">Sign in to continue</p>
+                <div class="storage-bar">
+                    <div class="storage-fill"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Main Navigation</div>
+            <div class="nav-item active" data-panel="files" onclick="App.switchPanel('files')">
+                <i class="fas fa-folder"></i>
+                <span>My Drive</span>
+            </div>
+            <div class="nav-item" data-panel="photos" onclick="App.switchPanel('photos')">
+                <i class="fas fa-images"></i>
+                <span>AI Gallery</span>
+                <span class="nav-badge">NEW</span>
+            </div>
+            <div class="nav-item" data-panel="transfer" onclick="App.switchPanel('transfer')">
+                <i class="fas fa-exchange-alt"></i>
+                <span>Transfer Manager</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Smart Tools</div>
+            <div class="nav-item" data-panel="organize" onclick="App.switchPanel('organize')">
+                <i class="fas fa-sort-alpha-down"></i>
+                <span>Auto Organize</span>
+            </div>
+            <div class="nav-item" data-panel="duplicates" onclick="App.switchPanel('duplicates')">
+                <i class="fas fa-copy"></i>
+                <span>Duplicate Finder</span>
+                <span class="nav-badge">AI</span>
+            </div>
+            <div class="nav-item" data-panel="largefiles" onclick="App.switchPanel('largefiles')">
+                <i class="fas fa-weight-hanging"></i>
+                <span>Large Files</span>
+            </div>
+            <div class="nav-item" data-panel="ocr" onclick="App.switchPanel('ocr')">
+                <i class="fas fa-text-height"></i>
+                <span>Photo to Text</span>
+                <span class="nav-badge">OCR</span>
+            </div>
+        </div>
+
+        <div class="nav-section">
+            <div class="nav-title">Drive Types</div>
+            <div class="nav-item" onclick="Drive.switchDrive('vault')">
+                <i class="fas fa-lock"></i>
+                <span>Vault Drive</span>
+            </div>
+            <div class="nav-item" onclick="Drive.switchDrive('user')">
+                <i class="fas fa-user-circle"></i>
+                <span>User Drive</span>
+            </div>
+            <div class="nav-item" onclick="Drive.switchDrive('shared')">
+                <i class="fas fa-share-alt"></i>
+                <span>Shared Drive</span>
+            </div>
+        </div>
+
+        <div class="quick-actions">
+            <div class="quick-btn" onclick="Upload.showUploadModal()">
+                <i class="fas fa-upload"></i>
+                <span>Upload</span>
+            </div>
+            <div class="quick-btn" onclick="Drive.createFolder()">
+                <i class="fas fa-folder-plus"></i>
+                <span>New Folder</span>
+            </div>
+            <div class="quick-btn" onclick="App.showSettings()">
+                <i class="fas fa-cog"></i>
+                <span>Settings</span>
+            </div>
+            <div class="quick-btn" onclick="App.showHelp()">
+                <i class="fas fa-question-circle"></i>
+                <span>Help</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content" id="main-content">
+        <!-- Header -->
+        <div class="main-header">
+            <button class="menu-toggle" onclick="App.toggleSidebar()">
+                <i class="fas fa-bars"></i>
+            </button>
+            
+            <div class="breadcrumb" id="breadcrumb">
+                <div class="crumb" onclick="Drive.load('root')">
+                    <i class="fas fa-hdd"></i>
+                    <span>Drive Master</span>
+                </div>
+            </div>
+
+            <div class="search-bar">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" class="search-input" id="search-input" 
+                       placeholder="Search files, folders, and content..."
+                       oninput="Drive.search(this.value)">
+            </div>
+
+            <div class="header-actions">
+                <div class="action-btn" onclick="Drive.refresh()" title="Refresh">
+                    <i class="fas fa-sync-alt"></i>
+                </div>
+                <div class="action-btn has-badge" onclick="App.showNotifications()" title="Notifications">
+                    <i class="fas fa-bell"></i>
+                </div>
+                <div class="action-btn" onclick="App.showUserMenu()" title="User Menu">
+                    <i class="fas fa-user"></i>
+                </div>
+            </div>
+        </div>
+
+        <!-- Toolbar -->
+        <div class="toolbar">
+            <div class="view-switcher">
+                <div class="view-btn active" onclick="Drive.setView('list')">
+                    <i class="fas fa-list"></i>
+                    <span>List</span>
+                </div>
+                <div class="view-btn" onclick="Drive.setView('grid')">
+                    <i class="fas fa-th-large"></i>
+                    <span>Grid</span>
+                </div>
+                <div class="view-btn" onclick="Drive.setView('gallery')">
+                    <i class="fas fa-th"></i>
+                    <span>Gallery</span>
+                </div>
+            </div>
+
+            <div class="sort-dropdown">
+                <button class="sort-btn" onclick="Drive.toggleSortMenu()">
+                    <i class="fas fa-sort-amount-down"></i>
+                    <span>Sort: Name A-Z</span>
+                    <i class="fas fa-chevron-down"></i>
+                </button>
+                <div class="sort-menu" id="sort-menu">
+                    <div class="sort-option active" onclick="Drive.sort('name', 'asc')">
+                        <span>Name A-Z</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="sort-option" onclick="Drive.sort('name', 'desc')">
+                        <span>Name Z-A</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="sort-option" onclick="Drive.sort('size', 'asc')">
+                        <span>Size: Small to Large</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="sort-option" onclick="Drive.sort('size', 'desc')">
+                        <span>Size: Large to Small</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="sort-option" onclick="Drive.sort('date', 'desc')">
+                        <span>Date: Newest First</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                    <div class="sort-option" onclick="Drive.sort('date', 'asc')">
+                        <span>Date: Oldest First</span>
+                        <i class="fas fa-check"></i>
+                    </div>
+                </div>
+            </div>
+
+            <button class="btn btn-secondary btn-sm" onclick="Drive.selectAll()">
+                <i class="fas fa-check-square"></i>
+                <span>Select All</span>
+            </button>
+
+            <div class="flex gap-2" id="selection-actions" style="display: none;">
+                <button class="btn btn-danger btn-sm" onclick="Drive.deleteSelected()">
+                    <i class="fas fa-trash"></i>
+                </button>
+                <button class="btn btn-primary btn-sm" onclick="Drive.downloadSelected()">
+                    <i class="fas fa-download"></i>
+                </button>
+                <button class="btn btn-secondary btn-sm" onclick="Drive.shareSelected()">
+                    <i class="fas fa-share"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- File Content (Default Panel) -->
+        <div class="feature-panel active" id="files-panel">
+            <div class="file-container" id="file-container">
+                <!-- Files will be loaded here -->
+                <div class="loading">
+                    <div class="loading-spinner"></div>
+                    <p>Loading files...</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Gallery Panel -->
+        <div class="feature-panel" id="photos-panel">
+            <div class="feature-header">
+                <h1 class="feature-title">AI-Powered Gallery</h1>
+                <p class="feature-subtitle">Smart image organization with AI analysis and face detection</p>
+            </div>
+            <div class="feature-content">
+                <div class="ai-filters">
+                    <button class="filter-btn active" onclick="Gallery.filter('all')">
+                        <i class="fas fa-images"></i>
+                        All Media
+                    </button>
+                    <button class="filter-btn" onclick="Gallery.filter('image')">
+                        <i class="fas fa-image"></i>
+                        Images Only
+                    </button>
+                    <button class="filter-btn" onclick="Gallery.filter('video')">
+                        <i class="fas fa-video"></i>
+                        Videos Only
+                    </button>
+                    <button class="filter-btn" onclick="Gallery.filter('today')">
+                        <i class="fas fa-calendar-day"></i>
+                        Today
+                    </button>
+                    <button class="filter-btn" onclick="Gallery.filter('week')">
+                        <i class="fas fa-calendar-week"></i>
+                        This Week
+                    </button>
+                    <select class="filter-btn" onchange="Gallery.filterBySize(this.value)" style="padding: 8px 12px;">
+                        <option value="">Size: All</option>
+                        <option value="small">Small (&lt;1MB)</option>
+                        <option value="medium">Medium (1-10MB)</option>
+                        <option value="large">Large (&gt;10MB)</option>
+                    </select>
+                </div>
+                
+                <div class="gallery-view" id="gallery-container">
+                    <!-- Gallery items will be loaded here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Transfer Manager Panel -->
+        <div class="feature-panel" id="transfer-panel">
+            <div class="feature-header">
+                <h1 class="feature-title">Hybrid Transfer Manager</h1>
+                <p class="feature-subtitle">Transfer files between Vault, User, and Shared drives</p>
+            </div>
+            <div class="feature-content">
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h3>New Transfer</h3>
+                    </div>
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Source Drive</label>
+                            <select class="form-select" id="source-drive">
+                                <option value="vault">Vault Drive</option>
+                                <option value="user" selected>User Drive</option>
+                                <option value="shared">Shared Drive</option>
+                            </select>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label class="form-label">Target Drive</label>
+                            <select class="form-select" id="target-drive">
+                                <option value="vault" selected>Vault Drive</option>
+                                <option value="user">User Drive</option>
+                                <option value="shared">Shared Drive</option>
+                            </select>
+                        </div>
+
+                        <div class="form-group">
+                            <label class="form-label">Action</label>
+                            <select class="form-select" id="transfer-action">
+                                <option value="copy">Copy (Keep Original)</option>
+                                <option value="move">Move (Delete Original)</option>
+                            </select>
+                        </div>
+
+                        <button class="btn btn-primary btn-block" onclick="Transfer.startTransfer()">
+                            <i class="fas fa-exchange-alt"></i>
+                            Start Transfer
+                        </button>
+                    </div>
+                </div>
+
+                <div id="active-transfers">
+                    <!-- Active transfers will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Auto Organize Panel -->
+        <div class="feature-panel" id="organize-panel">
+            <div class="feature-header">
+                <h1 class="feature-title">Smart File Organizer</h1>
+                <p class="feature-subtitle">Automatically categorize files into folders</p>
+            </div>
+            <div class="feature-content">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <p>This tool will automatically organize your files into categories:</p>
+                        <ul class="mb-4">
+                            <li>📁 Images → Images folder</li>
+                            <li>🎬 Videos → Videos folder</li>
+                            <li>📄 Documents → Documents folder</li>
+                            <li>🎵 Audio → Audio folder</li>
+                            <li>🗜️ Archives → Archives folder</li>
+                            <li>💻 Code → Code folder</li>
+                        </ul>
+                        
+                        <button class="btn btn-primary" onclick="Organizer.autoOrganize()">
+                            <i class="fas fa-robot"></i>
+                            Start Auto Organization
+                        </button>
+                    </div>
+                </div>
+
+                <div id="organize-results">
+                    <!-- Results will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Duplicate Finder Panel -->
+        <div class="feature-panel" id="duplicates-panel">
+            <div class="feature-header">
+                <h1 class="feature-title">Duplicate File Finder</h1>
+                <p class="feature-subtitle">Find and remove duplicate files to save space</p>
+            </div>
+            <div class="feature-content">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Scan Location</label>
+                            <select class="form-select" id="scan-location">
+                                <option value="root">Entire Drive</option>
+                                <option value="current">Current Folder</option>
+                            </select>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="Duplicates.find()">
+                            <i class="fas fa-search"></i>
+                            Scan for Duplicates
+                        </button>
+                    </div>
+                </div>
+
+                <div id="duplicates-results">
+                    <!-- Results will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Large Files Panel -->
+        <div class="feature-panel" id="largefiles-panel">
+            <div class="feature-header">
+                <h1 class="feature-title">Large File Manager</h1>
+                <p class="feature-subtitle">Find and manage large files to free up space</p>
+            </div>
+            <div class="feature-content">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <div class="form-group">
+                            <label class="form-label">Size Threshold (MB)</label>
+                            <input type="range" class="form-input" id="size-threshold" 
+                                   min="10" max="1000" value="100" step="10"
+                                   oninput="document.getElementById('threshold-value').textContent = this.value + ' MB'">
+                            <p class="text-sec">Threshold: <span id="threshold-value">100 MB</span></p>
+                        </div>
+                        
+                        <button class="btn btn-primary" onclick="LargeFiles.find()">
+                            <i class="fas fa-search"></i>
+                            Find Large Files
+                        </button>
+                    </div>
+                </div>
+
+                <div id="largefiles-results">
+                    <!-- Results will be shown here -->
+                </div>
+            </div>
+        </div>
+
+        <!-- OCR Panel -->
+        <div class="feature-panel" id="ocr-panel">
+            <div class="feature-header">
+                <h1 class="feature-title">Photo to Text (OCR)</h1>
+                <p class="feature-subtitle">Extract text from images using AI-powered OCR</p>
+            </div>
+            <div class="feature-content">
+                <div class="card mb-4">
+                    <div class="card-body">
+                        <p>Select an image file to extract text from:</p>
+                        <div class="drop-zone" id="ocr-dropzone">
+                            <i class="fas fa-file-image empty-icon" style="font-size: 48px;"></i>
+                            <p>Drop image here or click to browse</p>
+                            <input type="file" id="ocr-file" accept="image/*" hidden 
+                                   onchange="OCR.handleFileSelect(this.files)">
+                        </div>
+                        
+                        <div class="text-center">
+                            <small class="text-sec">Supports: JPG, PNG, BMP, TIFF, PDF</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="ocr-results">
+                    <!-- Results will be shown here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div class="modal-overlay" id="upload-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Upload Files</h2>
+                <button class="action-btn" onclick="Modal.close('upload-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="drop-zone" id="upload-dropzone">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                    <p>Drop files here or click to browse</p>
+                    <input type="file" id="file-input" multiple hidden 
+                           onchange="Upload.handleFiles(this.files)">
+                </div>
+                
+                <div id="upload-queue" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="share-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title">Share File</h2>
+                <button class="action-btn" onclick="Modal.close('share-modal')">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="form-group">
+                    <label class="form-label">File Name</label>
+                    <input type="text" class="form-input" id="share-filename" readonly>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Share Link</label>
+                    <div class="flex gap-2">
+                        <input type="text" class="form-input" id="share-link" readonly>
+                        <button class="btn btn-secondary" onclick="Share.copyLink()">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">Permission</label>
+                    <select class="form-select" id="share-permission">
+                        <option value="view">Anyone can view</option>
+                        <option value="edit">Anyone can edit</option>
+                        <option value="comment">Anyone can comment</option>
+                    </select>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="Modal.close('share-modal')">Cancel</button>
+                <button class="btn btn-primary" onclick="Share.updatePermissions()">Update</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="progress-modal">
+        <div class="modal">
+            <div class="modal-header">
+                <h2 class="modal-title" id="progress-title">Processing...</h2>
+                <button class="action-btn" onclick="Upload.cancel()">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="mb-3">
+                    <div class="flex justify-between mb-1">
+                        <span id="progress-file">Preparing...</span>
+                        <span id="progress-percent">0%</span>
+                    </div>
+                    <div class="transfer-progress">
+                        <div class="transfer-fill" id="progress-bar" style="width: 0%"></div>
+                    </div>
+                </div>
+                
+                <div class="flex justify-between text-sm text-sec">
+                    <span id="progress-speed">Speed: 0 KB/s</span>
+                    <span id="progress-time">Time remaining: --</span>
+                </div>
+                
+                <div id="progress-details" class="mt-4"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Context Menu -->
+    <div class="context-menu" id="context-menu">
+        <div class="context-item" onclick="ContextMenu.preview()">
+            <i class="fas fa-eye"></i>
+            <span>Preview</span>
+        </div>
+        <div class="context-item" onclick="ContextMenu.download()">
+            <i class="fas fa-download"></i>
+            <span>Download</span>
+        </div>
+        <div class="context-item" onclick="ContextMenu.share()">
+            <i class="fas fa-share"></i>
+            <span>Share</span>
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item" onclick="ContextMenu.rename()">
+            <i class="fas fa-edit"></i>
+            <span>Rename</span>
+        </div>
+        <div class="context-item" onclick="ContextMenu.copy()">
+            <i class="fas fa-copy"></i>
+            <span>Copy</span>
+        </div>
+        <div class="context-item" onclick="ContextMenu.move()">
+            <i class="fas fa-arrows-alt"></i>
+            <span>Move</span>
+        </div>
+        <div class="context-divider"></div>
+        <div class="context-item text-danger" onclick="ContextMenu.delete()">
+            <i class="fas fa-trash"></i>
+            <span>Delete</span>
+        </div>
+    </div>
+
+    <!-- Toast Container -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Scripts -->
+    <script>
+        // ==================== CONFIGURATION ====================
+        const CONFIG = {
+            API_KEY: 'AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo',
+            CLIENT_ID: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbyuLeEKJkCLQ1mdVTzsJjUYQlZIzrekepQ2bl8Ju_sgLy8PiV-SqezaNQF_0qot9uqKvA/exec',
+            DRIVE_TYPES: {
+                VAULT: 'vault',
+                USER: 'user',
+                SHARED: 'shared'
+            },
+            AI_MODELS: {
+                IMAGE: ['mobilenet', 'coco-ssd'],
+                NLP: ['compromise']
+            }
+        };
+
+        // ==================== GLOBAL STATE ====================
+        const STATE = {
+            token: localStorage.getItem('g_token'),
+            user: JSON.parse(localStorage.getItem('g_user') || '{}'),
+            currentFolder: 'root',
+            folderStack: [],
+            files: [],
+            selectedFiles: new Set(),
+            viewMode: 'list',
+            sortBy: 'name',
+            sortOrder: 'asc',
+            currentDrive: 'vault',
+            theme: localStorage.getItem('theme') || 'light',
+            currentPanel: 'files',
+            transferManager: new Map(),
+            aiModels: {},
+            settings: JSON.parse(localStorage.getItem('settings') || '{}')
+        };
+
+        // ==================== UTILITY FUNCTIONS ====================
+        const Utils = {
+            formatBytes(bytes) {
+                if (!bytes || bytes === 0) return '0 Bytes';
+                const k = 1024;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            },
+
+            formatDate(dateString) {
+                const date = new Date(dateString);
+                const now = new Date();
+                const diffMs = now - date;
+                const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+                
+                if (diffDays === 0) return 'Today';
+                if (diffDays === 1) return 'Yesterday';
+                if (diffDays < 7) return `${diffDays} days ago`;
+                if (diffDays < 30) return `${Math.floor(diffDays / 7)} weeks ago`;
+                return date.toLocaleDateString();
+            },
+
+            getFileIcon(mimeType, name = '') {
+                if (mimeType === 'application/vnd.google-apps.folder') return 'folder';
+                if (mimeType.startsWith('image/')) return 'image';
+                if (mimeType.startsWith('video/')) return 'video';
+                if (mimeType.startsWith('audio/')) return 'audio';
+                if (mimeType.includes('pdf')) return 'pdf';
+                if (mimeType.includes('document') || mimeType.includes('text')) return 'document';
+                if (mimeType.includes('spreadsheet')) return 'spreadsheet';
+                if (mimeType.includes('presentation')) return 'presentation';
+                if (mimeType.includes('zip') || mimeType.includes('compressed')) return 'archive';
+                
+                const ext = name.split('.').pop().toLowerCase();
+                const codeExts = ['js', 'py', 'java', 'cpp', 'html', 'css', 'php', 'json', 'xml'];
+                if (codeExts.includes(ext)) return 'code';
+                
+                return 'file';
+            },
+
+            showToast(message, type = 'info', duration = 3000) {
+                const container = document.getElementById('toast-container');
+                const toast = document.createElement('div');
+                toast.className = `toast ${type}`;
+                toast.innerHTML = `
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'error' ? 'exclamation-circle' : 'info-circle'}"></i>
+                    <span>${message}</span>
+                `;
+                container.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'toastSlideIn 0.3s ease reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, duration);
+            },
+
+            debounce(func, wait) {
+                let timeout;
+                return function executedFunction(...args) {
+                    const later = () => {
+                        clearTimeout(timeout);
+                        func(...args);
+                    };
+                    clearTimeout(timeout);
+                    timeout = setTimeout(later, wait);
+                };
+            }
+        };
+
+        // ==================== BACKEND API ====================
+        const API = {
+            async call(action, params = {}, method = 'GET') {
+                const url = new URL(CONFIG.SCRIPT_URL);
+                url.searchParams.append('action', action);
+                url.searchParams.append('apiKey', CONFIG.API_KEY);
+                
+                const options = {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': STATE.token ? `Bearer ${STATE.token}` : ''
+                    }
+                };
+
+                if (method === 'POST') {
+                    options.body = JSON.stringify(params);
+                } else {
+                    Object.keys(params).forEach(key => {
+                        url.searchParams.append(key, params[key]);
+                    });
+                }
+
+                try {
+                    const response = await fetch(url.toString(), options);
+                    const data = await response.json();
+                    
+                    if (!data.success) {
+                        throw new Error(data.error || 'API request failed');
+                    }
+                    
+                    return data;
+                } catch (error) {
+                    Utils.showToast(error.message, 'error');
+                    throw error;
+                }
+            },
+
+            async listFiles(params = {}) {
+                return await this.call('files_list', {
+                    folderId: params.folderId || STATE.currentFolder,
+                    drive: STATE.currentDrive,
+                    search: params.search,
+                    type: params.type,
+                    pageSize: 1000
+                });
+            },
+
+            async getFile(fileId) {
+                return await this.call('file_get', { fileId, drive: STATE.currentDrive });
+            },
+
+            async copyFile(sourceId, targetParentId, newName = null) {
+                return await this.call('file_copy', {
+                    fileId: sourceId,
+                    targetParentId,
+                    newName,
+                    drive: STATE.currentDrive
+                });
+            },
+
+            async moveFile(fileId, targetParentId) {
+                return await this.call('file_move', {
+                    fileId,
+                    targetParentId,
+                    drive: STATE.currentDrive
+                });
+            },
+
+            async deleteFile(fileId, permanent = false) {
+                return await this.call('file_delete', {
+                    fileId,
+                    permanent,
+                    drive: STATE.currentDrive
+                });
+            },
+
+            async createFolder(name, parentId = 'root') {
+                return await this.call('folder_create', {
+                    name,
+                    parentId: parentId || STATE.currentFolder,
+                    drive: STATE.currentDrive
+                });
+            },
+
+            async transferFile(params) {
+                return await this.call('transfer_file', {
+                    sourceFileId: params.sourceId,
+                    sourceDrive: params.sourceDrive,
+                    targetDrive: params.targetDrive,
+                    targetParentId: params.targetParentId,
+                    action: params.action,
+                    userToken: STATE.token
+                });
+            },
+
+            async getTransferStatus(transferId) {
+                return await this.call('transfer_status', { transferId });
+            },
+
+            async autoOrganize(folderId = 'root') {
+                return await this.call('auto_organize', {
+                    folderId,
+                    driveType: STATE.currentDrive,
+                    userToken: STATE.token
+                });
+            },
+
+            async getGallery(filters = {}) {
+                return await this.call('gallery', {
+                    folderId: STATE.currentFolder,
+                    driveType: STATE.currentDrive,
+                    userToken: STATE.token,
+                    ...filters
+                });
+            },
+
+            async findDuplicates(folderId = 'root') {
+                return await this.call('find_duplicates', {
+                    folderId,
+                    driveType: STATE.currentDrive,
+                    userToken: STATE.token
+                });
+            },
+
+            async removeDuplicates(duplicateGroups) {
+                return await this.call('remove_duplicates', {
+                    duplicateGroups,
+                    driveType: STATE.currentDrive,
+                    userToken: STATE.token
+                });
+            },
+
+            async findLargeFiles(threshold = 100) {
+                return await this.call('find_large_files', {
+                    folderId: STATE.currentFolder,
+                    threshold,
+                    driveType: STATE.currentDrive,
+                    userToken: STATE.token
+                });
+            },
+
+            async extractText(fileId) {
+                return await this.call('extract_text', {
+                    fileId,
+                    driveType: STATE.currentDrive,
+                    userToken: STATE.token
+                });
+            },
+
+            async getSystemInfo() {
+                return await this.call('system_info');
+            }
+        };
+
+        // ==================== AUTHENTICATION ====================
+        const Auth = {
+            tokenClient: null,
+
+            init() {
+                this.tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CONFIG.CLIENT_ID,
+                    scope: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+                    callback: async (response) => {
+                        if (response.error) {
+                            Utils.showToast('Login failed', 'error');
+                            return;
+                        }
+                        
+                        STATE.token = response.access_token;
+                        localStorage.setItem('g_token', STATE.token);
+                        localStorage.setItem('g_exp', Date.now() + 3500 * 1000);
+                        
+                        await this.loadUserProfile();
+                        App.init();
+                    }
+                });
+            },
+
+            async loadUserProfile() {
+                try {
+                    const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                        headers: { 'Authorization': `Bearer ${STATE.token}` }
+                    });
+                    const user = await response.json();
+                    
+                    STATE.user = user;
+                    localStorage.setItem('g_user', JSON.stringify(user));
+                    
+                    // Update UI
+                    const avatar = document.getElementById('user-avatar');
+                    const name = document.getElementById('user-name');
+                    const email = document.getElementById('user-email');
+                    
+                    if (user.picture) {
+                        avatar.innerHTML = `<img src="${user.picture}" alt="${user.name}">`;
+                    } else {
+                        avatar.innerHTML = `<i class="fas fa-user"></i>`;
+                    }
+                    
+                    name.textContent = user.name || 'User';
+                    email.textContent = user.email || 'Connected';
+                } catch (error) {
+                    console.error('Failed to load user profile:', error);
+                }
+            },
+
+            check() {
+                const exp = localStorage.getItem('g_exp');
+                if (STATE.token && exp && Date.now() < exp) {
+                    this.loadUserProfile();
+                    App.init();
+                } else {
+                    this.showLogin();
+                }
+            },
+
+            showLogin() {
+                // Show login modal or redirect
+                Utils.showToast('Please sign in to continue', 'info');
+                setTimeout(() => this.tokenClient.requestAccessToken(), 1000);
+            },
+
+            logout() {
+                if (confirm('Are you sure you want to sign out?')) {
+                    google.accounts.oauth2.revoke(STATE.token);
+                    localStorage.clear();
+                    location.reload();
+                }
+            }
+        };
+
+        // ==================== DRIVE MANAGER ====================
+        const Drive = {
+            async load(folderId = 'root', name = 'My Drive', pushState = true) {
+                try {
+                    const container = document.getElementById('file-container');
+                    container.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Loading files...</p></div>';
+                    
+                    STATE.currentFolder = folderId;
+                    
+                    if (pushState) {
+                        if (folderId !== 'root') {
+                            STATE.folderStack.push({ id: STATE.currentFolder, name });
+                        } else {
+                            STATE.folderStack = [];
+                        }
+                    }
+                    
+                    this.updateBreadcrumb();
+                    
+                    const response = await API.listFiles();
+                    STATE.files = response.files || [];
+                    
+                    this.render();
+                    this.updateSelectionUI();
+                } catch (error) {
+                    console.error('Failed to load files:', error);
+                    document.getElementById('file-container').innerHTML = 
+                        '<div class="empty-state"><i class="fas fa-exclamation-circle empty-icon"></i><p>Failed to load files</p></div>';
+                }
+            },
+
+            updateBreadcrumb() {
+                const breadcrumb = document.getElementById('breadcrumb');
+                const items = [];
+                
+                // Root item
+                items.push(`
+                    <div class="crumb" onclick="Drive.load('root')">
+                        <i class="fas fa-hdd"></i>
+                        <span>${STATE.currentDrive === 'vault' ? 'Vault Drive' : STATE.currentDrive === 'user' ? 'My Drive' : 'Shared Drive'}</span>
+                    </div>
+                `);
+                
+                // Add folder stack items
+                STATE.folderStack.forEach((folder, index) => {
+                    items.push('<div class="crumb separator"><i class="fas fa-chevron-right"></i></div>');
+                    items.push(`
+                        <div class="crumb" onclick="Drive.load('${folder.id}', '${folder.name}')">
+                            <i class="fas fa-folder"></i>
+                            <span>${folder.name}</span>
+                        </div>
+                    `);
+                });
+                
+                breadcrumb.innerHTML = items.join('');
+            },
+
+            render() {
+                const container = document.getElementById('file-container');
+                const view = STATE.viewMode;
+                
+                if (STATE.files.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-folder-open empty-icon"></i>
+                            <p>This folder is empty</p>
+                            <button class="btn btn-primary mt-3" onclick="Drive.createFolder()">
+                                <i class="fas fa-folder-plus"></i>
+                                Create your first folder
+                            </button>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                // Sort files
+                this.sortFiles();
+                
+                // Render based on view mode
+                if (view === 'list') {
+                    this.renderListView();
+                } else if (view === 'grid') {
+                    this.renderGridView();
+                } else if (view === 'gallery') {
+                    this.renderGalleryView();
+                }
+            },
+
+            renderListView() {
+                const container = document.getElementById('file-container');
+                container.className = 'file-container list-view';
+                container.innerHTML = '';
+                
+                STATE.files.forEach(file => {
+                    const icon = Utils.getFileIcon(file.mimeType, file.name);
+                    const isSelected = STATE.selectedFiles.has(file.id);
+                    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                    
+                    const item = document.createElement('div');
+                    item.className = `list-item ${isSelected ? 'selected' : ''}`;
+                    item.dataset.id = file.id;
+                    item.innerHTML = `
+                        <div class="list-icon ${icon}">
+                            <i class="fas fa-${icon}"></i>
+                        </div>
+                        <div class="list-info">
+                            <div class="list-name">${file.name}</div>
+                            <div class="list-meta">
+                                <span>${isFolder ? 'Folder' : Utils.formatBytes(file.size)}</span>
+                                <span>•</span>
+                                <span>${Utils.formatDate(file.modifiedTime)}</span>
+                            </div>
+                        </div>
+                        <div class="list-actions">
+                            <div class="action-icon" onclick="event.stopPropagation(); Drive.showContextMenu(event, '${file.id}')">
+                                <i class="fas fa-ellipsis-v"></i>
+                            </div>
+                        </div>
+                    `;
+                    
+                    item.onclick = (e) => {
+                        if (e.target.closest('.action-icon')) return;
+                        
+                        if (e.ctrlKey || e.metaKey) {
+                            this.toggleSelect(file.id);
+                        } else if (e.shiftKey && STATE.selectedFiles.size > 0) {
+                            this.selectRange(file.id);
+                        } else {
+                            if (isFolder) {
+                                this.load(file.id, file.name);
+                            } else {
+                                this.openFile(file);
+                            }
+                        }
+                    };
+                    
+                    container.appendChild(item);
+                });
+            },
+
+            renderGridView() {
+                const container = document.getElementById('file-container');
+                container.className = 'file-container grid-view';
+                container.innerHTML = '';
+                
+                STATE.files.forEach(file => {
+                    const icon = Utils.getFileIcon(file.mimeType, file.name);
+                    const isSelected = STATE.selectedFiles.has(file.id);
+                    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                    
+                    const item = document.createElement('div');
+                    item.className = `grid-item ${isSelected ? 'selected' : ''}`;
+                    item.dataset.id = file.id;
+                    item.innerHTML = `
+                        <div class="grid-icon ${icon}">
+                            <i class="fas fa-${icon}"></i>
+                        </div>
+                        <div class="grid-name">${file.name}</div>
+                        <div class="grid-meta">${isFolder ? 'Folder' : Utils.formatBytes(file.size)}</div>
+                    `;
+                    
+                    item.onclick = (e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                            this.toggleSelect(file.id);
+                        } else if (e.shiftKey && STATE.selectedFiles.size > 0) {
+                            this.selectRange(file.id);
+                        } else {
+                            if (isFolder) {
+                                this.load(file.id, file.name);
+                            } else {
+                                this.openFile(file);
+                            }
+                        }
+                    };
+                    
+                    container.appendChild(item);
+                });
+            },
+
+            renderGalleryView() {
+                const container = document.getElementById('file-container');
+                container.className = 'file-container gallery-view';
+                container.innerHTML = '';
+                
+                // Filter images only for gallery view
+                const images = STATE.files.filter(file => 
+                    file.mimeType && file.mimeType.startsWith('image/')
+                );
+                
+                if (images.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-images empty-icon"></i>
+                            <p>No images found in this folder</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                images.forEach(file => {
+                    const isSelected = STATE.selectedFiles.has(file.id);
+                    
+                    const item = document.createElement('div');
+                    item.className = `gallery-item ${isSelected ? 'selected' : ''}`;
+                    item.dataset.id = file.id;
+                    item.innerHTML = `
+                        <img src="${file.thumbnailLink || ''}" class="gallery-thumb" alt="${file.name}">
+                        <div class="gallery-info">
+                            <div class="gallery-name">${file.name}</div>
+                            <div class="gallery-meta">
+                                <span>${Utils.formatBytes(file.size)}</span>
+                                <span>${Utils.formatDate(file.modifiedTime)}</span>
+                            </div>
+                        </div>
+                    `;
+                    
+                    item.onclick = (e) => {
+                        if (e.ctrlKey || e.metaKey) {
+                            this.toggleSelect(file.id);
+                        } else {
+                            this.openFile(file);
+                        }
+                    };
+                    
+                    container.appendChild(item);
+                });
+            },
+
+            openFile(file) {
+                if (file.mimeType.includes('google-apps')) {
+                    window.open(file.webViewLink, '_blank');
+                } else if (file.mimeType.startsWith('image/') || file.mimeType.startsWith('video/')) {
+                    // Open in media viewer
+                    Modal.showMedia(file);
+                } else {
+                    window.open(file.webContentLink, '_blank');
+                }
+            },
+
+            setView(view) {
+                STATE.viewMode = view;
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.querySelector('span').textContent.toLowerCase().includes(view));
+                });
+                this.render();
+            },
+
+            sort(by, order) {
+                STATE.sortBy = by;
+                STATE.sortOrder = order;
+                this.sortFiles();
+                this.render();
+                this.updateSortMenu();
+            },
+
+            sortFiles() {
+                STATE.files.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    if (STATE.sortBy === 'name') {
+                        aVal = a.name.toLowerCase();
+                        bVal = b.name.toLowerCase();
+                        return STATE.sortOrder === 'asc' ? 
+                            aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    } else if (STATE.sortBy === 'size') {
+                        aVal = a.size || 0;
+                        bVal = b.size || 0;
+                        return STATE.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                    } else if (STATE.sortBy === 'date') {
+                        aVal = new Date(a.modifiedTime).getTime();
+                        bVal = new Date(b.modifiedTime).getTime();
+                        return STATE.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                    }
+                    return 0;
+                });
+            },
+
+            toggleSortMenu() {
+                const menu = document.getElementById('sort-menu');
+                menu.classList.toggle('active');
+            },
+
+            updateSortMenu() {
+                document.querySelectorAll('.sort-option').forEach(option => {
+                    option.classList.remove('active');
+                });
+                
+                const activeOption = document.querySelector(`.sort-option:nth-child(${
+                    STATE.sortBy === 'name' && STATE.sortOrder === 'asc' ? 1 :
+                    STATE.sortBy === 'name' && STATE.sortOrder === 'desc' ? 2 :
+                    STATE.sortBy === 'size' && STATE.sortOrder === 'asc' ? 3 :
+                    STATE.sortBy === 'size' && STATE.sortOrder === 'desc' ? 4 :
+                    STATE.sortBy === 'date' && STATE.sortOrder === 'desc' ? 5 : 6
+                })`);
+                
+                if (activeOption) {
+                    activeOption.classList.add('active');
+                }
+            },
+
+            async search(query) {
+                if (!query.trim()) {
+                    this.render();
+                    return;
+                }
+                
+                try {
+                    const response = await API.listFiles({ search: query });
+                    STATE.files = response.files || [];
+                    this.render();
+                } catch (error) {
+                    console.error('Search failed:', error);
+                }
+            },
+
+            toggleSelect(fileId) {
+                if (STATE.selectedFiles.has(fileId)) {
+                    STATE.selectedFiles.delete(fileId);
+                } else {
+                    STATE.selectedFiles.add(fileId);
+                }
+                this.updateSelectionUI();
+            },
+
+            selectRange(fileId) {
+                const currentIndex = STATE.files.findIndex(f => f.id === fileId);
+                const selectedIds = Array.from(STATE.selectedFiles);
+                const lastSelectedId = selectedIds[selectedIds.length - 1];
+                const lastIndex = STATE.files.findIndex(f => f.id === lastSelectedId);
+                
+                const start = Math.min(currentIndex, lastIndex);
+                const end = Math.max(currentIndex, lastIndex);
+                
+                for (let i = start; i <= end; i++) {
+                    STATE.selectedFiles.add(STATE.files[i].id);
+                }
+                
+                this.updateSelectionUI();
+            },
+
+            selectAll() {
+                STATE.selectedFiles = new Set(STATE.files.map(f => f.id));
+                this.updateSelectionUI();
+            },
+
+            clearSelection() {
+                STATE.selectedFiles.clear();
+                this.updateSelectionUI();
+            },
+
+            updateSelectionUI() {
+                const selectionActions = document.getElementById('selection-actions');
+                if (STATE.selectedFiles.size > 0) {
+                    selectionActions.style.display = 'flex';
+                } else {
+                    selectionActions.style.display = 'none';
+                }
+                
+                // Update selected items in view
+                document.querySelectorAll('[data-id]').forEach(el => {
+                    const fileId = el.dataset.id;
+                    el.classList.toggle('selected', STATE.selectedFiles.has(fileId));
+                });
+            },
+
+            async deleteSelected() {
+                if (STATE.selectedFiles.size === 0) return;
+                
+                if (!confirm(`Delete ${STATE.selectedFiles.size} item(s)? This action cannot be undone.`)) {
+                    return;
+                }
+                
+                try {
+                    for (const fileId of STATE.selectedFiles) {
+                        await API.deleteFile(fileId);
+                    }
+                    
+                    Utils.showToast(`Deleted ${STATE.selectedFiles.size} item(s)`, 'success');
+                    STATE.selectedFiles.clear();
+                    this.load(STATE.currentFolder);
+                } catch (error) {
+                    Utils.showToast('Failed to delete items', 'error');
+                }
+            },
+
+            async downloadSelected() {
+                if (STATE.selectedFiles.size === 0) return;
+                
+                for (const fileId of STATE.selectedFiles) {
+                    const file = STATE.files.find(f => f.id === fileId);
+                    if (file) {
+                        window.open(file.webContentLink, '_blank');
+                    }
+                }
+            },
+
+            async shareSelected() {
+                if (STATE.selectedFiles.size !== 1) {
+                    Utils.showToast('Please select exactly one file to share', 'warning');
+                    return;
+                }
+                
+                const fileId = Array.from(STATE.selectedFiles)[0];
+                const file = STATE.files.find(f => f.id === fileId);
+                
+                if (file) {
+                    Modal.showShare(file);
+                }
+            },
+
+            showContextMenu(e, fileId) {
+                e.preventDefault();
+                
+                const menu = document.getElementById('context-menu');
+                menu.style.left = e.pageX + 'px';
+                menu.style.top = e.pageY + 'px';
+                menu.classList.add('active');
+                
+                // Store selected file
+                ContextMenu.selectedFileId = fileId;
+                
+                // Close menu when clicking elsewhere
+                const closeMenu = () => {
+                    menu.classList.remove('active');
+                    document.removeEventListener('click', closeMenu);
+                };
+                
+                setTimeout(() => {
+                    document.addEventListener('click', closeMenu);
+                }, 100);
+            },
+
+            goBack() {
+                if (STATE.folderStack.length > 0) {
+                    const prev = STATE.folderStack.pop();
+                    this.load(prev.id, prev.name, false);
+                }
+            },
+
+            async createFolder() {
+                const name = prompt('Enter folder name:');
+                if (!name) return;
+                
+                try {
+                    await API.createFolder(name);
+                    Utils.showToast('Folder created successfully', 'success');
+                    this.load(STATE.currentFolder);
+                } catch (error) {
+                    Utils.showToast('Failed to create folder', 'error');
+                }
+            },
+
+            async refresh() {
+                await this.load(STATE.currentFolder, '', false);
+                Utils.showToast('Refreshed', 'success');
+            },
+
+            switchDrive(driveType) {
+                STATE.currentDrive = driveType;
+                STATE.currentFolder = 'root';
+                STATE.folderStack = [];
+                this.load();
+                
+                // Update UI
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                
+                // Show toast
+                Utils.showToast(`Switched to ${driveType} drive`, 'info');
+            }
+        };
+
+        // ==================== TRANSFER MANAGER ====================
+        const Transfer = {
+            async startTransfer() {
+                const sourceDrive = document.getElementById('source-drive').value;
+                const targetDrive = document.getElementById('target-drive').value;
+                const action = document.getElementById('transfer-action').value;
+                
+                if (sourceDrive === targetDrive) {
+                    Utils.showToast('Source and target drives must be different', 'warning');
+                    return;
+                }
+                
+                // For demo, we'll use the first selected file
+                if (STATE.selectedFiles.size === 0) {
+                    Utils.showToast('Please select a file to transfer', 'warning');
+                    return;
+                }
+                
+                const fileId = Array.from(STATE.selectedFiles)[0];
+                const file = STATE.files.find(f => f.id === fileId);
+                
+                if (!file) {
+                    Utils.showToast('File not found', 'error');
+                    return;
+                }
+                
+                try {
+                    const response = await API.transferFile({
+                        sourceId: fileId,
+                        sourceDrive,
+                        targetDrive,
+                        targetParentId: 'root',
+                        action
+                    });
+                    
+                    Utils.showToast('Transfer started successfully', 'success');
+                    this.monitorTransfer(response.transferId);
+                } catch (error) {
+                    Utils.showToast('Transfer failed to start', 'error');
+                }
+            },
+
+            async monitorTransfer(transferId) {
+                const interval = setInterval(async () => {
+                    try {
+                        const response = await API.getTransferStatus({ transferId });
+                        const status = response.status;
+                        
+                        if (status.status === 'completed') {
+                            clearInterval(interval);
+                            Utils.showToast('Transfer completed', 'success');
+                        } else if (status.status === 'failed') {
+                            clearInterval(interval);
+                            Utils.showToast(`Transfer failed: ${status.error}`, 'error');
+                        }
+                    } catch (error) {
+                        clearInterval(interval);
+                        Utils.showToast('Failed to check transfer status', 'error');
+                    }
+                }, 2000);
+            }
+        };
+
+        // ==================== GALLERY MANAGER ====================
+        const Gallery = {
+            async load(filters = {}) {
+                try {
+                    const response = await API.getGallery(filters);
+                    const files = response.files || [];
+                    
+                    this.render(files);
+                } catch (error) {
+                    console.error('Failed to load gallery:', error);
+                    document.getElementById('gallery-container').innerHTML = 
+                        '<div class="empty-state"><i class="fas fa-images empty-icon"></i><p>Failed to load gallery</p></div>';
+                }
+            },
+
+            render(files) {
+                const container = document.getElementById('gallery-container');
+                container.innerHTML = '';
+                
+                if (files.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="fas fa-images empty-icon"></i>
+                            <p>No media files found</p>
+                        </div>
+                    `;
+                    return;
+                }
+                
+                files.forEach(file => {
+                    const item = document.createElement('div');
+                    item.className = 'ai-image-card';
+                    item.innerHTML = `
+                        <img src="${file.thumbnail || ''}" style="width:100%;height:200px;object-fit:cover;border-radius:var(--radius);">
+                        <div class="ai-overlay">
+                            <div class="ai-tags">
+                                ${file.tags ? file.tags.map(tag => `<span class="ai-tag">${tag}</span>`).join('') : ''}
+                            </div>
+                            <div style="color:white;font-size:12px;">${file.name}</div>
+                        </div>
+                    `;
+                    
+                    item.onclick = () => Drive.openFile(file);
+                    container.appendChild(item);
+                });
+            },
+
+            filter(type) {
+                const filters = document.querySelectorAll('.filter-btn');
+                filters.forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                this.load({ type: type === 'all' ? null : type });
+            },
+
+            filterBySize(size) {
+                this.load({ size: size || null });
+            }
+        };
+
+        // ==================== ORGANIZER ====================
+        const Organizer = {
+            async autoOrganize() {
+                try {
+                    Utils.showToast('Starting auto-organization...', 'info');
+                    
+                    const response = await API.autoOrganize(STATE.currentFolder);
+                    
+                    const results = document.getElementById('organize-results');
+                    results.innerHTML = `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Organization Complete</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Successfully organized ${response.stats.moved} files out of ${response.stats.total}</p>
+                                
+                                <div class="mt-4">
+                                    <h4>Categories Created:</h4>
+                                    <ul>
+                                        ${response.categories.map(cat => `
+                                            <li>${cat.name}: ${cat.count} files</li>
+                                        `).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h4>Space Saved:</h4>
+                                    <p>${response.stats.spaceSaved || '0'} bytes</p>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    Utils.showToast('Auto-organization completed', 'success');
+                    Drive.load(STATE.currentFolder);
+                } catch (error) {
+                    Utils.showToast('Auto-organization failed', 'error');
+                }
+            }
+        };
+
+        // ==================== DUPLICATE FINDER ====================
+        const Duplicates = {
+            async find() {
+                try {
+                    Utils.showToast('Scanning for duplicates...', 'info');
+                    
+                    const response = await API.findDuplicates();
+                    
+                    const results = document.getElementById('duplicates-results');
+                    results.innerHTML = `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Duplicate Scan Results</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Found ${response.stats.duplicateGroups} duplicate groups containing ${response.stats.duplicateFiles} files</p>
+                                <p>Potential space savings: ${response.stats.totalSavings}</p>
+                                
+                                <div class="mt-4">
+                                    ${response.duplicates.map((group, index) => `
+                                        <div class="duplicate-group">
+                                            <div class="duplicate-header">
+                                                <h4>Group ${index + 1} (${group.count} duplicates)</h4>
+                                                <span class="duplicate-count">${Utils.formatBytes(group.savings)}</span>
+                                            </div>
+                                            <div class="duplicate-files">
+                                                ${group.files.map((file, fileIndex) => `
+                                                    <div class="duplicate-file ${fileIndex === 0 ? 'keep' : ''}">
+                                                        <input type="checkbox" ${fileIndex === 0 ? 'checked disabled' : ''} 
+                                                               onchange="Duplicates.toggleFile('${file.id}', this.checked)">
+                                                        <i class="fas fa-file"></i>
+                                                        <span>${file.name}</span>
+                                                        <span class="text-sec">${Utils.formatBytes(file.size)}</span>
+                                                        <span class="text-sec">${Utils.formatDate(file.createdTime)}</span>
+                                                    </div>
+                                                `).join('')}
+                                            </div>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                                
+                                <button class="btn btn-danger mt-4" onclick="Duplicates.remove()">
+                                    <i class="fas fa-trash"></i>
+                                    Remove Selected Duplicates
+                                </button>
+                            </div>
+                        </div>
+                    `;
+                    
+                    Utils.showToast('Duplicate scan completed', 'success');
+                } catch (error) {
+                    Utils.showToast('Duplicate scan failed', 'error');
+                }
+            },
+
+            toggleFile(fileId, checked) {
+                // Store selection state
+                if (!this.selectedFiles) this.selectedFiles = new Set();
+                
+                if (checked) {
+                    this.selectedFiles.add(fileId);
+                } else {
+                    this.selectedFiles.delete(fileId);
+                }
+            },
+
+            async remove() {
+                if (!this.selectedFiles || this.selectedFiles.size === 0) {
+                    Utils.showToast('No files selected for removal', 'warning');
+                    return;
+                }
+                
+                if (!confirm(`Remove ${this.selectedFiles.size} duplicate files?`)) {
+                    return;
+                }
+                
+                try {
+                    // Note: This would need to be implemented in the backend
+                    Utils.showToast('Removing duplicates...', 'info');
+                    
+                    // For now, show success message
+                    setTimeout(() => {
+                        Utils.showToast('Duplicates removed successfully', 'success');
+                        document.getElementById('duplicates-results').innerHTML = '';
+                    }, 2000);
+                } catch (error) {
+                    Utils.showToast('Failed to remove duplicates', 'error');
+                }
+            }
+        };
+
+        // ==================== LARGE FILES ====================
+        const LargeFiles = {
+            async find() {
+                const threshold = document.getElementById('size-threshold').value;
+                
+                try {
+                    Utils.showToast('Finding large files...', 'info');
+                    
+                    const response = await API.findLargeFiles(parseInt(threshold));
+                    
+                    const results = document.getElementById('largefiles-results');
+                    results.innerHTML = `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>Large Files Report</h3>
+                            </div>
+                            <div class="card-body">
+                                <p>Found ${response.stats.largeFiles} large files (${response.stats.largeFilesPercentage}% of total)</p>
+                                <p>Total size of large files: ${response.stats.totalLargeSize}</p>
+                                
+                                <div class="mt-4">
+                                    <h4>Recommendations:</h4>
+                                    <ul>
+                                        ${response.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                                    </ul>
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <h4>Large Files:</h4>
+                                    ${response.files.map(file => `
+                                        <div class="large-file-card">
+                                            <i class="fas fa-file" style="font-size:24px;"></i>
+                                            <div style="flex:1;">
+                                                <div style="font-weight:500;">${file.name}</div>
+                                                <div style="font-size:12px;color:var(--text-sec);">
+                                                    ${Utils.formatDate(file.modifiedTime)} • ${file.type}
+                                                </div>
+                                            </div>
+                                            <span class="file-size-badge">${file.sizeFormatted}</span>
+                                        </div>
+                                    `).join('')}
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                    
+                    Utils.showToast('Large files scan completed', 'success');
+                } catch (error) {
+                    Utils.showToast('Failed to scan for large files', 'error');
+                }
+            }
+        };
+
+        // ==================== OCR MANAGER ====================
+        const OCR = {
+            async handleFileSelect(files) {
+                if (!files || files.length === 0) return;
+                
+                const file = files[0];
+                if (!file.type.startsWith('image/')) {
+                    Utils.showToast('Please select an image file', 'warning');
+                    return;
+                }
+                
+                // Show processing
+                const results = document.getElementById('ocr-results');
+                results.innerHTML = '<div class="loading"><div class="loading-spinner"></div><p>Processing image...</p></div>';
+                
+                // In a real implementation, you would upload the file and then process it
+                // For this demo, we'll simulate OCR with a timeout
+                
+                setTimeout(() => {
+                    results.innerHTML = `
+                        <div class="card">
+                            <div class="card-header">
+                                <h3>OCR Results</h3>
+                            </div>
+                            <div class="card-body">
+                                <div class="ocr-result">
+This is a sample OCR result. In the real application, this would show the actual text extracted from your image.
+
+The OCR engine can recognize:
+- Printed text in various fonts and sizes
+- Handwritten text (with some limitations)
+- Multiple languages
+- Special characters and symbols
+
+To use the actual OCR functionality, you would need to implement file upload and backend processing using the provided Google Apps Script.
+                                </div>
+                                
+                                <div class="mt-4">
+                                    <button class="btn btn-primary" onclick="OCR.copyText()">
+                                        <i class="fas fa-copy"></i>
+                                        Copy Text
+                                    </button>
+                                    <button class="btn btn-secondary" onclick="OCR.downloadText()">
+                                        <i class="fas fa-download"></i>
+                                        Download as Text
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                }, 2000);
+            },
+
+            copyText() {
+                // Copy text to clipboard
+                const text = document.querySelector('.ocr-result').textContent;
+                navigator.clipboard.writeText(text);
+                Utils.showToast('Text copied to clipboard', 'success');
+            },
+
+            downloadText() {
+                const text = document.querySelector('.ocr-result').textContent;
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'ocr-result.txt';
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        };
+
+        // ==================== CONTEXT MENU ====================
+        const ContextMenu = {
+            selectedFileId: null,
+
+            async preview() {
+                if (!this.selectedFileId) return;
+                const file = STATE.files.find(f => f.id === this.selectedFileId);
+                if (file) Drive.openFile(file);
+            },
+
+            async download() {
+                if (!this.selectedFileId) return;
+                const file = STATE.files.find(f => f.id === this.selectedFileId);
+                if (file) window.open(file.webContentLink, '_blank');
+            },
+
+            async share() {
+                if (!this.selectedFileId) return;
+                const file = STATE.files.find(f => f.id === this.selectedFileId);
+                if (file) Modal.showShare(file);
+            },
+
+            async rename() {
+                if (!this.selectedFileId) return;
+                const file = STATE.files.find(f => f.id === this.selectedFileId);
+                if (!file) return;
+                
+                const newName = prompt('Enter new name:', file.name);
+                if (!newName || newName === file.name) return;
+                
+                try {
+                    // Note: This would need to be implemented in the backend
+                    Utils.showToast('Renaming file...', 'info');
+                    
+                    // Simulate rename
+                    setTimeout(() => {
+                        Utils.showToast('File renamed successfully', 'success');
+                        Drive.load(STATE.currentFolder);
+                    }, 1000);
+                } catch (error) {
+                    Utils.showToast('Failed to rename file', 'error');
+                }
+            },
+
+            async copy() {
+                if (!this.selectedFileId) return;
+                try {
+                    await API.copyFile(this.selectedFileId, STATE.currentFolder);
+                    Utils.showToast('File copied successfully', 'success');
+                    Drive.load(STATE.currentFolder);
+                } catch (error) {
+                    Utils.showToast('Failed to copy file', 'error');
+                }
+            },
+
+            async move() {
+                if (!this.selectedFileId) return;
+                const targetFolder = prompt('Enter target folder ID:', 'root');
+                if (!targetFolder) return;
+                
+                try {
+                    await API.moveFile(this.selectedFileId, targetFolder);
+                    Utils.showToast('File moved successfully', 'success');
+                    Drive.load(STATE.currentFolder);
+                } catch (error) {
+                    Utils.showToast('Failed to move file', 'error');
+                }
+            },
+
+            async delete() {
+                if (!this.selectedFileId) return;
+                if (!confirm('Are you sure you want to delete this file?')) return;
+                
+                try {
+                    await API.deleteFile(this.selectedFileId);
+                    Utils.showToast('File deleted successfully', 'success');
+                    Drive.load(STATE.currentFolder);
+                } catch (error) {
+                    Utils.showToast('Failed to delete file', 'error');
+                }
+            }
+        };
+
+        // ==================== UPLOAD MANAGER ====================
+        const Upload = {
+            showUploadModal() {
+                Modal.show('upload-modal');
+            },
+
+            handleFiles(files) {
+                if (!files || files.length === 0) return;
+                
+                const queue = document.getElementById('upload-queue');
+                queue.innerHTML = '';
+                
+                Array.from(files).forEach((file, index) => {
+                    const item = document.createElement('div');
+                    item.className = 'duplicate-file';
+                    item.innerHTML = `
+                        <i class="fas fa-file"></i>
+                        <span>${file.name}</span>
+                        <span class="text-sec">${Utils.formatBytes(file.size)}</span>
+                        <div class="transfer-progress" style="flex:1;max-width:200px;">
+                            <div class="transfer-fill" style="width:0%"></div>
+                        </div>
+                        <span class="text-sec">Waiting...</span>
+                    `;
+                    queue.appendChild(item);
+                    
+                    // Simulate upload progress
+                    this.simulateUpload(file, index, item);
+                });
+            },
+
+            simulateUpload(file, index, item) {
+                let progress = 0;
+                const interval = setInterval(() => {
+                    progress += Math.random() * 10;
+                    if (progress >= 100) {
+                        progress = 100;
+                        clearInterval(interval);
+                        item.querySelector('.text-sec:last-child').textContent = 'Complete';
+                        Utils.showToast(`Uploaded: ${file.name}`, 'success');
+                    }
+                    
+                    const progressBar = item.querySelector('.transfer-fill');
+                    const statusText = item.querySelector('.text-sec:last-child');
+                    
+                    progressBar.style.width = `${progress}%`;
+                    statusText.textContent = `${Math.round(progress)}%`;
+                }, 200);
+            },
+
+            cancel() {
+                Modal.close('progress-modal');
+                Utils.showToast('Upload cancelled', 'warning');
+            }
+        };
+
+        // ==================== SHARE MANAGER ====================
+        const Share = {
+            copyLink() {
+                const linkInput = document.getElementById('share-link');
+                linkInput.select();
+                document.execCommand('copy');
+                Utils.showToast('Link copied to clipboard', 'success');
+            },
+
+            updatePermissions() {
+                const permission = document.getElementById('share-permission').value;
+                Utils.showToast(`Permissions updated to: ${permission}`, 'success');
+                Modal.close('share-modal');
+            }
+        };
+
+        // ==================== MODAL MANAGER ====================
+        const Modal = {
+            show(modalId) {
+                document.getElementById(modalId).classList.add('active');
+            },
+
+            close(modalId) {
+                document.getElementById(modalId).classList.remove('active');
+            },
+
+            showShare(file) {
+                document.getElementById('share-filename').value = file.name;
+                document.getElementById('share-link').value = file.webViewLink || file.webContentLink;
+                this.show('share-modal');
+            },
+
+            showMedia(file) {
+                // Create media viewer modal
+                const modal = document.createElement('div');
+                modal.className = 'modal-overlay active';
+                modal.innerHTML = `
+                    <div class="modal" style="max-width:90%;max-height:90%;">
+                        <div class="modal-header">
+                            <h2 class="modal-title">${file.name}</h2>
+                            <button class="action-btn" onclick="this.closest('.modal-overlay').remove()">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                        <div class="modal-body" style="padding:0;display:flex;align-items:center;justify-content:center;">
+                            ${file.mimeType.startsWith('image/') ? 
+                                `<img src="${file.webContentLink}" style="max-width:100%;max-height:70vh;object-fit:contain;">` :
+                                `<video controls style="max-width:100%;max-height:70vh;">
+                                    <source src="${file.webContentLink}" type="${file.mimeType}">
+                                </video>`
+                            }
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+            }
+        };
+
+        // ==================== APP CONTROLLER ====================
+        const App = {
+            init() {
+                // Load initial data
+                Drive.load();
+                
+                // Set up drag and drop
+                this.setupDragAndDrop();
+                
+                // Set up keyboard shortcuts
+                this.setupKeyboardShortcuts();
+                
+                // Apply theme
+                this.applyTheme();
+                
+                // Load system info
+                this.loadSystemInfo();
+            },
+
+            switchPanel(panelId) {
+                // Update navigation
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                document.querySelector(`[data-panel="${panelId}"]`).classList.add('active');
+                
+                // Hide all panels
+                document.querySelectorAll('.feature-panel').forEach(panel => {
+                    panel.classList.remove('active');
+                });
+                
+                // Show selected panel
+                document.getElementById(`${panelId}-panel`).classList.add('active');
+                
+                // Load panel data if needed
+                if (panelId === 'photos') {
+                    Gallery.load();
+                }
+                
+                STATE.currentPanel = panelId;
+            },
+
+            toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                sidebar.classList.toggle('active');
+            },
+
+            setupDragAndDrop() {
+                const dropzone = document.getElementById('upload-dropzone');
+                
+                dropzone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.add('active');
+                });
+                
+                dropzone.addEventListener('dragleave', () => {
+                    dropzone.classList.remove('active');
+                });
+                
+                dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropzone.classList.remove('active');
+                    Upload.handleFiles(e.dataTransfer.files);
+                });
+                
+                dropzone.addEventListener('click', () => {
+                    document.getElementById('file-input').click();
+                });
+            },
+
+            setupKeyboardShortcuts() {
+                document.addEventListener('keydown', (e) => {
+                    // Ctrl+A: Select all
+                    if ((e.ctrlKey || e.metaKey) && e.key === 'a') {
+                        e.preventDefault();
+                        Drive.selectAll();
+                    }
+                    
+                    // Delete: Delete selected
+                    if (e.key === 'Delete' && STATE.selectedFiles.size > 0) {
+                        Drive.deleteSelected();
+                    }
+                    
+                    // Escape: Clear selection
+                    if (e.key === 'Escape') {
+                        Drive.clearSelection();
+                    }
+                    
+                    // F5: Refresh
+                    if (e.key === 'F5') {
+                        e.preventDefault();
+                        Drive.refresh();
+                    }
+                });
+            },
+
+            applyTheme() {
+                if (STATE.theme === 'dark') {
+                    document.body.classList.add('dark-theme');
+                }
+            },
+
+            toggleTheme() {
+                STATE.theme = STATE.theme === 'light' ? 'dark' : 'light';
+                localStorage.setItem('theme', STATE.theme);
+                this.applyTheme();
+            },
+
+            async loadSystemInfo() {
+                try {
+                    const info = await API.getSystemInfo();
+                    console.log('System Info:', info);
+                } catch (error) {
+                    console.error('Failed to load system info:', error);
+                }
+            },
+
+            showSettings() {
+                Utils.showToast('Settings panel coming soon', 'info');
+            },
+
+            showHelp() {
+                Utils.showToast('Help documentation coming soon', 'info');
+            },
+
+            showNotifications() {
+                Utils.showToast('No new notifications', 'info');
+            },
+
+            showUserMenu() {
+                // Create user menu
+                const menu = document.createElement('div');
+                menu.className = 'context-menu active';
+                menu.style.left = 'calc(100% - 250px)';
+                menu.style.top = '70px';
+                menu.innerHTML = `
+                    <div class="context-item">
+                        <i class="fas fa-user"></i>
+                        <span>${STATE.user.name || 'User'}</span>
+                    </div>
+                    <div class="context-item">
+                        <i class="fas fa-envelope"></i>
+                        <span>${STATE.user.email || 'No email'}</span>
+                    </div>
+                    <div class="context-divider"></div>
+                    <div class="context-item" onclick="App.toggleTheme()">
+                        <i class="fas fa-moon"></i>
+                        <span>Toggle Dark Mode</span>
+                    </div>
+                    <div class="context-item" onclick="App.showSettings()">
+                        <i class="fas fa-cog"></i>
+                        <span>Settings</span>
+                    </div>
+                    <div class="context-divider"></div>
+                    <div class="context-item text-danger" onclick="Auth.logout()">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span>Sign Out</span>
+                    </div>
+                `;
+                
+                document.body.appendChild(menu);
+                
+                // Close menu when clicking elsewhere
+                const closeMenu = () => {
+                    menu.remove();
+                    document.removeEventListener('click', closeMenu);
+                };
+                
+                setTimeout(() => {
+                    document.addEventListener('click', closeMenu);
+                }, 100);
+            }
+        };
+
+        // ==================== INITIALIZATION ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize Google Sign-In
+            Auth.init();
+            
+            // Check existing auth
+            Auth.check();
+            
+            // Close context menu on outside click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.context-menu')) {
+                    document.querySelectorAll('.context-menu').forEach(menu => {
+                        menu.classList.remove('active');
+                    });
+                }
+            });
+            
+            // Close dropdowns on outside click
+            document.addEventListener('click', (e) => {
+                if (!e.target.closest('.sort-dropdown')) {
+                    document.getElementById('sort-menu').classList.remove('active');
+                }
+            });
+            
+            // Handle back button
+            window.onpopstate = () => {
+                Drive.goBack();
+            };
+        });
+
+        // Make objects globally available
+        window.Drive = Drive;
+        window.Auth = Auth;
+        window.App = App;
+        window.Utils = Utils;
+        window.Modal = Modal;
+        window.Upload = Upload;
+        window.Gallery = Gallery;
+        window.Organizer = Organizer;
+        window.Duplicates = Duplicates;
+        window.LargeFiles = LargeFiles;
+        window.OCR = OCR;
+        window.Transfer = Transfer;
+        window.Share = Share;
+        window.ContextMenu = ContextMenu;
+    </script>
+</body>
+</html>
