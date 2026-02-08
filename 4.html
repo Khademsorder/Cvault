@@ -1,411 +1,295 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="bn">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Drive OS | Ultimate Pro</title>
-    
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&family=Google+Sans:wght@400;500&display=swap" rel="stylesheet">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive Master Pro - Hybrid Manager</title>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
-
+    <link href="https://fonts.googleapis.com/css2?family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    
     <style>
         :root {
-            --primary: #1a73e8; --primary-dark: #0d47a1; --surface: #ffffff;
-            --bg: #f8f9fa; --text-main: #202124; --text-sec: #5f6368;
-            --border: #dadce0; --hover: #f1f3f4; --radius: 12px;
-            --shadow: 0 1px 3px rgba(0,0,0,0.12);
+            --primary: #1a73e8;
+            --vault: #6200ee;
+            --bg: #f8f9fa;
+            --surface: #ffffff;
+            --text: #202124;
         }
-        .dark-theme {
-            --primary: #8ab4f8; --primary-dark: #669df6; --surface: #202124;
-            --bg: #121212; --text-main: #e8eaed; --text-sec: #9aa0a6;
-            --border: #3c4043; --hover: #2d2e30;
+        body { font-family: 'Google Sans', sans-serif; background: var(--bg); margin: 0; padding: 20px; color: var(--text); }
+        
+        /* Configuration Section */
+        .config-box {
+            background: #e8f0fe; padding: 15px; border-radius: 8px; margin-bottom: 20px;
+            border: 1px solid #d2e3fc; display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
         }
-        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; outline: none; user-select: none; }
-        body { margin: 0; font-family: 'Roboto', sans-serif; background: var(--bg); color: var(--text-main); height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
-
-        /* SCREENS */
-        .screen { position: absolute; inset: 0; background: var(--bg); display: none; z-index: 10; flex-direction: column; }
-        .screen.active { display: flex; animation: fadeIn 0.3s; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-
-        /* 1. LOCK SCREEN (PIN) */
-        #lock-screen { justify-content: center; align-items: center; background: var(--surface); }
-        .pin-display { display: flex; gap: 15px; margin: 30px 0; }
-        .pin-dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--text-sec); transition: 0.2s; }
-        .pin-dot.filled { background: var(--primary); border-color: var(--primary); }
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
-        .key { width: 70px; height: 70px; border-radius: 50%; background: var(--hover); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; border: 1px solid var(--border); }
-        .key:active { transform: scale(0.95); }
-
-        /* 2. AUTH SCREEN */
-        #auth-screen { justify-content: center; align-items: center; text-align: center; background: var(--surface); }
-        .auth-card { background: var(--surface); padding: 40px; border-radius: 16px; box-shadow: var(--shadow); width: 90%; max-width: 400px; border: 1px solid var(--border); }
-        .auth-btn { background: var(--surface); border: 1px solid var(--border); padding: 12px 24px; border-radius: 24px; font-family: 'Google Sans'; font-weight: 500; display: flex; align-items: center; gap: 10px; cursor: pointer; margin: 20px auto; width: 100%; justify-content: center; transition: 0.2s; }
-        .auth-btn:hover { background: var(--hover); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-
-        /* 3. MAIN APP UI */
-        .header { height: 60px; background: var(--surface); padding: 0 15px; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); flex-shrink: 0; }
-        .search-box { flex: 1; background: var(--hover); border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 10px; }
-        .search-box input { border: none; background: transparent; width: 100%; font-size: 16px; color: var(--text-main); }
+        input.url-input {
+            flex-grow: 1; padding: 10px; border: 1px solid #ccc; border-radius: 4px; font-family: monospace;
+        }
         
-        .toolbar { padding: 10px 15px; display: flex; align-items: center; justify-content: space-between; background: var(--surface); border-bottom: 1px solid var(--border); flex-shrink: 0; font-size: 14px; color: var(--text-sec); }
+        /* Layout Grid */
+        .dashboard { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+        @media (max-width: 768px) { .dashboard { grid-template-columns: 1fr; } }
+
+        /* Drive Panel */
+        .panel { background: var(--surface); border-radius: 12px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); overflow: hidden; display: flex; flex-direction: column; height: 80vh; }
+        .panel-header { padding: 15px; display: flex; justify-content: space-between; align-items: center; color: white; }
+        .user-header { background: var(--primary); }
+        .vault-header { background: var(--vault); }
         
+        .panel-title { display: flex; align-items: center; gap: 10px; font-weight: 500; }
+        .panel-actions button { background: rgba(255,255,255,0.2); border: none; color: white; padding: 5px 10px; border-radius: 4px; cursor: pointer; }
+        .panel-actions button:hover { background: rgba(255,255,255,0.3); }
+
         /* File List */
-        .file-list { flex: 1; overflow-y: auto; padding: 10px; display: grid; align-content: start; gap: 5px; }
-        .file-list.list { grid-template-columns: 1fr; }
-        .file-list.grid { grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 10px; }
-        
-        .file-item { background: var(--surface); border: 1px solid var(--border); padding: 12px; border-radius: 8px; cursor: pointer; position: relative; display: flex; align-items: center; gap: 12px; transition: 0.2s; }
-        .file-list.grid .file-item { flex-direction: column; text-align: center; height: 130px; justify-content: center; padding: 10px; }
-        .file-item:hover { background: var(--hover); border-color: var(--primary); }
-        
-        .file-icon { font-size: 24px; color: var(--text-sec); }
-        .file-list.grid .file-icon { font-size: 40px; margin-bottom: 5px; }
-        .file-info { flex: 1; overflow: hidden; }
+        .file-list { flex-grow: 1; overflow-y: auto; padding: 10px; }
+        .file-item {
+            display: flex; align-items: center; padding: 10px; border-bottom: 1px solid #eee;
+            transition: 0.2s; background: white; border-radius: 6px; margin-bottom: 5px;
+        }
+        .file-item:hover { background: #f1f3f4; }
+        .file-icon { margin-right: 12px; color: #5f6368; }
+        .file-info { flex-grow: 1; overflow: hidden; }
         .file-name { font-size: 14px; font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-        .file-meta { font-size: 11px; color: var(--text-sec); margin-top: 2px; }
-        .file-action { padding: 5px; border-radius: 50%; color: var(--text-sec); }
-
-        /* FAB & NAV */
-        .fab { position: fixed; bottom: 80px; right: 20px; width: 56px; height: 56px; background: var(--primary); border-radius: 50%; color: white; display: flex; align-items: center; justify-content: center; font-size: 28px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); cursor: pointer; z-index: 50; }
-        .bottom-nav { height: 60px; background: var(--surface); border-top: 1px solid var(--border); display: flex; justify-content: space-around; align-items: center; flex-shrink: 0; }
-        .nav-item { display: flex; flex-direction: column; align-items: center; font-size: 10px; color: var(--text-sec); gap: 2px; padding: 5px 15px; cursor: pointer; }
-        .nav-item.active { color: var(--primary); }
-
-        /* MODALS */
-        .modal { position: fixed; inset: 0; background: rgba(0,0,0,0.5); z-index: 100; display: none; align-items: flex-end; backdrop-filter: blur(2px); }
-        .modal-content { background: var(--surface); width: 100%; max-width: 500px; border-radius: 16px 16px 0 0; padding: 20px; margin: 0 auto; animation: slideUp 0.3s; }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .file-meta { font-size: 11px; color: #80868b; }
         
-        .menu-item { padding: 15px 0; display: flex; align-items: center; gap: 15px; border-bottom: 1px solid var(--border); color: var(--text-main); cursor: pointer; }
+        /* Action Buttons */
+        .actions { display: flex; gap: 5px; opacity: 0.5; transition: 0.2s; }
+        .file-item:hover .actions { opacity: 1; }
+        .btn-icon { cursor: pointer; padding: 4px; border-radius: 50%; border: none; background: none; color: #5f6368; }
+        .btn-icon:hover { background: #e8eaed; color: var(--primary); }
         
-        /* SETTINGS TOGGLES */
-        .switch { position: relative; display: inline-block; width: 44px; height: 24px; margin-left: auto; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--primary); }
-        input:checked + .slider:before { transform: translateX(20px); }
-
+        /* Loader & Status */
+        .loader { text-align: center; padding: 20px; color: #80868b; display: none; }
+        .status-bar { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background: #323232; color: white; padding: 10px 20px; border-radius: 20px; font-size: 13px; display: none; z-index: 1000; }
     </style>
 </head>
 <body>
 
-    <script>
-        const CONFIG = {
-            // ⚠️ আপনার Web App URL এখানে বসান
-            SCRIPT_URL: 'https://script.google.com/macros/s/AKfycbwZ10LXbPwx4DAKVn77TX33M9t741Cv1N50UOhq0ct-Fs6COIXhCWOfPa3WPHVnNjQo/exec',
-        };
-    </script>
+    <div class="config-box">
+        <span class="material-icons-round">settings</span>
+        <input type="text" id="scriptUrl" class="url-input" placeholder="Paste your Google Script Deployment URL here (ends with /exec)">
+        <button onclick="saveConfig()" style="background:#1a73e8; color:white; border:none; padding:10px 20px; border-radius:4px; cursor:pointer;">Save & Connect</button>
+    </div>
 
-    <div id="lock-screen" class="screen active">
-        <div style="font-family: 'Google Sans'; font-size: 24px; margin-bottom: 10px;">Security Check</div>
-        <div style="color: var(--text-sec); font-size: 14px;">Enter PIN to continue</div>
+    <div class="dashboard">
         
-        <div class="pin-display">
-            <div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div><div class="pin-dot"></div>
-        </div>
-        
-        <div class="keypad">
-            <div class="key" onclick="Pin.press(1)">1</div><div class="key" onclick="Pin.press(2)">2</div><div class="key" onclick="Pin.press(3)">3</div>
-            <div class="key" onclick="Pin.press(4)">4</div><div class="key" onclick="Pin.press(5)">5</div><div class="key" onclick="Pin.press(6)">6</div>
-            <div class="key" onclick="Pin.press(7)">7</div><div class="key" onclick="Pin.press(8)">8</div><div class="key" onclick="Pin.press(9)">9</div>
-            <div class="key" onclick="Pin.clear()" style="font-size:14px; color:#d93025; background:transparent; border:none;">CLR</div>
-            <div class="key" onclick="Pin.press(0)">0</div>
-            <div class="key" onclick="Pin.back()" style="background:transparent; border:none;"><span class="material-icons-round">backspace</span></div>
-        </div>
-    </div>
-
-    <div id="auth-screen" class="screen">
-        <div class="auth-card">
-            <h2 style="font-family: 'Google Sans'; margin-bottom: 10px;">Welcome Back</h2>
-            <p style="color: var(--text-sec); margin-bottom: 30px;">Sign in to access Drive OS</p>
-            <button class="auth-btn" onclick="Auth.login()">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
-                Sign in with Google
-            </button>
-            <div style="margin-top:20px; font-size:12px; color:var(--text-sec)">Secure Connection via Google Drive API</div>
-        </div>
-    </div>
-
-    <div id="app-screen" class="screen">
-        <div class="header">
-            <span class="material-icons-round" style="color:var(--text-sec)">menu</span>
-            <div class="search-box">
-                <span class="material-icons-round" style="font-size: 20px; color:var(--text-sec)">search</span>
-                <input type="text" placeholder="Search Drive..." onkeyup="Drive.search(this.value)">
-            </div>
-            <span class="material-icons-round" onclick="Drive.refresh()" style="cursor:pointer">refresh</span>
-        </div>
-
-        <div class="toolbar">
-            <div class="breadcrumb" id="breadcrumb" onclick="Drive.home()" style="display:flex; align-items:center; gap:5px; font-weight:500;">
-                <span class="material-icons-round" style="font-size:18px;">home</span> Home
-            </div>
-            <span class="material-icons-round" onclick="UI.toggleView()" style="cursor:pointer">grid_view</span>
-        </div>
-
-        <div id="file-list" class="file-list list">
-            <div style="text-align:center; padding:50px; color:var(--text-sec)">Loading files...</div>
-        </div>
-
-        <div class="fab" onclick="document.getElementById('upload-input').click()">
-            <span class="material-icons-round">add</span>
-        </div>
-        <input type="file" id="upload-input" multiple hidden onchange="Upload.start(this.files)">
-
-        <div class="bottom-nav">
-            <div class="nav-item active" onclick="Nav.go('home', this)">
-                <span class="material-icons-round">home</span>Home
-            </div>
-            <div class="nav-item" onclick="Nav.go('vault', this)">
-                <span class="material-icons-round">lock</span>Vault
-            </div>
-            <div class="nav-item" onclick="Nav.go('settings', this)">
-                <span class="material-icons-round">settings</span>Settings
-            </div>
-        </div>
-    </div>
-
-    <div id="ctx-modal" class="modal" onclick="if(event.target===this)UI.closeModal('ctx-modal')">
-        <div class="modal-content">
-            <h3 id="ctx-title" style="margin:0 0 15px 0; font-size:18px;">Options</h3>
-            <div class="menu-item" onclick="Ops.action('preview')">
-                <span class="material-icons-round">visibility</span> Preview
-            </div>
-            <div class="menu-item" onclick="Ops.action('download')">
-                <span class="material-icons-round">download</span> Download
-            </div>
-            <div class="menu-item" onclick="Ops.action('copy')">
-                <span class="material-icons-round">content_copy</span> Make a Copy
-            </div>
-            <div class="menu-item" onclick="Ops.action('move')">
-                <span class="material-icons-round">drive_file_move</span> Move to Folder...
-            </div>
-            <div class="menu-item" onclick="Ops.action('share')">
-                <span class="material-icons-round">share</span> Share
-            </div>
-            <div class="menu-item" onclick="Ops.action('delete')" style="color:#d93025">
-                <span class="material-icons-round">delete</span> Delete
-            </div>
-        </div>
-    </div>
-
-    <div id="settings-modal" class="modal" onclick="if(event.target===this)UI.closeModal('settings-modal')">
-        <div class="modal-content">
-            <h3 style="margin:0 0 20px 0;">Settings</h3>
-            
-            <div class="menu-item" style="cursor:default">
-                <div style="flex:1">
-                    <div>Dark Mode</div>
-                    <div style="font-size:12px; color:var(--text-sec)">Switch app theme</div>
+        <div class="panel">
+            <div class="panel-header user-header">
+                <div class="panel-title">
+                    <span class="material-icons-round">person</span> My Drive
                 </div>
-                <label class="switch"><input type="checkbox" onchange="UI.toggleTheme(this)"><span class="slider"></span></label>
-            </div>
-            
-            <div class="menu-item" style="cursor:default">
-                <div style="flex:1">
-                    <div>CDN Libraries</div>
-                    <div style="font-size:12px; color:var(--text-sec)">Load external scripts</div>
+                <div class="panel-actions">
+                    <button onclick="createFolder('root', 'user')" title="New Folder">+ Folder</button>
+                    <button onclick="loadUserDrive()" title="Refresh"><span class="material-icons-round" style="font-size:16px">refresh</span></button>
                 </div>
-                <label class="switch"><input type="checkbox" checked><span class="slider"></span></label>
             </div>
-
-            <div class="menu-item" onclick="Auth.logout()" style="color:#d93025; border-top:1px solid var(--border); margin-top:10px;">
-                <span class="material-icons-round">logout</span> Sign Out
+            <div id="loader-user" class="loader">Loading...</div>
+            <div id="list-user" class="file-list">
+                <div style="text-align:center; margin-top:50px; color:#aaa">Click Connect to load files</div>
             </div>
         </div>
+
+        <div class="panel">
+            <div class="panel-header vault-header">
+                <div class="panel-title">
+                    <span class="material-icons-round">lock</span> Private Vault
+                </div>
+                <div class="panel-actions">
+                    <button onclick="createFolder(vaultId, 'vault')" title="New Folder">+ Folder</button>
+                    <button onclick="connectVault()" title="Refresh"><span class="material-icons-round" style="font-size:16px">refresh</span></button>
+                </div>
+            </div>
+            <div id="loader-vault" class="loader">Securely connecting...</div>
+            <div id="list-vault" class="file-list">
+                <div style="text-align:center; margin-top:50px; color:#aaa">Waiting for connection...</div>
+            </div>
+        </div>
+
     </div>
+
+    <div id="status" class="status-bar">Action Completed</div>
 
     <script>
-        const STATE = { 
-            folderId: 'root', 
-            view: 'list', 
-            files: [], 
-            selected: null, 
-            isVault: false 
-        };
+        // Default Config
+        const API_KEY = "AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo";
+        let SCRIPT_URL = localStorage.getItem('dmp_script_url') || "";
+        
+        // State
+        let vaultId = null; // Will be fetched from script
+        let userDriveId = 'root'; // Default User Root
 
-        // --- AUTH & PIN SYSTEM ---
-        const Pin = {
-            input: '', saved: localStorage.getItem('drive_pin') || '1234',
-            press: (n) => {
-                if(Pin.input.length < 4) {
-                    Pin.input += n; Pin.update();
-                    if(Pin.input.length === 4) setTimeout(Pin.check, 200);
+        // Initialize
+        if(SCRIPT_URL) {
+            document.getElementById('scriptUrl').value = SCRIPT_URL;
+            loadUserDrive();
+            connectVault();
+        }
+
+        function saveConfig() {
+            const url = document.getElementById('scriptUrl').value.trim();
+            if(!url) return alert("Please enter the Script URL!");
+            localStorage.setItem('dmp_script_url', url);
+            SCRIPT_URL = url;
+            loadUserDrive();
+            connectVault();
+        }
+
+        function showStatus(msg) {
+            const el = document.getElementById('status');
+            el.innerText = msg;
+            el.style.display = 'block';
+            setTimeout(() => el.style.display = 'none', 3000);
+        }
+
+        // --- Core Functions ---
+
+        async function apiCall(params) {
+            const qs = new URLSearchParams({ ...params, apiKey: API_KEY }).toString();
+            const res = await fetch(`${SCRIPT_URL}?${qs}`);
+            return await res.json();
+        }
+
+        // 1. Load User Drive
+        async function loadUserDrive() {
+            document.getElementById('loader-user').style.display = 'block';
+            document.getElementById('list-user').innerHTML = '';
+            
+            try {
+                const data = await apiCall({ action: 'files_list', folderId: 'root' });
+                if(data.success) {
+                    renderFiles(data.files, 'list-user', 'user');
                 }
-            },
-            clear: () => { Pin.input = ''; Pin.update(); },
-            back: () => { Pin.input = Pin.input.slice(0,-1); Pin.update(); },
-            update: () => {
-                document.querySelectorAll('.pin-dot').forEach((d,i) => {
-                    if(i < Pin.input.length) d.classList.add('filled');
-                    else d.classList.remove('filled');
-                });
-            },
-            check: () => {
-                if(Pin.input === Pin.saved) {
-                    document.getElementById('lock-screen').classList.remove('active');
-                    // Check if logged in locally (simulated)
-                    if(localStorage.getItem('is_logged_in')) {
-                        document.getElementById('app-screen').classList.add('active');
-                        Drive.load('root');
+            } catch(e) { console.error(e); }
+            document.getElementById('loader-user').style.display = 'none';
+        }
+
+        // 2. Connect & Load Vault
+        async function connectVault() {
+            document.getElementById('loader-vault').style.display = 'block';
+            document.getElementById('list-vault').innerHTML = '';
+
+            try {
+                // First get the private folder ID
+                if(!vaultId) {
+                    const authData = await apiCall({ action: 'get_user_vault' });
+                    if(authData.success) {
+                        vaultId = authData.folderId;
+                        console.log("Vault Connected: ", vaultId);
                     } else {
-                        document.getElementById('auth-screen').classList.add('active');
-                    }
-                } else {
-                    alert('Wrong PIN (Default: 1234)'); Pin.clear();
-                }
-            }
-        };
-
-        const Auth = {
-            login: () => {
-                // Simulate Google Sign In visual flow
-                localStorage.setItem('is_logged_in', 'true');
-                document.getElementById('auth-screen').classList.remove('active');
-                document.getElementById('app-screen').classList.add('active');
-                Drive.load('root');
-            },
-            logout: () => {
-                localStorage.removeItem('is_logged_in');
-                location.reload();
-            }
-        };
-
-        // --- API & DRIVE ---
-        const API = {
-            call: async (action, params = {}, body = null) => {
-                let url = `${CONFIG.SCRIPT_URL}?action=${action}`;
-                for(let k in params) url += `&${k}=${encodeURIComponent(params[k])}`;
-                try {
-                    const res = await fetch(url, body ? {method:'POST', body:JSON.stringify(body)} : {method:'GET'});
-                    return await res.json();
-                } catch(e) { return null; }
-            }
-        };
-
-        const Drive = {
-            load: async (id = 'root', name = 'Home') => {
-                STATE.folderId = id; STATE.isVault = (id === 'vault');
-                document.getElementById('breadcrumb').innerHTML = `<span class="material-icons-round" style="font-size:18px;">${STATE.isVault?'lock':'home'}</span> ${name}`;
-                document.getElementById('file-list').innerHTML = '<div style="text-align:center; padding:50px;">Loading...</div>';
-
-                const action = STATE.isVault ? 'vault_list' : 'files_list';
-                const data = await API.call(action, STATE.isVault ? {} : {folderId: id});
-                
-                STATE.files = data?.files || [];
-                UI.render();
-            },
-            refresh: () => Drive.load(STATE.folderId),
-            search: (q) => {
-                const filtered = STATE.files.filter(f => f.name.toLowerCase().includes(q.toLowerCase()));
-                UI.render(filtered);
-            }
-        };
-
-        // --- UI & OPERATIONS ---
-        const UI = {
-            render: (files = STATE.files) => {
-                const con = document.getElementById('file-list');
-                con.innerHTML = '';
-                con.className = `file-list ${STATE.view}`;
-                
-                if(!files.length) { con.innerHTML = '<div style="text-align:center; padding:50px;">No files</div>'; return; }
-
-                files.forEach(f => {
-                    const el = document.createElement('div');
-                    el.className = 'file-item';
-                    
-                    let icon = 'insert_drive_file', col = '#5f6368';
-                    if(f.isFolder) { icon='folder'; col='#fbbc04'; }
-                    else if(f.mimeType.includes('image')) { icon='image'; col='#34a853'; }
-                    
-                    el.innerHTML = `
-                        <span class="material-icons-round file-icon" style="color:${col}">${icon}</span>
-                        <div class="file-info">
-                            <div class="file-name">${f.name}</div>
-                            <div class="file-meta">${f.isFolder ? 'Folder' : f.sizeFormatted}</div>
-                        </div>
-                        <div class="file-action" onclick="event.stopPropagation(); Ops.menu('${f.id}')">more_vert</div>
-                    `;
-                    el.onclick = () => f.isFolder ? Drive.load(f.id, f.name) : Ops.action('preview', f);
-                    con.appendChild(el);
-                });
-            },
-            toggleView: () => { STATE.view = STATE.view === 'list' ? 'grid' : 'list'; UI.render(); },
-            toggleTheme: (el) => document.body.classList.toggle('dark-theme', el.checked),
-            closeModal: (id) => document.getElementById(id).style.display = 'none'
-        };
-
-        const Ops = {
-            menu: (id) => {
-                STATE.selected = STATE.files.find(f => f.id === id);
-                document.getElementById('ctx-title').innerText = STATE.selected.name;
-                document.getElementById('ctx-modal').style.display = 'flex';
-            },
-            action: async (type, file = STATE.selected) => {
-                UI.closeModal('ctx-modal');
-                if(!file) return;
-
-                if(type === 'preview') window.open(file.webViewLink, '_blank');
-                if(type === 'download') window.open(file.webContentLink, '_blank');
-                
-                if(type === 'delete') {
-                    if(confirm('Delete file?')) {
-                        await API.call('file_delete', {fileId: file.id});
-                        Drive.refresh();
+                        throw new Error(authData.error);
                     }
                 }
-                if(type === 'copy') {
-                    await API.call('file_copy', {fileId: file.id});
-                    alert('File copied'); Drive.refresh();
-                }
-                if(type === 'move') {
-                    const target = prompt('Enter Target Folder ID:');
-                    if(target) {
-                        await API.call('file_move', {fileId: file.id, targetId: target});
-                        Drive.refresh();
-                    }
-                }
-                if(type === 'share') {
-                    const email = prompt('Enter email to share:');
-                    if(email) await API.call('file_share', {fileId: file.id, email: email});
-                }
-            }
-        };
 
-        const Nav = {
-            go: (t, el) => {
-                document.querySelectorAll('.nav-item').forEach(i=>i.classList.remove('active'));
-                el.classList.add('active');
-                if(t==='home') Drive.load('root');
-                if(t==='vault') Drive.load('vault');
-                if(t==='settings') document.getElementById('settings-modal').style.display = 'flex';
+                // Then load files
+                const data = await apiCall({ action: 'files_list', folderId: vaultId });
+                if(data.success) {
+                    renderFiles(data.files, 'list-vault', 'vault');
+                }
+            } catch(e) { 
+                document.getElementById('list-vault').innerHTML = `<p style="color:red;text-align:center">Connection Failed: ${e.message}</p>`;
             }
-        };
+            document.getElementById('loader-vault').style.display = 'none';
+        }
 
-        // --- UPLOAD ---
-        const Upload = {
-            start: async (files) => {
-                alert('Upload started in background...');
-                const f = files[0];
-                const init = await API.call('upload_initiate', {
-                    fileName: f.name, mimeType: f.type, fileSize: f.size, 
-                    parentId: STATE.isVault ? '' : STATE.folderId
-                });
+        // 3. Render Files UI
+        function renderFiles(files, containerId, source) {
+            const container = document.getElementById(containerId);
+            if(!files || files.length === 0) {
+                container.innerHTML = '<div style="text-align:center;padding:20px;color:#999">Empty Folder</div>';
+                return;
+            }
+
+            files.forEach(file => {
+                const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                const icon = isFolder ? 'folder' : 'description';
+                const color = isFolder ? '#fbbc04' : '#1a73e8';
                 
-                if(init && init.sessionId) {
-                    await API.call('upload_chunk', {
-                        sessionId: init.sessionId, offset: 0, fileSize: f.size
-                    }, {contents: Array.from(new Uint8Array(await f.arrayBuffer()))});
-                    alert('Upload Complete!'); Drive.refresh();
-                }
-            }
-        };
+                // Determine targets for Move/Copy
+                const targetName = source === 'user' ? 'Vault' : 'User Drive';
+                const targetId = source === 'user' ? vaultId : 'root';
 
-        window.onload = () => { if(!localStorage.getItem('drive_pin')) alert('Default PIN: 1234'); };
+                const div = document.createElement('div');
+                div.className = 'file-item';
+                div.innerHTML = `
+                    <span class="material-icons-round file-icon" style="color:${color}">${icon}</span>
+                    <div class="file-info">
+                        <div class="file-name">${file.name}</div>
+                        <div class="file-meta">${isFolder ? 'Folder' : formatSize(file.size)}</div>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-icon" onclick="transferFile('${file.id}', '${targetId}', 'copy')" title="Copy to ${targetName}">
+                            <span class="material-icons-round">content_copy</span>
+                        </button>
+                        <button class="btn-icon" onclick="transferFile('${file.id}', '${targetId}', 'move')" title="Move to ${targetName}">
+                            <span class="material-icons-round">drive_file_move</span>
+                        </button>
+                        <button class="btn-icon" onclick="renameFile('${file.id}', '${file.name}', '${source}')" title="Rename">
+                            <span class="material-icons-round">edit</span>
+                        </button>
+                        <button class="btn-icon" onclick="deleteFile('${file.id}', '${source}')" title="Delete" style="color:#d93025">
+                            <span class="material-icons-round">delete</span>
+                        </button>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- Actions ---
+
+        async function transferFile(fileId, destId, mode) {
+            showStatus(mode === 'copy' ? 'Copying...' : 'Moving...');
+            const action = mode === 'copy' ? 'file_copy' : 'file_move';
+            
+            const res = await apiCall({ action: action, fileId: fileId, destId: destId });
+            
+            if(res.success) {
+                showStatus('Success!');
+                refreshAll();
+            } else {
+                alert("Error: " + res.error);
+            }
+        }
+
+        async function renameFile(fileId, oldName, source) {
+            const newName = prompt("Rename file:", oldName);
+            if(!newName || newName === oldName) return;
+
+            showStatus('Renaming...');
+            const res = await apiCall({ action: 'file_rename', fileId: fileId, newName: newName });
+            if(res.success) refreshAll();
+        }
+
+        async function deleteFile(fileId, source) {
+            if(!confirm("Are you sure you want to delete this file?")) return;
+            
+            showStatus('Deleting...');
+            const res = await apiCall({ action: 'file_delete', fileId: fileId });
+            if(res.success) refreshAll();
+        }
+
+        async function createFolder(parentId, source) {
+            const name = prompt("Enter Folder Name:");
+            if(!name) return;
+            
+            showStatus('Creating Folder...');
+            const res = await apiCall({ action: 'folder_create', parentId: parentId, name: name });
+            if(res.success) refreshAll();
+        }
+
+        function refreshAll() {
+            loadUserDrive();
+            if(vaultId) connectVault(); // Only refresh vault if connected
+        }
+
+        function formatSize(bytes) {
+            if (!bytes) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
     </script>
 </body>
 </html>
