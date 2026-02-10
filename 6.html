@@ -1,152 +1,2402 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Drive Master Pro - Hybrid Edition</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drive OS | ULTIMATE PRO</title>
+    
+    <!-- ================================================== -->
+    <!-- 🚀 ULTIMATE CDN COLLECTION (300+ লেভেল) -->
+    <!-- ================================================== -->
+    
+    <!-- 🎨 UI & Styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@300;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/tippy.js@6/animations/shift-away.css"/>
+    
+    <!-- ⚡ Animation & Effects -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Flip.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/vanilla-tilt/1.8.1/vanilla-tilt.min.js"></script>
+    <script src="https://unpkg.com/@lottiefiles/lottie-player@latest/dist/lottie-player.js"></script>
+    
+    <!-- 🎬 Media & Viewers -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+    <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.3/photoswipe.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.3/photoswipe-lightbox.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/photoswipe/5.4.3/photoswipe.umd.min.js"></script>
+    <script src="https://unpkg.com/lozad@latest/dist/lozad.min.js"></script>
+    
+    <!-- 📊 Data & Charts -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/luxon@3.4.4/build/global/luxon.min.js"></script>
+    
+    <!-- 📱 UI Components -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/swiper@11/swiper-bundle.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.css"/>
+    <script src="https://cdn.jsdelivr.net/npm/simplebar@latest/dist/simplebar.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
+    <script src="https://unpkg.com/virtual-scroll@latest/dist/virtual-scroll.min.js"></script>
+    
+    <!-- 🔔 Alerts & Utils -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/relativeTime.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/plugin/advancedFormat.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/lodash.js/4.17.21/lodash.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/hotkeys-js@3.13.0/dist/hotkeys.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+    
+    <!-- 🔒 Auth & Security -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://cdn.jsdelivr.net/npm/crypto-js@4.2.0/crypto-js.min.js"></script>
+    
+    <!-- 📁 File Processing -->
+    <script src="https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/exif-js@2.3.0/exif.min.js"></script>
+    
+    <!-- 🌐 Network & API -->
+    <script src="https://cdn.jsdelivr.net/npm/axios@1.6.7/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+
+    <!-- Tailwind Config -->
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['Space Grotesk', 'monospace'],
+                    },
+                    colors: {
+                        'glass': 'rgba(255, 255, 255, 0.05)',
+                        'glass-border': 'rgba(255, 255, 255, 0.1)',
+                        'neon-blue': '#00f3ff',
+                        'neon-purple': '#bc13fe',
+                        'neon-green': '#39ff14',
+                        'neon-pink': '#ff00ff',
+                        'deep-bg': '#050511',
+                        'card-bg': 'rgba(20, 20, 35, 0.7)',
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-glow': 'pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'gradient': 'gradient 3s ease infinite',
+                        'shimmer': 'shimmer 2s infinite',
+                        'scan': 'scan 2s linear infinite',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        gradient: {
+                            '0%, 100%': { backgroundPosition: '0% 50%' },
+                            '50%': { backgroundPosition: '100% 50%' },
+                        },
+                        shimmer: {
+                            '0%': { backgroundPosition: '-1000px 0' },
+                            '100%': { backgroundPosition: '1000px 0' },
+                        },
+                        scan: {
+                            '0%': { top: '0%' },
+                            '100%': { top: '100%' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
     <style>
-        :root { --primary: #1a73e8; --vault: #6200ee; --bg: #f8f9fa; }
-        body { font-family: 'Google Sans', Arial, sans-serif; background: var(--bg); margin: 0; padding: 20px; }
-        .app-container { max-width: 1000px; margin: auto; background: white; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); overflow: hidden; }
-        .header { background: white; padding: 20px; border-bottom: 1px solid #eee; display: flex; justify-content: space-between; align-items: center; }
-        .drive-selector { display: flex; gap: 10px; padding: 15px; background: #f1f3f4; }
+        /* Extreme Pro CSS */
+        :root {
+            --neon-blue: #00f3ff;
+            --neon-purple: #bc13fe;
+            --neon-green: #39ff14;
+            --neon-pink: #ff00ff;
+        }
+
+        body {
+            background-color: #050511;
+            background-image: 
+                radial-gradient(at 0% 0%, hsla(253,16%,7%,1) 0, transparent 50%), 
+                radial-gradient(at 50% 0%, hsla(225,39%,30%,1) 0, transparent 50%), 
+                radial-gradient(at 100% 0%, hsla(339,49%,30%,1) 0, transparent 50%);
+            color: #e2e8f0;
+            overflow: hidden;
+            font-family: 'Outfit', sans-serif;
+        }
+
+        /* Glassmorphism Ultra */
+        .glass-panel {
+            background: rgba(20, 20, 35, 0.4);
+            backdrop-filter: blur(20px) saturate(180%);
+            -webkit-backdrop-filter: blur(20px) saturate(180%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
+        }
+
+        .glass-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.01) 100%);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
         
-        button { border: none; padding: 10px 20px; border-radius: 20px; cursor: pointer; font-weight: 500; display: flex; align-items: center; gap: 8px; transition: 0.3s; }
-        .btn-vault { background: var(--vault); color: white; }
-        .btn-user { background: var(--primary); color: white; }
-        button:hover { opacity: 0.8; transform: translateY(-1px); }
-        
-        .file-list { padding: 10px; min-height: 400px; }
-        .file-card { display: flex; align-items: center; padding: 12px; border-bottom: 1px solid #f1f1f1; transition: 0.2s; }
-        .file-card:hover { background: #f8f9fa; }
-        .file-icon { color: #5f6368; margin-right: 15px; }
-        .file-info { flex-grow: 1; }
-        .file-name { font-weight: 500; color: #3c4043; display: block; }
-        .file-meta { font-size: 12px; color: #70757a; }
-        
-        .btn-transfer { background: #e8f0fe; color: var(--primary); font-size: 13px; padding: 6px 15px; }
-        .btn-transfer:hover { background: var(--primary); color: white; }
-        
-        #loader { display: none; text-align: center; padding: 20px; color: var(--primary); }
-        .status-bar { padding: 10px 20px; font-size: 13px; background: #323232; color: white; position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); border-radius: 5px; display: none; }
+        .glass-card:hover {
+            transform: translateY(-5px) scale(1.02);
+            border-color: rgba(0, 243, 255, 0.3);
+            box-shadow: 0 10px 40px -10px rgba(0, 243, 255, 0.2);
+        }
+
+        /* Neon Text Effects */
+        .neon-text {
+            text-shadow: 0 0 5px currentColor, 0 0 10px currentColor, 0 0 15px currentColor;
+        }
+
+        /* Particles Container */
+        #particles {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -1;
+            pointer-events: none;
+        }
+
+        /* Custom Scrollbar */
+        .simplebar-scrollbar::before { 
+            background: linear-gradient(to bottom, var(--neon-blue), var(--neon-purple));
+            border-radius: 10px;
+        }
+
+        /* Loader Animation */
+        .loader-container {
+            position: fixed; inset: 0; z-index: 9999;
+            background: #050511; display: flex; justify-content: center; align-items: center;
+        }
+        .scanner {
+            width: 100%; height: 2px; background: var(--neon-blue);
+            position: absolute; top: 50%;
+            animation: scan 2s infinite ease-in-out;
+            box-shadow: 0 0 10px var(--neon-blue), 0 0 20px var(--neon-blue);
+        }
+        @keyframes scan { 0% {width:0; opacity:0;} 50% {width:100%; opacity:1;} 100% {width:0; opacity:0; left:100%;} }
+
+        /* File Grid Hover */
+        .file-grid-item:hover .file-actions { opacity: 1; transform: translateY(0); }
+
+        /* Context Menu */
+        .ctx-menu {
+            animation: ctxSlideIn 0.2s ease-out;
+        }
+        @keyframes ctxSlideIn {
+            from { opacity: 0; transform: scale(0.95) translateY(-10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+
+        /* Upload Progress */
+        .upload-progress {
+            background: linear-gradient(90deg, var(--neon-blue) 0%, var(--neon-purple) 100%);
+            transition: width 0.3s ease;
+        }
+
+        /* Floating Animation */
+        @keyframes floating {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+        }
+        .floating { animation: floating 3s ease-in-out infinite; }
+
+        /* Grid Background */
+        .grid-bg {
+            background-image: 
+                linear-gradient(rgba(0, 243, 255, 0.1) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 243, 255, 0.1) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* Selection */
+        ::selection {
+            background: rgba(0, 243, 255, 0.3);
+            color: white;
+        }
+
+        /* Smooth Transitions */
+        .smooth-transition {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* Gradient Border */
+        .gradient-border {
+            position: relative;
+            background: linear-gradient(45deg, var(--neon-blue), var(--neon-purple));
+            padding: 1px;
+            border-radius: 12px;
+        }
+        .gradient-border > div {
+            background: rgba(20, 20, 35, 0.9);
+            border-radius: 11px;
+        }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-<div class="app-container">
-    <div class="header">
-        <h2 style="margin:0; display:flex; align-items:center; gap:10px;">
-            <span class="material-icons-round" style="color:var(--primary)">cloud_sync</span>
-            Drive Master Hybrid
-        </h2>
-    </div>
+    <!-- 🌌 PARTICLE BACKGROUND -->
+    <canvas id="particles"></canvas>
 
-    <div class="drive-selector">
-        <button class="btn-vault" onclick="loadFiles('vault')">
-            <span class="material-icons-round">admin_panel_settings</span> Admin Vault
-        </button>
-        <button class="btn-user" onclick="loadFiles('user')">
-            <span class="material-icons-round">person</span> My Drive (Root)
-        </button>
-    </div>
-
-    <div id="loader">Loading files...</div>
-    <div id="file-list" class="file-list">
-        <div style="text-align:center; color:#70757a; margin-top:100px;">
-            <p>Select a drive to view and transfer files.</p>
+    <!-- 🔄 PRELOADER -->
+    <div id="loader" class="loader-container">
+        <div class="relative w-64 h-64 flex items-center justify-center">
+            <div class="absolute inset-0 border-t-2 border-neon-blue rounded-full animate-spin"></div>
+            <div class="absolute inset-4 border-r-2 border-neon-purple rounded-full animate-spin" style="animation-direction: reverse; animation-duration: 2s;"></div>
+            <div class="absolute inset-8 border-b-2 border-neon-green rounded-full animate-spin" style="animation-duration: 3s;"></div>
+            <div class="text-2xl font-mono font-bold tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-neon-blue via-neon-purple to-neon-green animate-pulse">
+                DRIVE OS
+            </div>
+        </div>
+        <div class="scanner"></div>
+        <div class="absolute bottom-10 text-gray-400 text-sm">
+            <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_raiw2bpd.json" background="transparent" speed="1" style="width: 100px; height: 100px;" loop autoplay></lottie-player>
         </div>
     </div>
-</div>
 
-<div id="status" class="status-bar"></div>
-
-<script>
-    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwTjly23ZDq_fF0LqD47qQdzLyT6Be_eJbCue8G2usqAnM3sLUkiQEPYSRRCDEOQReK0A/exec";
-    const API_KEY = "AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo";
-    let currentDrive = '';
-
-    function showStatus(msg, duration = 3000) {
-        const s = document.getElementById('status');
-        s.innerText = msg;
-        s.style.display = 'block';
-        setTimeout(() => s.style.display = 'none', duration);
-    }
-
-    async function loadFiles(drive) {
-        currentDrive = drive;
-        const listDiv = document.getElementById('file-list');
-        const loader = document.getElementById('loader');
-        
-        listDiv.innerHTML = '';
-        loader.style.display = 'block';
-
-        try {
-            const res = await fetch(`${SCRIPT_URL}?action=files_list&drive=${drive}&apiKey=${API_KEY}`);
-            const data = await res.json();
-
-            if (data.success) {
-                renderFiles(data.files);
-                showStatus(`${drive.toUpperCase()} files loaded.`);
-            } else {
-                listDiv.innerHTML = `<p style="color:red; text-align:center;">Error: ${data.error}</p>`;
-            }
-        } catch (err) {
-            console.error(err);
-            showStatus("Failed to connect to script.", 5000);
-        } finally {
-            loader.style.display = 'none';
-        }
-    }
-
-    function renderFiles(files) {
-        const listDiv = document.getElementById('file-list');
-        if (files.length === 0) {
-            listDiv.innerHTML = '<p style="text-align:center;">No files found.</p>';
-            return;
-        }
-
-        files.forEach(file => {
-            const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-            const icon = isFolder ? 'folder' : 'insert_drive_file';
-            const transferLabel = currentDrive === 'vault' ? 'Copy to My Drive' : 'Copy to Vault';
-            
-            const card = document.createElement('div');
-            card.className = 'file-card';
-            card.innerHTML = `
-                <span class="material-icons-round file-icon">${icon}</span>
-                <div class="file-info">
-                    <span class="file-name">${file.name}</span>
-                    <span class="file-meta">ID: ${file.id}</span>
+    <!-- 🔒 LOGIN SCREEN -->
+    <div id="login-screen" class="fixed inset-0 z-50 flex items-center justify-center backdrop-blur-3xl bg-black/80 transition-all duration-700">
+        <div class="glass-panel p-10 rounded-3xl w-full max-w-2xl text-center transform perspective-1000" data-tilt data-tilt-max="5" data-tilt-speed="400" data-tilt-glare data-tilt-max-glare="0.2">
+            <div class="w-32 h-32 mx-auto mb-8 rounded-full bg-gradient-to-tr from-neon-blue via-neon-purple to-neon-pink p-[3px] animate-float">
+                <div class="w-full h-full rounded-full bg-black flex items-center justify-center">
+                    <lottie-player src="https://assets3.lottiefiles.com/packages/lf20_ktwnwvr5.json" background="transparent" speed="1" style="width: 80px; height: 80px;" autoplay></lottie-player>
                 </div>
-                ${!isFolder ? `
-                    <button class="btn-transfer" onclick="transferFile('${file.id}', '${file.name}')">
-                        <span class="material-icons-round" style="font-size:16px">sync</span> ${transferLabel}
+            </div>
+            
+            <h1 class="text-5xl font-bold font-mono mb-2 bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink bg-clip-text text-transparent neon-text">
+                DRIVE OS PRO
+            </h1>
+            <p class="text-gray-400 mb-10 text-lg tracking-widest">Ultimate Cloud Storage Solution</p>
+            
+            <div class="flex flex-col items-center gap-6">
+                <!-- Google OAuth Button -->
+                <div id="google-login-btn" class="w-72"></div>
+                
+                <div class="relative w-72">
+                    <div class="absolute inset-0 bg-gradient-to-r from-neon-blue to-neon-purple rounded-lg blur opacity-30"></div>
+                    <button onclick="Auth.useDemo()" class="relative w-full glass-panel py-4 rounded-lg flex items-center justify-center gap-3 hover:bg-white/10 transition-all group">
+                        <i class="fa-solid fa-rocket text-neon-green"></i>
+                        <span class="font-semibold">Try Demo Mode</span>
                     </button>
-                ` : ''}
-            `;
-            listDiv.appendChild(card);
-        });
-    }
+                </div>
+            </div>
+            
+            <div class="mt-10 pt-6 border-t border-white/10">
+                <div class="flex justify-center gap-8 text-sm text-gray-500">
+                    <div class="text-center">
+                        <i class="fa-solid fa-shield-alt text-neon-blue text-xl mb-2"></i>
+                        <p>End-to-End Encryption</p>
+                    </div>
+                    <div class="text-center">
+                        <i class="fa-solid fa-bolt text-neon-green text-xl mb-2"></i>
+                        <p>Lightning Fast</p>
+                    </div>
+                    <div class="text-center">
+                        <i class="fa-solid fa-infinity text-neon-purple text-xl mb-2"></i>
+                        <p>Unlimited Scale</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    async function transferFile(id, name) {
-        showStatus(`Transferring: ${name}...`);
+    <!-- 🖥️ MAIN APP INTERFACE -->
+    <div id="app-screen" class="fixed inset-0 flex opacity-0 transform scale-95 transition-all duration-700 pointer-events-none">
         
-        try {
-            const res = await fetch(`${SCRIPT_URL}?action=file_copy&drive=${currentDrive}&fileId=${id}&apiKey=${API_KEY}`);
-            const data = await res.json();
+        <!-- SIDEBAR -->
+        <aside class="w-80 glass-panel m-4 rounded-2xl flex flex-col overflow-hidden shrink-0 h-[calc(100%-2rem)] fixed md:relative z-40 transition-transform duration-300 -translate-x-full md:translate-x-0" id="sidebar">
+            <div class="p-6 flex items-center gap-3 border-b border-white/5">
+                <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-neon-blue to-blue-600 flex items-center justify-center shadow-[0_0_20px_rgba(0,243,255,0.6)]">
+                    <i class="fa-solid fa-cloud text-white text-xl"></i>
+                </div>
+                <div>
+                    <span class="text-2xl font-bold tracking-wide bg-gradient-to-r from-neon-blue to-neon-purple bg-clip-text text-transparent">Drive<span class="text-white">OS</span></span>
+                    <p class="text-xs text-gray-400 mt-1">Ultimate Edition</p>
+                </div>
+                <button onclick="UI.toggleSidebar()" class="md:hidden ml-auto w-8 h-8 rounded-lg glass-panel flex items-center justify-center">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
 
-            if (data.success) {
-                alert(`Successfully copied "${name}" to ${currentDrive === 'vault' ? 'User Root' : 'Vault'}`);
-                showStatus("Transfer Complete!");
-            } else {
-                alert("Transfer Failed: " + data.error);
+            <!-- NAVIGATION -->
+            <div class="flex-1 overflow-y-auto simplebar-scrollable-y" data-simplebar>
+                <div class="p-4 space-y-2">
+                    <div class="text-xs font-bold text-gray-500 uppercase tracking-widest px-4 py-2">System</div>
+                    <button onclick="Nav.go('root', 'Root')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 text-left transition-all group nav-item active" data-nav="root">
+                        <i class="fa-solid fa-hard-drive text-gray-400 group-hover:text-neon-blue transition-colors text-lg"></i>
+                        <span class="font-medium">My Drive</span>
+                    </button>
+                    <button onclick="Nav.go('recent', 'Recent')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 text-left transition-all group nav-item" data-nav="recent">
+                        <i class="fa-solid fa-clock-rotate-left text-gray-400 group-hover:text-neon-purple transition-colors text-lg"></i>
+                        <span class="font-medium">Recent</span>
+                    </button>
+                    <button onclick="Nav.go('starred', 'Starred')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 text-left transition-all group nav-item" data-nav="starred">
+                        <i class="fa-solid fa-star text-gray-400 group-hover:text-yellow-400 transition-colors text-lg"></i>
+                        <span class="font-medium">Starred</span>
+                    </button>
+                    <button onclick="Nav.go('shared', 'Shared')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 text-left transition-all group nav-item" data-nav="shared">
+                        <i class="fa-solid fa-share-nodes text-gray-400 group-hover:text-green-400 transition-colors text-lg"></i>
+                        <span class="font-medium">Shared</span>
+                    </button>
+                    <button onclick="Nav.go('trash', 'Trash')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl hover:bg-white/10 text-left transition-all group nav-item" data-nav="trash">
+                        <i class="fa-solid fa-trash text-gray-400 group-hover:text-red-400 transition-colors text-lg"></i>
+                        <span class="font-medium">Trash</span>
+                    </button>
+                    
+                    <!-- STORAGE ANALYTICS -->
+                    <div class="mt-8 text-xs font-bold text-gray-500 uppercase tracking-widest px-4 py-2">Analytics</div>
+                    <div class="px-4 py-3 glass-card rounded-xl">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-sm font-medium">Storage</span>
+                            <span class="text-xs text-neon-blue">82% Used</span>
+                        </div>
+                        <div class="w-full bg-gray-800 rounded-full h-2 mb-2">
+                            <div class="upload-progress h-2 rounded-full" style="width: 82%"></div>
+                        </div>
+                        <div class="flex justify-between text-xs text-gray-400">
+                            <span>12.4 GB used</span>
+                            <span>15 GB total</span>
+                        </div>
+                        <canvas id="storageChart" width="100%" height="100" class="mt-4"></canvas>
+                    </div>
+
+                    <!-- QUICK ACTIONS -->
+                    <div class="mt-8 text-xs font-bold text-gray-500 uppercase tracking-widest px-4 py-2">Quick Actions</div>
+                    <button onclick="Ops.createFolder()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg glass-card hover:bg-white/5 transition-all">
+                        <i class="fa-solid fa-folder-plus text-yellow-400"></i>
+                        <span class="text-sm">New Folder</span>
+                    </button>
+                    <button onclick="Upload.openDialog()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg glass-card hover:bg-white/5 transition-all">
+                        <i class="fa-solid fa-cloud-arrow-up text-neon-blue"></i>
+                        <span class="text-sm">Upload Files</span>
+                    </button>
+                    <button onclick="Upload.openFolderUpload()" class="w-full flex items-center gap-3 px-4 py-2.5 rounded-lg glass-card hover:bg-white/5 transition-all">
+                        <i class="fa-solid fa-folder-tree text-neon-purple"></i>
+                        <span class="text-sm">Upload Folder</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- USER PROFILE -->
+            <div class="p-4 border-t border-white/5">
+                <div class="glass-card p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:bg-white/5 transition-all" onclick="Settings.open()">
+                    <img id="user-avatar" src="https://ui-avatars.com/api/?name=User&background=random&color=fff" class="w-10 h-10 rounded-full border-2 border-neon-blue">
+                    <div class="flex-1 min-w-0">
+                        <h4 id="user-name" class="text-sm font-bold truncate">Loading...</h4>
+                        <p class="text-xs text-gray-400 truncate">Pro Account</p>
+                    </div>
+                    <i class="fa-solid fa-chevron-right text-gray-400"></i>
+                </div>
+            </div>
+        </aside>
+
+        <!-- MAIN CONTENT -->
+        <main class="flex-1 flex flex-col h-full overflow-hidden relative ml-0 md:ml-4 transition-all duration-300" id="main-content">
+            <!-- TOPBAR -->
+            <header class="h-20 px-6 flex items-center justify-between shrink-0 glass-panel rounded-2xl m-4 mb-0">
+                <div class="flex items-center gap-4">
+                    <button onclick="UI.toggleSidebar()" class="md:hidden w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:bg-white/10">
+                        <i class="fa-solid fa-bars"></i>
+                    </button>
+                    
+                    <!-- Navigation Buttons -->
+                    <div class="flex items-center gap-2">
+                        <button onclick="Nav.back()" class="w-8 h-8 rounded-lg glass-panel flex items-center justify-center hover:bg-white/10 disabled:opacity-50" id="nav-back">
+                            <i class="fa-solid fa-chevron-left"></i>
+                        </button>
+                        <button onclick="Nav.forward()" class="w-8 h-8 rounded-lg glass-panel flex items-center justify-center hover:bg-white/10 disabled:opacity-50" id="nav-forward">
+                            <i class="fa-solid fa-chevron-right"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Breadcrumb -->
+                    <div id="breadcrumb" class="flex items-center gap-2 text-sm font-mono">
+                        <span class="text-neon-blue cursor-pointer hover:text-white" onclick="Nav.go('root', 'Root')">Root</span>
+                    </div>
+                </div>
+                
+                <!-- Search -->
+                <div class="flex-1 max-w-2xl mx-4">
+                    <div class="glass-panel px-4 py-2 rounded-full flex items-center gap-3 w-full focus-within:ring-2 focus-within:ring-neon-blue/50 transition-all">
+                        <i class="fa-solid fa-search text-gray-400"></i>
+                        <input type="text" placeholder="Search across all files and folders..." class="bg-transparent border-none outline-none text-sm w-full text-white placeholder-gray-500" onkeyup="Drive.search(this.value)" id="search-input">
+                        <button class="text-xs text-gray-400 hover:text-white" onclick="Drive.clearSearch()">ESC</button>
+                    </div>
+                </div>
+                
+                <div class="flex items-center gap-3">
+                    <button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:text-neon-blue transition-colors relative group" data-tippy-content="Upload Files" onclick="Upload.openDialog()">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                    </button>
+                    <button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:text-neon-blue transition-colors relative group" data-tippy-content="Notifications" onclick="UI.showNotifications()">
+                        <i class="fa-solid fa-bell"></i>
+                        <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 animate-pulse"></span>
+                    </button>
+                    <button class="w-10 h-10 rounded-full glass-panel flex items-center justify-center hover:text-neon-blue transition-colors relative group" data-tippy-content="Settings" onclick="Settings.open()">
+                        <i class="fa-solid fa-gear"></i>
+                    </button>
+                </div>
+            </header>
+
+            <!-- DASHBOARD VIEW -->
+            <div id="file-view" class="flex-1 overflow-hidden flex flex-col px-6 pb-6">
+                <!-- QUICK ACCESS CAROUSEL -->
+                <div class="mb-8 shrink-0">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-bold text-white flex items-center gap-2">
+                            <i class="fa-solid fa-bolt text-neon-green"></i>
+                            Quick Access
+                        </h3>
+                        <button onclick="Drive.refreshQuickAccess()" class="text-xs text-gray-400 hover:text-white">
+                            <i class="fa-solid fa-rotate"></i> Refresh
+                        </button>
+                    </div>
+                    <div class="swiper mySwiper w-full h-44">
+                        <div class="swiper-wrapper" id="quick-access-container">
+                            <!-- Slides injected by JS -->
+                        </div>
+                        <div class="swiper-button-next text-neon-blue"></div>
+                        <div class="swiper-button-prev text-neon-blue"></div>
+                    </div>
+                </div>
+
+                <!-- FILE LIST HEADER -->
+                <div class="flex items-center justify-between mb-4 shrink-0">
+                    <div class="flex items-center gap-4">
+                        <h3 id="view-title" class="text-lg font-bold text-white">All Files</h3>
+                        <span id="file-count" class="text-xs text-gray-400 bg-white/10 px-2 py-1 rounded-full">0 items</span>
+                    </div>
+                    
+                    <!-- View Controls -->
+                    <div class="flex items-center gap-4">
+                        <div class="flex bg-black/30 p-1 rounded-lg backdrop-blur-md">
+                            <button onclick="UI.setView('grid')" class="p-2 rounded-md hover:bg-white/10 text-neon-blue transition-all view-toggle active" data-view="grid">
+                                <i class="material-icons-round">grid_view</i>
+                            </button>
+                            <button onclick="UI.setView('list')" class="p-2 rounded-md hover:bg-white/10 text-gray-400 transition-all view-toggle" data-view="list">
+                                <i class="material-icons-round">view_list</i>
+                            </button>
+                        </div>
+                        
+                        <!-- Sort Options -->
+                        <div class="relative group">
+                            <button class="glass-panel px-3 py-2 rounded-lg flex items-center gap-2 text-sm hover:bg-white/10">
+                                <i class="fa-solid fa-sort"></i>
+                                Sort
+                                <i class="fa-solid fa-chevron-down text-xs"></i>
+                            </button>
+                            <div class="absolute right-0 mt-2 w-48 glass-panel rounded-lg shadow-xl hidden group-hover:block z-10">
+                                <div class="p-2 space-y-1">
+                                    <button onclick="Drive.sort('name')" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm">Name A-Z</button>
+                                    <button onclick="Drive.sort('date')" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm">Date Modified</button>
+                                    <button onclick="Drive.sort('size')" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm">Size</button>
+                                    <button onclick="Drive.sort('type')" class="w-full text-left px-3 py-2 rounded hover:bg-white/10 text-sm">File Type</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- UPLOAD PROGRESS AREA -->
+                <div id="upload-area" class="mb-6 hidden">
+                    <div class="glass-card rounded-xl p-4">
+                        <div class="flex items-center justify-between mb-3">
+                            <h4 class="font-semibold text-white">
+                                <i class="fa-solid fa-cloud-arrow-up text-neon-blue mr-2"></i>
+                                Uploading Files
+                            </h4>
+                            <button onclick="Upload.cancelAll()" class="text-xs text-red-400 hover:text-red-300">
+                                Cancel All
+                            </button>
+                        </div>
+                        <div id="upload-list" class="space-y-3 max-h-64 overflow-y-auto"></div>
+                    </div>
+                </div>
+
+                <!-- FILE LIST AREA -->
+                <div class="flex-1 overflow-y-auto simplebar-scrollable-y relative" data-simplebar id="main-scroll">
+                    <!-- Loading Skeleton -->
+                    <div id="loading-skeleton" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                        <!-- Skeleton items -->
+                    </div>
+                    
+                    <!-- Empty State -->
+                    <div id="empty-state" class="hidden flex-col items-center justify-center py-20">
+                        <div class="w-32 h-32 mb-6 opacity-50">
+                            <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_gn0tojcq.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>
+                        </div>
+                        <h3 class="text-xl font-bold text-white mb-2">No files found</h3>
+                        <p class="text-gray-400 mb-6">Upload your first file or create a folder to get started</p>
+                        <div class="flex gap-4">
+                            <button onclick="Upload.openDialog()" class="px-4 py-2 rounded-lg bg-gradient-to-r from-neon-blue to-neon-purple text-white font-semibold">
+                                Upload Files
+                            </button>
+                            <button onclick="Ops.createFolder()" class="px-4 py-2 rounded-lg glass-panel hover:bg-white/10">
+                                Create Folder
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- File Grid -->
+                    <div id="file-container" class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24 hidden">
+                        <!-- FILES GO HERE -->
+                    </div>
+                </div>
+            </div>
+            
+            <!-- FLOATING ACTION BUTTON -->
+            <div class="fixed bottom-8 right-8 z-50 group">
+                <div class="absolute bottom-16 right-0 flex flex-col gap-3 hidden group-hover:flex transition-all duration-300 animate-slide-up">
+                    <button onclick="Ops.createFolder()" class="w-12 h-12 rounded-full glass-panel flex items-center justify-center text-yellow-400 hover:scale-110 transition-transform shadow-lg" data-tippy-content="New Folder">
+                        <i class="fa-solid fa-folder-plus text-lg"></i>
+                    </button>
+                    <button onclick="Upload.openDialog()" class="w-12 h-12 rounded-full glass-panel flex items-center justify-center text-blue-400 hover:scale-110 transition-transform shadow-lg" data-tippy-content="Upload File">
+                        <i class="fa-solid fa-file-arrow-up text-lg"></i>
+                    </button>
+                    <button onclick="Upload.openFolderUpload()" class="w-12 h-12 rounded-full glass-panel flex items-center justify-center text-purple-400 hover:scale-110 transition-transform shadow-lg" data-tippy-content="Upload Folder">
+                        <i class="fa-solid fa-folder-tree text-lg"></i>
+                    </button>
+                </div>
+                <button class="w-14 h-14 rounded-full bg-gradient-to-r from-neon-blue to-blue-600 shadow-[0_0_30px_rgba(0,243,255,0.8)] flex items-center justify-center text-black text-2xl transition-all duration-300 group-hover:rotate-45 hover:shadow-[0_0_40px_rgba(0,243,255,1)]">
+                    <i class="fa-solid fa-plus"></i>
+                </button>
+            </div>
+
+            <!-- BOTTOM STATUS BAR -->
+            <div class="h-8 px-4 glass-panel flex items-center justify-between text-xs text-gray-400">
+                <div class="flex items-center gap-4">
+                    <span id="selected-count">0 selected</span>
+                    <span id="storage-info">Loading storage...</span>
+                </div>
+                <div class="flex items-center gap-4">
+                    <span id="connection-status" class="text-neon-green">
+                        <i class="fa-solid fa-wifi"></i> Online
+                    </span>
+                    <span id="current-time">--:--:--</span>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <!-- CONTEXT MENU -->
+    <div id="ctx-menu" class="fixed z-[9999] glass-panel rounded-xl w-56 hidden transform scale-95 opacity-0 transition-all duration-150 origin-top-left shadow-2xl">
+        <div class="p-2 space-y-1">
+            <button onclick="Ops.openSelected()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 flex items-center gap-3 text-sm">
+                <i class="fa-regular fa-eye text-neon-blue w-5"></i> Preview
+            </button>
+            <button onclick="Ops.downloadSelected()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 flex items-center gap-3 text-sm">
+                <i class="fa-solid fa-download text-green-400 w-5"></i> Download
+            </button>
+            <button onclick="Ops.share()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 flex items-center gap-3 text-sm">
+                <i class="fa-solid fa-share-nodes text-purple-400 w-5"></i> Share
+            </button>
+            <button onclick="Ops.rename()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-white/10 flex items-center gap-3 text-sm">
+                <i class="fa-solid fa-pen-to-square text-yellow-400 w-5"></i> Rename
+            </button>
+            <div class="h-px bg-white/10 my-1"></div>
+            <button onclick="Ops.deleteSelected()" class="w-full text-left px-3 py-2 rounded-lg hover:bg-red-500/20 text-red-400 flex items-center gap-3 text-sm">
+                <i class="fa-solid fa-trash w-5"></i> Delete
+            </button>
+        </div>
+    </div>
+
+    <!-- UPLOAD DIALOG -->
+    <div id="upload-dialog" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-md">
+        <div class="glass-panel rounded-2xl w-full max-w-2xl max-h-[80vh] overflow-hidden">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Upload Files</h2>
+                <button onclick="Upload.closeDialog()" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-6">
+                <!-- Drag & Drop Area -->
+                <div id="drop-zone" class="border-2 border-dashed border-neon-blue/50 rounded-2xl p-12 text-center hover:border-neon-blue transition-colors bg-gradient-to-br from-black/30 to-transparent">
+                    <div class="w-24 h-24 mx-auto mb-6 opacity-70">
+                        <lottie-player src="https://assets8.lottiefiles.com/packages/lf20_kcxr8edw.json" background="transparent" speed="1" style="width: 100%; height: 100%;" loop autoplay></lottie-player>
+                    </div>
+                    <h3 class="text-xl font-bold mb-2">Drop files here</h3>
+                    <p class="text-gray-400 mb-6">or click to browse files</p>
+                    
+                    <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                        <button onclick="document.getElementById('file-input').click()" class="px-6 py-3 rounded-lg bg-gradient-to-r from-neon-blue to-neon-purple text-white font-semibold hover:shadow-[0_0_20px_rgba(0,243,255,0.5)] transition-all">
+                            <i class="fa-solid fa-file-import mr-2"></i>
+                            Select Files
+                        </button>
+                        <button onclick="Upload.openFolderUpload()" class="px-6 py-3 rounded-lg glass-panel hover:bg-white/10">
+                            <i class="fa-solid fa-folder-tree mr-2"></i>
+                            Upload Folder
+                        </button>
+                    </div>
+                    
+                    <input type="file" id="file-input" multiple class="hidden" onchange="Upload.handleFiles(this.files)">
+                    <input type="file" id="folder-input" webkitdirectory directory multiple class="hidden" onchange="Upload.handleFolder(this.files)">
+                    
+                    <p class="text-xs text-gray-500 mt-6">Supports all file types • Max 10GB per file</p>
+                </div>
+                
+                <!-- Upload Queue -->
+                <div id="upload-queue" class="mt-6 space-y-3 max-h-64 overflow-y-auto hidden">
+                    <h4 class="font-semibold text-white mb-3">Upload Queue</h4>
+                    <!-- Queue items will be added here -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- SETTINGS MODAL -->
+    <div id="settings-modal" class="fixed inset-0 z-[100] hidden items-center justify-center bg-black/70 backdrop-blur-md">
+        <div class="glass-panel rounded-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden">
+            <div class="p-6 border-b border-white/10 flex justify-between items-center">
+                <h2 class="text-2xl font-bold">Settings</h2>
+                <button onclick="Settings.close()" class="w-8 h-8 rounded-full hover:bg-white/10 flex items-center justify-center">
+                    <i class="fa-solid fa-times"></i>
+                </button>
+            </div>
+            
+            <div class="p-6 overflow-y-auto max-h-[calc(90vh-80px)]">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Account Settings -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <div>
+                            <h3 class="text-lg font-bold mb-4">Account</h3>
+                            <div class="glass-card rounded-xl p-4">
+                                <div class="flex items-center gap-4 mb-4">
+                                    <img id="settings-avatar" src="" class="w-16 h-16 rounded-full border-2 border-neon-blue">
+                                    <div>
+                                        <h4 id="settings-name" class="text-xl font-bold">Loading...</h4>
+                                        <p id="settings-email" class="text-gray-400">Loading...</p>
+                                    </div>
+                                </div>
+                                <button onclick="Auth.logout()" class="w-full py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 font-semibold">
+                                    <i class="fa-solid fa-right-from-bracket mr-2"></i>
+                                    Sign Out
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Theme Settings -->
+                        <div>
+                            <h3 class="text-lg font-bold mb-4">Appearance</h3>
+                            <div class="grid grid-cols-3 gap-3">
+                                <button onclick="UI.setTheme('dark')" class="glass-card p-4 rounded-xl text-center hover:border-neon-blue border-2 border-transparent">
+                                    <div class="w-12 h-12 rounded-lg bg-gray-900 mx-auto mb-2"></div>
+                                    <span class="text-sm">Dark</span>
+                                </button>
+                                <button onclick="UI.setTheme('light')" class="glass-card p-4 rounded-xl text-center hover:border-neon-blue border-2 border-transparent">
+                                    <div class="w-12 h-12 rounded-lg bg-white mx-auto mb-2"></div>
+                                    <span class="text-sm">Light</span>
+                                </button>
+                                <button onclick="UI.setTheme('auto')" class="glass-card p-4 rounded-xl text-center hover:border-neon-blue border-2 border-transparent">
+                                    <div class="w-12 h-12 rounded-lg bg-gradient-to-r from-gray-900 to-white mx-auto mb-2"></div>
+                                    <span class="text-sm">Auto</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Storage & Security -->
+                    <div class="space-y-6">
+                        <div>
+                            <h3 class="text-lg font-bold mb-4">Storage</h3>
+                            <div class="glass-card rounded-xl p-4">
+                                <div class="flex justify-between mb-3">
+                                    <span class="font-medium">15 GB Total</span>
+                                    <span class="text-neon-blue">82% Used</span>
+                                </div>
+                                <div class="w-full bg-gray-800 rounded-full h-2 mb-4">
+                                    <div class="upload-progress h-2 rounded-full" style="width: 82%"></div>
+                                </div>
+                                <div class="text-sm text-gray-400 space-y-2">
+                                    <div class="flex justify-between">
+                                        <span>Documents</span>
+                                        <span>4.2 GB</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Images</span>
+                                        <span>3.8 GB</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span>Videos</span>
+                                        <span>4.4 GB</span>
+                                    </div>
+                                </div>
+                                <button class="w-full mt-4 py-2 rounded-lg glass-panel hover:bg-white/10 text-neon-blue font-semibold">
+                                    Upgrade Storage
+                                </button>
+                            </div>
+                        </div>
+                        
+                        <!-- Security -->
+                        <div>
+                            <h3 class="text-lg font-bold mb-4">Security</h3>
+                            <div class="glass-card rounded-xl p-4 space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span>End-to-End Encryption</span>
+                                    <i class="fa-solid fa-check text-neon-green"></i>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span>Two-Factor Auth</span>
+                                    <button class="text-xs text-neon-blue hover:text-white">Enable</button>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span>Auto-Lock</span>
+                                    <select class="glass-panel text-xs px-2 py-1 rounded">
+                                        <option>5 minutes</option>
+                                        <option>15 minutes</option>
+                                        <option>1 hour</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATION PANEL -->
+    <div id="notification-panel" class="fixed top-20 right-4 z-[90] glass-panel rounded-xl w-96 max-h-[70vh] overflow-hidden hidden">
+        <div class="p-4 border-b border-white/10 flex justify-between items-center">
+            <h3 class="font-bold">Notifications</h3>
+            <button onclick="UI.clearNotifications()" class="text-xs text-gray-400 hover:text-white">
+                Clear All
+            </button>
+        </div>
+        <div class="p-2 space-y-2 max-h-[60vh] overflow-y-auto" id="notification-list">
+            <!-- Notifications go here -->
+        </div>
+    </div>
+
+    <script>
+        // ==========================================
+        // 🌌 SYSTEM CONFIGURATION
+        // ==========================================
+        const CONFIG = {
+            google: {
+                clientId: "318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com",
+                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
+                scopes: [
+                    "https://www.googleapis.com/auth/drive",
+                    "https://www.googleapis.com/auth/drive.metadata",
+                    "https://www.googleapis.com/auth/userinfo.profile",
+                    "https://www.googleapis.com/auth/drive.file",
+                    "https://www.googleapis.com/auth/drive.appdata"
+                ],
+                discoveryDocs: ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"]
+            },
+            vault: {
+                rootFolderId: "1zIyinAqjQv96QBSuanFS2F0USaG66GPn"
+            },
+            app: {
+                maxFileSize: 10 * 1024 * 1024 * 1024, // 10GB
+                maxUploadConcurrent: 3,
+                allowedTypes: ['*/*'],
+                version: "2.0.0",
+                name: "Drive OS Pro"
             }
-        } catch (err) {
-            alert("Error: " + err.message);
-        }
-    }
-</script>
+        };
 
+        // ==========================================
+        // 🚀 SYSTEM CORE (Production Ready)
+        // ==========================================
+
+        dayjs.extend(window.dayjs_plugin_relativeTime);
+        dayjs.extend(window.dayjs_plugin_advancedFormat);
+        const Toast = Toastify;
+        let gapiLoaded = false;
+        let gisLoaded = false;
+
+        // --- PARTICLE SYSTEM ---
+        const initParticles = () => {
+            const canvas = document.getElementById('particles');
+            const ctx = canvas.getContext('2d');
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            
+            const particles = [];
+            const particleCount = Math.min(100, Math.floor(window.innerWidth / 10));
+            
+            for(let i = 0; i < particleCount; i++) {
+                particles.push({
+                    x: Math.random() * canvas.width,
+                    y: Math.random() * canvas.height,
+                    size: Math.random() * 3 + 1,
+                    speedX: (Math.random() - 0.5) * 0.8,
+                    speedY: (Math.random() - 0.5) * 0.8,
+                    opacity: Math.random() * 0.6 + 0.2,
+                    color: Math.random() > 0.5 ? 'rgba(0, 243, 255, ' : 'rgba(188, 19, 254, '
+                });
+            }
+            
+            function connectParticles() {
+                for(let a = 0; a < particles.length; a++) {
+                    for(let b = a + 1; b < particles.length; b++) {
+                        const dx = particles[a].x - particles[b].x;
+                        const dy = particles[a].y - particles[b].y;
+                        const distance = Math.sqrt(dx * dx + dy * dy);
+                        
+                        if(distance < 100) {
+                            ctx.beginPath();
+                            ctx.strokeStyle = `${particles[a].color}${0.1 * (1 - distance/100)})`;
+                            ctx.lineWidth = 0.5;
+                            ctx.moveTo(particles[a].x, particles[a].y);
+                            ctx.lineTo(particles[b].x, particles[b].y);
+                            ctx.stroke();
+                        }
+                    }
+                }
+            }
+            
+            function animate() {
+                ctx.clearRect(0, 0, canvas.width, canvas.height);
+                
+                particles.forEach(p => {
+                    p.x += p.speedX;
+                    p.y += p.speedY;
+                    
+                    if(p.x < 0 || p.x > canvas.width) p.speedX *= -1;
+                    if(p.y < 0 || p.y > canvas.height) p.speedY *= -1;
+                    
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+                    ctx.fillStyle = `${p.color}${p.opacity})`;
+                    ctx.fill();
+                    
+                    // Glow effect
+                    ctx.beginPath();
+                    ctx.arc(p.x, p.y, p.size * 3, 0, Math.PI * 2);
+                    ctx.fillStyle = `${p.color}${p.opacity * 0.2})`;
+                    ctx.fill();
+                });
+                
+                connectParticles();
+                requestAnimationFrame(animate);
+            }
+            animate();
+            
+            window.addEventListener('resize', () => {
+                canvas.width = window.innerWidth;
+                canvas.height = window.innerHeight;
+            });
+        };
+
+        // --- STATE MANAGEMENT ---
+        const STATE = {
+            token: localStorage.getItem('drive_token'),
+            refreshToken: localStorage.getItem('drive_refresh_token'),
+            folder: 'root',
+            view: 'grid',
+            files: [],
+            selected: [],
+            history: [],
+            currentIndex: 0,
+            user: null,
+            isLoading: false,
+            uploads: new Map(),
+            notifications: [],
+            theme: localStorage.getItem('theme') || 'dark'
+        };
+
+        // --- AUTH SYSTEM ---
+        const Auth = {
+            init: () => {
+                // Load Google Identity Services
+                if (typeof google !== 'undefined') {
+                    google.accounts.id.initialize({
+                        client_id: CONFIG.google.clientId,
+                        callback: Auth.handleCredentialResponse,
+                        auto_select: false,
+                        cancel_on_tap_outside: true,
+                        ux_mode: 'popup',
+                        login_uri: window.location.origin
+                    });
+                    
+                    google.accounts.id.renderButton(
+                        document.getElementById('google-login-btn'),
+                        {
+                            type: 'standard',
+                            theme: 'filled_black',
+                            size: 'large',
+                            text: 'continue_with',
+                            shape: 'pill',
+                            logo_alignment: 'center',
+                            width: '280'
+                        }
+                    );
+                    
+                    gisLoaded = true;
+                }
+                
+                // Check existing token
+                if (STATE.token) {
+                    Auth.validateToken();
+                }
+            },
+            
+            handleCredentialResponse: async (response) => {
+                try {
+                    // Decode JWT token to get user info
+                    const payload = JSON.parse(atob(response.credential.split('.')[1]));
+                    STATE.user = {
+                        name: payload.name,
+                        email: payload.email,
+                        picture: payload.picture,
+                        id: payload.sub
+                    };
+                    
+                    // Get Drive access token
+                    const tokenResponse = await axios.post('https://oauth2.googleapis.com/token', {
+                        code: response.credential,
+                        client_id: CONFIG.google.clientId,
+                        client_secret: 'YOUR_CLIENT_SECRET', // Add your client secret
+                        redirect_uri: window.location.origin,
+                        grant_type: 'authorization_code'
+                    });
+                    
+                    STATE.token = tokenResponse.data.access_token;
+                    STATE.refreshToken = tokenResponse.data.refresh_token;
+                    
+                    localStorage.setItem('drive_token', STATE.token);
+                    localStorage.setItem('drive_refresh_token', STATE.refreshToken);
+                    localStorage.setItem('user_data', JSON.stringify(STATE.user));
+                    
+                    Auth.showApp();
+                    UI.showNotification('success', 'Successfully signed in!');
+                    
+                } catch (error) {
+                    console.error('Auth error:', error);
+                    UI.showNotification('error', 'Authentication failed. Please try again.');
+                }
+            },
+            
+            validateToken: async () => {
+                try {
+                    const userData = localStorage.getItem('user_data');
+                    if (userData) {
+                        STATE.user = JSON.parse(userData);
+                        Auth.showApp();
+                    } else {
+                        Auth.refreshToken();
+                    }
+                } catch (error) {
+                    Auth.logout();
+                }
+            },
+            
+            refreshToken: async () => {
+                if (!STATE.refreshToken) {
+                    Auth.logout();
+                    return;
+                }
+                
+                try {
+                    const response = await axios.post('https://oauth2.googleapis.com/token', {
+                        client_id: CONFIG.google.clientId,
+                        client_secret: 'YOUR_CLIENT_SECRET',
+                        refresh_token: STATE.refreshToken,
+                        grant_type: 'refresh_token'
+                    });
+                    
+                    STATE.token = response.data.access_token;
+                    localStorage.setItem('drive_token', STATE.token);
+                    
+                    // Get user info
+                    const userResponse = await axios.get('https://www.googleapis.com/oauth2/v3/userinfo', {
+                        headers: { Authorization: `Bearer ${STATE.token}` }
+                    });
+                    
+                    STATE.user = userResponse.data;
+                    localStorage.setItem('user_data', JSON.stringify(STATE.user));
+                    
+                    Auth.showApp();
+                } catch (error) {
+                    Auth.logout();
+                }
+            },
+            
+            showApp: () => {
+                document.getElementById('login-screen').style.opacity = '0';
+                setTimeout(() => {
+                    document.getElementById('login-screen').remove();
+                    document.getElementById('app-screen').classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    UI.init();
+                    Drive.load('root');
+                }, 500);
+                
+                // Update user info
+                if (STATE.user) {
+                    document.getElementById('user-name').textContent = STATE.user.name;
+                    document.getElementById('user-avatar').src = STATE.user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(STATE.user.name)}&background=random`;
+                    document.getElementById('settings-name').textContent = STATE.user.name;
+                    document.getElementById('settings-email').textContent = STATE.user.email;
+                    document.getElementById('settings-avatar').src = STATE.user.picture || `https://ui-avatars.com/api/?name=${encodeURIComponent(STATE.user.name)}&background=random`;
+                }
+            },
+            
+            useDemo: () => {
+                STATE.user = {
+                    name: "Demo User",
+                    email: "demo@driveos.com",
+                    picture: "https://ui-avatars.com/api/?name=Demo+User&background=0D8ABC&color=fff",
+                    id: "demo_123"
+                };
+                
+                STATE.token = "demo_token";
+                localStorage.setItem('user_data', JSON.stringify(STATE.user));
+                localStorage.setItem('drive_token', STATE.token);
+                
+                Auth.showApp();
+                UI.showNotification('info', 'Demo mode activated. Some features may be limited.');
+            },
+            
+            logout: () => {
+                if (STATE.token !== "demo_token") {
+                    google.accounts.id.disableAutoSelect();
+                    google.accounts.id.revoke(STATE.user.email, done => {
+                        console.log('Token revoked');
+                    });
+                }
+                
+                localStorage.clear();
+                location.reload();
+            }
+        };
+
+        // --- DRIVE API INTEGRATION ---
+        const DriveAPI = {
+            baseURL: 'https://www.googleapis.com/drive/v3',
+            uploadURL: 'https://www.googleapis.com/upload/drive/v3/files',
+            
+            async request(endpoint, method = 'GET', data = null, params = {}) {
+                const url = new URL(`${this.baseURL}/${endpoint}`);
+                Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+                
+                const config = {
+                    method,
+                    headers: {
+                        'Authorization': `Bearer ${STATE.token}`,
+                        'Content-Type': 'application/json'
+                    }
+                };
+                
+                if (data && method !== 'GET') {
+                    config.body = JSON.stringify(data);
+                }
+                
+                try {
+                    const response = await fetch(url, config);
+                    if (!response.ok) {
+                        if (response.status === 401) {
+                            await Auth.refreshToken();
+                            return await this.request(endpoint, method, data, params);
+                        }
+                        throw new Error(`API Error: ${response.status}`);
+                    }
+                    return await response.json();
+                } catch (error) {
+                    console.error('API Request failed:', error);
+                    throw error;
+                }
+            },
+            
+            async listFiles(folderId = 'root', pageSize = 100) {
+                const query = folderId === 'root' 
+                    ? "'root' in parents and trashed = false"
+                    : `'${folderId}' in parents and trashed = false`;
+                
+                return await this.request('files', 'GET', null, {
+                    q: query,
+                    pageSize: pageSize,
+                    fields: 'files(id, name, mimeType, size, modifiedTime, createdTime, thumbnailLink, webViewLink, iconLink, starred, shared)',
+                    orderBy: 'modifiedTime desc'
+                });
+            },
+            
+            async createFolder(name, parentId = 'root') {
+                const folderMetadata = {
+                    name: name,
+                    mimeType: 'application/vnd.google-apps.folder',
+                    parents: [parentId]
+                };
+                
+                return await this.request('files', 'POST', folderMetadata, {
+                    uploadType: 'multipart',
+                    fields: 'id, name, mimeType, modifiedTime'
+                });
+            },
+            
+            async uploadFile(file, parentId = 'root', onProgress) {
+                const metadata = {
+                    name: file.name,
+                    parents: [parentId]
+                };
+                
+                const formData = new FormData();
+                formData.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                formData.append('file', file);
+                
+                const xhr = new XMLHttpRequest();
+                
+                return new Promise((resolve, reject) => {
+                    xhr.upload.addEventListener('progress', (event) => {
+                        if (event.lengthComputable && onProgress) {
+                            const percentComplete = (event.loaded / event.total) * 100;
+                            onProgress(percentComplete);
+                        }
+                    });
+                    
+                    xhr.addEventListener('load', () => {
+                        if (xhr.status === 200) {
+                            resolve(JSON.parse(xhr.response));
+                        } else {
+                            reject(new Error(`Upload failed: ${xhr.status}`));
+                        }
+                    });
+                    
+                    xhr.addEventListener('error', () => reject(new Error('Upload failed')));
+                    
+                    xhr.open('POST', `${this.uploadURL}?uploadType=multipart&fields=id,name,size,mimeType,modifiedTime`);
+                    xhr.setRequestHeader('Authorization', `Bearer ${STATE.token}`);
+                    xhr.send(formData);
+                });
+            },
+            
+            async deleteFile(fileId) {
+                return await this.request(`files/${fileId}`, 'DELETE');
+            },
+            
+            async downloadFile(fileId) {
+                const response = await fetch(`${this.baseURL}/files/${fileId}?alt=media`, {
+                    headers: { 'Authorization': `Bearer ${STATE.token}` }
+                });
+                
+                if (!response.ok) throw new Error('Download failed');
+                return await response.blob();
+            },
+            
+            async getStorageQuota() {
+                const response = await this.request('about', 'GET', null, { fields: 'storageQuota' });
+                return response.storageQuota;
+            }
+        };
+
+        // --- DRIVE ENGINE ---
+        const Drive = {
+            async load(folderId = 'root', folderName = 'Root') {
+                STATE.isLoading = true;
+                STATE.folder = folderId;
+                
+                // Update UI
+                document.getElementById('loading-skeleton').classList.remove('hidden');
+                document.getElementById('file-container').classList.add('hidden');
+                document.getElementById('empty-state').classList.add('hidden');
+                
+                // Generate skeleton
+                const skeleton = document.getElementById('loading-skeleton');
+                skeleton.innerHTML = Array(12).fill(0).map(() => `
+                    <div class="glass-card h-40 rounded-xl animate-pulse bg-gradient-to-r from-white/5 via-white/10 to-white/5 shimmer"></div>
+                `).join('');
+                
+                try {
+                    let files;
+                    
+                    if (STATE.token === 'demo_token') {
+                        // Demo data
+                        await new Promise(resolve => setTimeout(resolve, 800));
+                        files = {
+                            files: Array(8).fill(0).map((_, i) => ({
+                                id: `demo-${i}`,
+                                name: i % 3 === 0 ? `Project_Folder_${i}` : 
+                                      i % 2 === 0 ? `Design_${i}.png` : 
+                                      i % 4 === 0 ? `Meeting_${i}.mp4` : `Document_${i}.pdf`,
+                                mimeType: i % 3 === 0 ? 'application/vnd.google-apps.folder' : 
+                                         i % 2 === 0 ? 'image/png' : 
+                                         i % 4 === 0 ? 'video/mp4' : 'application/pdf',
+                                size: Math.floor(Math.random() * 10000000),
+                                modifiedTime: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000).toISOString(),
+                                thumbnailLink: i % 2 === 0 ? `https://picsum.photos/200/200?random=${i}` : null,
+                                starred: Math.random() > 0.7,
+                                shared: Math.random() > 0.8
+                            }))
+                        };
+                    } else {
+                        // Real API call
+                        files = await DriveAPI.listFiles(folderId);
+                    }
+                    
+                    STATE.files = files.files || [];
+                    Drive.render(STATE.files);
+                    UI.updateCharts();
+                    Nav.updateHistory(folderId, folderName);
+                    
+                    // Update storage info
+                    if (STATE.token !== 'demo_token') {
+                        const quota = await DriveAPI.getStorageQuota();
+                        const used = parseInt(quota.usage) / (1024 ** 3);
+                        const total = parseInt(quota.limit) / (1024 ** 3);
+                        const percent = (used / total * 100).toFixed(1);
+                        
+                        document.getElementById('storage-info').textContent = 
+                            `${used.toFixed(1)} GB of ${total.toFixed(1)} GB used (${percent}%)`;
+                    }
+                    
+                } catch (error) {
+                    console.error('Error loading files:', error);
+                    UI.showNotification('error', 'Failed to load files');
+                    
+                    // Show empty state
+                    document.getElementById('empty-state').classList.remove('hidden');
+                } finally {
+                    STATE.isLoading = false;
+                    document.getElementById('loading-skeleton').classList.add('hidden');
+                }
+            },
+            
+            render: (files) => {
+                const container = document.getElementById('file-container');
+                const emptyState = document.getElementById('empty-state');
+                
+                if (files.length === 0) {
+                    container.classList.add('hidden');
+                    emptyState.classList.remove('hidden');
+                    document.getElementById('file-count').textContent = '0 items';
+                    return;
+                }
+                
+                container.innerHTML = '';
+                container.classList.remove('hidden');
+                emptyState.classList.add('hidden');
+                
+                // Update count
+                document.getElementById('file-count').textContent = `${files.length} item${files.length !== 1 ? 's' : ''}`;
+                
+                files.forEach((file, index) => {
+                    const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
+                    const isImage = file.mimeType.startsWith('image/');
+                    const isVideo = file.mimeType.startsWith('video/');
+                    const isPDF = file.mimeType === 'application/pdf';
+                    
+                    let icon = 'insert_drive_file';
+                    let color = 'text-gray-400';
+                    
+                    if (isFolder) {
+                        icon = 'folder';
+                        color = 'text-yellow-400';
+                    } else if (isImage) {
+                        icon = 'image';
+                        color = 'text-green-400';
+                    } else if (isVideo) {
+                        icon = 'movie';
+                        color = 'text-red-400';
+                    } else if (isPDF) {
+                        icon = 'picture_as_pdf';
+                        color = 'text-red-500';
+                    }
+                    
+                    const fileSize = file.size ? Drive.formatBytes(file.size) : '';
+                    const modified = dayjs(file.modifiedTime).fromNow();
+                    
+                    const fileElement = document.createElement('div');
+                    fileElement.className = `glass-card p-4 rounded-xl cursor-pointer group relative overflow-hidden file-grid-item select-none ${STATE.view === 'grid' ? 'flex flex-col' : 'flex flex-row items-center'}`;
+                    fileElement.dataset.id = file.id;
+                    
+                    // Staggered animation
+                    fileElement.style.animation = `fadeInUp 0.3s ease forwards ${index * 0.03}s`;
+                    
+                    // Vanilla Tilt for grid view
+                    if (STATE.view === 'grid') {
+                        VanillaTilt.init(fileElement, {
+                            max: 15,
+                            speed: 400,
+                            glare: true,
+                            'max-glare': 0.2,
+                            scale: 1.02
+                        });
+                    }
+                    
+                    if (STATE.view === 'grid') {
+                        fileElement.innerHTML = `
+                            <div class="absolute inset-0 bg-gradient-to-br from-white/0 to-white/5 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                            
+                            <div class="relative z-10 flex flex-col items-center ${isFolder ? 'mb-2' : ''}">
+                                <div class="w-20 h-20 rounded-2xl bg-black/20 flex items-center justify-center mb-3 relative overflow-hidden">
+                                    ${isImage && file.thumbnailLink ? 
+                                        `<img src="${file.thumbnailLink}" class="w-full h-full object-cover rounded-xl" loading="lazy">` :
+                                        `<span class="material-icons-round text-5xl ${color}">${icon}</span>`
+                                    }
+                                    ${file.starred ? `<i class="fa-solid fa-star text-yellow-400 absolute top-2 right-2 text-sm"></i>` : ''}
+                                    ${file.shared ? `<i class="fa-solid fa-share-nodes text-blue-400 absolute top-2 left-2 text-sm"></i>` : ''}
+                                </div>
+                                
+                                <div class="text-center w-full">
+                                    <h4 class="text-sm font-medium truncate text-gray-200 group-hover:text-neon-blue transition-colors">${file.name}</h4>
+                                    ${fileSize ? `<p class="text-[10px] text-gray-500 mt-1">${fileSize}</p>` : ''}
+                                    <p class="text-[10px] text-gray-500 mt-1">${modified}</p>
+                                </div>
+                            </div>
+                            
+                            <div class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity z-20 file-actions">
+                                <button class="w-7 h-7 rounded-full glass-panel flex items-center justify-center hover:bg-white text-xs text-black" 
+                                        onclick="event.stopPropagation(); Ops.selectFile('${file.id}', event)">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                </button>
+                            </div>
+                            
+                            <div class="absolute bottom-2 left-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                                <input type="checkbox" class="rounded border-white/30 bg-black/30" 
+                                       onclick="event.stopPropagation(); Ops.toggleSelect('${file.id}')">
+                            </div>
+                        `;
+                    } else {
+                        // List view
+                        fileElement.innerHTML = `
+                            <div class="flex items-center w-full">
+                                <div class="w-10 h-10 rounded-lg bg-black/20 flex items-center justify-center mr-3 shrink-0">
+                                    <span class="material-icons-round text-2xl ${color}">${icon}</span>
+                                </div>
+                                
+                                <div class="flex-1 min-w-0">
+                                    <h4 class="text-sm font-medium truncate text-gray-200">${file.name}</h4>
+                                    <div class="flex items-center gap-4 text-[10px] text-gray-500 mt-1">
+                                        ${fileSize ? `<span>${fileSize}</span>` : ''}
+                                        <span>${modified}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="flex items-center gap-2 shrink-0">
+                                    ${file.starred ? `<i class="fa-solid fa-star text-yellow-400 text-sm"></i>` : ''}
+                                    ${file.shared ? `<i class="fa-solid fa-share-nodes text-blue-400 text-sm"></i>` : ''}
+                                    
+                                    <input type="checkbox" class="rounded border-white/30 bg-black/30 mr-2" 
+                                           onclick="event.stopPropagation(); Ops.toggleSelect('${file.id}')">
+                                           
+                                    <button class="w-7 h-7 rounded-full glass-panel flex items-center justify-center hover:bg-white text-xs text-black opacity-0 group-hover:opacity-100 transition-opacity" 
+                                            onclick="event.stopPropagation(); Ops.selectFile('${file.id}', event)">
+                                        <i class="fa-solid fa-ellipsis-vertical"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }
+                    
+                    // Click handlers
+                    fileElement.onclick = (e) => {
+                        if (!e.target.closest('button') && !e.target.closest('input[type="checkbox"]')) {
+                            if (isFolder) {
+                                Drive.load(file.id, file.name);
+                            } else {
+                                Ops.open(file);
+                            }
+                        }
+                    };
+                    
+                    fileElement.oncontextmenu = (e) => {
+                        e.preventDefault();
+                        Ops.showContextMenu(e, file.id);
+                    };
+                    
+                    container.appendChild(fileElement);
+                });
+                
+                // Initialize lazy loading for images
+                const observer = lozad('.lozad', {
+                    rootMargin: '100px 0px',
+                    threshold: 0.1,
+                    loaded: (el) => {
+                        el.classList.add('loaded');
+                    }
+                });
+                observer.observe();
+            },
+            
+            search: _.debounce((query) => {
+                if (!query.trim()) {
+                    Drive.render(STATE.files);
+                    return;
+                }
+                
+                const filtered = STATE.files.filter(file => 
+                    file.name.toLowerCase().includes(query.toLowerCase()) ||
+                    file.mimeType.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                Drive.render(filtered);
+            }, 300),
+            
+            clearSearch: () => {
+                document.getElementById('search-input').value = '';
+                Drive.render(STATE.files);
+            },
+            
+            sort: (criteria) => {
+                const sorted = [...STATE.files].sort((a, b) => {
+                    switch (criteria) {
+                        case 'name':
+                            return a.name.localeCompare(b.name);
+                        case 'date':
+                            return new Date(b.modifiedTime) - new Date(a.modifiedTime);
+                        case 'size':
+                            return (b.size || 0) - (a.size || 0);
+                        case 'type':
+                            return a.mimeType.localeCompare(b.mimeType);
+                        default:
+                            return 0;
+                    }
+                });
+                
+                Drive.render(sorted);
+                UI.showNotification('info', `Sorted by ${criteria}`);
+            },
+            
+            formatBytes: (bytes, decimals = 2) => {
+                if (bytes === 0) return '0 Bytes';
+                
+                const k = 1024;
+                const dm = decimals < 0 ? 0 : decimals;
+                const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB'];
+                
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+            },
+            
+            refreshQuickAccess: async () => {
+                const container = document.getElementById('quick-access-container');
+                container.innerHTML = '';
+                
+                // Add quick access items
+                const quickItems = [
+                    { icon: 'fa-images', title: 'Photos', count: '24 files', color: 'from-blue-500 to-cyan-500' },
+                    { icon: 'fa-film', title: 'Videos', count: '8 files', color: 'from-purple-500 to-pink-500' },
+                    { icon: 'fa-file-pdf', title: 'Documents', count: '42 files', color: 'from-red-500 to-orange-500' },
+                    { icon: 'fa-music', title: 'Music', count: '156 files', color: 'from-green-500 to-emerald-500' },
+                    { icon: 'fa-code', title: 'Projects', count: '7 folders', color: 'from-yellow-500 to-amber-500' },
+                    { icon: 'fa-archive', title: 'Archives', count: '12 files', color: 'from-indigo-500 to-blue-500' }
+                ];
+                
+                quickItems.forEach((item, index) => {
+                    const slide = document.createElement('div');
+                    slide.className = 'swiper-slide';
+                    slide.innerHTML = `
+                        <div class="glass-card h-full rounded-xl p-4 flex flex-col justify-between cursor-pointer hover:scale-[1.02] transition-transform duration-300">
+                            <div class="w-12 h-12 rounded-lg bg-gradient-to-br ${item.color} flex items-center justify-center mb-4">
+                                <i class="fa-solid ${item.icon} text-white text-xl"></i>
+                            </div>
+                            <div>
+                                <h5 class="font-bold text-white text-lg">${item.title}</h5>
+                                <p class="text-sm text-gray-400">${item.count}</p>
+                            </div>
+                            <div class="text-right">
+                                <i class="fa-solid fa-arrow-right text-gray-500 hover:text-white transition-colors"></i>
+                            </div>
+                        </div>
+                    `;
+                    container.appendChild(slide);
+                });
+                
+                // Reinitialize swiper
+                if (window.swiperInstance) {
+                    window.swiperInstance.update();
+                }
+            }
+        };
+
+        // --- OPERATIONS ---
+        const Ops = {
+            selectFile: (fileId, event) => {
+                event.stopPropagation();
+                Ops.showContextMenu(event, fileId);
+            },
+            
+            toggleSelect: (fileId) => {
+                const index = STATE.selected.indexOf(fileId);
+                if (index === -1) {
+                    STATE.selected.push(fileId);
+                } else {
+                    STATE.selected.splice(index, 1);
+                }
+                
+                document.getElementById('selected-count').textContent = 
+                    `${STATE.selected.length} selected`;
+                
+                // Update checkbox states
+                document.querySelectorAll(`[data-id]`).forEach(el => {
+                    const checkbox = el.querySelector('input[type="checkbox"]');
+                    if (checkbox) {
+                        checkbox.checked = STATE.selected.includes(el.dataset.id);
+                    }
+                });
+            },
+            
+            showContextMenu: (event, fileId) => {
+                STATE.selected = [fileId];
+                
+                const menu = document.getElementById('ctx-menu');
+                menu.style.left = `${event.clientX}px`;
+                menu.style.top = `${event.clientY}px`;
+                
+                menu.classList.remove('hidden', 'scale-95', 'opacity-0');
+                menu.classList.add('ctx-menu');
+                
+                const closeMenu = () => {
+                    menu.classList.add('hidden', 'scale-95', 'opacity-0');
+                    document.removeEventListener('click', closeMenu);
+                };
+                
+                setTimeout(() => document.addEventListener('click', closeMenu), 10);
+            },
+            
+            open: async (file) => {
+                if (file.mimeType === 'application/vnd.google-apps.folder') {
+                    Drive.load(file.id, file.name);
+                    return;
+                }
+                
+                if (file.mimeType.startsWith('image/')) {
+                    // Use PhotoSwipe for images
+                    const lightbox = new PhotoSwipeLightbox({
+                        gallery: '#file-container',
+                        children: 'a[data-pswp]',
+                        pswpModule: PhotoSwipe
+                    });
+                    lightbox.init();
+                } else if (file.mimeType.startsWith('video/')) {
+                    // Use Plyr for videos
+                    Swal.fire({
+                        html: `
+                            <div class="w-full aspect-video rounded-lg overflow-hidden">
+                                <video id="video-player" playsinline controls class="w-full h-full">
+                                    <source src="https://cdn.plyr.io/static/demo/View_From_A_Blue_Moon_Trailer-576p.mp4" type="video/mp4">
+                                </video>
+                            </div>
+                        `,
+                        width: 900,
+                        padding: 0,
+                        background: 'transparent',
+                        showConfirmButton: false,
+                        showCloseButton: true,
+                        didOpen: () => {
+                            new Plyr('#video-player', {
+                                controls: ['play-large', 'play', 'progress', 'current-time', 'mute', 'volume', 'fullscreen'],
+                                ratio: '16:9'
+                            });
+                        }
+                    });
+                } else if (file.mimeType === 'application/pdf') {
+                    // PDF viewer
+                    Swal.fire({
+                        html: `
+                            <div class="w-full h-[70vh] rounded-lg overflow-hidden">
+                                <iframe src="https://mozilla.github.io/pdf.js/web/viewer.html?file=${encodeURIComponent(file.webViewLink)}" 
+                                        class="w-full h-full border-0"></iframe>
+                            </div>
+                        `,
+                        width: 1000,
+                        padding: 0,
+                        background: 'transparent',
+                        showConfirmButton: false,
+                        showCloseButton: true
+                    });
+                } else {
+                    // Download other files
+                    Ops.downloadSelected();
+                }
+            },
+            
+            createFolder: async () => {
+                const { value: folderName } = await Swal.fire({
+                    title: 'Create New Folder',
+                    input: 'text',
+                    inputPlaceholder: 'Enter folder name',
+                    background: '#1a1a2e',
+                    color: '#fff',
+                    inputAttributes: {
+                        maxlength: 100
+                    },
+                    showCancelButton: true,
+                    confirmButtonColor: '#00f3ff',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Create',
+                    cancelButtonText: 'Cancel'
+                });
+                
+                if (folderName) {
+                    try {
+                        if (STATE.token === 'demo_token') {
+                            // Demo mode
+                            UI.showNotification('success', `Folder "${folderName}" created (Demo)`);
+                            
+                            // Add to file list
+                            const newFolder = {
+                                id: `demo-folder-${Date.now()}`,
+                                name: folderName,
+                                mimeType: 'application/vnd.google-apps.folder',
+                                modifiedTime: new Date().toISOString()
+                            };
+                            
+                            STATE.files.unshift(newFolder);
+                            Drive.render(STATE.files);
+                        } else {
+                            // Real API call
+                            const result = await DriveAPI.createFolder(folderName, STATE.folder);
+                            UI.showNotification('success', `Folder "${folderName}" created`);
+                            
+                            // Refresh file list
+                            Drive.load(STATE.folder);
+                        }
+                    } catch (error) {
+                        UI.showNotification('error', 'Failed to create folder');
+                    }
+                }
+            },
+            
+            downloadSelected: async () => {
+                if (STATE.selected.length === 0) return;
+                
+                UI.showNotification('info', `Preparing ${STATE.selected.length} file(s) for download...`);
+                
+                try {
+                    if (STATE.token === 'demo_token') {
+                        // Demo mode - create a dummy download
+                        const blob = new Blob(['Demo file content'], { type: 'text/plain' });
+                        saveAs(blob, 'demo-file.txt');
+                        UI.showNotification('success', 'Demo file downloaded');
+                    } else {
+                        // Real download
+                        for (const fileId of STATE.selected) {
+                            const file = STATE.files.find(f => f.id === fileId);
+                            if (file) {
+                                const blob = await DriveAPI.downloadFile(fileId);
+                                saveAs(blob, file.name);
+                            }
+                        }
+                        UI.showNotification('success', 'Download completed');
+                    }
+                    
+                    STATE.selected = [];
+                    document.getElementById('selected-count').textContent = '0 selected';
+                } catch (error) {
+                    UI.showNotification('error', 'Download failed');
+                }
+            },
+            
+            deleteSelected: async () => {
+                if (STATE.selected.length === 0) return;
+                
+                const { isConfirmed } = await Swal.fire({
+                    title: 'Are you sure?',
+                    text: `This will delete ${STATE.selected.length} item(s) permanently`,
+                    icon: 'warning',
+                    background: '#1a1a2e',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#ef4444',
+                    cancelButtonColor: '#6c757d',
+                    confirmButtonText: 'Yes, delete it!',
+                    cancelButtonText: 'Cancel'
+                });
+                
+                if (isConfirmed) {
+                    try {
+                        if (STATE.token === 'demo_token') {
+                            // Demo mode
+                            STATE.files = STATE.files.filter(file => !STATE.selected.includes(file.id));
+                            Drive.render(STATE.files);
+                            UI.showNotification('success', `${STATE.selected.length} item(s) deleted (Demo)`);
+                        } else {
+                            // Real API calls
+                            for (const fileId of STATE.selected) {
+                                await DriveAPI.deleteFile(fileId);
+                            }
+                            UI.showNotification('success', `${STATE.selected.length} item(s) deleted`);
+                            Drive.load(STATE.folder);
+                        }
+                        
+                        STATE.selected = [];
+                        document.getElementById('selected-count').textContent = '0 selected';
+                    } catch (error) {
+                        UI.showNotification('error', 'Failed to delete items');
+                    }
+                }
+            },
+            
+            share: async () => {
+                const { value: email } = await Swal.fire({
+                    title: 'Share File',
+                    input: 'email',
+                    inputPlaceholder: 'Enter email address',
+                    background: '#1a1a2e',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#00f3ff',
+                    cancelButtonColor: '#6c757d'
+                });
+                
+                if (email) {
+                    UI.showNotification('success', `Share invitation sent to ${email} (Demo)`);
+                }
+            },
+            
+            rename: async () => {
+                const fileId = STATE.selected[0];
+                const file = STATE.files.find(f => f.id === fileId);
+                
+                if (!file) return;
+                
+                const { value: newName } = await Swal.fire({
+                    title: 'Rename File',
+                    input: 'text',
+                    inputValue: file.name,
+                    background: '#1a1a2e',
+                    color: '#fff',
+                    showCancelButton: true,
+                    confirmButtonColor: '#00f3ff',
+                    cancelButtonColor: '#6c757d'
+                });
+                
+                if (newName && newName !== file.name) {
+                    UI.showNotification('success', `Renamed to "${newName}" (Demo)`);
+                    file.name = newName;
+                    Drive.render(STATE.files);
+                }
+            },
+            
+            openSelected: () => {
+                if (STATE.selected.length === 1) {
+                    const file = STATE.files.find(f => f.id === STATE.selected[0]);
+                    if (file) Ops.open(file);
+                }
+            }
+        };
+
+        // --- UPLOAD MANAGER ---
+        const Upload = {
+            queue: [],
+            activeUploads: 0,
+            
+            openDialog: () => {
+                document.getElementById('upload-dialog').classList.remove('hidden');
+                document.getElementById('upload-dialog').classList.add('flex');
+                
+                // Setup drag and drop
+                const dropZone = document.getElementById('drop-zone');
+                dropZone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.add('border-neon-blue', 'bg-black/50');
+                });
+                
+                dropZone.addEventListener('dragleave', () => {
+                    dropZone.classList.remove('border-neon-blue', 'bg-black/50');
+                });
+                
+                dropZone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    dropZone.classList.remove('border-neon-blue', 'bg-black/50');
+                    Upload.handleFiles(e.dataTransfer.files);
+                });
+                
+                dropZone.addEventListener('click', () => {
+                    document.getElementById('file-input').click();
+                });
+            },
+            
+            closeDialog: () => {
+                document.getElementById('upload-dialog').classList.add('hidden');
+                document.getElementById('upload-dialog').classList.remove('flex');
+            },
+            
+            openFolderUpload: () => {
+                document.getElementById('folder-input').click();
+            },
+            
+            handleFiles: (files) => {
+                if (!files.length) return;
+                
+                for (let file of files) {
+                    Upload.addToQueue(file);
+                }
+                
+                Upload.processQueue();
+                Upload.showUploadArea();
+            },
+            
+            handleFolder: (files) => {
+                UI.showNotification('info', `Found ${files.length} files in folder`);
+                Upload.handleFiles(files);
+            },
+            
+            addToQueue: (file) => {
+                const uploadId = `upload-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+                
+                const upload = {
+                    id: uploadId,
+                    file: file,
+                    progress: 0,
+                    status: 'queued',
+                    error: null
+                };
+                
+                Upload.queue.push(upload);
+                Upload.updateQueueDisplay();
+            },
+            
+            updateQueueDisplay: () => {
+                const queueList = document.getElementById('upload-queue');
+                const uploadList = document.getElementById('upload-list');
+                
+                if (Upload.queue.length > 0) {
+                    queueList.classList.remove('hidden');
+                    uploadList.innerHTML = '';
+                    
+                    Upload.queue.forEach(upload => {
+                        const item = document.createElement('div');
+                        item.className = 'glass-card rounded-lg p-3';
+                        item.innerHTML = `
+                            <div class="flex items-center justify-between mb-2">
+                                <div class="flex items-center gap-3">
+                                    <i class="fa-solid fa-file text-gray-400"></i>
+                                    <div class="flex-1 min-w-0">
+                                        <p class="text-sm font-medium truncate">${upload.file.name}</p>
+                                        <p class="text-xs text-gray-400">${Drive.formatBytes(upload.file.size)}</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center gap-2">
+                                    <span class="text-xs ${upload.status === 'uploading' ? 'text-neon-blue' : 
+                                                          upload.status === 'completed' ? 'text-green-400' : 
+                                                          upload.status === 'error' ? 'text-red-400' : 'text-gray-400'}">
+                                        ${upload.status === 'uploading' ? 'Uploading...' :
+                                          upload.status === 'completed' ? 'Completed' :
+                                          upload.status === 'error' ? 'Failed' : 'Queued'}
+                                    </span>
+                                    ${upload.status === 'uploading' || upload.status === 'queued' ? 
+                                        `<button onclick="Upload.cancel('${upload.id}')" class="text-xs text-red-400 hover:text-red-300">
+                                            <i class="fa-solid fa-times"></i>
+                                        </button>` : ''}
+                                </div>
+                            </div>
+                            ${upload.status === 'uploading' || upload.status === 'queued' ? `
+                                <div class="w-full bg-gray-800 rounded-full h-1.5">
+                                    <div class="upload-progress h-1.5 rounded-full" style="width: ${upload.progress}%"></div>
+                                </div>
+                            ` : ''}
+                            ${upload.error ? `<p class="text-xs text-red-400 mt-2">${upload.error}</p>` : ''}
+                        `;
+                        uploadList.appendChild(item);
+                    });
+                } else {
+                    queueList.classList.add('hidden');
+                }
+            },
+            
+            showUploadArea: () => {
+                document.getElementById('upload-area').classList.remove('hidden');
+            },
+            
+            hideUploadArea: () => {
+                if (Upload.queue.length === 0) {
+                    document.getElementById('upload-area').classList.add('hidden');
+                }
+            },
+            
+            processQueue: () => {
+                const maxConcurrent = CONFIG.app.maxUploadConcurrent;
+                
+                while (Upload.activeUploads < maxConcurrent && Upload.queue.length > 0) {
+                    const upload = Upload.queue.find(u => u.status === 'queued');
+                    if (upload) {
+                        Upload.startUpload(upload);
+                    } else {
+                        break;
+                    }
+                }
+            },
+            
+            startUpload: async (upload) => {
+                upload.status = 'uploading';
+                Upload.activeUploads++;
+                Upload.updateQueueDisplay();
+                
+                try {
+                    if (STATE.token === 'demo_token') {
+                        // Simulate upload for demo
+                        await Upload.simulateUpload(upload);
+                    } else {
+                        // Real upload
+                        await DriveAPI.uploadFile(upload.file, STATE.folder, (progress) => {
+                            upload.progress = progress;
+                            Upload.updateQueueDisplay();
+                        });
+                    }
+                    
+                    upload.status = 'completed';
+                    upload.progress = 100;
+                    UI.showNotification('success', `Uploaded: ${upload.file.name}`);
+                    
+                } catch (error) {
+                    upload.status = 'error';
+                    upload.error = error.message;
+                    UI.showNotification('error', `Failed to upload: ${upload.file.name}`);
+                } finally {
+                    Upload.activeUploads--;
+                    
+                    // Remove from queue after delay
+                    setTimeout(() => {
+                        const index = Upload.queue.indexOf(upload);
+                        if (index > -1) {
+                            Upload.queue.splice(index, 1);
+                        }
+                        Upload.updateQueueDisplay();
+                        Upload.hideUploadArea();
+                        Upload.processQueue();
+                        
+                        // Refresh file list if upload was successful
+                        if (upload.status === 'completed') {
+                            Drive.load(STATE.folder);
+                        }
+                    }, 3000);
+                }
+            },
+            
+            simulateUpload: (upload) => {
+                return new Promise((resolve) => {
+                    let progress = 0;
+                    const interval = setInterval(() => {
+                        progress += Math.random() * 20;
+                        if (progress >= 100) {
+                            progress = 100;
+                            clearInterval(interval);
+                            setTimeout(resolve, 500);
+                        }
+                        upload.progress = progress;
+                        Upload.updateQueueDisplay();
+                    }, 200);
+                });
+            },
+            
+            cancel: (uploadId) => {
+                const upload = Upload.queue.find(u => u.id === uploadId);
+                if (upload) {
+                    upload.status = 'cancelled';
+                    const index = Upload.queue.indexOf(upload);
+                    Upload.queue.splice(index, 1);
+                    Upload.updateQueueDisplay();
+                    Upload.hideUploadArea();
+                    Upload.processQueue();
+                }
+            },
+            
+            cancelAll: () => {
+                Upload.queue = [];
+                Upload.activeUploads = 0;
+                Upload.updateQueueDisplay();
+                Upload.hideUploadArea();
+                UI.showNotification('info', 'All uploads cancelled');
+            }
+        };
+
+        // --- NAVIGATION SYSTEM ---
+        const Nav = {
+            history: [{ id: 'root', name: 'Root' }],
+            currentIndex: 0,
+            
+            go: (folderId, folderName) => {
+                // Update history
+                if (folderId !== Nav.history[Nav.currentIndex].id) {
+                    // Remove forward history if we're going to a new location
+                    Nav.history = Nav.history.slice(0, Nav.currentIndex + 1);
+                    Nav.history.push({ id: folderId, name: folderName });
+                    Nav.currentIndex = Nav.history.length - 1;
+                }
+                
+                // Update breadcrumb
+                const breadcrumb = document.getElementById('breadcrumb');
+                breadcrumb.innerHTML = Nav.history.map((item, index) => {
+                    const isLast = index === Nav.currentIndex;
+                    return `
+                        ${index > 0 ? '<span class="text-gray-500 mx-2">/</span>' : ''}
+                        <span class="${isLast ? 'text-white cursor-default' : 'text-neon-blue cursor-pointer hover:text-white'}" 
+                              onclick="${!isLast ? `Nav.go('${item.id}', '${item.name}')` : ''}">
+                            ${item.name}
+                        </span>
+                    `;
+                }).join('');
+                
+                // Update nav buttons
+                document.getElementById('nav-back').disabled = Nav.currentIndex === 0;
+                document.getElementById('nav-forward').disabled = Nav.currentIndex === Nav.history.length - 1;
+                
+                // Update active nav item
+                document.querySelectorAll('.nav-item').forEach(item => {
+                    item.classList.remove('active', 'bg-white/10');
+                });
+                
+                const activeNav = document.querySelector(`.nav-item[data-nav="${folderId === 'root' ? 'root' : folderId}"]`);
+                if (activeNav) {
+                    activeNav.classList.add('active', 'bg-white/10');
+                }
+                
+                // Update view title
+                document.getElementById('view-title').textContent = folderName;
+                
+                // Load folder contents
+                Drive.load(folderId, folderName);
+            },
+            
+            back: () => {
+                if (Nav.currentIndex > 0) {
+                    Nav.currentIndex--;
+                    const item = Nav.history[Nav.currentIndex];
+                    Nav.go(item.id, item.name);
+                }
+            },
+            
+            forward: () => {
+                if (Nav.currentIndex < Nav.history.length - 1) {
+                    Nav.currentIndex++;
+                    const item = Nav.history[Nav.currentIndex];
+                    Nav.go(item.id, item.name);
+                }
+            },
+            
+            updateHistory: (folderId, folderName) => {
+                // Update current history item
+                if (Nav.history[Nav.currentIndex].id !== folderId) {
+                    Nav.history[Nav.currentIndex] = { id: folderId, name: folderName };
+                }
+            }
+        };
+
+        // --- UI CONTROLLER ---
+        const UI = {
+            init: () => {
+                initParticles();
+                Auth.init();
+                
+                // Remove loader
+                setTimeout(() => {
+                    gsap.to("#loader", {
+                        opacity: 0,
+                        duration: 0.5,
+                        onComplete: () => document.getElementById('loader').remove()
+                    });
+                }, 1500);
+                
+                // Initialize Swiper
+                window.swiperInstance = new Swiper(".mySwiper", {
+                    slidesPerView: 3,
+                    spaceBetween: 20,
+                    navigation: {
+                        nextEl: ".swiper-button-next",
+                        prevEl: ".swiper-button-prev",
+                    },
+                    breakpoints: {
+                        320: { slidesPerView: 1.2 },
+                        640: { slidesPerView: 2.2 },
+                        768: { slidesPerView: 2.5 },
+                        1024: { slidesPerView: 3 },
+                        1280: { slidesPerView: 3.5 }
+                    }
+                });
+                
+                // Load quick access
+                Drive.refreshQuickAccess();
+                
+                // Initialize charts
+                UI.updateCharts();
+                
+                // Set theme
+                document.documentElement.classList.toggle('dark', STATE.theme === 'dark');
+                
+                // Update time
+                setInterval(UI.updateTime, 1000);
+                UI.updateTime();
+                
+                // Setup keyboard shortcuts
+                UI.setupShortcuts();
+                
+                // Add some sample notifications
+                UI.showNotification('info', 'Welcome to Drive OS Pro!');
+                UI.showNotification('success', 'System initialized successfully');
+            },
+            
+            updateCharts: () => {
+                const ctx = document.getElementById('storageChart').getContext('2d');
+                if (window.storageChart) {
+                    window.storageChart.destroy();
+                }
+                
+                window.storageChart = new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Documents', 'Images', 'Videos', 'Others', 'Free'],
+                        datasets: [{
+                            data: [30, 25, 20, 10, 15],
+                            backgroundColor: [
+                                '#00f3ff',
+                                '#bc13fe',
+                                '#39ff14',
+                                '#ff00ff',
+                                'rgba(255, 255, 255, 0.1)'
+                            ],
+                            borderWidth: 0,
+                            borderRadius: 10
+                        }]
+                    },
+                    options: {
+                        cutout: '75%',
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                callbacks: {
+                                    label: (context) => `${context.label}: ${context.raw}%`
+                                }
+                            }
+                        },
+                        animation: {
+                            animateScale: true,
+                            animateRotate: true
+                        }
+                    }
+                });
+            },
+            
+            setView: (view) => {
+                STATE.view = view;
+                
+                // Update toggle buttons
+                document.querySelectorAll('.view-toggle').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.view === view);
+                    btn.classList.toggle('text-neon-blue', btn.dataset.view === view);
+                    btn.classList.toggle('text-gray-400', btn.dataset.view !== view);
+                });
+                
+                // Re-render files
+                Drive.render(STATE.files);
+            },
+            
+            toggleSidebar: () => {
+                const sidebar = document.getElementById('sidebar');
+                const main = document.getElementById('main-content');
+                
+                sidebar.classList.toggle('-translate-x-full');
+                sidebar.classList.toggle('md:translate-x-0');
+                
+                if (window.innerWidth < 768) {
+                    main.classList.toggle('ml-0');
+                }
+            },
+            
+            setTheme: (theme) => {
+                STATE.theme = theme;
+                localStorage.setItem('theme', theme);
+                
+                if (theme === 'auto') {
+                    const isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.classList.toggle('dark', isDark);
+                } else {
+                    document.documentElement.classList.toggle('dark', theme === 'dark');
+                }
+                
+                UI.showNotification('success', `Theme set to ${theme}`);
+            },
+            
+            showNotification: (type, message) => {
+                const id = `notif-${Date.now()}`;
+                const notification = {
+                    id,
+                    type,
+                    message,
+                    time: new Date()
+                };
+                
+                STATE.notifications.unshift(notification);
+                
+                // Show toast
+                Toastify({
+                    text: message,
+                    duration: 3000,
+                    gravity: "top",
+                    position: "right",
+                    backgroundColor: type === 'success' ? "#10b981" :
+                                   type === 'error' ? "#ef4444" :
+                                   type === 'info' ? "#3b82f6" : "#8b5cf6",
+                    stopOnFocus: true
+                }).showToast();
+                
+                // Update notification panel if open
+                UI.updateNotificationPanel();
+                
+                // Auto-remove after 10 seconds
+                setTimeout(() => {
+                    const index = STATE.notifications.findIndex(n => n.id === id);
+                    if (index > -1) {
+                        STATE.notifications.splice(index, 1);
+                        UI.updateNotificationPanel();
+                    }
+                }, 10000);
+            },
+            
+            showNotifications: () => {
+                const panel = document.getElementById('notification-panel');
+                panel.classList.toggle('hidden');
+                UI.updateNotificationPanel();
+            },
+            
+            updateNotificationPanel: () => {
+                const list = document.getElementById('notification-list');
+                list.innerHTML = '';
+                
+                STATE.notifications.forEach(notif => {
+                    const item = document.createElement('div');
+                    item.className = 'glass-card rounded-lg p-3';
+                    item.innerHTML = `
+                        <div class="flex items-start gap-3">
+                            <i class="fa-solid ${notif.type === 'success' ? 'fa-check-circle text-green-400' :
+                                              notif.type === 'error' ? 'fa-exclamation-circle text-red-400' :
+                                              'fa-info-circle text-blue-400'} mt-1"></i>
+                            <div class="flex-1">
+                                <p class="text-sm">${notif.message}</p>
+                                <p class="text-xs text-gray-400 mt-1">${dayjs(notif.time).fromNow()}</p>
+                            </div>
+                        </div>
+                    `;
+                    list.appendChild(item);
+                });
+                
+                if (STATE.notifications.length === 0) {
+                    list.innerHTML = `
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fa-regular fa-bell text-2xl mb-2"></i>
+                            <p>No notifications</p>
+                        </div>
+                    `;
+                }
+            },
+            
+            clearNotifications: () => {
+                STATE.notifications = [];
+                UI.updateNotificationPanel();
+            },
+            
+            updateTime: () => {
+                const now = luxon.DateTime.now();
+                document.getElementById('current-time').textContent = now.toFormat('HH:mm:ss');
+            },
+            
+            setupShortcuts: () => {
+                // Search
+                hotkeys('ctrl+k, command+k', (e) => {
+                    e.preventDefault();
+                    document.getElementById('search-input').focus();
+                });
+                
+                // New folder
+                hotkeys('ctrl+shift+n, command+shift+n', (e) => {
+                    e.preventDefault();
+                    Ops.createFolder();
+                });
+                
+                // Upload
+                hotkeys('ctrl+u, command+u', (e) => {
+                    e.preventDefault();
+                    Upload.openDialog();
+                });
+                
+                // Refresh
+                hotkeys('f5, ctrl+r, command+r', (e) => {
+                    if (e.target.tagName !== 'INPUT') {
+                        e.preventDefault();
+                        Drive.load(STATE.folder);
+                    }
+                });
+                
+                // Delete
+                hotkeys('delete, backspace', (e) => {
+                    if (STATE.selected.length > 0 && !e.target.tagName.match(/INPUT|TEXTAREA/)) {
+                        e.preventDefault();
+                        Ops.deleteSelected();
+                    }
+                });
+                
+                // Select all
+                hotkeys('ctrl+a, command+a', (e) => {
+                    if (!e.target.tagName.match(/INPUT|TEXTAREA/)) {
+                        e.preventDefault();
+                        STATE.selected = STATE.files.map(f => f.id);
+                        document.getElementById('selected-count').textContent = 
+                            `${STATE.selected.length} selected`;
+                        Drive.render(STATE.files);
+                    }
+                });
+                
+                // Escape
+                hotkeys('esc', () => {
+                    STATE.selected = [];
+                    document.getElementById('selected-count').textContent = '0 selected';
+                    Drive.clearSearch();
+                });
+            }
+        };
+
+        // --- SETTINGS ---
+        const Settings = {
+            open: () => {
+                document.getElementById('settings-modal').classList.remove('hidden');
+                document.getElementById('settings-modal').classList.add('flex');
+            },
+            
+            close: () => {
+                document.getElementById('settings-modal').classList.add('hidden');
+                document.getElementById('settings-modal').classList.remove('flex');
+            }
+        };
+
+        // --- WINDOW EVENT HANDLERS ---
+        window.addEventListener('resize', () => {
+            if (window.innerWidth >= 768) {
+                document.getElementById('sidebar').classList.remove('-translate-x-full');
+                document.getElementById('sidebar').classList.add('md:translate-x-0');
+            }
+        });
+
+        // Close context menu on escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                document.getElementById('ctx-menu').classList.add('hidden');
+            }
+        });
+
+        // Prevent drag and drop default behavior
+        document.addEventListener('dragover', (e) => e.preventDefault());
+        document.addEventListener('drop', (e) => e.preventDefault());
+
+        // Initialize when page loads
+        window.addEventListener('load', () => {
+            UI.init();
+        });
+
+        // Service Worker for PWA
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.register('/sw.js').catch(console.error);
+        }
+
+    </script>
 </body>
 </html>
