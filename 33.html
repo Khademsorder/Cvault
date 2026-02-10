@@ -1,0 +1,2584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drive OS | Pro Premium</title>
+    
+    <!-- CDN Libraries -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet">
+    <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tesseract.js/4.0.2/tesseract.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://unpkg.com/compressorjs@1.1.1/dist/compressor.min.js"></script>
+    
+    <style>
+        :root {
+            --primary: #4285f4;
+            --primary-dark: #3367d6;
+            --secondary: #34a853;
+            --accent: #ea4335;
+            --warning: #fbbc05;
+            --surface: #ffffff;
+            --bg: #f8f9fa;
+            --bg-dark: #1a1d21;
+            --text-main: #202124;
+            --text-sec: #5f6368;
+            --border: #dadce0;
+            --hover: #f1f3f4;
+            --card: #ffffff;
+            --shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.1);
+            --radius: 12px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            --glass: rgba(255, 255, 255, 0.8);
+            --glass-dark: rgba(26, 29, 33, 0.8);
+        }
+
+        [data-theme="dark"] {
+            --primary: #8ab4f8;
+            --primary-dark: #669df6;
+            --surface: #1a1d21;
+            --bg: #0e1013;
+            --bg-dark: #0e1013;
+            --text-main: #e8eaed;
+            --text-sec: #9aa0a6;
+            --border: #3c4043;
+            --hover: #282a2d;
+            --card: #1e2125;
+            --shadow: 0 1px 3px rgba(0,0,0,0.3);
+            --shadow-lg: 0 10px 40px rgba(0,0,0,0.3);
+            --glass: rgba(30, 33, 37, 0.8);
+            --glass-dark: rgba(14, 16, 19, 0.8);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+            user-select: none;
+        }
+        
+        body {
+            margin: 0; 
+            padding: 0;
+            font-family: 'Inter', sans-serif;
+            background: var(--bg); 
+            color: var(--text-main);
+            height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        /* Premium Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { transform: translateX(20px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+        }
+
+        /* Glass Effect */
+        .glass {
+            background: var(--glass);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        .glass-dark {
+            background: var(--glass-dark);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        /* Screens */
+        .screen {
+            position: absolute; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            display: none; 
+            flex-direction: column; 
+            background: var(--bg); 
+            z-index: 10;
+        }
+        .screen.active { 
+            display: flex; 
+            animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1); 
+        }
+
+        /* Premium Lock Screen */
+        #lock-screen {
+            background: linear-gradient(135deg, var(--primary) 0%, #8ab4f8 100%);
+            justify-content: center; 
+            align-items: center;
+            overflow: hidden;
+        }
+        
+        .particles {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        .pin-container {
+            background: var(--glass);
+            border-radius: 24px;
+            padding: 40px 30px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: var(--shadow-lg);
+            animation: slideInRight 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .logo-area { 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            margin-bottom: 40px;
+        }
+        
+        .logo-text {
+            font-family: 'Inter', sans-serif; 
+            font-size: 28px; 
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary) 0%, #34a853 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .pin-dots {
+            display: flex; 
+            justify-content: center; 
+            gap: 20px; 
+            margin-bottom: 50px;
+        }
+        
+        .dot {
+            width: 20px; 
+            height: 20px; 
+            border-radius: 50%;
+            border: 2px solid var(--text-sec); 
+            transition: var(--transition);
+            position: relative;
+        }
+        
+        .dot.filled { 
+            background: var(--primary); 
+            border-color: var(--primary); 
+            box-shadow: 0 0 20px rgba(66, 133, 244, 0.5);
+        }
+        
+        .dot.filled::after {
+            content: '';
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: var(--primary);
+            animation: pulse 1s infinite;
+        }
+        
+        .keypad {
+            display: grid; 
+            grid-template-columns: repeat(3, 1fr); 
+            gap: 15px;
+        }
+        
+        .key {
+            width: 80px; 
+            height: 80px; 
+            border-radius: 50%;
+            background: var(--glass); 
+            color: var(--text-main);
+            font-size: 28px; 
+            font-weight: 500;
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            margin: auto; 
+            cursor: pointer; 
+            transition: var(--transition);
+            border: 1px solid rgba(255,255,255,0.2);
+        }
+        
+        .key:hover {
+            background: var(--hover);
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .key:active { 
+            transform: scale(0.95); 
+        }
+        
+        .key.clear { 
+            background: transparent; 
+            font-size: 16px; 
+            color: var(--text-sec);
+            font-weight: 600;
+        }
+        
+        .biometric-option {
+            margin-top: 30px;
+            color: var(--text-sec);
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            cursor: pointer;
+        }
+
+        /* Premium Auth Screen */
+        #auth-screen { 
+            background: linear-gradient(135deg, var(--bg) 0%, #f0f7ff 100%);
+            justify-content: center; 
+            align-items: center; 
+            text-align: center;
+        }
+        
+        .auth-card {
+            background: var(--glass);
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 90%;
+            max-width: 450px;
+            box-shadow: var(--shadow-lg);
+            animation: fadeIn 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        .welcome-text {
+            font-size: 42px;
+            font-weight: 800;
+            background: linear-gradient(135deg, var(--primary) 0%, #ea4335 50%, #fbbc05 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 10px;
+        }
+        
+        .auth-btn {
+            background: var(--surface);
+            border: 2px solid var(--border);
+            padding: 16px 32px;
+            border-radius: 50px;
+            font-family: 'Inter';
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            cursor: pointer;
+            transition: var(--transition);
+            width: 100%;
+            justify-content: center;
+            margin-top: 30px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+        }
+        
+        .auth-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 30px rgba(0,0,0,0.12);
+            border-color: var(--primary);
+        }
+        
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 20px;
+            margin: 40px 0;
+        }
+        
+        .feature-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 15px;
+            border-radius: var(--radius);
+            background: rgba(255,255,255,0.5);
+            transition: var(--transition);
+        }
+        
+        .feature-item:hover {
+            background: var(--glass);
+            transform: translateY(-5px);
+        }
+
+        /* Premium App Header */
+        .app-header {
+            background: var(--surface); 
+            padding: 0 20px; 
+            height: 70px;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            box-shadow: 0 1px 0 var(--border); 
+            z-index: 20;
+            position: relative;
+        }
+        
+        .search-bar-container {
+            flex: 1;
+            max-width: 600px;
+            margin: 0 30px;
+            position: relative;
+        }
+        
+        .search-bar {
+            background: var(--hover); 
+            border-radius: 50px;
+            padding: 12px 24px;
+            display: flex; 
+            align-items: center; 
+            color: var(--text-sec);
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+        
+        .search-bar:focus-within {
+            background: var(--surface);
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(66, 133, 244, 0.1);
+        }
+        
+        .search-input {
+            border: none; 
+            background: transparent; 
+            margin-left: 12px; 
+            width: 100%; 
+            font-size: 16px;
+            font-family: 'Inter', sans-serif;
+            color: var(--text-main);
+        }
+        
+        .search-results {
+            position: absolute;
+            top: 100%;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-radius: 0 0 var(--radius) var(--radius);
+            box-shadow: var(--shadow-lg);
+            max-height: 400px;
+            overflow-y: auto;
+            display: none;
+            z-index: 1000;
+        }
+        
+        .search-result-item {
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            transition: var(--transition);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .search-result-item:hover {
+            background: var(--hover);
+        }
+
+        /* Enhanced Toolbar */
+        .toolbar {
+            padding: 15px 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            color: var(--text-sec); 
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        
+        .breadcrumb { 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+            flex-wrap: wrap;
+            max-width: 60%;
+        }
+        
+        .crumb-item { 
+            color: var(--text-main); 
+            font-weight: 500; 
+            cursor: pointer;
+            padding: 4px 8px;
+            border-radius: 6px;
+            transition: var(--transition);
+        }
+        
+        .crumb-item:hover {
+            background: var(--hover);
+        }
+        
+        .crumb-separator {
+            color: var(--text-sec);
+        }
+
+        /* Enhanced File Views */
+        .file-viewer { 
+            flex: 1; 
+            overflow-y: auto; 
+            padding: 20px;
+            background: var(--bg);
+        }
+        
+        .file-list-view { 
+            display: flex; 
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .file-grid-view { 
+            display: grid; 
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); 
+            gap: 20px;
+        }
+        
+        /* Premium File Items */
+        .list-item {
+            display: flex; 
+            align-items: center; 
+            padding: 16px;
+            border-radius: var(--radius);
+            background: var(--surface);
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: var(--transition);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        .list-item:hover {
+            background: var(--hover);
+            border-color: var(--primary);
+            transform: translateX(5px);
+            box-shadow: var(--shadow);
+        }
+        
+        .grid-item {
+            background: var(--surface); 
+            border: 1px solid var(--border); 
+            border-radius: var(--radius);
+            padding: 20px; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            text-align: center;
+            cursor: pointer;
+            transition: var(--transition);
+            animation: fadeIn 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .grid-item:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .grid-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+        }
+        
+        .item-icon { 
+            font-size: 32px; 
+            color: var(--text-sec); 
+            margin-right: 20px;
+            transition: var(--transition);
+        }
+        
+        .folder-icon { 
+            color: var(--primary); 
+        }
+        
+        .grid-item .item-icon { 
+            font-size: 48px; 
+            margin: 0 0 15px 0; 
+        }
+        
+        .item-text { 
+            flex: 1; 
+            overflow: hidden;
+            text-align: left;
+        }
+        
+        .item-name { 
+            display: block; 
+            font-size: 15px; 
+            font-weight: 500;
+            color: var(--text-main); 
+            white-space: nowrap; 
+            overflow: hidden; 
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+        
+        .item-meta { 
+            display: block; 
+            font-size: 13px; 
+            color: var(--text-sec); 
+        }
+        
+        .item-actions {
+            display: flex;
+            gap: 8px;
+            opacity: 0;
+            transition: var(--transition);
+        }
+        
+        .list-item:hover .item-actions,
+        .grid-item:hover .item-actions {
+            opacity: 1;
+        }
+        
+        .quick-action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--bg);
+            color: var(--text-sec);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .quick-action-btn:hover {
+            background: var(--primary);
+            color: white;
+        }
+
+        /* Premium FAB */
+        .fab-container { 
+            position: fixed; 
+            bottom: 100px; 
+            right: 30px; 
+            z-index: 50;
+        }
+        
+        .fab-main {
+            width: 60px; 
+            height: 60px; 
+            border-radius: 18px; 
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            box-shadow: var(--shadow-lg); 
+            display: flex; 
+            align-items: center; 
+            justify-content: center;
+            cursor: pointer; 
+            color: white; 
+            font-size: 32px;
+            transition: var(--transition);
+            animation: pulse 2s infinite;
+        }
+        
+        .fab-main:hover {
+            transform: rotate(90deg) scale(1.1);
+            box-shadow: 0 15px 40px rgba(66, 133, 244, 0.4);
+        }
+        
+        .fab-menu {
+            position: absolute; 
+            bottom: 70px; 
+            right: 0; 
+            background: var(--surface);
+            border-radius: var(--radius); 
+            box-shadow: var(--shadow-lg); 
+            width: 220px;
+            display: none; 
+            flex-direction: column; 
+            overflow: hidden;
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1px solid var(--border);
+        }
+        
+        .fab-item { 
+            padding: 16px 20px; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            font-size: 15px; 
+            font-weight: 500;
+            cursor: pointer; 
+            transition: var(--transition);
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .fab-item:last-child {
+            border-bottom: none;
+        }
+        
+        .fab-item:hover { 
+            background: var(--hover); 
+            transform: translateX(-5px);
+        }
+
+        /* Premium Bottom Navigation */
+        .bottom-nav {
+            height: 75px; 
+            background: var(--surface); 
+            border-top: 1px solid var(--border);
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .nav-item { 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            color: var(--text-sec); 
+            font-size: 12px; 
+            font-weight: 500;
+            padding: 8px 16px; 
+            border-radius: 50px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .nav-item.active { 
+            color: var(--primary); 
+            background: rgba(66, 133, 244, 0.1);
+        }
+        
+        .nav-item .material-icons-round { 
+            font-size: 24px;
+            margin-bottom: 4px; 
+            transition: var(--transition); 
+        }
+        
+        .nav-item.active .material-icons-round { 
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        /* Premium Modals */
+        .modal-mask {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: rgba(0,0,0,0.5); 
+            backdrop-filter: blur(10px);
+            z-index: 2000; 
+            display: none;
+            justify-content: center; 
+            align-items: center;
+            animation: fadeIn 0.2s ease;
+        }
+        
+        .modal-dialog {
+            background: var(--surface); 
+            width: 90%; 
+            max-width: 500px;
+            border-radius: var(--radius); 
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            animation: slideInRight 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            max-height: 80vh; 
+            overflow-y: auto;
+        }
+        
+        .dialog-head { 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center; 
+            margin-bottom: 25px;
+        }
+        
+        .dialog-title { 
+            font-family: 'Inter'; 
+            font-size: 20px; 
+            font-weight: 600;
+        }
+        
+        .action-list div { 
+            padding: 16px 0; 
+            display: flex; 
+            align-items: center; 
+            gap: 15px; 
+            border-bottom: 1px solid var(--border); 
+            cursor: pointer; 
+            transition: var(--transition);
+        }
+        
+        .action-list div:hover {
+            background: var(--hover);
+            border-radius: var(--radius);
+            padding-left: 15px;
+            margin-left: -15px;
+            padding-right: 15px;
+        }
+        
+        .action-list div:last-child { border: none; }
+
+        /* Advanced Progress System */
+        .progress-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(10px);
+            z-index: 3000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        .progress-card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            padding: 30px;
+            width: 90%;
+            max-width: 500px;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .upload-queue {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 20px 0;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        
+        .queue-item {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .queue-item:last-child {
+            border-bottom: none;
+        }
+        
+        .queue-item-controls {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .progress-container {
+            margin-top: 15px;
+        }
+        
+        .progress-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--text-sec);
+        }
+        
+        .progress-bar-wrapper {
+            height: 6px;
+            background: var(--hover);
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            border-radius: 3px;
+            transition: width 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-fill::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(90deg, 
+                transparent, 
+                rgba(255,255,255,0.3), 
+                transparent);
+            animation: shimmer 2s infinite;
+        }
+
+        /* Enhanced Media Viewer */
+        .media-viewer {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%;
+            background: #000; 
+            z-index: 2500; 
+            display: none; 
+            flex-direction: column;
+        }
+        
+        .media-header { 
+            padding: 20px; 
+            color: #fff; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            background: rgba(0,0,0,0.7);
+            backdrop-filter: blur(10px);
+        }
+        
+        .media-controls {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
+        .media-iframe { 
+            flex: 1; 
+            border: none; 
+            background: #fff; 
+        }
+        
+        .media-info {
+            color: #fff;
+            padding: 15px 20px;
+            background: rgba(0,0,0,0.5);
+            border-top: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* OCR Interface */
+        .ocr-panel {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: var(--surface);
+            border-radius: var(--radius) var(--radius) 0 0;
+            box-shadow: 0 -5px 30px rgba(0,0,0,0.2);
+            z-index: 2000;
+            display: none;
+            flex-direction: column;
+            max-height: 70vh;
+        }
+        
+        .ocr-header {
+            padding: 20px;
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .ocr-content {
+            padding: 20px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .ocr-text {
+            font-family: 'Inter', sans-serif;
+            line-height: 1.6;
+            white-space: pre-wrap;
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 15px;
+            background: var(--bg);
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        
+        .language-selector {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .lang-btn {
+            padding: 8px 16px;
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            background: var(--bg);
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .lang-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+
+        /* Storage Info Dashboard */
+        .storage-dashboard {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        
+        .storage-chart {
+            grid-column: span 2;
+            height: 200px;
+            position: relative;
+        }
+        
+        .storage-stat {
+            background: var(--bg);
+            padding: 20px;
+            border-radius: var(--radius);
+            border: 1px solid var(--border);
+        }
+        
+        .stat-value {
+            font-size: 24px;
+            font-weight: 700;
+            margin-bottom: 5px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-label {
+            font-size: 14px;
+            color: var(--text-sec);
+        }
+
+        /* Advanced Sorting Panel */
+        .sort-panel {
+            position: absolute;
+            top: 60px;
+            right: 20px;
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow-lg);
+            padding: 15px;
+            min-width: 200px;
+            display: none;
+            z-index: 100;
+            border: 1px solid var(--border);
+        }
+        
+        .sort-option {
+            padding: 12px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: var(--transition);
+        }
+        
+        .sort-option:hover {
+            background: var(--hover);
+        }
+        
+        .sort-option.active {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* Theme Toggle */
+        .theme-toggle {
+            width: 50px;
+            height: 26px;
+            border-radius: 13px;
+            background: var(--hover);
+            position: relative;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        
+        .theme-toggle::after {
+            content: '';
+            position: absolute;
+            top: 3px;
+            left: 3px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: var(--primary);
+            transition: var(--transition);
+        }
+        
+        [data-theme="dark"] .theme-toggle::after {
+            transform: translateX(24px);
+        }
+
+        /* Empty States */
+        .empty-state {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 60px 20px;
+            text-align: center;
+            color: var(--text-sec);
+        }
+        
+        .empty-icon {
+            font-size: 80px;
+            margin-bottom: 20px;
+            opacity: 0.3;
+        }
+
+        /* Loading Skeletons */
+        .skeleton {
+            background: linear-gradient(90deg, var(--hover) 25%, var(--bg) 50%, var(--hover) 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: var(--radius);
+        }
+        
+        .skeleton-item {
+            height: 60px;
+            margin-bottom: 10px;
+        }
+        
+        .skeleton-grid {
+            height: 140px;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .file-grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+                gap: 15px;
+            }
+            
+            .search-bar-container {
+                margin: 0 15px;
+            }
+            
+            .modal-dialog {
+                width: 95%;
+                padding: 20px;
+            }
+            
+            .storage-dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .storage-chart {
+                grid-column: span 1;
+            }
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: var(--bg);
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--text-sec);
+            border-radius: 4px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--primary);
+        }
+    </style>
+</head>
+<body>
+    <!-- Enhanced Lock Screen -->
+    <div id="lock-screen" class="screen active">
+        <div class="particles" id="particles"></div>
+        <div class="pin-container">
+            <div class="logo-area">
+                <i class='bx bxs-cloud' style="font-size: 36px; color: var(--primary);"></i>
+                <span class="logo-text">Drive OS Pro</span>
+            </div>
+            <div class="pin-dots" id="pin-dots">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+            </div>
+            <div class="keypad">
+                <div class="key" onclick="PremiumKeypad.press(1)">1</div>
+                <div class="key" onclick="PremiumKeypad.press(2)">2</div>
+                <div class="key" onclick="PremiumKeypad.press(3)">3</div>
+                <div class="key" onclick="PremiumKeypad.press(4)">4</div>
+                <div class="key" onclick="PremiumKeypad.press(5)">5</div>
+                <div class="key" onclick="PremiumKeypad.press(6)">6</div>
+                <div class="key" onclick="PremiumKeypad.press(7)">7</div>
+                <div class="key" onclick="PremiumKeypad.press(8)">8</div>
+                <div class="key" onclick="PremiumKeypad.press(9)">9</div>
+                <div class="key clear" onclick="PremiumKeypad.reset()">CLEAR</div>
+                <div class="key" onclick="PremiumKeypad.press(0)">0</div>
+                <div class="key clear" onclick="PremiumKeypad.biometric()">
+                    <i class='bx bx-fingerprint'></i>
+                </div>
+            </div>
+            <div class="biometric-option" onclick="PremiumKeypad.biometric()">
+                <i class='bx bx-fingerprint'></i>
+                Use Biometric Authentication
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Auth Screen -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-card">
+            <h1 class="welcome-text">Drive OS Pro</h1>
+            <p style="color: var(--text-sec); margin-bottom: 40px; font-size: 16px;">Enterprise-grade cloud management with advanced AI features</p>
+            
+            <div class="feature-grid">
+                <div class="feature-item">
+                    <i class='bx bxs-zap' style="font-size: 24px; color: var(--warning); margin-bottom: 10px;"></i>
+                    <span style="font-size: 13px; font-weight: 500;">Lightning Fast</span>
+                </div>
+                <div class="feature-item">
+                    <i class='bx bxs-lock-alt' style="font-size: 24px; color: var(--secondary); margin-bottom: 10px;"></i>
+                    <span style="font-size: 13px; font-weight: 500;">Military Grade</span>
+                </div>
+                <div class="feature-item">
+                    <i class='bx bxs-cloud-upload' style="font-size: 24px; color: var(--primary); margin-bottom: 10px;"></i>
+                    <span style="font-size: 13px; font-weight: 500;">Smart Sync</span>
+                </div>
+                <div class="feature-item">
+                    <i class='bx bxs-bolt-circle' style="font-size: 24px; color: var(--accent); margin-bottom: 10px;"></i>
+                    <span style="font-size: 13px; font-weight: 500;">AI Powered</span>
+                </div>
+            </div>
+            
+            <button class="auth-btn" onclick="PremiumAuth.signIn()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
+                Sign in with Google
+            </button>
+            
+            <div style="margin-top: 20px; font-size: 12px; color: var(--text-sec);">
+                <i class='bx bxs-shield-alt'></i> Your data is encrypted end-to-end
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium App Dashboard -->
+    <div id="app-screen" class="screen">
+        <div class="app-header">
+            <div style="display: flex; align-items: center; gap: 15px;">
+                <span class="material-icons-round" onclick="PremiumUI.toggleSidebar()" style="cursor: pointer;">menu</span>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                    <i class='bx bxs-cloud' style="font-size: 24px; color: var(--primary);"></i>
+                    <span style="font-weight: 600; font-size: 18px;">Drive OS</span>
+                    <span style="background: linear-gradient(135deg, var(--primary), var(--secondary)); color: white; padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;">PRO</span>
+                </div>
+            </div>
+            
+            <div class="search-bar-container">
+                <div class="search-bar">
+                    <i class='bx bx-search'></i>
+                    <input type="text" class="search-input" placeholder="Search files, OCR text, or use natural language..." id="search-input" 
+                           onkeyup="PremiumDrive.search(this.value)"
+                           onfocus="PremiumUI.showSearchResults()">
+                    <div class="search-results" id="search-results"></div>
+                </div>
+            </div>
+            
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div class="theme-toggle" onclick="PremiumUI.toggleTheme()"></div>
+                <div style="position: relative;">
+                    <img id="user-avatar" src="" style="width: 36px; height: 36px; border-radius: 50%; cursor: pointer; border: 2px solid var(--primary);" 
+                         onclick="PremiumUI.toggleUserMenu()">
+                    <div id="user-menu" style="display: none; position: absolute; top: 50px; right: 0; background: var(--surface); border-radius: var(--radius); box-shadow: var(--shadow-lg); min-width: 200px; z-index: 100; border: 1px solid var(--border);">
+                        <div style="padding: 15px; border-bottom: 1px solid var(--border);">
+                            <div style="font-weight: 600;" id="user-name"></div>
+                            <div style="font-size: 12px; color: var(--text-sec);" id="user-email"></div>
+                        </div>
+                        <div class="action-list">
+                            <div onclick="PremiumSettings.open()"><i class='bx bx-cog'></i> Settings</div>
+                            <div onclick="PremiumDrive.storageInfo()"><i class='bx bxs-pie-chart-alt-2'></i> Storage Analytics</div>
+                            <div onclick="PremiumAuth.logout()" style="color: var(--accent);"><i class='bx bx-log-out'></i> Sign Out</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Enhanced Toolbar -->
+        <div class="toolbar">
+            <div class="breadcrumb" id="breadcrumb">
+                <span class="crumb-item" onclick="PremiumDrive.navigate('root')">My Drive</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 20px;">
+                <div style="position: relative;">
+                    <span class="material-icons-round" onclick="PremiumUI.toggleSortPanel()" style="cursor: pointer;">sort</span>
+                    <div class="sort-panel" id="sort-panel">
+                        <div class="sort-option" onclick="PremiumDrive.sort('name')">
+                            <span>Name</span>
+                            <i class='bx bx-check' style="display: none;"></i>
+                        </div>
+                        <div class="sort-option" onclick="PremiumDrive.sort('date')">
+                            <span>Date Modified</span>
+                            <i class='bx bx-check' style="display: none;"></i>
+                        </div>
+                        <div class="sort-option" onclick="PremiumDrive.sort('size')">
+                            <span>Size</span>
+                            <i class='bx bx-check' style="display: none;"></i>
+                        </div>
+                        <div class="sort-option" onclick="PremiumDrive.sort('type')">
+                            <span>File Type</span>
+                            <i class='bx bx-check' style="display: none;"></i>
+                        </div>
+                    </div>
+                </div>
+                <span class="material-icons-round" id="view-toggle" onclick="PremiumUI.toggleView()" style="cursor: pointer;">grid_view</span>
+                <span class="material-icons-round" onclick="PremiumUI.refresh()" style="cursor: pointer;">refresh</span>
+            </div>
+        </div>
+
+        <!-- Enhanced File Container -->
+        <div id="file-container" class="file-viewer file-list-view">
+            <!-- Dynamic Content with Skeleton Loader -->
+            <div id="skeleton-loader">
+                <div class="skeleton skeleton-item"></div>
+                <div class="skeleton skeleton-item"></div>
+                <div class="skeleton skeleton-item"></div>
+            </div>
+        </div>
+
+        <!-- Premium FAB with More Options -->
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <label class="fab-item">
+                    <i class='bx bx-cloud-upload' style="color: var(--primary); font-size: 20px;"></i>
+                    Upload File
+                    <input type="file" hidden multiple onchange="PremiumUpload.handleFiles(this.files)">
+                </label>
+                <label class="fab-item">
+                    <i class='bx bx-folder-plus' style="color: var(--secondary); font-size: 20px;"></i>
+                    Upload Folder
+                    <input type="file" hidden webkitdirectory onchange="PremiumUpload.handleFiles(this.files)">
+                </label>
+                <div class="fab-item" onclick="PremiumOps.createFolder()">
+                    <i class='bx bx-folder' style="color: var(--warning); font-size: 20px;"></i>
+                    New Folder
+                </div>
+                <div class="fab-item" onclick="PremiumOps.scanDocuments()">
+                    <i class='bx bx-scan' style="color: var(--accent); font-size: 20px;"></i>
+                    Scan Documents
+                </div>
+                <div class="fab-item" onclick="PremiumOps.compressFiles()">
+                    <i class='bx bx-compress' style="color: var(--primary); font-size: 20px;"></i>
+                    Compress Files
+                </div>
+            </div>
+            <div class="fab-main" onclick="PremiumUI.toggleFab()">
+                <i class='bx bx-plus'></i>
+            </div>
+        </div>
+
+        <!-- Enhanced Bottom Navigation -->
+        <div class="bottom-nav">
+            <div class="nav-item active" onclick="PremiumNav.switchTab('home', this)">
+                <i class='bx bx-home'></i>
+                Home
+            </div>
+            <div class="nav-item" onclick="PremiumNav.switchTab('vault', this)">
+                <i class='bx bx-lock-alt'></i>
+                Vault
+            </div>
+            <div class="nav-item" onclick="PremiumNav.switchTab('starred', this)">
+                <i class='bx bx-star'></i>
+                Starred
+            </div>
+            <div class="nav-item" onclick="PremiumNav.switchTab('recent', this)">
+                <i class='bx bx-time'></i>
+                Recent
+            </div>
+            <div class="nav-item" onclick="PremiumNav.switchTab('shared', this)">
+                <i class='bx bx-share-alt'></i>
+                Shared
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Context Menu -->
+    <div id="ctx-modal" class="modal-mask" onclick="if(event.target === this) PremiumUI.closeModal('ctx-modal')">
+        <div class="modal-dialog">
+            <div class="dialog-head">
+                <span class="dialog-title" id="ctx-name">File Options</span>
+                <span class="material-icons-round" onclick="PremiumUI.closeModal('ctx-modal')" style="cursor: pointer;">close</span>
+            </div>
+            <div class="action-list">
+                <div onclick="PremiumOps.preview()"><i class='bx bx-show'></i> Preview</div>
+                <div onclick="PremiumOps.download()"><i class='bx bx-download'></i> Download</div>
+                <div onclick="PremiumOps.copyLink()"><i class='bx bx-link'></i> Copy Link</div>
+                <div onclick="PremiumOps.rename()"><i class='bx bx-edit'></i> Rename</div>
+                <div onclick="PremiumOps.ocr()"><i class='bx bx-text'></i> Extract Text (OCR)</div>
+                <div onclick="PremiumOps.compress()"><i class='bx bx-compress'></i> Compress</div>
+                <div onclick="PremiumOps.share()"><i class='bx bx-share'></i> Share</div>
+                <div onclick="PremiumOps.info()"><i class='bx bx-info-circle'></i> File Info</div>
+                <div onclick="PremiumOps.delete()" style="color: var(--accent);"><i class='bx bx-trash'></i> Move to Trash</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium Upload Manager with Pause/Resume -->
+    <div id="upload-manager" class="progress-overlay">
+        <div class="progress-card">
+            <div class="dialog-head">
+                <span class="dialog-title">Upload Manager</span>
+                <span class="material-icons-round" onclick="PremiumUI.closeModal('upload-manager')" style="cursor: pointer;">close</span>
+            </div>
+            
+            <div class="upload-queue" id="upload-queue">
+                <!-- Queue items will be added here -->
+            </div>
+            
+            <div class="progress-container">
+                <div class="progress-header">
+                    <span>Overall Progress</span>
+                    <span id="overall-progress">0%</span>
+                </div>
+                <div class="progress-bar-wrapper">
+                    <div class="progress-fill" id="overall-progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button onclick="PremiumUpload.pauseAll()" style="flex: 1; padding: 10px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">Pause All</button>
+                <button onclick="PremiumUpload.resumeAll()" style="flex: 1; padding: 10px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">Resume All</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- OCR Panel -->
+    <div id="ocr-panel" class="ocr-panel">
+        <div class="ocr-header">
+            <span style="font-weight: 600; font-size: 18px;">OCR Text Extraction</span>
+            <span class="material-icons-round" onclick="PremiumUI.closeModal('ocr-panel')" style="cursor: pointer;">close</span>
+        </div>
+        
+        <div class="language-selector">
+            <div class="lang-btn active" onclick="PremiumOCR.setLanguage('eng')">English</div>
+            <div class="lang-btn" onclick="PremiumOCR.setLanguage('ben')">Bangla</div>
+            <div class="lang-btn" onclick="PremiumOCR.setLanguage('eng+ben')">Both</div>
+        </div>
+        
+        <div class="ocr-content">
+            <div style="margin-bottom: 15px; font-weight: 500;">Extracted Text:</div>
+            <div class="ocr-text" id="ocr-text">
+                Processing... Please wait.
+            </div>
+        </div>
+        
+        <div style="padding: 20px; display: flex; gap: 10px; border-top: 1px solid var(--border);">
+            <button onclick="PremiumOCR.copyText()" style="flex: 1; padding: 12px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">Copy Text</button>
+            <button onclick="PremiumOCR.saveText()" style="flex: 1; padding: 12px; background: var(--bg); border: 1px solid var(--border); border-radius: 8px; cursor: pointer;">Save as File</button>
+        </div>
+    </div>
+
+    <!-- Storage Analytics Modal -->
+    <div id="storage-modal" class="modal-mask" onclick="if(event.target === this) PremiumUI.closeModal('storage-modal')">
+        <div class="modal-dialog" style="max-width: 600px;">
+            <div class="dialog-head">
+                <span class="dialog-title">Storage Analytics</span>
+                <span class="material-icons-round" onclick="PremiumUI.closeModal('storage-modal')" style="cursor: pointer;">close</span>
+            </div>
+            
+            <div class="storage-dashboard">
+                <div class="storage-chart">
+                    <canvas id="storage-chart"></canvas>
+                </div>
+                <div class="storage-stat">
+                    <div class="stat-value" id="storage-used">0 GB</div>
+                    <div class="stat-label">Used</div>
+                </div>
+                <div class="storage-stat">
+                    <div class="stat-value" id="storage-free">15 GB</div>
+                    <div class="stat-label">Free</div>
+                </div>
+                <div class="storage-stat">
+                    <div class="stat-value" id="storage-total">15 GB</div>
+                    <div class="stat-label">Total</div>
+                </div>
+                <div class="storage-stat">
+                    <div class="stat-value" id="file-count">0</div>
+                    <div class="stat-label">Files</div>
+                </div>
+            </div>
+            
+            <div style="margin-top: 30px;">
+                <div style="font-weight: 600; margin-bottom: 15px;">Storage by File Type</div>
+                <div id="storage-by-type"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Enhanced Media Viewer -->
+    <div id="media-view" class="media-viewer">
+        <div class="media-header">
+            <span id="media-title" style="font-weight: 600; font-size: 18px;">Preview</span>
+            <div class="media-controls">
+                <span class="material-icons-round" onclick="PremiumOps.download()" style="cursor: pointer;">download</span>
+                <span class="material-icons-round" onclick="PremiumOps.openExternal()" style="cursor: pointer;">open_in_new</span>
+                <span class="material-icons-round" onclick="PremiumOps.ocr()" style="cursor: pointer;">text_fields</span>
+                <span class="material-icons-round" onclick="PremiumUI.closeMedia()" style="cursor: pointer;">close</span>
+            </div>
+        </div>
+        <iframe id="media-frame" class="media-iframe" src=""></iframe>
+        <div class="media-info" id="media-info"></div>
+    </div>
+
+    <!-- Main Application Script -->
+    <script>
+        // Initialize Lucide icons
+        lucide.createIcons();
+
+        const PREMIUM_CONFIG = {
+            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+            vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn',
+            apiKey: 'AIzaSyB_8T8H9Jq3tL1h7Q4v6p7q9r0s1t2u3v4w5',
+            ocrLanguages: {
+                'eng': 'English',
+                'ben': 'Bangla',
+                'eng+ben': 'Both'
+            }
+        };
+
+        const PREMIUM_STATE = {
+            token: localStorage.getItem('g_token'),
+            user: JSON.parse(localStorage.getItem('g_user') || '{}'),
+            currFolder: 'root',
+            folderStack: [],
+            files: [],
+            selected: null,
+            viewMode: 'list',
+            theme: localStorage.getItem('app_theme') || 'light',
+            settings: JSON.parse(localStorage.getItem('d_premium_settings') || '{"extPlayer": false, "compression": true, "ocrAuto": false}'),
+            uploadQueue: [],
+            activeUploads: new Map(),
+            sortBy: 'name',
+            sortOrder: 'asc'
+        };
+
+        // Initialize particles for lock screen
+        function initParticles() {
+            const container = document.getElementById('particles');
+            if (!container) return;
+            
+            for (let i = 0; i < 15; i++) {
+                const particle = document.createElement('div');
+                particle.className = 'particle';
+                particle.style.width = `${Math.random() * 20 + 5}px`;
+                particle.style.height = particle.style.width;
+                particle.style.left = `${Math.random() * 100}%`;
+                particle.style.top = `${Math.random() * 100}%`;
+                particle.style.animationDelay = `${Math.random() * 5}s`;
+                particle.style.animationDuration = `${Math.random() * 3 + 3}s`;
+                container.appendChild(particle);
+            }
+        }
+
+        /* ===== PREMIUM KEYPAD SYSTEM ===== */
+        const PremiumKeypad = {
+            input: "",
+            press: (num) => {
+                if (PremiumKeypad.input.length < 4) {
+                    PremiumKeypad.input += num;
+                    PremiumKeypad.updateDots();
+                    if (PremiumKeypad.input.length === 4) {
+                        setTimeout(PremiumKeypad.check, 300);
+                    }
+                }
+            },
+            updateDots: () => {
+                const dots = document.querySelectorAll('#pin-dots .dot');
+                dots.forEach((d, i) => {
+                    if (i < PremiumKeypad.input.length) {
+                        d.classList.add('filled');
+                    } else {
+                        d.classList.remove('filled');
+                    }
+                });
+            },
+            reset: () => {
+                PremiumKeypad.input = "";
+                PremiumKeypad.updateDots();
+            },
+            check: async () => {
+                const stored = localStorage.getItem('app_pin');
+                const hash = btoa(PremiumKeypad.input);
+                
+                if (!stored) {
+                    localStorage.setItem('app_pin', hash);
+                    PremiumUI.showToast("PIN set successfully!", "success");
+                    PremiumAuth.check();
+                } else {
+                    if (stored === hash) {
+                        PremiumUI.showToast("Welcome back!", "success");
+                        PremiumAuth.check();
+                    } else {
+                        PremiumKeypad.reset();
+                        PremiumUI.shakeElement(document.getElementById('pin-dots'));
+                        PremiumUI.showToast("Incorrect PIN", "error");
+                    }
+                }
+            },
+            biometric: () => {
+                // Simulate biometric authentication
+                if (typeof PublicKeyCredential !== 'undefined') {
+                    PremiumUI.showToast("Biometric authentication requested", "info");
+                    // In real implementation, this would trigger WebAuthn
+                    setTimeout(() => {
+                        PremiumAuth.check();
+                    }, 1000);
+                } else {
+                    PremiumUI.showToast("Biometric not supported", "warning");
+                }
+            }
+        };
+
+        /* ===== PREMIUM AUTH SYSTEM ===== */
+        let premiumTokenClient;
+        const PremiumAuth = {
+            init: () => {
+                premiumTokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: PREMIUM_CONFIG.clientId,
+                    scope: PREMIUM_CONFIG.scopes,
+                    callback: async (response) => {
+                        if (response.error) {
+                            PremiumUI.showToast("Login failed. Please try again.", "error");
+                            return;
+                        }
+                        
+                        PREMIUM_STATE.token = response.access_token;
+                        localStorage.setItem('g_token', PREMIUM_STATE.token);
+                        localStorage.setItem('g_exp', Date.now() + 3500 * 1000);
+                        
+                        await PremiumAuth.loadProfile();
+                        PremiumUI.switchScreen('app-screen');
+                        PremiumDrive.load('root');
+                        PremiumUI.showToast("Welcome to Drive OS Pro!", "success");
+                    }
+                });
+                
+                // Apply theme
+                document.body.setAttribute('data-theme', PREMIUM_STATE.theme);
+            },
+            check: () => {
+                const exp = localStorage.getItem('g_exp');
+                if (PREMIUM_STATE.token && exp && Date.now() < exp) {
+                    PremiumUI.switchScreen('app-screen');
+                    PremiumDrive.load('root');
+                    if (!PREMIUM_STATE.user.picture) {
+                        PremiumAuth.loadProfile();
+                    }
+                } else {
+                    PremiumUI.switchScreen('auth-screen');
+                }
+            },
+            signIn: () => {
+                premiumTokenClient.requestAccessToken();
+            },
+            loadProfile: async () => {
+                try {
+                    const [userRes, peopleRes] = await Promise.all([
+                        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                            headers: { 'Authorization': `Bearer ${PREMIUM_STATE.token}` }
+                        }),
+                        fetch('https://people.googleapis.com/v1/people/me?personFields=photos', {
+                            headers: { 'Authorization': `Bearer ${PREMIUM_STATE.token}` }
+                        })
+                    ]);
+                    
+                    const userData = await userRes.json();
+                    const peopleData = await peopleRes.json();
+                    
+                    PREMIUM_STATE.user = userData;
+                    localStorage.setItem('g_user', JSON.stringify(userData));
+                    
+                    const avatar = document.getElementById('user-avatar');
+                    const userName = document.getElementById('user-name');
+                    const userEmail = document.getElementById('user-email');
+                    
+                    if (avatar) {
+                        avatar.src = userData.picture || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(userData.name) + '&background=4285f4&color=fff';
+                    }
+                    if (userName) userName.textContent = userData.name;
+                    if (userEmail) userEmail.textContent = userData.email;
+                    
+                } catch (error) {
+                    console.error('Profile load error:', error);
+                }
+            },
+            logout: () => {
+                if (confirm('Are you sure you want to sign out?')) {
+                    google.accounts.oauth2.revoke(PREMIUM_STATE.token, () => {
+                        localStorage.clear();
+                        PremiumUI.showToast('Signed out successfully', 'info');
+                        setTimeout(() => location.reload(), 1000);
+                    });
+                }
+            }
+        };
+
+        /* ===== PREMIUM DRIVE ENGINE ===== */
+        const PremiumDrive = {
+            load: async (id) => {
+                const container = document.getElementById('file-container');
+                container.innerHTML = `
+                    <div id="skeleton-loader">
+                        ${Array.from({length: 8}).map(() => 
+                            `<div class="skeleton ${PREMIUM_STATE.viewMode === 'list' ? 'skeleton-item' : 'skeleton-grid'}"></div>`
+                        ).join('')}
+                    </div>`;
+                
+                PREMIUM_STATE.currFolder = id;
+                PremiumDrive.updateBreadcrumb();
+                
+                history.pushState({ folderId: id }, null, "");
+                
+                const q = `'${id}' in parents and trashed = false`;
+                const fields = "files(id,name,mimeType,size,modifiedTime,iconLink,thumbnailLink,webViewLink,webContentLink,starred,shared,owners)";
+                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(fields)}&orderBy=${PremiumDrive.getSortOrder()}&pageSize=1000`;
+                
+                try {
+                    const res = await fetch(url, {
+                        headers: { 'Authorization': `Bearer ${PREMIUM_STATE.token}` }
+                    });
+                    
+                    if (!res.ok) throw new Error('API Error');
+                    
+                    const data = await res.json();
+                    PREMIUM_STATE.files = data.files || [];
+                    PremiumDrive.render(PREMIUM_STATE.files);
+                    
+                } catch (error) {
+                    console.error('Drive load error:', error);
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bx bx-error-circle empty-icon"></i>
+                            <div style="font-size: 16px; margin-bottom: 10px;">Failed to load files</div>
+                            <button onclick="PremiumDrive.load('${id}')" style="padding: 8px 16px; background: var(--primary); color: white; border: none; border-radius: 8px; cursor: pointer;">Retry</button>
+                        </div>`;
+                }
+            },
+            render: (files) => {
+                const container = document.getElementById('file-container');
+                
+                if (files.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <i class="bx bx-folder-open empty-icon"></i>
+                            <div style="font-size: 16px; margin-bottom: 5px;">No files here yet</div>
+                            <div style="color: var(--text-sec); font-size: 14px;">Upload files or create folders to get started</div>
+                        </div>`;
+                    return;
+                }
+                
+                container.innerHTML = '';
+                
+                files.forEach(file => {
+                    const isDir = file.mimeType === 'application/vnd.google-apps.folder';
+                    const element = document.createElement('div');
+                    element.className = PREMIUM_STATE.viewMode === 'list' ? 'list-item' : 'grid-item';
+                    
+                    const icon = PremiumDrive.getFileIcon(file);
+                    const date = new Date(file.modifiedTime).toLocaleDateString();
+                    const size = file.size ? PremiumOps.formatSize(file.size) : 'Folder';
+                    
+                    // File preview thumbnail
+                    let thumbnail = '';
+                    if (file.thumbnailLink && !isDir && file.mimeType.startsWith('image/')) {
+                        thumbnail = `<img src="${file.thumbnailLink}" style="width: 40px; height: 40px; border-radius: 8px; object-fit: cover;" alt="${file.name}">`;
+                    } else {
+                        thumbnail = `<i class='bx ${icon} item-icon ${isDir ? 'folder-icon' : ''}'></i>`;
+                    }
+                    
+                    // Grid view thumbnail
+                    if (PREMIUM_STATE.viewMode === 'grid' && file.thumbnailLink && !isDir) {
+                        thumbnail = `<img src="${file.thumbnailLink}" style="width: 100%; height: 100px; object-fit: cover; border-radius: 8px; margin-bottom: 10px;" alt="${file.name}">`;
+                    }
+                    
+                    element.innerHTML = `
+                        ${thumbnail}
+                        <div class="item-text">
+                            <span class="item-name">${file.name} ${file.starred ? '<i class="bx bxs-star" style="color: var(--warning); font-size: 12px;"></i>' : ''}</span>
+                            <span class="item-meta">${isDir ? 'Folder' : size} • ${date}</span>
+                        </div>
+                        <div class="item-actions">
+                            <div class="quick-action-btn" onclick="event.stopPropagation(); PremiumOps.toggleStar('${file.id}')">
+                                <i class='bx ${file.starred ? 'bxs-star' : 'bx-star'}'></i>
+                            </div>
+                            <div class="quick-action-btn" onclick="event.stopPropagation(); PremiumOps.menu('${file.id}')">
+                                <i class='bx bx-dots-vertical-rounded'></i>
+                            </div>
+                        </div>
+                    `;
+                    
+                    element.onclick = () => {
+                        if (isDir) {
+                            PremiumDrive.load(file.id);
+                        } else {
+                            PremiumOps.menu(file.id);
+                        }
+                    };
+                    
+                    container.appendChild(element);
+                });
+            },
+            search: async (query) => {
+                if (!query.trim()) {
+                    PremiumDrive.render(PREMIUM_STATE.files);
+                    return;
+                }
+                
+                // Advanced search with OCR text capability
+                const results = PREMIUM_STATE.files.filter(file => 
+                    file.name.toLowerCase().includes(query.toLowerCase()) ||
+                    file.mimeType.toLowerCase().includes(query.toLowerCase())
+                );
+                
+                PremiumDrive.render(results);
+                
+                // Show search suggestions
+                if (query.length > 2) {
+                    PremiumUI.showSearchSuggestions(query, results);
+                }
+            },
+            sort: (criteria) => {
+                PREMIUM_STATE.sortBy = criteria;
+                PREMIUM_STATE.sortOrder = PREMIUM_STATE.sortOrder === 'asc' ? 'desc' : 'asc';
+                
+                PREMIUM_STATE.files.sort((a, b) => {
+                    let aVal, bVal;
+                    
+                    switch (criteria) {
+                        case 'name':
+                            aVal = a.name.toLowerCase();
+                            bVal = b.name.toLowerCase();
+                            break;
+                        case 'date':
+                            aVal = new Date(a.modifiedTime);
+                            bVal = new Date(b.modifiedTime);
+                            break;
+                        case 'size':
+                            aVal = a.size || 0;
+                            bVal = b.size || 0;
+                            break;
+                        case 'type':
+                            aVal = a.mimeType;
+                            bVal = b.mimeType;
+                            break;
+                        default:
+                            return 0;
+                    }
+                    
+                    const order = PREMIUM_STATE.sortOrder === 'asc' ? 1 : -1;
+                    if (aVal < bVal) return -1 * order;
+                    if (aVal > bVal) return 1 * order;
+                    return 0;
+                });
+                
+                PremiumDrive.render(PREMIUM_STATE.files);
+                PremiumUI.closeModal('sort-panel');
+                PremiumUI.showToast(`Sorted by ${criteria} (${PREMIUM_STATE.sortOrder})`, 'info');
+            },
+            getSortOrder: () => {
+                switch (PREMIUM_STATE.sortBy) {
+                    case 'name': return 'name';
+                    case 'date': return 'modifiedTime desc';
+                    case 'size': return 'size desc';
+                    default: return 'folder,name';
+                }
+            },
+            updateBreadcrumb: () => {
+                const breadcrumb = document.getElementById('breadcrumb');
+                if (!breadcrumb) return;
+                
+                let path = '';
+                if (PREMIUM_STATE.currFolder === 'root') {
+                    path = '<span class="crumb-item" onclick="PremiumDrive.navigate(\'root\')">My Drive</span>';
+                } else if (PREMIUM_STATE.currFolder === PREMIUM_CONFIG.vaultId) {
+                    path = '<span class="crumb-item" onclick="PremiumDrive.navigate(\'' + PREMIUM_CONFIG.vaultId + '\')">Vault</span>';
+                } else {
+                    path = '<span class="crumb-item" onclick="PremiumDrive.navigate(\'root\')">My Drive</span>' +
+                           '<span class="crumb-separator">/</span>' +
+                           '<span class="crumb-item">Folder</span>';
+                }
+                
+                breadcrumb.innerHTML = path;
+            },
+            navigate: (folderId) => {
+                PremiumDrive.load(folderId);
+            },
+            storageInfo: async () => {
+                try {
+                    const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+                        headers: { 'Authorization': `Bearer ${PREMIUM_STATE.token}` }
+                    });
+                    
+                    const data = await res.json();
+                    PremiumUI.showStorageAnalytics(data.storageQuota);
+                    
+                } catch (error) {
+                    console.error('Storage info error:', error);
+                    PremiumUI.showToast('Failed to load storage info', 'error');
+                }
+            },
+            getFileIcon: (file) => {
+                const mime = file.mimeType;
+                if (mime === 'application/vnd.google-apps.folder') return 'bx-folder';
+                if (mime.includes('image')) return 'bx-image';
+                if (mime.includes('video')) return 'bx-video';
+                if (mime.includes('audio')) return 'bx-music';
+                if (mime.includes('pdf')) return 'bx-file-pdf';
+                if (mime.includes('word') || mime.includes('document')) return 'bx-file-doc';
+                if (mime.includes('excel') || mime.includes('spreadsheet')) return 'bx-file-xls';
+                if (mime.includes('presentation') || mime.includes('powerpoint')) return 'bx-file-ppt';
+                if (mime.includes('zip') || mime.includes('compressed')) return 'bx-file-zip';
+                return 'bx-file';
+            }
+        };
+
+        /* ===== PREMIUM UPLOAD ENGINE ===== */
+        const PremiumUpload = {
+            handleFiles: (files) => {
+                if (!files.length) return;
+                
+                PremiumUI.toggleFab();
+                
+                Array.from(files).forEach(file => {
+                    PremiumUpload.addToQueue(file);
+                });
+                
+                PremiumUpload.processQueue();
+            },
+            addToQueue: (file) => {
+                const uploadId = 'upload_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+                
+                const uploadItem = {
+                    id: uploadId,
+                    file: file,
+                    progress: 0,
+                    status: 'queued', // queued, uploading, paused, completed, failed
+                    speed: 0,
+                    estimatedTime: 0
+                };
+                
+                PREMIUM_STATE.uploadQueue.push(uploadItem);
+                PremiumUpload.updateQueueDisplay();
+            },
+            updateQueueDisplay: () => {
+                const queueContainer = document.getElementById('upload-queue');
+                if (!queueContainer) return;
+                
+                queueContainer.innerHTML = PREMIUM_STATE.uploadQueue.map(item => `
+                    <div class="queue-item" id="queue-${item.id}">
+                        <div style="display: flex; align-items: center; gap: 10px; flex: 1;">
+                            <i class='bx ${item.file.type.startsWith('image/') ? 'bx-image' : 'bx-file'}'></i>
+                            <div style="overflow: hidden;">
+                                <div style="font-weight: 500; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${item.file.name}</div>
+                                <div style="font-size: 12px; color: var(--text-sec);">
+                                    ${PremiumOps.formatSize(item.file.size)} • ${item.status}
+                                    ${item.speed > 0 ? ` • ${PremiumOps.formatSize(item.speed)}/s` : ''}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="queue-item-controls">
+                            ${item.status === 'uploading' ? 
+                                `<i class='bx bx-pause' onclick="PremiumUpload.pause('${item.id}')" style="cursor: pointer;"></i>` :
+                                item.status === 'paused' ?
+                                `<i class='bx bx-play' onclick="PremiumUpload.resume('${item.id}')" style="cursor: pointer;"></i>` :
+                                ''
+                            }
+                            <i class='bx bx-x' onclick="PremiumUpload.remove('${item.id}')" style="cursor: pointer;"></i>
+                        </div>
+                    </div>
+                `).join('');
+                
+                // Update overall progress
+                const totalSize = PREMIUM_STATE.uploadQueue.reduce((sum, item) => sum + item.file.size, 0);
+                const uploadedSize = PREMIUM_STATE.uploadQueue.reduce((sum, item) => sum + (item.file.size * item.progress / 100), 0);
+                const overallProgress = totalSize > 0 ? (uploadedSize / totalSize) * 100 : 0;
+                
+                document.getElementById('overall-progress').textContent = Math.round(overallProgress) + '%';
+                document.getElementById('overall-progress-bar').style.width = overallProgress + '%';
+            },
+            processQueue: async () => {
+                const activeUploads = PREMIUM_STATE.uploadQueue.filter(item => 
+                    item.status === 'queued' || item.status === 'paused'
+                );
+                
+                // Process up to 3 uploads concurrently
+                const concurrentUploads = activeUploads.slice(0, 3);
+                
+                concurrentUploads.forEach(async (item) => {
+                    if (item.status === 'queued') {
+                        await PremiumUpload.startUpload(item);
+                    }
+                });
+                
+                PremiumUI.openModal('upload-manager');
+            },
+            startUpload: async (uploadItem) => {
+                uploadItem.status = 'uploading';
+                PremiumUpload.updateQueueDisplay();
+                
+                try {
+                    // Check if compression is enabled for images
+                    let fileToUpload = uploadItem.file;
+                    if (PREMIUM_STATE.settings.compression && fileToUpload.type.startsWith('image/')) {
+                        fileToUpload = await PremiumUpload.compressImage(fileToUpload);
+                    }
+                    
+                    const metadata = {
+                        name: fileToUpload.name,
+                        mimeType: fileToUpload.type,
+                        parents: [PREMIUM_STATE.currFolder]
+                    };
+                    
+                    // Create resumable upload session
+                    const initResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${PREMIUM_STATE.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify(metadata)
+                    });
+                    
+                    const uploadUrl = initResponse.headers.get('Location');
+                    
+                    // Upload with progress tracking
+                    await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        PREMIUM_STATE.activeUploads.set(uploadItem.id, xhr);
+                        
+                        xhr.upload.onprogress = (event) => {
+                            if (event.lengthComputable) {
+                                const progress = (event.loaded / event.total) * 100;
+                                uploadItem.progress = progress;
+                                uploadItem.speed = event.loaded / (Date.now() - uploadItem.startTime) * 1000;
+                                PremiumUpload.updateQueueDisplay();
+                            }
+                        };
+                        
+                        xhr.onload = () => {
+                            if (xhr.status === 200 || xhr.status === 201) {
+                                uploadItem.status = 'completed';
+                                PremiumUI.showToast(`${uploadItem.file.name} uploaded successfully`, 'success');
+                                resolve();
+                            } else {
+                                reject();
+                            }
+                        };
+                        
+                        xhr.onerror = reject;
+                        xhr.open('PUT', uploadUrl);
+                        xhr.setRequestHeader('Content-Type', fileToUpload.type);
+                        xhr.send(fileToUpload);
+                        
+                        uploadItem.startTime = Date.now();
+                    });
+                    
+                } catch (error) {
+                    console.error('Upload failed:', error);
+                    uploadItem.status = 'failed';
+                    PremiumUI.showToast(`Failed to upload ${uploadItem.file.name}`, 'error');
+                }
+                
+                PREMIUM_STATE.activeUploads.delete(uploadItem.id);
+                PremiumUpload.updateQueueDisplay();
+                
+                // Refresh file list if this was the last upload
+                const hasActiveUploads = PREMIUM_STATE.uploadQueue.some(item => 
+                    item.status === 'uploading' || item.status === 'queued'
+                );
+                
+                if (!hasActiveUploads) {
+                    setTimeout(() => PremiumDrive.load(PREMIUM_STATE.currFolder), 1000);
+                }
+            },
+            compressImage: (file) => {
+                return new Promise((resolve) => {
+                    new Compressor(file, {
+                        quality: 0.8,
+                        success(result) {
+                            resolve(result);
+                        },
+                        error(err) {
+                            console.error('Compression failed:', err);
+                            resolve(file); // Return original if compression fails
+                        }
+                    });
+                });
+            },
+            pause: (uploadId) => {
+                const xhr = PREMIUM_STATE.activeUploads.get(uploadId);
+                if (xhr) {
+                    xhr.abort();
+                    const item = PREMIUM_STATE.uploadQueue.find(i => i.id === uploadId);
+                    if (item) {
+                        item.status = 'paused';
+                        PremiumUpload.updateQueueDisplay();
+                    }
+                }
+            },
+            resume: (uploadId) => {
+                const item = PREMIUM_STATE.uploadQueue.find(i => i.id === uploadId);
+                if (item) {
+                    PremiumUpload.startUpload(item);
+                }
+            },
+            pauseAll: () => {
+                PREMIUM_STATE.activeUploads.forEach((xhr, id) => {
+                    xhr.abort();
+                    const item = PREMIUM_STATE.uploadQueue.find(i => i.id === id);
+                    if (item) item.status = 'paused';
+                });
+                PremiumUpload.updateQueueDisplay();
+                PremiumUI.showToast('All uploads paused', 'info');
+            },
+            resumeAll: () => {
+                PREMIUM_STATE.uploadQueue.forEach(item => {
+                    if (item.status === 'paused') {
+                        item.status = 'queued';
+                    }
+                });
+                PremiumUpload.processQueue();
+                PremiumUI.showToast('Resuming all uploads', 'info');
+            },
+            remove: (uploadId) => {
+                PremiumUpload.pause(uploadId);
+                PREMIUM_STATE.uploadQueue = PREMIUM_STATE.uploadQueue.filter(item => item.id !== uploadId);
+                PremiumUpload.updateQueueDisplay();
+            }
+        };
+
+        /* ===== PREMIUM OCR ENGINE ===== */
+        const PremiumOCR = {
+            currentLanguage: 'eng',
+            worker: null,
+            setLanguage: (lang) => {
+                PremiumOCR.currentLanguage = lang;
+                document.querySelectorAll('.lang-btn').forEach(btn => btn.classList.remove('active'));
+                event.target.classList.add('active');
+                
+                if (PREMIUM_STATE.selected && PREMIUM_STATE.selected.mimeType.startsWith('image/')) {
+                    PremiumOCR.extractText();
+                }
+            },
+            extractText: async () => {
+                const file = PREMIUM_STATE.selected;
+                if (!file) return;
+                
+                PremiumUI.openModal('ocr-panel');
+                
+                try {
+                    // Get file content
+                    const response = await fetch(file.webContentLink, {
+                        headers: { 'Authorization': `Bearer ${PREMIUM_STATE.token}` }
+                    });
+                    
+                    const blob = await response.blob();
+                    
+                    // Initialize Tesseract worker
+                    if (!PremiumOCR.worker) {
+                        PremiumOCR.worker = await Tesseract.createWorker();
+                    }
+                    
+                    await PremiumOCR.worker.loadLanguage(PremiumOCR.currentLanguage);
+                    await PremiumOCR.worker.initialize(PremiumOCR.currentLanguage);
+                    
+                    // Perform OCR
+                    const { data: { text } } = await PremiumOCR.worker.recognize(blob);
+                    
+                    document.getElementById('ocr-text').textContent = text || 'No text found in the image.';
+                    
+                } catch (error) {
+                    console.error('OCR Error:', error);
+                    document.getElementById('ocr-text').textContent = 'Failed to extract text. Please try again.';
+                }
+            },
+            copyText: () => {
+                const text = document.getElementById('ocr-text').textContent;
+                navigator.clipboard.writeText(text).then(() => {
+                    PremiumUI.showToast('Text copied to clipboard!', 'success');
+                });
+            },
+            saveText: () => {
+                const text = document.getElementById('ocr-text').textContent;
+                const blob = new Blob([text], { type: 'text/plain' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `extracted_text_${new Date().getTime()}.txt`;
+                a.click();
+                URL.revokeObjectURL(url);
+                PremiumUI.showToast('Text saved as file!', 'success');
+            }
+        };
+
+        /* ===== PREMIUM OPERATIONS ===== */
+        const PremiumOps = {
+            menu: (fileId) => {
+                PREMIUM_STATE.selected = PREMIUM_STATE.files.find(f => f.id === fileId);
+                document.getElementById('ctx-name').textContent = PREMIUM_STATE.selected.name;
+                PremiumUI.openModal('ctx-modal');
+            },
+            preview: () => {
+                PremiumUI.closeModal('ctx-modal');
+                const file = PREMIUM_STATE.selected;
+                
+                if (PREMIUM_STATE.settings.extPlayer) {
+                    PremiumOps.openExternal();
+                    return;
+                }
+                
+                // Enhanced preview with multiple formats
+                const embedUrl = `https://drive.google.com/file/d/${file.id}/preview`;
+                
+                document.getElementById('media-title').textContent = file.name;
+                document.getElementById('media-frame').src = embedUrl;
+                document.getElementById('media-info').innerHTML = `
+                    <div style="display: flex; justify-content: space-between;">
+                        <span>${PremiumOps.formatSize(file.size)}</span>
+                        <span>${new Date(file.modifiedTime).toLocaleString()}</span>
+                    </div>
+                `;
+                
+                PremiumUI.openModal('media-view');
+            },
+            openExternal: () => {
+                window.open(PREMIUM_STATE.selected.webViewLink, '_blank');
+            },
+            download: () => {
+                const file = PREMIUM_STATE.selected;
+                PremiumUI.showToast(`Downloading ${file.name}...`, 'info');
+                window.open(file.webContentLink, '_blank');
+            },
+            copyLink: () => {
+                navigator.clipboard.writeText(PREMIUM_STATE.selected.webViewLink);
+                PremiumUI.showToast('Link copied to clipboard!', 'success');
+                PremiumUI.closeModal('ctx-modal');
+            },
+            rename: async () => {
+                const newName = prompt('Enter new name:', PREMIUM_STATE.selected.name);
+                if (!newName || newName === PREMIUM_STATE.selected.name) return;
+                
+                try {
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${PREMIUM_STATE.selected.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${PREMIUM_STATE.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ name: newName })
+                    });
+                    
+                    PremiumUI.showToast('File renamed successfully!', 'success');
+                    PremiumDrive.load(PREMIUM_STATE.currFolder);
+                    
+                } catch (error) {
+                    PremiumUI.showToast('Failed to rename file', 'error');
+                }
+                
+                PremiumUI.closeModal('ctx-modal');
+            },
+            ocr: () => {
+                PremiumOCR.extractText();
+            },
+            compress: async () => {
+                PremiumUI.showToast('Compression feature coming soon!', 'info');
+                // Implement file compression using JSZip
+            },
+            share: () => {
+                const shareUrl = PREMIUM_STATE.selected.webViewLink;
+                if (navigator.share) {
+                    navigator.share({
+                        title: PREMIUM_STATE.selected.name,
+                        url: shareUrl
+                    });
+                } else {
+                    navigator.clipboard.writeText(shareUrl);
+                    PremiumUI.showToast('Share link copied!', 'success');
+                }
+            },
+            toggleStar: async (fileId) => {
+                try {
+                    const file = PREMIUM_STATE.files.find(f => f.id === fileId);
+                    const newStarred = !file.starred;
+                    
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${PREMIUM_STATE.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ starred: newStarred })
+                    });
+                    
+                    file.starred = newStarred;
+                    PremiumDrive.render(PREMIUM_STATE.files);
+                    PremiumUI.showToast(newStarred ? 'Added to starred!' : 'Removed from starred!', 'success');
+                    
+                } catch (error) {
+                    PremiumUI.showToast('Failed to update star status', 'error');
+                }
+            },
+            info: () => {
+                const file = PREMIUM_STATE.selected;
+                const info = `
+                    Name: ${file.name}
+                    Type: ${file.mimeType}
+                    Size: ${PremiumOps.formatSize(file.size)}
+                    Modified: ${new Date(file.modifiedTime).toLocaleString()}
+                    ID: ${file.id}
+                    ${file.owners ? `Owner: ${file.owners[0].displayName}` : ''}
+                `;
+                
+                alert(info);
+                PremiumUI.closeModal('ctx-modal');
+            },
+            delete: async () => {
+                if (!confirm('Move to trash? This can be recovered from Google Drive trash.')) {
+                    return;
+                }
+                
+                PremiumUI.closeModal('ctx-modal');
+                
+                try {
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${PREMIUM_STATE.selected.id}`, {
+                        method: 'PATCH',
+                        headers: {
+                            'Authorization': `Bearer ${PREMIUM_STATE.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ trashed: true })
+                    });
+                    
+                    PremiumUI.showToast('Moved to trash', 'success');
+                    PremiumDrive.load(PREMIUM_STATE.currFolder);
+                    
+                } catch (error) {
+                    PremiumUI.showToast('Failed to delete file', 'error');
+                }
+            },
+            createFolder: async () => {
+                const name = prompt('Folder name:');
+                if (!name) return;
+                
+                try {
+                    await fetch('https://www.googleapis.com/drive/v3/files', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${PREMIUM_STATE.token}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({
+                            name: name,
+                            mimeType: 'application/vnd.google-apps.folder',
+                            parents: [PREMIUM_STATE.currFolder]
+                        })
+                    });
+                    
+                    PremiumUI.showToast('Folder created!', 'success');
+                    PremiumDrive.load(PREMIUM_STATE.currFolder);
+                    PremiumUI.toggleFab();
+                    
+                } catch (error) {
+                    PremiumUI.showToast('Failed to create folder', 'error');
+                }
+            },
+            scanDocuments: () => {
+                // Trigger camera/document scanner
+                PremiumUI.showToast('Document scanner activated', 'info');
+                // Implementation would use device camera API
+            },
+            compressFiles: () => {
+                PremiumUI.showToast('Batch compression coming soon!', 'info');
+            },
+            formatSize: (bytes) => {
+                if (!bytes || bytes === 0) return '0 B';
+                const k = 1024;
+                const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                const i = Math.floor(Math.log(bytes) / Math.log(k));
+                return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+            }
+        };
+
+        /* ===== PREMIUM UI CONTROLLER ===== */
+        const PremiumUI = {
+            switchScreen: (screenId) => {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(screenId).classList.add('active');
+            },
+            toggleFab: () => {
+                const menu = document.getElementById('fab-menu');
+                menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
+            },
+            toggleView: () => {
+                PREMIUM_STATE.viewMode = PREMIUM_STATE.viewMode === 'list' ? 'grid' : 'list';
+                const container = document.getElementById('file-container');
+                container.className = `file-viewer file-${PREMIUM_STATE.viewMode}-view`;
+                
+                const toggleIcon = document.getElementById('view-toggle');
+                toggleIcon.textContent = PREMIUM_STATE.viewMode === 'list' ? 'grid_view' : 'view_list';
+                
+                PremiumDrive.render(PREMIUM_STATE.files);
+            },
+            toggleTheme: () => {
+                PREMIUM_STATE.theme = PREMIUM_STATE.theme === 'light' ? 'dark' : 'light';
+                document.body.setAttribute('data-theme', PREMIUM_STATE.theme);
+                localStorage.setItem('app_theme', PREMIUM_STATE.theme);
+            },
+            toggleSortPanel: () => {
+                const panel = document.getElementById('sort-panel');
+                panel.style.display = panel.style.display === 'block' ? 'none' : 'block';
+            },
+            toggleUserMenu: () => {
+                const menu = document.getElementById('user-menu');
+                menu.style.display = menu.style.display === 'block' ? 'none' : 'block';
+            },
+            toggleSidebar: () => {
+                // Sidebar implementation
+                PremiumUI.showToast('Sidebar coming soon!', 'info');
+            },
+            openModal: (modalId) => {
+                document.getElementById(modalId).style.display = 'flex';
+            },
+            closeModal: (modalId) => {
+                document.getElementById(modalId).style.display = 'none';
+            },
+            openMedia: () => {
+                document.getElementById('media-view').style.display = 'flex';
+            },
+            closeMedia: () => {
+                document.getElementById('media-view').style.display = 'none';
+                document.getElementById('media-frame').src = '';
+            },
+            refresh: () => {
+                PremiumDrive.load(PREMIUM_STATE.currFolder);
+                PremiumUI.showToast('Refreshed!', 'success');
+            },
+            showToast: (message, type = 'info') => {
+                // Create toast element
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    background: ${type === 'error' ? 'var(--accent)' : type === 'success' ? 'var(--secondary)' : 'var(--primary)'};
+                    color: white;
+                    padding: 12px 20px;
+                    border-radius: var(--radius);
+                    box-shadow: var(--shadow-lg);
+                    z-index: 9999;
+                    animation: slideInRight 0.3s ease;
+                    display: flex;
+                    align-items: center;
+                    gap: 10px;
+                    font-weight: 500;
+                `;
+                
+                const icon = type === 'error' ? 'bx-error-circle' : 
+                            type === 'success' ? 'bx-check-circle' : 'bx-info-circle';
+                
+                toast.innerHTML = `<i class='bx ${icon}'></i> ${message}`;
+                document.body.appendChild(toast);
+                
+                setTimeout(() => {
+                    toast.style.animation = 'slideInRight 0.3s ease reverse';
+                    setTimeout(() => toast.remove(), 300);
+                }, 3000);
+            },
+            showSearchResults: () => {
+                const results = document.getElementById('search-results');
+                if (results) {
+                    results.style.display = 'block';
+                }
+            },
+            showSearchSuggestions: (query, results) => {
+                // Implement search suggestions
+            },
+            showStorageAnalytics: (storageQuota) => {
+                const used = parseInt(storageQuota.usage);
+                const total = parseInt(storageQuota.limit);
+                const free = total - used;
+                
+                document.getElementById('storage-used').textContent = PremiumOps.formatSize(used);
+                document.getElementById('storage-free').textContent = PremiumOps.formatSize(free);
+                document.getElementById('storage-total').textContent = PremiumOps.formatSize(total);
+                
+                // Create chart
+                const ctx = document.getElementById('storage-chart').getContext('2d');
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Used', 'Free'],
+                        datasets: [{
+                            data: [used, free],
+                            backgroundColor: ['var(--primary)', 'var(--hover)'],
+                            borderWidth: 0
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+                
+                PremiumUI.openModal('storage-modal');
+            },
+            shakeElement: (element) => {
+                element.style.animation = 'none';
+                setTimeout(() => {
+                    element.style.animation = 'shake 0.5s ease';
+                    setTimeout(() => {
+                        element.style.animation = '';
+                    }, 500);
+                }, 10);
+            }
+        };
+
+        /* ===== PREMIUM NAVIGATION ===== */
+        const PremiumNav = {
+            switchTab: (tab, element) => {
+                document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+                element.classList.add('active');
+                
+                switch (tab) {
+                    case 'home':
+                        PremiumDrive.load('root');
+                        break;
+                    case 'vault':
+                        PremiumDrive.load(PREMIUM_CONFIG.vaultId);
+                        break;
+                    case 'starred':
+                        PremiumDrive.load('starred'); // Would need special query
+                        PremiumUI.showToast('Starred files coming soon!', 'info');
+                        break;
+                    case 'recent':
+                        PremiumUI.showToast('Recent files coming soon!', 'info');
+                        break;
+                    case 'shared':
+                        PremiumUI.showToast('Shared files coming soon!', 'info');
+                        break;
+                }
+            }
+        };
+
+        /* ===== PREMIUM SETTINGS ===== */
+        const PremiumSettings = {
+            open: () => {
+                PremiumUI.openModal('settings-modal');
+            },
+            save: () => {
+                // Save settings implementation
+                localStorage.setItem('d_premium_settings', JSON.stringify(PREMIUM_STATE.settings));
+                PremiumUI.showToast('Settings saved!', 'success');
+            }
+        };
+
+        // Initialize application
+        window.addEventListener('load', () => {
+            // Create shake animation
+            const style = document.createElement('style');
+            style.textContent = `
+                @keyframes shake {
+                    0%, 100% { transform: translateX(0); }
+                    10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+                    20%, 40%, 60%, 80% { transform: translateX(5px); }
+                }
+            `;
+            document.head.appendChild(style);
+            
+            initParticles();
+            
+            if (!localStorage.getItem('app_pin')) {
+                PremiumUI.showToast('Welcome! Set your PIN to secure your files.', 'info');
+            }
+            
+            PremiumAuth.init();
+            PremiumAuth.check();
+            
+            // Handle back/forward navigation
+            window.addEventListener('popstate', (event) => {
+                if (event.state && event.state.folderId) {
+                    PremiumDrive.load(event.state.folderId);
+                }
+            });
+        });
+
+        // Close modals when clicking outside
+        document.addEventListener('click', (event) => {
+            if (!event.target.closest('#user-menu') && !event.target.closest('#user-avatar')) {
+                const menu = document.getElementById('user-menu');
+                if (menu) menu.style.display = 'none';
+            }
+            
+            if (!event.target.closest('#sort-panel') && !event.target.closest('.material-icons-round')) {
+                const panel = document.getElementById('sort-panel');
+                if (panel) panel.style.display = 'none';
+            }
+            
+            if (!event.target.closest('#search-results') && !event.target.closest('.search-bar')) {
+                const results = document.getElementById('search-results');
+                if (results) results.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>
