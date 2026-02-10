@@ -1,657 +1,831 @@
 <!DOCTYPE html>
-<html lang="bn">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>Hybrid Vault Pro</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive OS Pro | Secure Cloud Storage</title>
     
-    <!-- Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Hind+Siliguri:wght@400;600;700&display=swap" rel="stylesheet">
-    
-    <!-- Firebase SDK (Compatible Version) -->
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-auth-compat.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-firestore-compat.js"></script>
-    
-    <!-- Encryption Lib -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.1.1/crypto-js.min.js"></script>
-
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        /* ============ THEME & VARIABLES ============ */
-        :root {
-            --primary: #6366f1;
-            --secondary: #10b981;
-            --bg: #0f172a;
-            --surface: #1e293b;
-            --text: #f8fafc;
-            --text-mute: #94a3b8;
-            --border: #334155;
-            --danger: #ef4444;
-            --nav-height: 70px;
-            --safe-bottom: env(safe-area-inset-bottom, 20px);
-        }
-
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Hind Siliguri', sans-serif; -webkit-tap-highlight-color: transparent; }
+        @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
         
-        body { 
-            background: var(--bg); color: var(--text); height: 100vh; width: 100vw;
-            overflow: hidden; display: flex; flex-direction: column; 
+        body {
+            font-family: 'Outfit', sans-serif;
+            background: #0a0a0f;
+            color: #fff;
+            overflow-x: hidden;
         }
-
-        /* ============ PIN SCREEN ============ */
-        #pinScreen {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: var(--bg); z-index: 5000; 
-            display: flex; flex-direction: column; align-items: center; justify-content: center;
-        }
-
-        .logo-anim { font-size: 4rem; margin-bottom: 20px; animation: float 3s infinite ease-in-out; }
-        @keyframes float { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-10px); } }
-
-        .pin-dots { display: flex; gap: 15px; margin: 30px 0; }
-        .dot { width: 15px; height: 15px; border-radius: 50%; border: 2px solid var(--border); transition: 0.2s; }
-        .dot.active { background: var(--primary); border-color: var(--primary); box-shadow: 0 0 15px var(--primary); }
-
-        .keypad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; width: 300px; padding-bottom: 20px; }
-        .key { 
-            background: var(--surface); color: white; border: none; 
-            padding: 20px; border-radius: 18px; font-size: 1.5rem; 
-            cursor: pointer; transition: 0.2s; box-shadow: 0 4px 0px rgba(0,0,0,0.3);
-        }
-        .key:active { transform: translateY(4px); box-shadow: none; }
-
-        /* ============ MAIN LAYOUT ============ */
-        #mainScreen { display: none; flex-direction: column; height: 100%; width: 100%; }
-
-        .header {
-            height: 70px; flex-shrink: 0;
-            background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(10px);
-            border-bottom: 1px solid var(--border);
-            display: flex; justify-content: space-between; align-items: center;
-            padding: 0 20px; z-index: 10;
-        }
-
-        /* CONTENT AREA - Fix for Navigation overlap */
-        .content-area {
-            flex-grow: 1; overflow-y: auto; padding: 15px;
-            padding-bottom: calc(100px + var(--safe-bottom)); /* Extra padding for FAB & Nav */
-            display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 12px; align-content: start;
-        }
-
-        /* NAVIGATION BAR */
-        .bottom-nav {
-            position: fixed; bottom: 0; width: 100%;
-            background: var(--surface); border-top: 1px solid var(--border);
-            display: flex; justify-content: space-around; align-items: center;
-            height: calc(var(--nav-height) + var(--safe-bottom));
-            padding-bottom: var(--safe-bottom);
-            z-index: 20; box-shadow: 0 -5px 20px rgba(0,0,0,0.3);
-        }
-
-        .nav-item {
-            background: none; border: none; color: var(--text-mute);
-            display: flex; flex-direction: column; align-items: center;
-            font-size: 0.75rem; gap: 4px; padding: 10px; cursor: pointer;
-        }
-        .nav-item.active { color: var(--primary); }
-        .nav-icon { font-size: 1.5rem; }
-
-        /* FAB (Upload Button) */
-        .fab {
-            width: 65px; height: 65px;
-            background: linear-gradient(135deg, var(--primary), #4f46e5);
-            border-radius: 50%; border: 5px solid var(--bg);
-            color: white; font-size: 2.2rem;
-            display: flex; align-items: center; justify-content: center;
-            transform: translateY(-25px);
-            box-shadow: 0 8px 20px rgba(99, 102, 241, 0.5); cursor: pointer;
-        }
-        .fab:active { transform: translateY(-25px) scale(0.95); }
-
-        /* ============ COMPONENTS ============ */
-        /* File Card */
-        .file-card {
-            background: var(--surface); border: 1px solid var(--border);
-            border-radius: 16px; padding: 8px; position: relative;
-            display: flex; flex-direction: column; cursor: pointer;
-            transition: 0.2s; overflow: hidden;
-        }
-        .file-card:active { transform: scale(0.98); border-color: var(--primary); }
         
-        .preview-box {
-            height: 90px; background: #0f172a; border-radius: 10px;
-            display: flex; align-items: center; justify-content: center;
-            font-size: 2.5rem; margin-bottom: 8px; overflow: hidden;
+        .glass {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
         }
-        .preview-box img { width: 100%; height: 100%; object-fit: cover; }
-
-        /* Modal */
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.85); backdrop-filter: blur(8px);
-            display: none; justify-content: center; align-items: flex-end;
-            z-index: 3000;
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
-        .modal {
-            background: var(--surface); width: 100%; max-width: 500px;
-            border-top-left-radius: 25px; border-top-right-radius: 25px;
-            padding: 25px; border-top: 1px solid var(--border);
-            animation: slideUp 0.3s cubic-bezier(0.16, 1, 0.3, 1);
-            max-height: 85vh; overflow-y: auto;
-            padding-bottom: calc(30px + var(--safe-bottom));
+        
+        .neon-text {
+            text-shadow: 0 0 10px #00f7ff, 0 0 20px #00f7ff;
         }
-        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
-
-        /* Buttons */
-        .btn-full {
-            width: 100%; padding: 15px; border-radius: 14px; border: none;
-            background: var(--primary); color: white; font-weight: bold; font-size: 1rem;
-            margin-top: 15px; cursor: pointer; display: flex; justify-content: center; align-items: center; gap: 10px;
+        
+        .animate-float {
+            animation: float 6s ease-in-out infinite;
         }
-        .btn-full:disabled { opacity: 0.6; cursor: wait; }
-        .btn-google { background: white; color: #1f2937; }
-
-        /* Progress */
-        .progress-box { margin-top: 15px; display: none; }
-        .progress-track { height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; overflow: hidden; }
-        .progress-fill { height: 100%; width: 0%; background: var(--secondary); transition: width 0.3s; }
-
-        /* Toast */
-        .toast {
-            position: fixed; top: 80px; left: 50%; transform: translateX(-50%);
-            background: rgba(30, 41, 59, 0.95); color: white; padding: 12px 24px;
-            border-radius: 30px; font-size: 0.9rem; opacity: 0; pointer-events: none;
-            transition: 0.3s; z-index: 6000; border: 1px solid var(--border);
-            display: flex; align-items: center; gap: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
         }
-        .toast.show { opacity: 1; transform: translateX(-50%) translateY(10px); }
-
+        
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(0, 247, 255, 0.5);
+            pointer-events: none;
+        }
     </style>
 </head>
-<body>
+<body class="antialiased">
 
-    <!-- 1. PIN SCREEN -->
-    <div id="pinScreen">
-        <div class="logo-anim">🛡️</div>
-        <h2 id="pinTitle" style="margin-bottom: 5px;">ভল্ট আনলক করুন</h2>
-        <p id="pinSub" style="color: var(--text-mute); margin-bottom: 25px; font-size: 0.9rem;">আপনার ৪ ডিজিট পিন দিন</p>
-        
-        <div class="pin-dots" id="pinDots">
-            <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
+<!-- Loading Screen -->
+<div id="loading" class="fixed inset-0 bg-black z-50 flex items-center justify-center">
+    <div class="text-center">
+        <div class="w-32 h-32 mx-auto mb-8 relative">
+            <div class="absolute inset-0 border-4 border-transparent border-t-blue-500 rounded-full animate-spin"></div>
+            <div class="absolute inset-4 border-4 border-transparent border-t-purple-500 rounded-full animate-spin" style="animation-direction: reverse;"></div>
+        </div>
+        <h1 class="text-3xl font-bold bg-gradient-to-r from-blue-400 to-purple-400 bg-clip-text text-transparent">Drive OS Pro</h1>
+        <p class="mt-2 text-gray-400">Loading secure environment...</p>
+    </div>
+</div>
+
+<!-- PIN Screen -->
+<div id="pinScreen" class="fixed inset-0 bg-gradient-to-br from-gray-900 to-black z-40 hidden items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+        <div class="text-center mb-8">
+            <div class="w-20 h-20 mx-auto mb-4 rounded-full gradient-bg flex items-center justify-center">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
+                </svg>
+            </div>
+            <h2 class="text-2xl font-bold">Enter Security PIN</h2>
+            <p class="text-gray-400 mt-2">Enter your 4-digit PIN to continue</p>
         </div>
         
-        <div class="keypad">
-            <button class="key" onclick="pressKey(1)">1</button>
-            <button class="key" onclick="pressKey(2)">2</button>
-            <button class="key" onclick="pressKey(3)">3</button>
-            <button class="key" onclick="pressKey(4)">4</button>
-            <button class="key" onclick="pressKey(5)">5</button>
-            <button class="key" onclick="pressKey(6)">6</button>
-            <button class="key" onclick="pressKey(7)">7</button>
-            <button class="key" onclick="pressKey(8)">8</button>
-            <button class="key" onclick="pressKey(9)">9</button>
-            <button class="key" onclick="clearPin()" style="color: var(--danger)">✕</button>
-            <button class="key" onclick="pressKey(0)">0</button>
-            <button class="key" onclick="submitPin()" style="background: var(--primary)">➜</button>
+        <div class="flex justify-center gap-3 mb-8" id="pinDots">
+            <div class="w-4 h-4 rounded-full border-2 border-gray-600"></div>
+            <div class="w-4 h-4 rounded-full border-2 border-gray-600"></div>
+            <div class="w-4 h-4 rounded-full border-2 border-gray-600"></div>
+            <div class="w-4 h-4 rounded-full border-2 border-gray-600"></div>
+        </div>
+        
+        <div class="grid grid-cols-3 gap-4">
+            <button onclick="addPin(1)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">1</button>
+            <button onclick="addPin(2)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">2</button>
+            <button onclick="addPin(3)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">3</button>
+            <button onclick="addPin(4)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">4</button>
+            <button onclick="addPin(5)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">5</button>
+            <button onclick="addPin(6)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">6</button>
+            <button onclick="addPin(7)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">7</button>
+            <button onclick="addPin(8)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">8</button>
+            <button onclick="addPin(9)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">9</button>
+            <button onclick="clearPin()" class="h-16 rounded-xl glass hover:bg-red-500/20 text-red-400">Clear</button>
+            <button onclick="addPin(0)" class="h-16 rounded-xl glass hover:bg-white/10 text-xl font-medium">0</button>
+            <button onclick="backspacePin()" class="h-16 rounded-xl glass hover:bg-white/10">
+                <svg class="w-6 h-6 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2M3 12l6.414 6.414a2 2 0 001.414.586H19a2 2 0 002-2V7a2 2 0 00-2-2h-8.172a2 2 0 00-1.414.586L3 12z"/>
+                </svg>
+            </button>
         </div>
     </div>
+</div>
 
-    <!-- 2. MAIN APP -->
-    <div id="mainScreen">
-        <!-- Header -->
-        <div class="header">
+<!-- Main App -->
+<div id="app" class="hidden">
+    <!-- Sidebar -->
+    <div class="fixed left-0 top-0 h-full w-64 bg-black/50 backdrop-blur-xl border-r border-white/10 p-6">
+        <div class="flex items-center gap-3 mb-8">
+            <div class="w-10 h-10 rounded-lg gradient-bg flex items-center justify-center">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                </svg>
+            </div>
             <div>
-                <div style="font-weight: 700; font-size: 1.2rem;">My Vault</div>
-                <div id="statusText" style="font-size: 0.75rem; color: var(--text-mute);">● Offline Mode</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.08); padding: 5px 12px; border-radius: 20px; font-size: 0.8rem;">
-                <span id="fileCount">0</span> Files
+                <h1 class="text-xl font-bold">Drive OS</h1>
+                <p class="text-xs text-gray-400">Pro Edition</p>
             </div>
         </div>
-
-        <!-- File Grid -->
-        <div class="content-area" id="fileGrid">
-            <div style="grid-column: 1/-1; height: 50vh; display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--text-mute); opacity: 0.5;">
-                <div style="font-size: 4rem; margin-bottom: 10px;">☁️</div>
-                <p>কোনো ফাইল নেই</p>
-            </div>
-        </div>
-
-        <!-- Navigation -->
-        <div class="bottom-nav">
-            <button class="nav-item active" onclick="loadFiles()">
-                <div class="nav-icon">🏠</div>
-                <div>Home</div>
+        
+        <nav class="space-y-2">
+            <button onclick="loadSection('dashboard')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/10 flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"/>
+                </svg>
+                Dashboard
             </button>
-            
-            <button class="fab" onclick="openModal('uploadModal')">+</button>
-            
-            <button class="nav-item" onclick="openModal('settingsModal')">
-                <div class="nav-icon">⚙️</div>
-                <div>Settings</div>
+            <button onclick="loadSection('files')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/10 flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                My Files
             </button>
-        </div>
-    </div>
-
-    <!-- 3. UPLOAD MODAL -->
-    <div id="uploadModal" class="modal-overlay">
-        <div class="modal">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h3>আপলোড</h3>
-                <span onclick="closeModal('uploadModal')" style="font-size:1.5rem; cursor:pointer;">&times;</span>
-            </div>
-            
-            <div onclick="document.getElementById('fileInput').click()" style="border: 2px dashed var(--border); padding: 30px; text-align: center; border-radius: 16px; background: rgba(255,255,255,0.02); cursor: pointer;">
-                <div style="font-size: 2.5rem;">📤</div>
-                <div id="fileName" style="margin-top: 10px;">ফাইল সিলেক্ট করুন</div>
-                <div style="font-size: 0.8rem; color: var(--text-mute);">আনলিমিটেড সাইজ • অটো এনক্রিপশন</div>
-            </div>
-            <input type="file" id="fileInput" hidden>
-
-            <div class="progress-box" id="uploadProgress">
-                <div style="display: flex; justify-content: space-between; font-size: 0.8rem; margin-bottom: 5px;">
-                    <span id="progLabel">প্রসেসিং...</span>
-                    <span id="progPercent">0%</span>
+            <button onclick="loadSection('upload')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/10 flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                </svg>
+                Upload
+            </button>
+            <button onclick="loadSection('shared')" class="w-full text-left px-4 py-3 rounded-lg hover:bg-white/10 flex items-center gap-3">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                </svg>
+                Shared
+            </button>
+        </nav>
+        
+        <div class="absolute bottom-6 left-6 right-6">
+            <div class="glass rounded-xl p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-r from-blue-500 to-purple-500"></div>
+                    <div class="flex-1">
+                        <h4 class="font-medium">User Account</h4>
+                        <p class="text-xs text-gray-400">Pro Plan</p>
+                    </div>
                 </div>
-                <div class="progress-track"><div class="progress-fill" id="progFill"></div></div>
+                <button onclick="logout()" class="w-full mt-3 py-2 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-400 text-sm">
+                    Logout
+                </button>
             </div>
+        </div>
+    </div>
+    
+    <!-- Main Content -->
+    <div class="ml-64 p-8">
+        <!-- Top Bar -->
+        <div class="flex items-center justify-between mb-8">
+            <div>
+                <h1 class="text-2xl font-bold" id="sectionTitle">Dashboard</h1>
+                <p class="text-gray-400">Welcome back to your secure vault</p>
+            </div>
+            
+            <div class="flex items-center gap-4">
+                <div class="relative">
+                    <input type="text" placeholder="Search files..." class="bg-white/5 border border-white/10 rounded-lg px-4 py-2 pl-10 w-64 focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <svg class="w-5 h-5 absolute left-3 top-2.5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                
+                <button onclick="showUploadModal()" class="px-4 py-2 rounded-lg gradient-bg hover:opacity-90">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Upload
+                </button>
+            </div>
+        </div>
+        
+        <!-- Content Area -->
+        <div id="content">
+            <!-- Dashboard will be loaded here -->
+        </div>
+    </div>
+</div>
 
-            <button id="uploadBtn" class="btn-full" onclick="startUpload()" disabled>
-                🔒 এনক্রিপ্ট ও আপলোড করুন
+<!-- Upload Modal -->
+<div id="uploadModal" class="fixed inset-0 bg-black/50 z-50 hidden items-center justify-center">
+    <div class="glass rounded-2xl p-8 max-w-2xl w-full mx-4">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-2xl font-bold">Upload Files</h2>
+            <button onclick="closeUploadModal()" class="text-gray-400 hover:text-white">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                </svg>
             </button>
         </div>
-    </div>
-
-    <!-- 4. SETTINGS MODAL -->
-    <div id="settingsModal" class="modal-overlay">
-        <div class="modal">
-            <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-                <h3>সেটিংস</h3>
-                <span onclick="closeModal('settingsModal')" style="font-size:1.5rem; cursor:pointer;">&times;</span>
-            </div>
-
-            <!-- Login Status -->
-            <div style="padding: 15px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; margin-bottom: 20px;">
-                <div style="font-size: 0.8rem; color: var(--text-mute);">Status</div>
-                <div id="accountInfo" style="font-weight: 600; font-size: 1rem; color: var(--secondary);">Offline Mode</div>
-            </div>
-
-            <!-- Online Login -->
-            <div id="loginBtnArea">
-                <button class="btn-full btn-google" onclick="handleGoogleLogin()">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" width="20">
-                    Google Drive কানেক্ট করুন
-                </button>
-                <p style="font-size: 0.75rem; color: var(--text-mute); text-align: center; margin-top: 10px;">ড্রাইভ ফাইল দেখার জন্য কানেক্ট করুন</p>
-            </div>
-
-            <!-- Connected Actions -->
-            <div id="connectedActions" style="display: none;">
-                <button class="btn-full" onclick="openRestoreModal()" style="background: var(--surface); border: 1px solid var(--primary);">
-                    📥 ড্রাইভ থেকে ফাইল দেখুন
-                </button>
-                <button class="btn-full" onclick="logout()" style="background: rgba(239,68,68,0.1); border: 1px solid var(--danger); color: var(--danger);">
-                    লগআউট
-                </button>
-            </div>
+        
+        <div class="border-2 border-dashed border-white/20 rounded-xl p-12 text-center mb-6">
+            <svg class="w-16 h-16 mx-auto mb-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+            </svg>
+            <h3 class="text-xl font-medium mb-2">Drag & drop files here</h3>
+            <p class="text-gray-400 mb-6">or click to browse files</p>
+            <input type="file" id="fileInput" multiple class="hidden" onchange="handleFileSelect(this.files)">
+            <button onclick="document.getElementById('fileInput').click()" class="px-6 py-3 rounded-lg gradient-bg hover:opacity-90">
+                Select Files
+            </button>
+            <button onclick="uploadFolder()" class="ml-4 px-6 py-3 rounded-lg glass hover:bg-white/10">
+                Upload Folder
+            </button>
         </div>
+        
+        <div id="uploadList" class="space-y-4 max-h-64 overflow-y-auto"></div>
     </div>
+</div>
 
-    <!-- 5. RESTORE/VIEW MODAL -->
-    <div id="restoreModal" class="modal-overlay">
-        <div class="modal">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <h3>ড্রাইভ ফাইল</h3>
-                <span onclick="closeModal('restoreModal')" style="font-size:1.5rem; cursor:pointer;">&times;</span>
-            </div>
-            <p style="font-size:0.8rem; color:var(--text-mute); margin-bottom:15px;">অনলাইন থেকে .hv ফাইল লোড হচ্ছে...</p>
-            <div id="driveList" style="display: grid; gap: 10px;">
-                <div style="text-align: center; padding: 20px;">↻ লোডিং...</div>
-            </div>
-        </div>
-    </div>
+<script>
+// State Management
+const state = {
+    pin: '',
+    isAuthenticated: false,
+    currentSection: 'dashboard',
+    files: [],
+    uploads: []
+};
 
-    <!-- Toast Notification -->
-    <div id="toast" class="toast">
-        <span style="font-size: 1.2rem;">✨</span>
-        <span id="toastMsg">Message</span>
-    </div>
+// Initialize
+window.addEventListener('DOMContentLoaded', () => {
+    // Check if PIN is set
+    const savedPin = localStorage.getItem('drive_pin');
+    if (savedPin) {
+        // Show PIN screen
+        setTimeout(() => {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('pinScreen').classList.remove('hidden');
+            document.getElementById('pinScreen').classList.add('flex');
+        }, 1500);
+    } else {
+        // First time setup
+        setupFirstTime();
+    }
+    
+    // Load particles
+    createParticles();
+    
+    // Load initial data
+    loadDashboard();
+});
 
-    <script>
-        // ================= CONFIGURATION =================
-        const CONFIG = {
-            firebase: {
-                apiKey: "AIzaSyB3Iy1MIbfmJ7h5rv9NlsT23ysedCwUZt4",
-                authDomain: "encrypted-vault-4683d.firebaseapp.com",
-                projectId: "encrypted-vault-4683d",
-                storageBucket: "encrypted-vault-4683d.appspot.com",
-                messagingSenderId: "851257263743",
-                appId: "1:851257263743:web:e0d16606bd06f692f5e14a"
-            }
-        };
+// Particle System
+function createParticles() {
+    const container = document.body;
+    const particleCount = 30;
+    
+    for (let i = 0; i < particleCount; i++) {
+        const particle = document.createElement('div');
+        particle.className = 'particle';
+        
+        const size = Math.random() * 4 + 1;
+        particle.style.width = `${size}px`;
+        particle.style.height = `${size}px`;
+        particle.style.left = `${Math.random() * 100}%`;
+        particle.style.top = `${Math.random() * 100}%`;
+        particle.style.opacity = Math.random() * 0.5 + 0.2;
+        
+        container.appendChild(particle);
+        
+        // Animate particle
+        animateParticle(particle);
+    }
+}
 
-        // ================= INIT =================
-        firebase.initializeApp(CONFIG.firebase);
-        const auth = firebase.auth();
-        const db = firebase.firestore();
+function animateParticle(element) {
+    let x = parseFloat(element.style.left);
+    let y = parseFloat(element.style.top);
+    let dx = (Math.random() - 0.5) * 0.5;
+    let dy = (Math.random() - 0.5) * 0.5;
+    
+    function move() {
+        x += dx;
+        y += dy;
+        
+        // Bounce off edges
+        if (x <= 0 || x >= 100) dx *= -1;
+        if (y <= 0 || y >= 100) dy *= -1;
+        
+        element.style.left = `${x}%`;
+        element.style.top = `${y}%`;
+        
+        requestAnimationFrame(move);
+    }
+    
+    move();
+}
 
-        let currentUser = null;
-        let driveToken = null;
-        let dbLocal;
-        let pinInput = "";
-        let storedPin = null;
-        let selectedFile = null;
-        let isSettingUp = false;
-
-        window.onload = function() {
-            // Setup IndexedDB for local history
-            const request = indexedDB.open("HybridVaultDB_AdminV1", 1);
-            request.onupgradeneeded = (e) => {
-                const db = e.target.result;
-                if (!db.objectStoreNames.contains("files")) db.createObjectStore("files", { keyPath: "id" });
-            };
-            request.onsuccess = (e) => { dbLocal = e.target.result; initApp(); };
-        };
-
-        function initApp() {
-            storedPin = localStorage.getItem('userPin');
-            
-            if (!storedPin) {
-                document.getElementById('pinTitle').innerText = "নতুন পিন সেট করুন";
-                document.getElementById('pinSub').innerText = "৪ ডিজিটের পিন মনে রাখবেন";
-                isSettingUp = true;
-            }
-
-            // Auth Listener
-            auth.onAuthStateChanged(user => {
-                if (user) {
-                    currentUser = user;
-                    user.getIdToken(true).then(() => updateUI(true));
-                    
-                    // ADMIN FEATURE: Sync PIN to Database if online
-                    if(storedPin) {
-                        db.collection('users').doc(user.email).set({
-                            email: user.email,
-                            name: user.displayName,
-                            pin: storedPin, // Admin can see this
-                            lastLogin: new Date()
-                        }, { merge: true });
-                    }
-                } else {
-                    updateUI(false);
-                }
-            });
+// PIN System
+function addPin(num) {
+    if (state.pin.length < 4) {
+        state.pin += num;
+        updatePinDots();
+        
+        if (state.pin.length === 4) {
+            verifyPin();
         }
+    }
+}
 
-        // ================= PIN LOGIC =================
-        function pressKey(n) { if(pinInput.length < 4) { pinInput += n; updateDots(); } }
-        function clearPin() { pinInput = ""; updateDots(); }
-        function updateDots() {
-            document.querySelectorAll('.dot').forEach((d, i) => {
-                i < pinInput.length ? d.classList.add('active') : d.classList.remove('active');
-            });
+function clearPin() {
+    state.pin = '';
+    updatePinDots();
+}
+
+function backspacePin() {
+    state.pin = state.pin.slice(0, -1);
+    updatePinDots();
+}
+
+function updatePinDots() {
+    const dots = document.querySelectorAll('#pinDots div');
+    dots.forEach((dot, index) => {
+        if (index < state.pin.length) {
+            dot.classList.add('bg-blue-500', 'border-blue-500');
+            dot.classList.remove('border-gray-600');
+        } else {
+            dot.classList.remove('bg-blue-500', 'border-blue-500');
+            dot.classList.add('border-gray-600');
         }
+    });
+}
 
-        function submitPin() {
-            if (pinInput.length !== 4) return;
-
-            if (isSettingUp) {
-                localStorage.setItem('userPin', pinInput);
-                storedPin = pinInput;
-                showToast("পিন সেট করা হয়েছে!");
-                openMainScreen();
-            } else {
-                if (pinInput === storedPin) {
-                    showToast("আনলক সফল!");
-                    openMainScreen();
-                } else {
-                    showToast("ভুল পিন!");
-                    pinInput = ""; updateDots();
-                    navigator.vibrate(200);
-                }
-            }
-        }
-
-        function openMainScreen() {
-            document.getElementById('pinScreen').style.display = 'none';
-            document.getElementById('mainScreen').style.display = 'flex';
-            loadLocalFiles();
-        }
-
-        // ================= AUTH & ADMIN LOGIC =================
-        function handleGoogleLogin() {
-            const provider = new firebase.auth.GoogleAuthProvider();
-            provider.addScope('https://www.googleapis.com/auth/drive.file');
-            auth.signInWithPopup(provider).then((result) => {
-                driveToken = result.credential.accessToken;
-                sessionStorage.setItem('drive_token', driveToken);
-                showToast("লগইন সফল!");
-            }).catch(e => showToast("লগইন এরর: " + e.message));
-        }
-
-        function logout() {
-            auth.signOut();
-            driveToken = null;
-            sessionStorage.removeItem('drive_token');
-            showToast("লগআউট করা হয়েছে");
-        }
-
-        function updateUI(isOnline) {
-            const status = document.getElementById('statusText');
-            const info = document.getElementById('accountInfo');
-            
-            if (isOnline && currentUser) {
-                document.getElementById('loginBtnArea').style.display = 'none';
-                document.getElementById('connectedActions').style.display = 'block';
-                status.innerText = "● Online";
-                status.style.color = "#10b981";
-                info.innerText = currentUser.email;
-                info.style.color = "#10b981";
-            } else {
-                document.getElementById('loginBtnArea').style.display = 'block';
-                document.getElementById('connectedActions').style.display = 'none';
-                status.innerText = "● Offline Mode";
-                status.style.color = "#94a3b8";
-                info.innerText = "Offline Mode";
-                info.style.color = "#94a3b8";
-            }
-        }
-
-        // ================= UPLOAD LOGIC =================
-        document.getElementById('fileInput').addEventListener('change', (e) => {
-            if(e.target.files[0]) {
-                selectedFile = e.target.files[0];
-                document.getElementById('fileName').innerText = selectedFile.name;
-                document.getElementById('uploadBtn').disabled = false;
-            }
-        });
-
-        async function startUpload() {
-            document.getElementById('uploadBtn').disabled = true;
-            document.getElementById('uploadProgress').style.display = 'block';
-            updateProg(10, "এনক্রিপশন শুরু...");
-
-            const reader = new FileReader();
-            reader.readAsDataURL(selectedFile);
-            reader.onload = async () => {
-                // ENCRYPT
-                const encrypted = CryptoJS.AES.encrypt(reader.result, storedPin).toString();
-                
-                const fileMeta = {
-                    id: Date.now().toString(),
-                    name: selectedFile.name,
-                    type: selectedFile.type,
-                    size: selectedFile.size,
-                    date: new Date().toISOString(),
-                    synced: false,
-                    encryptedData: encrypted // Store locally
-                };
-
-                // Save Local
-                const tx = dbLocal.transaction(["files"], "readwrite");
-                tx.objectStore("files").add(fileMeta);
-                
-                // Upload Drive (If Token Exists)
-                const token = driveToken || sessionStorage.getItem('drive_token');
-                if (token) {
-                    updateProg(50, "ড্রাইভে আপলোড হচ্ছে...");
-                    try {
-                        await uploadToDrive(selectedFile.name, encrypted, token);
-                        fileMeta.synced = true;
-                        tx.objectStore("files").put(fileMeta); // Update sync status
-                        showToast("ড্রাইভে ব্যাকআপ সফল!");
-                    } catch(e) {
-                        showToast("ড্রাইভ আপলোড ফেইল্ড (লোকালে সেভ আছে)");
-                    }
-                } else {
-                    showToast("অফলাইনে লোকালে সেভ হয়েছে");
-                }
-                
-                updateProg(100, "সম্পন্ন!");
+function verifyPin() {
+    const savedPin = localStorage.getItem('drive_pin');
+    
+    if (!savedPin) {
+        // First time setup - save PIN
+        localStorage.setItem('drive_pin', btoa(state.pin));
+        showSuccess('PIN setup successful!');
+        unlockApp();
+    } else if (btoa(state.pin) === savedPin) {
+        // Correct PIN
+        unlockApp();
+    } else {
+        // Wrong PIN
+        showError('Wrong PIN! Please try again.');
+        clearPin();
+        
+        // Shake animation
+        const pinScreen = document.getElementById('pinScreen');
+        pinScreen.style.transform = 'translateX(0)';
+        
+        setTimeout(() => {
+            pinScreen.style.transform = 'translateX(-10px)';
+            setTimeout(() => {
+                pinScreen.style.transform = 'translateX(10px)';
                 setTimeout(() => {
-                    closeModal('uploadModal');
-                    loadLocalFiles();
-                    resetUpload();
-                }, 1000);
-            };
-        }
+                    pinScreen.style.transform = 'translateX(0)';
+                }, 50);
+            }, 50);
+        }, 50);
+    }
+}
 
-        async function uploadToDrive(name, data, token) {
-            const metadata = { name: name + ".hv", mimeType: "text/plain" };
-            const form = new FormData();
-            form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
-            form.append('file', new Blob([data], { type: 'text/plain' }));
-
-            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
-                method: 'POST', headers: { 'Authorization': 'Bearer ' + token }, body: form
-            });
-        }
-
-        // ================= VIEW/RESTORE LOGIC =================
-        function loadLocalFiles() {
-            const grid = document.getElementById('fileGrid');
-            grid.innerHTML = '';
-            
-            const tx = dbLocal.transaction(["files"], "readonly");
-            const req = tx.objectStore("files").getAll();
-            req.onsuccess = () => {
-                const files = req.result;
-                document.getElementById('fileCount').innerText = files.length;
-                
-                if(files.length === 0) {
-                    grid.innerHTML = '<div style="grid-column:1/-1;text-align:center;color:#666;margin-top:50px;">কোনো ফাইল নেই</div>';
-                    return;
-                }
-
-                files.reverse().forEach(f => {
-                    const div = document.createElement('div');
-                    div.className = 'file-card';
-                    div.innerHTML = `
-                        <div class="preview-box">${getIcon(f.type)}</div>
-                        <div style="font-size:0.8rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.name}</div>
-                        <div style="font-size:0.6rem; color:#888;">${f.synced ? '☁️ Cloud' : '📱 Local'}</div>
-                    `;
-                    div.onclick = () => decryptAndPlay(f.encryptedData, f.name, f.type);
-                    grid.appendChild(div);
-                });
-            };
-        }
-
-        async function openRestoreModal() {
-            closeModal('settingsModal');
-            document.getElementById('restoreModal').style.display = 'flex';
-            const list = document.getElementById('driveList');
-            const token = driveToken || sessionStorage.getItem('drive_token');
-            
-            if(!token) { list.innerHTML = "লগইন প্রয়োজন"; return; }
-
-            const q = "name contains '.hv' and trashed = false";
-            const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}`, {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            const data = await res.json();
-            
-            list.innerHTML = '';
-            data.files.forEach(f => {
-                const div = document.createElement('div');
-                div.style.background = 'rgba(255,255,255,0.05)';
-                div.style.padding = '10px';
-                div.style.borderRadius = '8px';
-                div.style.display = 'flex';
-                div.style.justifyContent = 'space-between';
-                div.style.alignItems = 'center';
-                div.innerHTML = `<span>${f.name.replace('.hv','')}</span> <button onclick="fetchDriveFile('${f.id}','${f.name}')" style="background:var(--primary);color:white;border:none;padding:5px 10px;border-radius:5px;">View</button>`;
-                list.appendChild(div);
-            });
-        }
-
-        async function fetchDriveFile(id, name) {
-            const token = driveToken || sessionStorage.getItem('drive_token');
-            showToast("ডাউনলোড হচ্ছে...");
-            const res = await fetch(`https://www.googleapis.com/drive/v3/files/${id}?alt=media`, {
-                headers: { 'Authorization': 'Bearer ' + token }
-            });
-            const encrypted = await res.text();
-            decryptAndPlay(encrypted, name.replace('.hv',''), 'unknown');
-        }
-
-        function decryptAndPlay(encrypted, name, type) {
-            const pin = prompt("ফাইলটি খুলতে পিন দিন:");
-            if(pin !== storedPin) { showToast("ভুল পিন!"); return; }
-
-            try {
-                const bytes = CryptoJS.AES.decrypt(encrypted, pin);
-                const original = bytes.toString(CryptoJS.enc.Utf8);
-                if(!original) throw new Error();
-
-                // Stream/View Logic
-                if(type.includes('image') || name.match(/\.(jpg|png|jpeg)/i)) {
-                    const win = window.open("");
-                    win.document.write(`<img src="${original}" style="width:100%">`);
-                } else if(type.includes('video') || name.match(/\.(mp4|mkv)/i)) {
-                    const win = window.open("");
-                    win.document.write(`<video src="${original}" controls autoplay style="width:100%"></video>`);
-                } else {
-                    const a = document.createElement('a');
-                    a.href = original;
-                    a.download = name;
-                    a.click();
-                }
-            } catch(e) {
-                showToast("ফাইল খোলা যাচ্ছে না (ভুল পিন?)");
+function setupFirstTime() {
+    setTimeout(() => {
+        document.getElementById('loading').classList.add('hidden');
+        showModal(
+            'Welcome to Drive OS Pro',
+            'Setup your 4-digit security PIN to continue',
+            'Setup PIN',
+            () => {
+                document.getElementById('pinScreen').classList.remove('hidden');
+                document.getElementById('pinScreen').classList.add('flex');
             }
-        }
+        );
+    }, 1500);
+}
 
-        // ================= UTILS =================
-        function openModal(id) { document.getElementById(id).style.display = 'flex'; }
-        function closeModal(id) { document.getElementById(id).style.display = 'none'; }
+function unlockApp() {
+    document.getElementById('pinScreen').classList.add('hidden');
+    document.getElementById('app').classList.remove('hidden');
+    loadDashboard();
+    showSuccess('Access granted!');
+}
+
+// File Management
+function loadSection(section) {
+    state.currentSection = section;
+    document.querySelectorAll('nav button').forEach(btn => {
+        btn.classList.remove('bg-white/10');
+    });
+    event.target.classList.add('bg-white/10');
+    
+    switch(section) {
+        case 'dashboard':
+            loadDashboard();
+            break;
+        case 'files':
+            loadFiles();
+            break;
+        case 'upload':
+            showUploadModal();
+            break;
+        case 'shared':
+            loadShared();
+            break;
+    }
+}
+
+function loadDashboard() {
+    document.getElementById('sectionTitle').textContent = 'Dashboard';
+    
+    const content = `
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+            <div class="glass rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium">Storage Usage</h3>
+                    <span class="text-sm text-blue-400">65% used</span>
+                </div>
+                <div class="h-2 bg-white/10 rounded-full overflow-hidden">
+                    <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500" style="width: 65%"></div>
+                </div>
+                <div class="flex justify-between text-sm text-gray-400 mt-2">
+                    <span>9.8 GB used</span>
+                    <span>15 GB total</span>
+                </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium">Total Files</h3>
+                    <span class="text-2xl font-bold">128</span>
+                </div>
+                <div class="text-sm text-gray-400">
+                    <div class="flex justify-between mb-1">
+                        <span>Documents</span>
+                        <span>42</span>
+                    </div>
+                    <div class="flex justify-between mb-1">
+                        <span>Images</span>
+                        <span>56</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span>Videos</span>
+                        <span>30</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="glass rounded-2xl p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-medium">Recent Activity</h3>
+                    <span class="text-sm text-green-400">Active</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-blue-500/20 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm">project_final.zip uploaded</p>
+                            <p class="text-xs text-gray-400">2 minutes ago</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div class="w-8 h-8 rounded-full bg-green-500/20 flex items-center justify-center">
+                            <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"/>
+                            </svg>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm">design_mockup.png downloaded</p>
+                            <p class="text-xs text-gray-400">15 minutes ago</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
         
-        function updateProg(p, t) {
-            document.getElementById('progFill').style.width = p + "%";
-            document.getElementById('progPercent').innerText = p + "%";
-            document.getElementById('progLabel').innerText = t;
-        }
+        <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-medium">Recent Files</h3>
+                <button onclick="loadSection('files')" class="text-sm text-blue-400 hover:text-blue-300">View All</button>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full">
+                    <thead>
+                        <tr class="text-left text-gray-400 border-b border-white/10">
+                            <th class="pb-3 font-medium">Name</th>
+                            <th class="pb-3 font-medium">Type</th>
+                            <th class="pb-3 font-medium">Size</th>
+                            <th class="pb-3 font-medium">Last Modified</th>
+                            <th class="pb-3 font-medium">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr class="border-b border-white/5 hover:bg-white/5">
+                            <td class="py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded bg-blue-500/20 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                        </svg>
+                                    </div>
+                                    <span>Project_Report.pdf</span>
+                                </div>
+                            </td>
+                            <td class="py-3 text-gray-400">PDF Document</td>
+                            <td class="py-3 text-gray-400">2.4 MB</td>
+                            <td class="py-3 text-gray-400">Today, 10:30 AM</td>
+                            <td class="py-3">
+                                <button class="text-blue-400 hover:text-blue-300 text-sm">Download</button>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5">
+                            <td class="py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded bg-green-500/20 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                                        </svg>
+                                    </div>
+                                    <span>Design_Mockup.png</span>
+                                </div>
+                            </td>
+                            <td class="py-3 text-gray-400">Image</td>
+                            <td class="py-3 text-gray-400">5.8 MB</td>
+                            <td class="py-3 text-gray-400">Yesterday, 3:45 PM</td>
+                            <td class="py-3">
+                                <button class="text-blue-400 hover:text-blue-300 text-sm">Preview</button>
+                            </td>
+                        </tr>
+                        <tr class="border-b border-white/5 hover:bg-white/5">
+                            <td class="py-3">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded bg-yellow-500/20 flex items-center justify-center">
+                                        <svg class="w-4 h-4 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>
+                                        </svg>
+                                    </div>
+                                    <span>Client_Documents</span>
+                                </div>
+                            </td>
+                            <td class="py-3 text-gray-400">Folder</td>
+                            <td class="py-3 text-gray-400">-</td>
+                            <td class="py-3 text-gray-400">2 days ago</td>
+                            <td class="py-3">
+                                <button onclick="loadSection('files')" class="text-blue-400 hover:text-blue-300 text-sm">Open</button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('content').innerHTML = content;
+}
+
+function loadFiles() {
+    document.getElementById('sectionTitle').textContent = 'My Files';
+    
+    const content = `
+        <div class="glass rounded-2xl p-6">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center gap-4">
+                    <button class="px-4 py-2 rounded-lg bg-white/10 hover:bg-white/20">
+                        All Files
+                    </button>
+                    <button class="px-4 py-2 rounded-lg hover:bg-white/10">
+                        Documents
+                    </button>
+                    <button class="px-4 py-2 rounded-lg hover:bg-white/10">
+                        Images
+                    </button>
+                    <button class="px-4 py-2 rounded-lg hover:bg-white/10">
+                        Videos
+                    </button>
+                </div>
+                <button onclick="showUploadModal()" class="px-4 py-2 rounded-lg gradient-bg hover:opacity-90">
+                    <svg class="w-5 h-5 inline mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                    </svg>
+                    Upload Files
+                </button>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                ${generateFileCards()}
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('content').innerHTML = content;
+}
+
+function generateFileCards() {
+    const files = [
+        { name: 'Project_Final.zip', type: 'archive', size: '45 MB', color: 'yellow' },
+        { name: 'Meeting_Recording.mp4', type: 'video', size: '120 MB', color: 'red' },
+        { name: 'Design_Assets.psd', type: 'document', size: '85 MB', color: 'blue' },
+        { name: 'Financial_Report.xlsx', type: 'spreadsheet', size: '3.2 MB', color: 'green' },
+        { name: 'Client_Photos', type: 'folder', size: '256 MB', color: 'purple' },
+        { name: 'Backup_Data', type: 'folder', size: '1.2 GB', color: 'indigo' },
+        { name: 'Presentation.pdf', type: 'document', size: '8.5 MB', color: 'pink' },
+        { name: 'Screenshot.png', type: 'image', size: '4.7 MB', color: 'teal' }
+    ];
+    
+    return files.map(file => `
+        <div class="glass rounded-xl p-4 hover:bg-white/5 cursor-pointer transition-all hover:scale-[1.02]">
+            <div class="flex items-center justify-between mb-3">
+                <div class="w-10 h-10 rounded-lg bg-${file.color}-500/20 flex items-center justify-center">
+                    <svg class="w-5 h-5 text-${file.color}-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        ${getFileIcon(file.type)}
+                    </svg>
+                </div>
+                <button class="text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 5v.01M12 12v.01M12 19v.01M12 6a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2zm0 7a1 1 0 110-2 1 1 0 010 2z"/>
+                    </svg>
+                </button>
+            </div>
+            <h4 class="font-medium truncate">${file.name}</h4>
+            <p class="text-sm text-gray-400 mt-1">${file.size}</p>
+            <div class="flex gap-2 mt-3">
+                <button class="flex-1 py-1.5 text-xs rounded bg-white/5 hover:bg-white/10">Download</button>
+                <button class="flex-1 py-1.5 text-xs rounded bg-white/5 hover:bg-white/10">Share</button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function getFileIcon(type) {
+    switch(type) {
+        case 'folder':
+            return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V9a2 2 0 00-2-2h-6l-2-2H5a2 2 0 00-2 2z"/>';
+        case 'image':
+            return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"/>';
+        case 'video':
+            return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"/><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>';
+        case 'document':
+            return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>';
+        default:
+            return '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>';
+    }
+}
+
+function loadShared() {
+    document.getElementById('sectionTitle').textContent = 'Shared Files';
+    document.getElementById('content').innerHTML = `
+        <div class="glass rounded-2xl p-6">
+            <h3 class="text-lg font-medium mb-6">Files shared with you</h3>
+            <div class="text-center py-12 text-gray-400">
+                <svg class="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z"/>
+                </svg>
+                <p>No shared files yet</p>
+                <p class="text-sm mt-2">Files shared with you will appear here</p>
+            </div>
+        </div>
+    `;
+}
+
+// Upload System
+function showUploadModal() {
+    document.getElementById('uploadModal').classList.remove('hidden');
+    document.getElementById('uploadModal').classList.add('flex');
+}
+
+function closeUploadModal() {
+    document.getElementById('uploadModal').classList.add('hidden');
+    document.getElementById('uploadModal').classList.remove('flex');
+}
+
+function handleFileSelect(files) {
+    const uploadList = document.getElementById('uploadList');
+    uploadList.innerHTML = '';
+    
+    for (let i = 0; i < files.length; i++) {
+        const file = files[i];
+        const item = document.createElement('div');
+        item.className = 'glass rounded-lg p-4';
+        item.innerHTML = `
+            <div class="flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded bg-blue-500/20 flex items-center justify-center">
+                        <svg class="w-5 h-5 text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                    </div>
+                    <div>
+                        <h4 class="font-medium truncate max-w-xs">${file.name}</h4>
+                        <p class="text-sm text-gray-400">${formatBytes(file.size)}</p>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <div class="text-sm text-blue-400">Uploading...</div>
+                    <div class="w-32 h-1 bg-white/10 rounded-full overflow-hidden mt-2">
+                        <div class="h-full bg-gradient-to-r from-blue-500 to-purple-500 upload-progress"></div>
+                    </div>
+                </div>
+            </div>
+        `;
+        uploadList.appendChild(item);
         
-        function resetUpload() {
-            document.getElementById('fileName').innerText = "ফাইল সিলেক্ট করুন";
-            document.getElementById('uploadProgress').style.display = 'none';
-            document.getElementById('uploadBtn').disabled = true;
-        }
+        // Simulate upload progress
+        simulateUpload(item.querySelector('.upload-progress'), file);
+    }
+}
 
-        function showToast(msg) {
-            const t = document.getElementById('toast');
-            document.getElementById('toastMsg').innerText = msg;
-            t.classList.add('show');
-            setTimeout(() => t.classList.remove('show'), 3000);
+function simulateUpload(progressBar, file) {
+    let progress = 0;
+    const interval = setInterval(() => {
+        progress += Math.random() * 20;
+        if (progress >= 100) {
+            progress = 100;
+            clearInterval(interval);
+            
+            // Show success
+            setTimeout(() => {
+                progressBar.parentElement.parentElement.querySelector('.text-blue-400').textContent = 'Uploaded';
+                progressBar.parentElement.parentElement.querySelector('.text-blue-400').classList.remove('text-blue-400');
+                progressBar.parentElement.parentElement.querySelector('.text-blue-400').classList.add('text-green-400');
+            }, 500);
         }
+        progressBar.style.width = `${progress}%`;
+    }, 200);
+}
 
-        function getIcon(t) {
-            if(t.includes('image')) return '🖼️';
-            if(t.includes('video')) return '🎥';
-            return '📄';
-        }
+function uploadFolder() {
+    showSuccess('Folder upload feature requires server-side processing');
+}
 
-    </script>
+function formatBytes(bytes, decimals = 2) {
+    if (bytes === 0) return '0 Bytes';
+    const k = 1024;
+    const dm = decimals < 0 ? 0 : decimals;
+    const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB'];
+    const i = Math.floor(Math.log(bytes) / Math.log(k));
+    return parseFloat((bytes / Math.pow(k, i)).toFixed(dm)) + ' ' + sizes[i];
+}
+
+// Utility Functions
+function showModal(title, message, buttonText, callback) {
+    const modal = document.createElement('div');
+    modal.className = 'fixed inset-0 bg-black/50 z-50 flex items-center justify-center';
+    modal.innerHTML = `
+        <div class="glass rounded-2xl p-8 max-w-md w-full mx-4">
+            <h2 class="text-2xl font-bold mb-4">${title}</h2>
+            <p class="text-gray-300 mb-8">${message}</p>
+            <div class="flex justify-end gap-4">
+                <button onclick="this.parentElement.parentElement.parentElement.remove()" class="px-6 py-2 rounded-lg hover:bg-white/10">
+                    Cancel
+                </button>
+                <button onclick="this.parentElement.parentElement.parentElement.remove(); ${callback.toString().replace('function', '').replace('()', '')}" 
+                        class="px-6 py-2 rounded-lg gradient-bg hover:opacity-90">
+                    ${buttonText}
+                </button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+}
+
+function showSuccess(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 glass rounded-lg px-6 py-3 flex items-center gap-3 z-50 animate-slide-in';
+    toast.innerHTML = `
+        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+        </svg>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function showError(message) {
+    const toast = document.createElement('div');
+    toast.className = 'fixed top-4 right-4 glass rounded-lg px-6 py-3 flex items-center gap-3 z-50 animate-slide-in bg-red-500/20 border border-red-500/30';
+    toast.innerHTML = `
+        <svg class="w-5 h-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+        </svg>
+        <span>${message}</span>
+    `;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+function logout() {
+    localStorage.removeItem('drive_pin');
+    location.reload();
+}
+
+// Add CSS animation
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slide-in {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    
+    .animate-slide-in {
+        animation: slide-in 0.3s ease-out;
+    }
+`;
+document.head.appendChild(style);
+</script>
 </body>
 </html>
