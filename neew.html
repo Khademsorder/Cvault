@@ -1,563 +1,787 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" class="scroll-smooth">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>⚛️ DRIVE OS | QUANTUM PRO [FIXED]</title>
+    <title>QUANTUM DRIVE OS | PRO</title>
 
-    <!-- Essential CDNs (all working) -->
+    <!-- CORE LIBRARIES -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/dompurify/3.0.6/purify.min.js"></script>
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://cdn.jsdelivr.net/npm/tsparticles@2.12.0/tsparticles.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+    
+    <!-- UI LIBRARIES -->
     <link href="https://cdn.jsdelivr.net/npm/@mdi/font@7.4.47/css/materialdesignicons.min.css" rel="stylesheet">
-    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.2/dist/confetti.browser.min.js"></script>
-    <style>
-        /* ========== QUANTUM STYLES (condensed but complete) ========== */
-        :root {
-            --quantum-primary: #00D4FF;
-            --quantum-secondary: #FF00FF;
-            --quantum-accent: #00FF9D;
-            --quantum-dark: #0A0A1A;
-            --quantum-darker: #050510;
-            --quantum-surface: #13132B;
-            --quantum-glass: rgba(19, 19, 43, 0.8);
-            --quantum-gradient: linear-gradient(135deg, var(--quantum-primary) 0%, var(--quantum-secondary) 50%, var(--quantum-accent) 100%);
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;500;700&display=swap" rel="stylesheet">
+    
+    <!-- TAILWIND CONFIG -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        quantum: {
+                            primary: '#00F0FF',
+                            secondary: '#FF00E5',
+                            accent: '#00FF9D',
+                            dark: '#050510',
+                            surface: '#0F0F2A'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['Orbitron', 'sans-serif'],
+                        rajdhani: ['Rajdhani', 'sans-serif']
+                    }
+                }
+            }
         }
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
-        body { background: var(--quantum-dark); color: white; min-height: 100vh; overflow-x: hidden; }
-        .quantum-glass { background: var(--quantum-glass); backdrop-filter: blur(20px); border: 1px solid rgba(255,255,255,0.1); }
-        .quantum-btn { background: var(--quantum-gradient); border: none; color: white; padding: 16px 32px; border-radius: 16px; font-weight: 600; cursor: pointer; transition: 0.3s; box-shadow: 0 0 30px rgba(0,212,255,0.3); }
-        .quantum-btn:hover { transform: translateY(-4px); box-shadow: 0 0 50px rgba(0,212,255,0.6); }
-        .screen { position: fixed; top: 0; left: 0; width: 100%; height: 100%; display: none; z-index: 1000; overflow-y: auto; }
-        .screen.active { display: block; }
-        #boot-screen { background: var(--quantum-darker); display: flex; align-items: center; justify-content: center; flex-direction: column; }
-        .boot-progress { width: 300px; height: 6px; background: #333; border-radius: 3px; margin: 30px; overflow: hidden; }
-        .boot-progress-fill { height: 100%; background: var(--quantum-gradient); width: 0%; transition: width 0.3s; }
-        .particle-canvas { position: absolute; inset: 0; pointer-events: none; }
-        .pin-dots { display: flex; gap: 20px; justify-content: center; margin: 30px 0; }
-        .pin-dot { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--quantum-primary); transition: 0.2s; }
-        .keypad-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; max-width: 300px; margin: 0 auto; }
-        .keypad-key { height: 70px; border-radius: 20px; background: rgba(255,255,255,0.05); display: flex; align-items: center; justify-content: center; font-size: 24px; cursor: pointer; transition: 0.2s; border: 1px solid rgba(255,255,255,0.1); }
-        .keypad-key:hover { background: rgba(255,255,255,0.1); }
-        .quantum-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 20px; padding: 20px; }
-        .quantum-grid-item { background: rgba(255,255,255,0.05); border-radius: 20px; padding: 15px; transition: 0.3s; cursor: pointer; border: 1px solid transparent; }
-        .quantum-grid-item:hover { transform: translateY(-10px); border-color: var(--quantum-primary); box-shadow: 0 20px 40px rgba(0,212,255,0.2); }
-        /* More styles in actual code - kept minimal for brevity but fully functional in final */
+    </script>
+
+    <style>
+        /* --- ADVANCED ANIMATION CSS (Non-Browser Defaults) --- */
+        :root {
+            --q-gradient: linear-gradient(135deg, #00F0FF 0%, #FF00E5 50%, #00FF9D 100%);
+        }
+
+        body {
+            background: #050510;
+            font-family: 'Rajdhani', sans-serif;
+            overflow: hidden;
+        }
+
+        /* Glitch Effect Text */
+        .glitch-text {
+            position: relative;
+            animation: glitch-skew 1s infinite linear alternate-reverse;
+        }
+        .glitch-text::before, .glitch-text::after {
+            content: attr(data-text);
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+        }
+        .glitch-text::before {
+            left: 2px;
+            text-shadow: -2px 0 #FF00E5;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim 5s infinite linear alternate-reverse;
+        }
+        .glitch-text::after {
+            left: -2px;
+            text-shadow: -2px 0 #00F0FF;
+            clip: rect(44px, 450px, 56px, 0);
+            animation: glitch-anim2 5s infinite linear alternate-reverse;
+        }
+
+        /* Holographic Card Hover */
+        .holo-card {
+            background: rgba(15, 15, 42, 0.6);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            position: relative;
+            overflow: hidden;
+        }
+        .holo-card::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: conic-gradient(from 0deg, transparent, #00F0FF, transparent 30%);
+            opacity: 0;
+            transition: opacity 0.5s;
+            animation: rotate-border 4s linear infinite;
+        }
+        .holo-card:hover::before { opacity: 1; }
+        .holo-card:hover {
+            transform: translateY(-10px) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0, 240, 255, 0.2);
+            border-color: transparent;
+        }
+        .holo-card-inner {
+            background: rgba(5, 5, 16, 0.9);
+            height: 100%;
+            width: 100%;
+            position: relative;
+            z-index: 1;
+            border-radius: inherit;
+            padding: 1.5rem;
+        }
+
+        /* Scanning Line Animation */
+        .scan-line {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 2px;
+            background: rgba(0, 240, 255, 0.5);
+            animation: scan 3s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+            opacity: 0.5;
+            z-index: 10;
+            pointer-events: none;
+        }
+
+        /* PIN Dot Pulse */
+        .pin-dot-active {
+            box-shadow: 0 0 15px #00F0FF, 0 0 30px #00F0FF;
+            background: #00F0FF !important;
+            animation: pulse-dot 0.3s ease-out;
+        }
+
+        /* Animations Keyframes */
+        @keyframes glitch-anim {
+            0% { clip: rect(31px, 9999px, 94px, 0); transform: skew(0.5deg); }
+            5% { clip: rect(70px, 9999px, 71px, 0); transform: skew(0.4deg); }
+            10% { clip: rect(29px, 9999px, 24px, 0); transform: skew(0.5deg); }
+            15% { clip: rect(69px, 9999px, 65px, 0); transform: skew(0.4deg); }
+            20% { clip: rect(32px, 9999px, 95px, 0); transform: skew(0.3deg); }
+            100% { clip: rect(58px, 9999px, 78px, 0); transform: skew(0.2deg); }
+        }
+        @keyframes glitch-anim2 {
+            0% { clip: rect(65px, 9999px, 100px, 0); transform: skew(0.3deg); }
+            5% { clip: rect(52px, 9999px, 74px, 0); transform: skew(0.2deg); }
+            100% { clip: rect(79px, 9999px, 85px, 0); transform: skew(0.1deg); }
+        }
+        @keyframes glitch-skew { 0% { transform: skew(1deg); } 10% { transform: skew(-1deg); } 20% { transform: skew(0deg); } }
+        @keyframes rotate-border { 100% { transform: rotate(360deg); } }
+        @keyframes scan { 0% { top: 0%; } 50% { top: 100%; } 100% { top: 0%; } }
+        @keyframes pulse-dot { 0% { transform: scale(1); } 50% { transform: scale(1.5); } 100% { transform: scale(1); } }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: #050510; }
+        ::-webkit-scrollbar-thumb { background: #00F0FF; border-radius: 3px; }
     </style>
 </head>
-<body>
-    <!-- BOOT SCREEN -->
-    <div id="boot-screen" class="screen active">
-        <div style="text-align: center;">
-            <div class="quantum-btn" style="width: 100px; height: 100px; border-radius: 50%; padding: 0; line-height: 100px; font-size: 40px; margin: 0 auto 30px;">⚛️</div>
-            <h1>QUANTUM DRIVE OS</h1>
-            <p style="opacity: 0.7; margin: 20px;">Initializing secure environment...</p>
-            <div class="boot-progress"><div class="boot-progress-fill" id="boot-progress"></div></div>
-            <div style="margin-top: 30px; color: #00D4FF;" id="boot-status">Loading...</div>
+<body class="text-white">
+
+    <!-- 3D BACKGROUND CONTAINER -->
+    <div id="bg-container" class="fixed inset-0 z-0"></div>
+
+    <!-- OVERLAY GRADIENT -->
+    <div class="fixed inset-0 bg-gradient-to-b from-transparent via-quantum-dark/50 to-quantum-dark z-10 pointer-events-none"></div>
+
+    <!-- BOOT SEQUENCE -->
+    <div id="boot-screen" class="screen active z-50 flex flex-col items-center justify-center">
+        <div class="scan-line"></div>
+        <div class="text-center">
+            <h1 class="font-orbitron text-6xl glitch-text font-bold text-transparent bg-clip-text bg-gradient-to-r from-quantum-primary to-quantum-secondary" data-text="QUANTUM OS">
+                QUANTUM OS
+            </h1>
+            <div class="mt-8 w-64 h-1 bg-white/10 rounded-full overflow-hidden mx-auto">
+                <div id="boot-progress" class="h-full bg-quantum-primary w-0% transition-all duration-300 shadow-[0_0_15px_#00F0FF]"></div>
+            </div>
+            <p id="boot-status" class="font-rajdhani text-quantum-primary mt-4 tracking-widest uppercase">Initializing Core...</p>
         </div>
     </div>
 
     <!-- LOCK SCREEN -->
-    <div id="lock-screen" class="screen">
-        <canvas class="particle-canvas" id="particles-canvas"></canvas>
-        <div style="display: flex; align-items: center; justify-content: center; min-height: 100%; padding: 20px;">
-            <div class="quantum-glass" style="max-width: 400px; width: 100%; padding: 40px; border-radius: 32px;">
-                <div style="text-align: center;">
-                    <i class="mdi mdi-fingerprint" style="font-size: 80px; color: var(--quantum-primary);"></i>
-                    <h2 style="margin: 20px 0 10px;">Enter PIN</h2>
-                    <p style="opacity: 0.6;">4-digit quantum code</p>
+    <div id="lock-screen" class="screen z-40 flex items-center justify-center p-4">
+        <div class="holo-card rounded-3xl w-full max-w-sm">
+            <div class="holo-card-inner rounded-3xl flex flex-col items-center justify-center">
+                <i class="mdi mdi-fingerprint text-6xl text-quantum-primary drop-shadow-[0_0_10px_rgba(0,240,255,0.5)]"></i>
+                <h2 class="font-orbitron text-2xl mt-6 mb-2">SECURE ACCESS</h2>
+                <p class="text-white/60 mb-8">Enter Quantum PIN</p>
+                
+                <div class="flex gap-4 mb-8" id="pin-dots">
+                    <div class="w-4 h-4 rounded-full border-2 border-quantum-primary transition-all duration-200"></div>
+                    <div class="w-4 h-4 rounded-full border-2 border-quantum-primary transition-all duration-200"></div>
+                    <div class="w-4 h-4 rounded-full border-2 border-quantum-primary transition-all duration-200"></div>
+                    <div class="w-4 h-4 rounded-full border-2 border-quantum-primary transition-all duration-200"></div>
                 </div>
-                <div class="pin-dots" id="pin-dots">
-                    <div class="pin-dot" id="pin-1"></div>
-                    <div class="pin-dot" id="pin-2"></div>
-                    <div class="pin-dot" id="pin-3"></div>
-                    <div class="pin-dot" id="pin-4"></div>
-                </div>
-                <div class="keypad-grid">
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('1')">1</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('2')">2</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('3')">3</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('4')">4</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('5')">5</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('6')">6</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('7')">7</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('8')">8</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('9')">9</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.clear()">C</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.input('0')">0</div>
-                    <div class="keypad-key" onclick="window.QuantumAuth?.biometric()"><i class="mdi mdi-fingerprint"></i></div>
-                </div>
-                <div style="text-align: center; margin-top: 30px;">
-                    <span style="opacity: 0.5;">or </span><a href="#" onclick="window.QuantumAuth?.useFaceID()" style="color: var(--quantum-primary);">use Face ID</a>
+
+                <div class="grid grid-cols-3 gap-3 w-full">
+                    <button onclick="QuantumOS.inputPin('1')" class="keypad-btn">1</button>
+                    <button onclick="QuantumOS.inputPin('2')" class="keypad-btn">2</button>
+                    <button onclick="QuantumOS.inputPin('3')" class="keypad-btn">3</button>
+                    <button onclick="QuantumOS.inputPin('4')" class="keypad-btn">4</button>
+                    <button onclick="QuantumOS.inputPin('5')" class="keypad-btn">5</button>
+                    <button onclick="QuantumOS.inputPin('6')" class="keypad-btn">6</button>
+                    <button onclick="QuantumOS.inputPin('7')" class="keypad-btn">7</button>
+                    <button onclick="QuantumOS.inputPin('8')" class="keypad-btn">8</button>
+                    <button onclick="QuantumOS.inputPin('9')" class="keypad-btn">9</button>
+                    <button onclick="QuantumOS.clearPin()" class="keypad-btn text-quantum-secondary">C</button>
+                    <button onclick="QuantumOS.inputPin('0')" class="keypad-btn">0</button>
+                    <button onclick="QuantumOS.biometric()" class="keypad-btn text-quantum-accent"><i class="mdi mdi-face-recognition"></i></button>
                 </div>
             </div>
         </div>
     </div>
 
     <!-- AUTH SCREEN -->
-    <div id="auth-screen" class="screen">
-        <canvas class="particle-canvas" id="auth-particles"></canvas>
-        <div style="display: flex; align-items: center; justify-content: center; min-height: 100%; padding: 20px;">
-            <div class="quantum-glass" style="max-width: 500px; width: 100%; padding: 50px; border-radius: 32px; text-align: center;">
-                <i class="mdi mdi-cloud-outline" style="font-size: 100px; background: var(--quantum-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;"></i>
-                <h1 style="font-size: 40px; margin: 20px 0; background: var(--quantum-gradient); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">DRIVE OS</h1>
-                <p style="opacity: 0.7; margin-bottom: 40px;">Quantum‑secure cloud storage</p>
-                <button class="quantum-btn" style="width: 100%;" onclick="window.QuantumAuth?.googleSignIn()">
-                    <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" style="width: 24px; height: 24px; margin-right: 10px; vertical-align: middle;">
-                    Continue with Google
+    <div id="auth-screen" class="screen z-40 flex items-center justify-center p-4">
+        <div class="holo-card rounded-3xl w-full max-w-md p-8 text-center relative overflow-hidden">
+            <div class="scan-line delay-1000"></div>
+            <div class="relative z-10">
+                <div class="w-24 h-24 mx-auto bg-quantum-dark rounded-full flex items-center justify-center border border-quantum-primary mb-6 shadow-[0_0_30px_rgba(0,240,255,0.2)]">
+                    <i class="mdi mdi-cloud-outline text-5xl text-quantum-primary"></i>
+                </div>
+                <h1 class="font-orbitron text-4xl font-bold text-white mb-2">DRIVE OS</h1>
+                <p class="text-white/60 mb-8">Quantum Encrypted Storage</p>
+                
+                <button onclick="QuantumOS.googleSignIn()" class="w-full py-4 rounded-xl bg-white text-black font-bold hover:bg-quantum-primary transition-all duration-300 flex items-center justify-center gap-3 group">
+                    <i class="mdi mdi-google text-2xl group-hover:rotate-12 transition-transform"></i>
+                    Authenticate with Google
                 </button>
-                <div style="margin-top: 30px; display: flex; justify-content: center; gap: 20px;">
-                    <div><i class="mdi mdi-bolt" style="color: var(--quantum-primary);"></i> Quantum speed</div>
-                    <div><i class="mdi mdi-shield-lock" style="color: var(--quantum-secondary);"></i> Military grade</div>
-                    <div><i class="mdi mdi-brain" style="color: var(--quantum-accent);"></i> AI powered</div>
+
+                <div class="flex justify-center gap-6 mt-8 text-xs text-white/50">
+                    <span><i class="mdi mdi-shield-check text-quantum-accent mr-1"></i> 256-bit AES</span>
+                    <span><i class="mdi mdi-nas text-quantum-secondary mr-1"></i> Decentralized</span>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- MAIN APP -->
-    <div id="app-screen" class="screen">
-        <!-- Sidebar -->
-        <div id="sidebar" class="quantum-glass" style="position: fixed; left: 0; top: 0; bottom: 0; width: 280px; transform: translateX(-100%); transition: transform 0.3s; z-index: 1001; padding: 30px; overflow-y: auto;">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <h2><i class="mdi mdi-cloud"></i> DRIVE OS</h2>
-                <button class="keypad-key" style="width: 40px; height: 40px;" onclick="window.QuantumUI?.toggleSidebar()"><i class="mdi mdi-close"></i></button>
-            </div>
-            <div id="user-avatar" style="width: 80px; height: 80px; border-radius: 50%; background: var(--quantum-gradient); margin: 0 auto 20px;"></div>
-            <div id="user-name" style="text-align: center; font-weight: bold; margin-bottom: 5px;">Loading...</div>
-            <div id="user-email" style="text-align: center; opacity: 0.7; font-size: 0.9rem; margin-bottom: 30px;">user@example.com</div>
-            
-            <div style="margin-bottom: 30px;">
-                <div style="display: flex; justify-content: space-between; font-size: 0.9rem;"><span>Storage</span> <span id="storage-used">0 GB</span></div>
-                <div style="height: 8px; background: rgba(255,255,255,0.1); border-radius: 4px; margin: 10px 0;"><div id="storage-bar" style="height: 100%; width: 0%; background: var(--quantum-gradient); border-radius: 4px;"></div></div>
-                <div style="font-size: 0.8rem; opacity: 0.6;"><span id="storage-free">15 GB</span> free of <span id="storage-total">15 GB</span></div>
-            </div>
-
-            <nav style="display: flex; flex-direction: column; gap: 10px;">
-                <a href="#" class="keypad-key" style="justify-content: flex-start; padding: 15px;" onclick="window.QuantumNav?.goTo('dashboard')"><i class="mdi mdi-view-dashboard" style="margin-right: 15px;"></i> Dashboard</a>
-                <a href="#" class="keypad-key" style="justify-content: flex-start; padding: 15px;" onclick="window.QuantumDrive?.loadFiles()"><i class="mdi mdi-folder" style="margin-right: 15px;"></i> My Drive</a>
-                <a href="#" class="keypad-key" style="justify-content: flex-start; padding: 15px;" onclick="window.QuantumNav?.goTo('shared')"><i class="mdi mdi-share" style="margin-right: 15px;"></i> Shared</a>
-                <a href="#" class="keypad-key" style="justify-content: flex-start; padding: 15px;" onclick="window.QuantumNav?.goTo('starred')"><i class="mdi mdi-star" style="margin-right: 15px;"></i> Starred</a>
-                <a href="#" class="keypad-key" style="justify-content: flex-start; padding: 15px;" onclick="window.QuantumUI?.showSettings()"><i class="mdi mdi-cog" style="margin-right: 15px;"></i> Settings</a>
-            </nav>
-            <button class="quantum-btn" style="margin-top: 30px; width: 100%;" onclick="window.QuantumAuth?.logout()">Logout</button>
-        </div>
-
-        <!-- Main content area -->
-        <div style="margin-left: 0; transition: margin 0.3s; padding: 20px;" id="main-content">
-            <!-- Top bar -->
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px;">
-                <button class="keypad-key" style="width: 50px; height: 50px;" onclick="window.QuantumUI?.toggleSidebar()"><i class="mdi mdi-menu"></i></button>
-                <div style="flex: 1; max-width: 500px; margin: 0 20px; position: relative;">
-                    <input type="text" id="search-input" placeholder="Search files..." style="width: 100%; padding: 15px 20px; border-radius: 50px; background: rgba(255,255,255,0.05); border: 2px solid transparent; color: white;" oninput="window.QuantumDrive?.search(this.value)">
-                    <i class="mdi mdi-magnify" style="position: absolute; right: 20px; top: 50%; transform: translateY(-50%); opacity: 0.7;"></i>
-                </div>
-                <div style="display: flex; gap: 15px;">
-                    <button class="keypad-key" style="width: 50px; height: 50px;" onclick="window.QuantumUI?.toggleView()"><i class="mdi mdi-grid" id="view-icon"></i></button>
-                    <div id="upload-indicator" style="display: none; background: var(--quantum-primary); border-radius: 20px; padding: 5px 15px; align-items: center;">⬆️ <span id="upload-count">0</span></div>
+    <!-- MAIN DASHBOARD -->
+    <div id="app-screen" class="screen z-30 h-screen overflow-hidden flex flex-col">
+        <!-- Top Navigation -->
+        <header class="h-20 border-b border-white/5 flex items-center px-6 backdrop-blur-xl bg-quantum-dark/30 relative z-20">
+            <button onclick="QuantumUI.toggleSidebar()" class="p-2 hover:bg-white/5 rounded-lg transition-colors">
+                <i class="mdi mdi-menu text-2xl"></i>
+            </button>
+            <div class="flex-1 px-8">
+                <div class="relative w-full max-w-lg mx-auto">
+                    <input type="text" placeholder="Search quantum files..." class="w-full bg-white/5 border border-white/10 rounded-full py-3 px-6 focus:outline-none focus:border-quantum-primary transition-colors">
+                    <i class="mdi mdi-magnify absolute right-5 top-1/2 -translate-y-1/2 text-white/50"></i>
                 </div>
             </div>
+            <div class="flex items-center gap-4">
+                <div id="upload-indicator" class="hidden items-center gap-2 px-4 py-2 bg-quantum-primary/20 rounded-full text-quantum-primary text-sm font-bold animate-pulse">
+                    <i class="mdi mdi-cloud-upload"></i> <span id="upload-count">0</span>
+                </div>
+                <button class="p-2 hover:bg-white/5 rounded-full"><i class="mdi mdi-bell-outline text-xl"></i></button>
+                <div id="user-avatar-nav" class="w-10 h-10 rounded-full bg-quantum-secondary flex items-center justify-center font-bold cursor-pointer">?</div>
+            </div>
+        </header>
 
-            <!-- Breadcrumb -->
-            <div id="breadcrumb" style="margin-bottom: 20px; font-size: 0.9rem;">My Drive</div>
+        <div class="flex flex-1 overflow-hidden relative">
+            <!-- Sidebar -->
+            <aside id="sidebar" class="w-72 bg-quantum-dark/50 backdrop-blur-lg border-r border-white/5 absolute md:relative h-full -translate-x-full md:translate-x-0 transition-transform duration-300 z-30 flex flex-col">
+                <div class="p-6 flex-1">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div id="user-avatar-side" class="w-16 h-16 rounded-full bg-gradient-to-tr from-quantum-primary to-quantum-secondary p-[2px]">
+                            <div class="w-full h-full rounded-full bg-quantum-dark flex items-center justify-center text-2xl font-bold overflow-hidden">
+                                <span id="user-initial">U</span>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 id="user-name" class="font-bold">User</h3>
+                            <p id="user-email" class="text-xs text-white/50">Loading...</p>
+                        </div>
+                    </div>
 
-            <!-- File grid -->
-            <div id="files-grid" class="quantum-grid"></div>
+                    <nav class="space-y-2">
+                        <a href="#" onclick="QuantumUI.setView('dashboard')" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-quantum-primary bg-quantum-primary/10 border border-quantum-primary/20">
+                            <i class="mdi mdi-view-dashboard"></i> Dashboard
+                        </a>
+                        <a href="#" onclick="QuantumDrive.loadFiles()" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-white/70 hover:text-white transition-colors">
+                            <i class="mdi mdi-folder"></i> My Drive
+                        </a>
+                        <a href="#" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-white/70 hover:text-white transition-colors">
+                            <i class="mdi mdi-share-variant"></i> Shared
+                        </a>
+                        <a href="#" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-white/70 hover:text-white transition-colors">
+                            <i class="mdi mdi-star"></i> Starred
+                        </a>
+                        <a href="#" class="flex items-center gap-3 p-3 rounded-xl hover:bg-white/5 text-white/70 hover:text-white transition-colors">
+                            <i class="mdi mdi-history"></i> Recent
+                        </a>
+                    </nav>
+                </div>
+                
+                <div class="p-6 border-t border-white/5">
+                     <div class="mb-2 flex justify-between text-sm">
+                         <span class="text-white/50">Storage</span>
+                         <span id="storage-used" class="text-quantum-accent font-bold">0 GB</span>
+                     </div>
+                     <div class="w-full h-2 bg-white/5 rounded-full overflow-hidden">
+                         <div id="storage-bar" class="h-full bg-gradient-to-r from-quantum-primary to-quantum-accent w-0 transition-all duration-1000"></div>
+                     </div>
+                     <button onclick="QuantumOS.logout()" class="w-full mt-6 py-2 border border-red-500/30 text-red-400 rounded-lg hover:bg-red-500/10 transition-colors text-sm font-bold">
+                         <i class="mdi mdi-logout mr-2"></i> Disconnect
+                     </button>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="flex-1 overflow-y-auto p-6 relative">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="font-orbitron text-2xl tracking-wide">My Drive</h2>
+                    <div class="flex gap-2">
+                         <button onclick="QuantumUI.toggleView()" class="p-2 bg-white/5 rounded-lg hover:bg-white/10">
+                             <i id="view-icon" class="mdi mdi-view-grid text-xl"></i>
+                         </button>
+                    </div>
+                </div>
+
+                <!-- File Grid -->
+                <div id="files-grid" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
+                    <!-- Files injected here -->
+                </div>
+                
+                <!-- Empty State -->
+                <div id="empty-state" class="hidden flex-col items-center justify-center h-96 text-center opacity-50">
+                    <i class="mdi mdi-cloud-off-outline text-6xl text-quantum-primary mb-4"></i>
+                    <h3 class="font-orbitron text-xl">No Files Found</h3>
+                    <p class="text-sm mt-2">Upload files or sync your drive.</p>
+                </div>
+            </main>
         </div>
-
+        
         <!-- FAB -->
-        <div style="position: fixed; bottom: 30px; right: 30px; z-index: 1000;">
-            <button class="quantum-btn" style="width: 70px; height: 70px; border-radius: 20px; padding: 0; font-size: 30px;" onclick="window.QuantumUI?.toggleFAB()"><i class="mdi mdi-plus"></i></button>
-            <div id="fab-menu" style="position: absolute; bottom: 80px; right: 0; background: var(--quantum-glass); border-radius: 20px; padding: 15px; min-width: 200px; display: none;">
-                <div class="keypad-key" style="margin-bottom: 10px;" onclick="window.QuantumUpload?.openFilePicker()"><i class="mdi mdi-file-upload"></i> Upload File</div>
-                <div class="keypad-key" style="margin-bottom: 10px;" onclick="window.QuantumUpload?.openFolderPicker()"><i class="mdi mdi-folder-upload"></i> Upload Folder</div>
-                <div class="keypad-key" style="margin-bottom: 10px;" onclick="window.QuantumDrive?.createFolder()"><i class="mdi mdi-folder-plus"></i> New Folder</div>
-                <div class="keypad-key" onclick="window.QuantumAI?.scanDocument()"><i class="mdi mdi-scanner"></i> Scan Document</div>
-            </div>
+        <button onclick="QuantumUI.toggleFAB()" class="fixed bottom-8 right-8 w-16 h-16 bg-quantum-primary rounded-2xl shadow-[0_0_30px_rgba(0,240,255,0.4)] flex items-center justify-center text-quantum-dark text-3xl hover:scale-110 transition-transform z-50">
+            <i class="mdi mdi-plus font-bold"></i>
+        </button>
+        
+        <!-- FAB Menu -->
+        <div id="fab-menu" class="fixed bottom-28 right-8 bg-quantum-surface border border-white/10 rounded-2xl p-4 shadow-2xl z-50 hidden flex-col gap-2 animate-bounce-in">
+            <button onclick="QuantumDrive.createFolder()" class="flex items-center gap-3 px-4 py-2 hover:bg-white/5 rounded-lg text-left w-full">
+                <i class="mdi mdi-folder-plus text-quantum-accent"></i> New Folder
+            </button>
+            <button onclick="document.getElementById('file-input').click()" class="flex items-center gap-3 px-4 py-2 hover:bg-white/5 rounded-lg text-left w-full">
+                <i class="mdi mdi-file-upload text-quantum-primary"></i> Upload File
+            </button>
+            <input type="file" id="file-input" class="hidden" multiple onchange="QuantumDrive.handleUpload(this.files)">
         </div>
     </div>
 
-    <!-- MODALS (simplified) -->
-    <div id="upload-manager" class="quantum-glass" style="position: fixed; bottom: 30px; right: 30px; width: 400px; border-radius: 24px; padding: 20px; display: none; z-index: 2000;">
-        <div style="display: flex; justify-content: space-between;"><h3>Upload Manager</h3><button onclick="window.QuantumUpload?.close()"><i class="mdi mdi-close"></i></button></div>
-        <div id="upload-list" style="max-height: 300px; overflow-y: auto; margin: 15px 0;"></div>
-        <div style="height: 8px; background: #333; border-radius: 4px;"><div id="upload-progress" style="height: 100%; width: 0%; background: var(--quantum-gradient); border-radius: 4px;"></div></div>
-        <div style="display: flex; gap: 10px; margin-top: 15px;">
-            <button class="quantum-btn" style="flex:1; padding: 10px;" onclick="window.QuantumUpload?.pauseAll()">Pause All</button>
-            <button class="quantum-btn" style="flex:1; padding: 10px;" onclick="window.QuantumUpload?.resumeAll()">Resume All</button>
-        </div>
-    </div>
+    <!-- TOAST CONTAINER -->
+    <div id="toast-container" class="fixed top-24 right-8 z-[100] space-y-3 pointer-events-none"></div>
 
-    <!-- Hidden file inputs -->
-    <input type="file" id="file-input" multiple hidden onchange="window.QuantumUpload?.handleFiles(this.files)">
-    <input type="file" id="folder-input" webkitdirectory hidden onchange="window.QuantumUpload?.handleFiles(this.files)">
-
-    <!-- ================= FIXED JAVASCRIPT (everything global) ================= -->
     <script>
-        (function() {
-            // ========== CONFIG ==========
-            window.CONFIG = {
-                clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
-                scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
-                defaultPin: '1234'
-            };
+        // ==========================================
+        // QUANTUM DRIVE OS - PROFESSIONAL EDITION
+        // ==========================================
 
-            // ========== STATE ==========
-            window.STATE = {
-                token: localStorage.getItem('quantum_token'),
-                user: JSON.parse(localStorage.getItem('quantum_user') || 'null'),
-                currentFolder: 'root',
-                files: [],
-                view: 'grid',
-                uploadQueue: [],
-                activeUploads: new Map()
-            };
+        // CONFIGURATION
+        const CONFIG = {
+            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.profile https://www.googleapis.com/auth/userinfo.email',
+            defaultPin: '1234' // Default PIN for demo
+        };
 
-            // ========== BOOT ==========
-            window.bootSequence = function() {
-                let progress = 0;
-                const bootProgress = document.getElementById('boot-progress');
-                const bootStatus = document.getElementById('boot-status');
-                const steps = ['Initializing quantum core', 'Loading AI models', 'Securing connection', 'Ready'];
+        // UTILITIES
+        const $ = (id) => document.getElementById(id);
+        const createEl = (tag, cls) => { const el = document.createElement(tag); el.className = cls; return el; };
+
+        // SANITIZER (XSS Protection)
+        const sanitize = (str) => DOMPurify.sanitize(str, { ALLOWED_TAGS: [], ALLOWED_ATTR: [] });
+
+        // STATE
+        const STATE = {
+            token: localStorage.getItem('q_token'),
+            user: JSON.parse(localStorage.getItem('q_user') || 'null'),
+            pin: '',
+            files: [],
+            view: 'grid'
+        };
+
+        // ==========================================
+        // ANIMATION & VISUALS
+        // ==========================================
+        class QuantumBackground {
+            constructor() {
+                this.scene = new THREE.Scene();
+                this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+                this.particles = null;
+                this.init();
+            }
+
+            init() {
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(window.devicePixelRatio);
+                $('bg-container').appendChild(this.renderer.domElement);
+
+                // Create Particles
+                const geometry = new THREE.BufferGeometry();
+                const count = 3000;
+                const positions = new Float32Array(count * 3);
+                const colors = new Float32Array(count * 3);
+                
+                const colorPrimary = new THREE.Color(0x00F0FF);
+                const colorSecondary = new THREE.Color(0xFF00E5);
+
+                for(let i = 0; i < count * 3; i += 3) {
+                    positions[i] = (Math.random() - 0.5) * 10;
+                    positions[i+1] = (Math.random() - 0.5) * 10;
+                    positions[i+2] = (Math.random() - 0.5) * 10;
+                    
+                    const mixedColor = Math.random() > 0.5 ? colorPrimary : colorSecondary;
+                    colors[i] = mixedColor.r;
+                    colors[i+1] = mixedColor.g;
+                    colors[i+2] = mixedColor.b;
+                }
+
+                geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+                geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+                const material = new THREE.PointsMaterial({
+                    size: 0.02,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.8,
+                    blending: THREE.AdditiveBlending
+                });
+
+                this.particles = new THREE.Points(geometry, material);
+                this.scene.add(this.particles);
+                this.camera.position.z = 3;
+
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+
+                this.animate();
+            }
+
+            animate() {
+                requestAnimationFrame(() => this.animate());
+                const time = Date.now() * 0.0005;
+                this.particles.rotation.x = time * 0.1;
+                this.particles.rotation.y = time * 0.2;
+                this.renderer.render(this.scene, this.camera);
+            }
+        }
+
+        // ==========================================
+        // UI CONTROLLER
+        // ==========================================
+        const QuantumUI = {
+            sidebarOpen: false,
+            fabOpen: false,
+
+            showScreen(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                gsap.to(`#${id}`, { opacity: 1, display: 'flex', duration: 0.5, ease: 'power2.out' });
+                $(id).classList.add('active');
+            },
+
+            toggleSidebar() {
+                this.sidebarOpen = !this.sidebarOpen;
+                const sidebar = $('sidebar');
+                if(this.sidebarOpen) {
+                    gsap.to(sidebar, { x: '0%', duration: 0.3, ease: 'power2.out' });
+                } else {
+                    gsap.to(sidebar, { x: '-100%', duration: 0.3, ease: 'power2.in' });
+                }
+            },
+
+            toggleFAB() {
+                this.fabOpen = !this.fabOpen;
+                const menu = $('fab-menu');
+                if(this.fabOpen) {
+                    menu.classList.remove('hidden');
+                    menu.classList.add('flex');
+                    gsap.from(menu, { opacity: 0, y: 20, duration: 0.3 });
+                } else {
+                    gsap.to(menu, { opacity: 0, y: 20, duration: 0.2, onComplete: () => {
+                        menu.classList.add('hidden');
+                        menu.classList.remove('flex');
+                    }});
+                }
+            },
+
+            toast(message, type = 'info') {
+                const container = $('toast-container');
+                const colors = { 
+                    info: 'bg-blue-500/80 border-blue-400', 
+                    success: 'bg-quantum-accent/20 border-quantum-accent text-quantum-accent', 
+                    error: 'bg-red-500/20 border-red-400 text-red-400' 
+                };
+                const el = createEl('div', `p-4 rounded-xl border backdrop-blur-lg pointer-events-auto ${colors[type]}`);
+                el.innerHTML = `<i class="mdi mdi-${type === 'success' ? 'check-circle' : type === 'error' ? 'alert-circle' : 'information'} mr-2"></i> ${sanitize(message)}`;
+                container.appendChild(el);
+                gsap.from(el, { x: 100, opacity: 0, duration: 0.4, ease: 'back.out' });
+                setTimeout(() => gsap.to(el, { x: 100, opacity: 0, duration: 0.3, onComplete: () => el.remove() }), 3000);
+            },
+
+            updateProfile(user) {
+                $('user-name').textContent = sanitize(user.name);
+                $('user-email').textContent = sanitize(user.email);
+                $('user-initial').textContent = user.name.charAt(0);
+                if(user.picture) {
+                    $('user-avatar-nav').innerHTML = `<img src="${sanitize(user.picture)}" class="w-full h-full rounded-full object-cover">`;
+                    $('user-avatar-side').innerHTML = `<img src="${sanitize(user.picture)}" class="w-full h-full rounded-full object-cover">`;
+                }
+            }
+        };
+
+        // ==========================================
+        // AUTH CONTROLLER
+        // ==========================================
+        const QuantumOS = {
+            tokenClient: null,
+
+            init() {
+                // Init Google Identity Services
+                if (typeof google !== 'undefined') {
+                    this.tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: CONFIG.clientId,
+                        scope: CONFIG.scopes,
+                        callback: (response) => {
+                            if (response.error) return QuantumUI.toast('Auth Failed', 'error');
+                            this.handleAuth(response.access_token);
+                        }
+                    });
+                }
+            },
+
+            handleAuth(token) {
+                STATE.token = token;
+                localStorage.setItem('q_token', token);
+                this.fetchUser();
+            },
+
+            async fetchUser() {
+                try {
+                    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+                        headers: { Authorization: `Bearer ${STATE.token}` }
+                    });
+                    STATE.user = await res.json();
+                    localStorage.setItem('q_user', JSON.stringify(STATE.user));
+                    QuantumUI.updateProfile(STATE.user);
+                    QuantumUI.showScreen('app-screen');
+                    QuantumDrive.init();
+                    QuantumUI.toast('Quantum Link Established', 'success');
+                } catch (e) {
+                    QuantumUI.toast('Connection Failed', 'error');
+                }
+            },
+
+            inputPin(num) {
+                if (STATE.pin.length < 4) {
+                    STATE.pin += num;
+                    this.updatePinDots();
+                    if (STATE.pin.length === 4) setTimeout(() => this.verifyPin(), 300);
+                }
+            },
+
+            clearPin() {
+                STATE.pin = '';
+                this.updatePinDots();
+            },
+
+            updatePinDots() {
+                const dots = $('pin-dots').children;
+                for(let i = 0; i < 4; i++) {
+                    if(i < STATE.pin.length) dots[i].classList.add('pin-dot-active');
+                    else dots[i].classList.remove('pin-dot-active');
+                }
+            },
+
+            verifyPin() {
+                // In production, this should be a hash check or server validation
+                const stored = localStorage.getItem('q_pin');
+                if (!stored || atob(stored) === STATE.pin) {
+                    if(!stored) localStorage.setItem('q_pin', btoa(CONFIG.defaultPin)); // Set default for first time
+                    gsap.to('#lock-screen', { scale: 0.9, opacity: 0, duration: 0.3, onComplete: () => {
+                        QuantumUI.showScreen('auth-screen');
+                    }});
+                } else {
+                    QuantumUI.toast('Access Denied', 'error');
+                    this.clearPin();
+                    // Shake animation
+                    gsap.fromTo('#lock-screen .holo-card', {x: -10}, {x: 10, duration: 0.1, repeat: 5, yoyo: true, clearProps: 'x'});
+                }
+            },
+
+            biometric() {
+                QuantumUI.toast('Biometrics not supported on web', 'info');
+            },
+
+            googleSignIn() {
+                if (this.tokenClient) this.tokenClient.requestAccessToken();
+                else QuantumUI.toast('Google Services Unavailable', 'error');
+            },
+
+            logout() {
+                localStorage.clear();
+                location.reload();
+            }
+        };
+
+        // ==========================================
+        // DRIVE CONTROLLER
+        // ==========================================
+        const QuantumDrive = {
+            async init() {
+                await this.loadFiles();
+                await this.getStorageInfo();
+            },
+
+            async loadFiles() {
+                $('files-grid').innerHTML = '<div class="col-span-full text-center opacity-50"><i class="mdi mdi-loader mdi-spin text-4xl"></i></div>';
+                try {
+                    const res = await fetch(`https://www.googleapis.com/drive/v3/files?orderBy=modifiedTime desc&pageSize=50&fields=files(id,name,mimeType,size,thumbnailLink,modifiedTime)&q='root' in parents and trashed=false`, {
+                        headers: { Authorization: `Bearer ${STATE.token}` }
+                    });
+                    const data = await res.json();
+                    STATE.files = data.files || [];
+                    this.renderFiles();
+                } catch (e) {
+                    QuantumUI.toast('Failed to sync drive', 'error');
+                }
+            },
+
+            renderFiles() {
+                const grid = $('files-grid');
+                grid.innerHTML = '';
+                if(STATE.files.length === 0) {
+                    $('empty-state').classList.remove('hidden');
+                    $('empty-state').classList.add('flex');
+                    return;
+                }
+                
+                $('empty-state').classList.add('hidden');
+                STATE.files.forEach(f => {
+                    const isFolder = f.mimeType === 'application/vnd.google-apps.folder';
+                    const icon = this.getIcon(f.mimeType);
+                    
+                    const card = document.createElement('div');
+                    card.className = 'holo-card rounded-2xl group cursor-pointer';
+                    card.onclick = () => this.openFile(f);
+                    
+                    card.innerHTML = `
+                        <div class="holo-card-inner rounded-2xl flex flex-col justify-between h-full">
+                            <div class="h-24 flex items-center justify-center border-b border-white/10">
+                                <i class="mdi ${icon} text-4xl ${isFolder ? 'text-quantum-secondary' : 'text-quantum-primary'} group-hover:scale-110 transition-transform duration-300"></i>
+                            </div>
+                            <div class="pt-2">
+                                <h4 class="font-bold truncate text-sm" title="${sanitize(f.name)}">${sanitize(f.name)}</h4>
+                                <p class="text-xs text-white/50 mt-1">${isFolder ? 'Folder' : this.formatSize(f.size)}</p>
+                            </div>
+                        </div>
+                    `;
+                    grid.appendChild(card);
+                });
+            },
+
+            getIcon(mime) {
+                if (mime.includes('folder')) return 'mdi-folder';
+                if (mime.includes('image')) return 'mdi-image';
+                if (mime.includes('pdf')) return 'mdi-file-pdf-box';
+                if (mime.includes('video')) return 'mdi-video';
+                if (mime.includes('audio')) return 'mdi-music';
+                return 'mdi-file-outline';
+            },
+
+            formatSize(bytes) {
+                if(!bytes) return '? KB';
+                const i = Math.floor(Math.log(bytes) / Math.log(1024));
+                return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + ['B', 'KB', 'MB', 'GB'][i];
+            },
+
+            openFile(f) {
+                QuantumUI.toast(`Opening ${sanitize(f.name)}...`, 'info');
+                window.open(`https://drive.google.com/file/d/${f.id}/view`, '_blank');
+            },
+
+            async getStorageInfo() {
+                try {
+                    const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+                        headers: { Authorization: `Bearer ${STATE.token}` }
+                    });
+                    const data = await res.json();
+                    const used = parseInt(data.storageQuota.usage);
+                    const limit = parseInt(data.storageQuota.limit) || 15000000000;
+                    const percent = (used / limit) * 100;
+                    
+                    $('storage-used').textContent = this.formatSize(used);
+                    $('storage-bar').style.width = `${percent}%`;
+                } catch(e) {}
+            },
+
+            createFolder() {
+                const name = prompt('New Folder Name:');
+                if(!name) return;
+                
+                fetch('https://www.googleapis.com/drive/v3/files', {
+                    method: 'POST',
+                    headers: { 
+                        Authorization: `Bearer ${STATE.token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        name: name,
+                        mimeType: 'application/vnd.google-apps.folder'
+                    })
+                }).then(() => {
+                    QuantumUI.toast('Folder Created', 'success');
+                    this.loadFiles();
+                });
+            },
+
+            handleUpload(files) {
+                QuantumUI.toast('Upload simulation started', 'info');
+                $('upload-indicator').classList.remove('hidden');
+                $('upload-indicator').classList.add('flex');
+                
+                // Note: Actual Drive upload requires multipart upload logic which is complex.
+                // This simulates the UI feedback.
+                let count = 0;
                 const interval = setInterval(() => {
-                    progress += 25;
-                    if (bootProgress) bootProgress.style.width = progress + '%';
-                    if (bootStatus) bootStatus.textContent = steps[progress/25 - 1];
-                    if (progress >= 100) {
+                    count++;
+                    $('upload-count').textContent = count;
+                    if(count >= files.length) {
                         clearInterval(interval);
                         setTimeout(() => {
-                            document.getElementById('boot-screen')?.classList.remove('active');
-                            if (localStorage.getItem('quantum_pin')) {
-                                document.getElementById('lock-screen')?.classList.add('active');
-                                QuantumUI.initParticles('particles-canvas');
-                            } else {
-                                document.getElementById('auth-screen')?.classList.add('active');
-                                QuantumUI.initParticles('auth-particles');
-                            }
-                        }, 500);
+                            $('upload-indicator').classList.add('hidden');
+                            $('upload-indicator').classList.remove('flex');
+                            QuantumUI.toast('Upload Complete', 'success');
+                        }, 1000);
                     }
-                }, 800);
-            };
+                }, 500);
+            }
+        };
 
-            // ========== QUANTUM UI (global) ==========
-            window.QuantumUI = {
-                toggleSidebar() {
-                    const sidebar = document.getElementById('sidebar');
-                    const main = document.getElementById('main-content');
-                    if (sidebar.style.transform === 'translateX(0px)') {
-                        sidebar.style.transform = 'translateX(-100%)';
-                        main.style.marginLeft = '0';
-                    } else {
-                        sidebar.style.transform = 'translateX(0px)';
-                        main.style.marginLeft = '280px';
-                    }
-                },
-                toggleView() {
-                    STATE.view = STATE.view === 'grid' ? 'list' : 'grid';
-                    const icon = document.getElementById('view-icon');
-                    if (icon) icon.className = STATE.view === 'grid' ? 'mdi mdi-grid' : 'mdi mdi-format-list-bulleted';
-                    if (QuantumDrive) QuantumDrive.renderFiles();
-                },
-                toggleFAB() {
-                    const menu = document.getElementById('fab-menu');
-                    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-                },
-                showNotification(msg, type = 'info') {
-                    alert(msg); // simple fallback – you can implement toast later
-                },
-                showApp() {
-                    document.getElementById('lock-screen')?.classList.remove('active');
-                    document.getElementById('auth-screen')?.classList.remove('active');
-                    document.getElementById('app-screen')?.classList.add('active');
-                    QuantumDrive.loadFiles();
-                    QuantumStorage.getInfo();
-                },
-                showAuth() {
-                    document.getElementById('lock-screen')?.classList.remove('active');
-                    document.getElementById('auth-screen')?.classList.add('active');
-                    this.initParticles('auth-particles');
-                },
-                hideLock() {
-                    document.getElementById('lock-screen')?.classList.remove('active');
-                },
-                initParticles(canvasId) {
-                    if (window.tsParticles) {
-                        tsParticles.load(canvasId, {
-                            particles: { number: { value: 30 }, color: { value: '#00D4FF' }, opacity: { value: 0.3 }, size: { value: 2 }, move: { enable: true, speed: 1 } }
-                        });
-                    }
-                },
-                showSettings() {
-                    alert('Settings panel – you can implement a modal here');
-                }
-            };
+        // ==========================================
+        // INITIALIZATION
+        // ==========================================
+        window.onload = () => {
+            // Initialize 3D Background
+            new QuantumBackground();
+            
+            // Initialize Auth Client
+            QuantumOS.init();
 
-            // ========== QUANTUM AUTH (global) ==========
-            window.QuantumAuth = {
-                token: STATE.token,
-                user: STATE.user,
-                pin: '',
-                tokenClient: null,
-                init() {
-                    if (typeof google !== 'undefined' && google.accounts) {
-                        this.tokenClient = google.accounts.oauth2.initTokenClient({
-                            client_id: CONFIG.clientId,
-                            scope: CONFIG.scopes,
-                            callback: async (response) => {
-                                if (response.error) return QuantumUI.showNotification('Auth failed', 'error');
-                                this.token = response.access_token;
-                                STATE.token = this.token;
-                                localStorage.setItem('quantum_token', this.token);
-                                localStorage.setItem('quantum_token_expiry', Date.now() + 3500000);
-                                await this.loadUserProfile();
-                                QuantumUI.showApp();
-                            }
-                        });
-                    } else {
-                        setTimeout(() => this.init(), 500);
-                    }
-                },
-                async loadUserProfile() {
-                    if (!this.token) return;
-                    try {
-                        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                            headers: { 'Authorization': `Bearer ${this.token}` }
-                        });
-                        this.user = await res.json();
-                        STATE.user = this.user;
-                        localStorage.setItem('quantum_user', JSON.stringify(this.user));
-                        document.getElementById('user-name').textContent = this.user.name || 'User';
-                        document.getElementById('user-email').textContent = this.user.email || '';
-                        if (this.user.picture) {
-                            document.getElementById('user-avatar').innerHTML = `<img src="${this.user.picture}" style="width:100%; height:100%; border-radius:50%; object-fit:cover;">`;
+            // Boot Sequence Animation
+            const bootProgress = $('boot-progress');
+            const bootStatus = $('boot-status');
+            const steps = ['Checking Quantum State...', 'Injecting AI Core...', 'Securing Connection...', 'System Ready'];
+            
+            gsap.to(bootProgress, { width: '100%', duration: 2, ease: 'power1.inOut', onUpdate: function() {
+                const p = Math.round(this.progress() * 100);
+                bootStatus.textContent = steps[Math.floor(p / 30)];
+            }});
+
+            setTimeout(() => {
+                gsap.to('#boot-screen', { 
+                    opacity: 0, 
+                    scale: 0.8, 
+                    duration: 0.5, 
+                    onComplete: () => {
+                        $('boot-screen').classList.remove('active');
+                        
+                        // Check if PIN is set
+                        if(localStorage.getItem('q_pin')) {
+                            QuantumUI.showScreen('lock-screen');
+                        } else {
+                            QuantumUI.showScreen('auth-screen');
                         }
-                    } catch (e) { console.warn(e); }
-                },
-                check() {
-                    const expiry = localStorage.getItem('quantum_token_expiry');
-                    if (this.token && expiry && Date.now() < expiry) {
-                        this.loadUserProfile().then(() => QuantumUI.showApp());
-                    } else {
-                        QuantumUI.showAuth();
                     }
-                },
-                googleSignIn() {
-                    if (this.tokenClient) this.tokenClient.requestAccessToken();
-                    else QuantumUI.showNotification('Google client not ready', 'warning');
-                },
-                logout() {
-                    if (confirm('Logout?')) { localStorage.clear(); location.reload(); }
-                },
-                input(num) {
-                    if (this.pin.length < 4) {
-                        this.pin += num;
-                        this.updatePinDots();
-                        if (this.pin.length === 4) setTimeout(() => this.verifyPin(), 300);
-                    }
-                },
-                clear() { this.pin = ''; this.updatePinDots(); },
-                updatePinDots() {
-                    for (let i = 1; i <= 4; i++) {
-                        const dot = document.getElementById(`pin-${i}`);
-                        if (dot) dot.style.backgroundColor = i <= this.pin.length ? '#00D4FF' : 'transparent';
-                    }
-                },
-                verifyPin() {
-                    const stored = localStorage.getItem('quantum_pin');
-                    if (!stored || atob(stored) === this.pin) {
-                        if (!stored) localStorage.setItem('quantum_pin', btoa(this.pin));
-                        this.pin = '';
-                        QuantumUI.hideLock();
-                        this.check();
-                    } else {
-                        QuantumUI.showNotification('Wrong PIN', 'error');
-                        this.pin = '';
-                        this.updatePinDots();
-                    }
-                },
-                biometric() {
-                    QuantumUI.showNotification('Biometric simulation – accepted', 'success');
-                    QuantumUI.hideLock();
-                    this.check();
-                },
-                useFaceID() { this.biometric(); }
-            };
-
-            // ========== QUANTUM DRIVE (global) ==========
-            window.QuantumDrive = {
-                async loadFiles(folderId = 'root') {
-                    STATE.currentFolder = folderId;
-                    document.getElementById('files-grid').innerHTML = '<div style="text-align:center; padding:50px;">Loading...</div>';
-                    if (!QuantumAuth.token) return;
-                    try {
-                        const q = `'${folderId}' in parents and trashed = false`;
-                        const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=files(id,name,mimeType,size,modifiedTime,thumbnailLink,webContentLink,starred)&orderBy=modifiedTime desc`;
-                        const res = await fetch(url, { headers: { 'Authorization': `Bearer ${QuantumAuth.token}` } });
-                        const data = await res.json();
-                        STATE.files = data.files || [];
-                        this.renderFiles();
-                    } catch (e) {
-                        QuantumUI.showNotification('Failed to load files', 'error');
-                        document.getElementById('files-grid').innerHTML = '<div style="text-align:center; padding:50px;">Error loading files</div>';
-                    }
-                },
-                renderFiles() {
-                    const container = document.getElementById('files-grid');
-                    if (!STATE.files.length) {
-                        container.innerHTML = '<div style="text-align:center; padding:50px;">No files</div>';
-                        return;
-                    }
-                    container.innerHTML = STATE.files.map(f => `
-                        <div class="quantum-grid-item" onclick="window.QuantumPreview?.show('${f.id}')">
-                            <div style="font-size: 40px; text-align: center; margin-bottom: 10px;">
-                                <i class="mdi ${this.getIcon(f.mimeType)}"></i>
-                            </div>
-                            <div style="font-weight: bold; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${f.name}</div>
-                            <div style="font-size: 0.8rem; opacity: 0.7;">${this.formatSize(f.size)}</div>
-                        </div>
-                    `).join('');
-                },
-                getIcon(mime) {
-                    if (mime === 'application/vnd.google-apps.folder') return 'mdi-folder';
-                    if (mime.includes('image')) return 'mdi-image';
-                    if (mime.includes('pdf')) return 'mdi-file-pdf';
-                    if (mime.includes('video')) return 'mdi-video';
-                    if (mime.includes('audio')) return 'mdi-music';
-                    return 'mdi-file';
-                },
-                formatSize(bytes) {
-                    if (!bytes) return 'Folder';
-                    const sizes = ['B','KB','MB','GB'];
-                    const i = Math.floor(Math.log(bytes)/Math.log(1024));
-                    return (bytes/Math.pow(1024,i)).toFixed(1) + ' ' + sizes[i];
-                },
-                search(query) {
-                    if (!query) return this.renderFiles();
-                    const filtered = STATE.files.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
-                    const container = document.getElementById('files-grid');
-                    container.innerHTML = filtered.map(f => `<div class="quantum-grid-item">${f.name}</div>`).join('');
-                },
-                async createFolder() {
-                    const name = prompt('Folder name:');
-                    if (!name) return;
-                    try {
-                        await fetch('https://www.googleapis.com/drive/v3/files', {
-                            method: 'POST',
-                            headers: { 'Authorization': `Bearer ${QuantumAuth.token}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [STATE.currentFolder] })
-                        });
-                        QuantumUI.showNotification('Folder created', 'success');
-                        this.loadFiles();
-                    } catch (e) { QuantumUI.showNotification('Error', 'error'); }
-                }
-            };
-
-            // ========== QUANTUM PREVIEW ==========
-            window.QuantumPreview = {
-                currentFile: null,
-                show(fileId) {
-                    const file = STATE.files.find(f => f.id === fileId);
-                    if (!file) return;
-                    this.currentFile = file;
-                    if (file.mimeType.includes('image')) {
-                        window.open(file.webContentLink, '_blank');
-                    } else {
-                        window.open(`https://drive.google.com/file/d/${file.id}/preview`, '_blank');
-                    }
-                }
-            };
-
-            // ========== QUANTUM UPLOAD ==========
-            window.QuantumUpload = {
-                openFilePicker() { document.getElementById('file-input').click(); },
-                openFolderPicker() { document.getElementById('folder-input').click(); },
-                handleFiles(fileList) {
-                    const files = Array.from(fileList);
-                    files.forEach(f => {
-                        STATE.uploadQueue.push({ id: Date.now()+Math.random(), file: f, progress:0, status:'pending' });
-                    });
-                    this.showManager();
-                    this.processQueue();
-                },
-                showManager() {
-                    document.getElementById('upload-manager').style.display = 'block';
-                    document.getElementById('upload-indicator').style.display = 'flex';
-                    document.getElementById('upload-count').textContent = STATE.uploadQueue.length;
-                    this.updateList();
-                },
-                updateList() {
-                    const list = document.getElementById('upload-list');
-                    list.innerHTML = STATE.uploadQueue.map(item => `
-                        <div style="padding:10px; border-bottom:1px solid rgba(255,255,255,0.1);">
-                            <div>${item.file.name}</div>
-                            <div style="height:4px; background:#333; margin:5px 0;"><div style="height:100%; width:${item.progress}%; background:var(--quantum-gradient);"></div></div>
-                        </div>
-                    `).join('');
-                },
-                async processQueue() {
-                    for (let item of STATE.uploadQueue) {
-                        if (item.status !== 'pending') continue;
-                        item.status = 'uploading';
-                        this.updateList();
-                        // Simulated upload progress
-                        for (let p = 0; p <= 100; p += 10) {
-                            item.progress = p;
-                            this.updateList();
-                            await new Promise(r => setTimeout(r, 200));
-                        }
-                        item.status = 'done';
-                        this.updateList();
-                    }
-                    QuantumUI.showNotification('All uploads completed', 'success');
-                    setTimeout(() => this.close(), 2000);
-                },
-                close() {
-                    document.getElementById('upload-manager').style.display = 'none';
-                    document.getElementById('upload-indicator').style.display = 'none';
-                    STATE.uploadQueue = [];
-                },
-                pauseAll() { QuantumUI.showNotification('Pause not implemented in demo', 'info'); },
-                resumeAll() { this.processQueue(); }
-            };
-
-            // ========== QUANTUM STORAGE ==========
-            window.QuantumStorage = {
-                async getInfo() {
-                    if (!QuantumAuth.token) return;
-                    try {
-                        const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
-                            headers: { 'Authorization': `Bearer ${QuantumAuth.token}` }
-                        });
-                        const data = await res.json();
-                        const used = parseInt(data.storageQuota.usage) || 0;
-                        const total = parseInt(data.storageQuota.limit) || 15000000000;
-                        const free = total - used;
-                        document.getElementById('storage-used').textContent = QuantumDrive.formatSize(used);
-                        document.getElementById('storage-free').textContent = QuantumDrive.formatSize(free);
-                        document.getElementById('storage-total').textContent = QuantumDrive.formatSize(total);
-                        const percent = (used/total)*100;
-                        document.getElementById('storage-bar').style.width = percent + '%';
-                    } catch (e) { console.warn('Storage info error', e); }
-                }
-            };
-
-            // ========== QUANTUM NAV ==========
-            window.QuantumNav = {
-                goTo(section) { QuantumUI.showNotification('Navigating to ' + section, 'info'); }
-            };
-
-            // ========== QUANTUM AI (mock) ==========
-            window.QuantumAI = {
-                scanDocument() { QuantumUI.showNotification('Scanner not implemented', 'info'); }
-            };
-
-            // ========== STARTUP ==========
-            window.onload = function() {
-                QuantumAuth.init();
-                bootSequence();
-            };
-        })();
+                });
+            }, 2500);
+        };
     </script>
 </body>
 </html>
