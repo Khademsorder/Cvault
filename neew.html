@@ -1,9 +1,9 @@
 <!DOCTYPE html>
-<html lang="en" class="dark">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>DRIVE OS · NEBULA</title>
+    <title>VAULT DRIVE · NEBULA</title>
     
     <!-- Google Identity -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
@@ -12,59 +12,60 @@
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
 
-    <!-- Tailwind (custom config) -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            darkMode: 'class',
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Outfit', 'sans-serif'],
-                        mono: ['Space Grotesk', 'monospace'],
-                    },
-                    colors: {
-                        glass: {
-                            100: 'rgba(255, 255, 255, 0.03)',
-                            200: 'rgba(255, 255, 255, 0.08)',
-                            300: 'rgba(255, 255, 255, 0.12)',
-                            border: 'rgba(255, 255, 255, 0.1)',
-                        },
-                        neon: {
-                            blue: '#00f0ff',
-                            purple: '#b300ff',
-                            green: '#00ffaa',
-                            pink: '#ff2b9e'
-                        }
-                    },
-                    animation: {
-                        'pulse-slow': 'pulse 5s cubic-bezier(0.4, 0, 0.6, 1) infinite',
-                        'float': 'float 8s ease-in-out infinite',
-                        'glow': 'glow 3s ease-in-out infinite alternate',
-                    },
-                    keyframes: {
-                        float: { '0%,100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-20px)' } },
-                        glow: { '0%': { textShadow: '0 0 10px #00f0ff, 0 0 20px #b300ff' }, '100%': { textShadow: '0 0 20px #ff2b9e, 0 0 40px #00f0ff' } }
-                    }
-                }
-            }
-        }
-    </script>
-
     <!-- GSAP -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/gsap.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.2/Flip.min.js"></script>
 
     <style>
-        /* ----- ULTRA VISUAL UPGRADE ----- */
-        body {
-            background: #0b0b12;
-            color: #fff;
-            overflow: hidden;
-            font-smooth: antialiased;
+        /* ----- MODERN GLASS & NEBULA THEME (merged with 111.html structure) ----- */
+        :root {
+            --primary: #1a73e8;
+            --primary-dark: #0d47a1;
+            --secondary: #34a853;
+            --surface: #ffffff;
+            --bg: #f8f9fa;
+            --text-main: #202124;
+            --text-sec: #5f6368;
+            --border: #dadce0;
+            --hover: #f1f3f4;
+            --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+            --radius: 8px;
+            --radius-lg: 12px;
+            --radius-xl: 16px;
+            --neon-blue: #00f0ff;
+            --neon-purple: #b300ff;
+            --neon-pink: #ff2b9e;
+            --neon-green: #00ffaa;
         }
 
-        /* Premium glassmorphism with animated border */
+        .dark-theme {
+            --primary: #8ab4f8;
+            --primary-dark: #669df6;
+            --secondary: #81c995;
+            --surface: #202124;
+            --bg: #121212;
+            --text-main: #e8eaed;
+            --text-sec: #9aa0a6;
+            --border: #3c4043;
+            --hover: #2d2e30;
+            --shadow: 0 1px 2px 0 rgba(0,0,0,0.6), 0 1px 3px 1px rgba(0,0,0,0.302);
+        }
+
+        * { 
+            box-sizing: border-box; 
+            -webkit-tap-highlight-color: transparent; 
+            outline: none; 
+            user-select: none; 
+        }
+        
+        body {
+            margin: 0; padding: 0;
+            font-family: 'Outfit', sans-serif;
+            background: var(--bg); color: var(--text-main);
+            height: 100vh; display: flex; flex-direction: column; overflow: hidden;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        /* Premium glassmorphism */
         .ultra-glass {
             background: rgba(12, 15, 25, 0.65);
             backdrop-filter: blur(32px) saturate(200%);
@@ -78,641 +79,1010 @@
             box-shadow: 0 30px 60px -20px #000, inset 0 0 40px rgba(0, 240, 255, 0.1);
         }
 
-        .card-glass {
-            background: linear-gradient(145deg, rgba(30, 35, 55, 0.5) 0%, rgba(15, 20, 35, 0.7) 100%);
-            border: 1px solid rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(16px);
-            transition: all 0.25s cubic-bezier(0.2, 0.9, 0.3, 1);
-            position: relative;
-            overflow: hidden;
+        /* Screens */
+        .screen {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            display: none; flex-direction: column; background: var(--bg); z-index: 10;
         }
-        .card-glass::after {
-            content: '';
-            position: absolute;
-            inset: 0;
-            background: radial-gradient(circle at 50% 0%, rgba(0,240,255,0.15), transparent 70%);
-            opacity: 0;
-            transition: opacity 0.5s;
-            pointer-events: none;
+        .screen.active { display: flex; animation: fade 0.2s ease; }
+        @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
+
+        /* --- LOCK SCREEN (with neon dots) --- */
+        #lock-screen {
+            justify-content: center; align-items: center; background: var(--surface);
         }
-        .card-glass:hover::after {
-            opacity: 1;
+        .pin-container {
+            text-align: center; width: 100%; max-width: 320px; padding: 20px;
+        }
+        .logo-area { 
+            font-family: 'Space Grotesk', monospace; 
+            font-size: 24px; 
+            color: var(--text-main); 
+            margin-bottom: 10px; 
+            text-shadow: 0 0 10px var(--neon-blue);
+        }
+        .logo-subtitle {
+            font-size: 14px; color: var(--text-sec); margin-bottom: 30px;
+        }
+        .pin-dots {
+            display: flex; justify-content: center; gap: 15px; margin-bottom: 40px;
+        }
+        .dot {
+            width: 15px; height: 15px; border-radius: 50%;
+            border: 2px solid var(--text-sec); transition: 0.2s;
+        }
+        .dot.filled { background: var(--neon-blue); border-color: var(--neon-blue); box-shadow: 0 0 10px var(--neon-blue); }
+        .keypad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px;
+            padding: 0 20px;
+        }
+        .key {
+            width: 65px; height: 65px; border-radius: 50%;
+            background: var(--hover); color: var(--text-main);
+            font-size: 22px; display: flex; align-items: center; justify-content: center;
+            margin: auto; cursor: pointer; transition: 0.1s;
+            border: 1px solid var(--border);
+            touch-action: manipulation;
+        }
+        .key:active { background: var(--border); transform: scale(0.95); }
+        .key.clear, .key.backspace { background: transparent; font-size: 13px; color: var(--text-sec); border: none; }
+        .biometric-btn {
+            margin-top: 20px; padding: 10px 20px;
+            background: transparent; border: 1px solid var(--border);
+            border-radius: 20px; color: var(--text-sec); cursor: pointer;
+            display: flex; align-items: center; gap: 8px; justify-content: center;
+            font-size: 14px;
         }
 
-        /* Custom scrollbar for cyberpunk vibe */
-        ::-webkit-scrollbar { width: 6px; height: 6px; }
-        ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.3); }
-        ::-webkit-scrollbar-thumb { background: rgba(0, 240, 255, 0.3); border-radius: 20px; box-shadow: inset 0 0 6px #00f0ff; }
-        ::-webkit-scrollbar-thumb:hover { background: #00f0ff; }
+        /* --- AUTH SCREEN --- */
+        #auth-screen { justify-content: center; align-items: center; text-align: center; background: var(--surface); }
+        .auth-card {
+            background: var(--surface); padding: 30px; border-radius: var(--radius-xl);
+            box-shadow: var(--shadow); width: 90%; max-width: 400px;
+            border: 1px solid var(--border);
+        }
+        .auth-btn {
+            background: var(--surface); border: 1px solid var(--border); padding: 12px 24px;
+            border-radius: 24px; font-family: 'Outfit'; font-weight: 500;
+            display: flex; align-items: center; gap: 10px; cursor: pointer;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1); margin-bottom: 15px;
+            width: 100%; justify-content: center; transition: 0.2s;
+        }
+        .auth-btn:hover { background: var(--hover); }
 
-        /* Background canvas — enhanced starfield with color */
-        #bg-canvas {
+        /* --- MAIN APP UI (based on 111.html but with glass) --- */
+        .app-header {
+            background: var(--surface); padding: 10px 15px; height: 60px;
+            display: flex; align-items: center; justify-content: space-between;
+            box-shadow: 0 1px 0 var(--border); z-index: 20;
+            flex-shrink: 0;
+        }
+        .search-bar {
+            flex: 1; background: var(--hover); border-radius: var(--radius-lg); margin: 0 15px;
+            padding: 8px 12px; display: flex; align-items: center; color: var(--text-sec);
+            border: 1px solid transparent; transition: 0.2s;
+            min-width: 0;
+        }
+        .search-bar:focus-within { border-color: var(--neon-blue); background: var(--surface); }
+        .search-input {
+            border: none; background: transparent; margin-left: 10px; width: 100%; font-size: 16px;
+            color: var(--text-main);
+        }
+
+        .toolbar {
+            padding: 10px 15px; display: flex; justify-content: space-between; align-items: center;
+            font-size: 14px; color: var(--text-sec); border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+        }
+        .breadcrumb { 
+            display: flex; align-items: center; overflow-x: auto; white-space: nowrap; flex: 1;
+            min-width: 0; scrollbar-width: none; 
+        }
+        .breadcrumb::-webkit-scrollbar { display: none; }
+        .back-btn {
+            background: var(--hover); border: 1px solid var(--border); border-radius: var(--radius);
+            width: 36px; height: 36px; display: flex; align-items: center; justify-content: center;
+            cursor: pointer; margin-right: 10px; flex-shrink: 0;
+        }
+        .crumb-item { 
+            color: var(--text-main); font-weight: 500; padding: 4px 8px; border-radius: var(--radius);
+            cursor: pointer; transition: 0.2s; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            max-width: 200px;
+        }
+        .crumb-item:hover { background: var(--hover); }
+        .crumb-sep { margin: 0 5px; color: var(--text-sec); flex-shrink: 0; }
+        .toolbar-actions { display: flex; gap: 10px; align-items: center; flex-shrink: 0; }
+        
+        .view-switcher {
+            display: flex; background: var(--hover); border-radius: var(--radius);
+            padding: 2px; border: 1px solid var(--border);
+        }
+        .view-btn {
+            padding: 6px 10px; border-radius: 6px; cursor: pointer; font-size: 13px;
+            display: flex; align-items: center; gap: 4px; min-width: 36px; justify-content: center;
+        }
+        .view-btn.active { background: var(--surface); }
+
+        .file-viewer { flex: 1; overflow-y: auto; padding: 10px; min-height: 0; }
+        .file-list-view { display: flex; flex-direction: column; gap: 2px; }
+        .file-grid-view { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); gap: 12px; }
+        
+        .list-item {
+            display: flex; align-items: center; padding: 12px 15px;
+            border-bottom: 1px solid var(--border); cursor: pointer;
+            border-radius: var(--radius); margin-bottom: 2px;
+            background: var(--surface); transition: 0.2s;
+            min-height: 64px; position: relative; overflow: hidden;
+        }
+        .list-item:hover { background: var(--hover); }
+        
+        .grid-item {
+            background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius);
+            padding: 12px; display: flex; flex-direction: column; align-items: center; 
+            text-align: center; cursor: pointer; transition: 0.2s;
+            height: 140px; overflow: hidden; position: relative;
+        }
+        .grid-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
+        
+        .item-icon { font-size: 24px; color: var(--text-sec); margin-right: 15px; flex-shrink: 0; }
+        .folder-icon { color: #fbbc04; }
+        .pdf-icon { color: #d93025; }
+        .image-icon { color: #34a853; }
+        .video-icon { color: #ea4335; }
+        .grid-item .item-icon { font-size: 40px; margin: 0 0 8px 0; }
+        
+        .item-text { flex: 1; overflow: hidden; min-width: 0; }
+        .item-name { 
+            display: block; font-size: 14px; color: var(--text-main); 
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; 
+            font-weight: 500; line-height: 1.4; margin-bottom: 2px;
+        }
+        .item-meta { 
+            display: block; font-size: 11px; color: var(--text-sec); line-height: 1.3;
+        }
+        .file-actions { display: flex; gap: 5px; flex-shrink: 0; }
+        .action-btn {
+            width: 32px; height: 32px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text-sec); transition: 0.2s;
+        }
+        .action-btn:hover { background: var(--hover); }
+
+        /* Sidebar */
+        .sidebar {
+            position: fixed; top: 0; left: -280px; width: 280px; height: 100%;
+            background: var(--surface); box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+            z-index: 1000; transition: left 0.3s ease;
+            display: flex; flex-direction: column;
+            border-right: 1px solid var(--border);
+        }
+        .sidebar.active { left: 0; }
+        .sidebar-header {
+            padding: 20px; border-bottom: 1px solid var(--border);
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .sidebar-user {
+            display: flex; align-items: center; gap: 10px;
+            padding: 15px 20px; border-bottom: 1px solid var(--border);
+        }
+        .user-avatar { width: 40px; height: 40px; border-radius: 50%; }
+        .user-info h3 { margin: 0; font-size: 16px; }
+        .user-info p { margin: 2px 0 0; font-size: 12px; color: var(--text-sec); }
+        
+        .sidebar-nav { flex: 1; padding: 15px 0; overflow-y: auto; }
+        .nav-section { padding: 10px 0; }
+        .nav-title {
+            padding: 0 20px; font-size: 12px; color: var(--text-sec); 
+            text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px;
+        }
+        .nav-item {
+            display: flex; align-items: center; gap: 15px; padding: 12px 20px;
+            color: var(--text-main); text-decoration: none; transition: 0.2s; cursor: pointer;
+        }
+        .nav-item:hover { background: var(--hover); }
+        .nav-item.active { background: #e8f0fe; color: var(--primary); border-left: 3px solid var(--primary); }
+        .nav-badge { margin-left: auto; background: var(--primary); color: white; font-size: 11px; padding: 2px 6px; border-radius: 10px; }
+
+        /* Bottom Nav */
+        .bottom-nav {
+            height: 60px; background: var(--surface); border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center;
+            position: relative; z-index: 20; flex-shrink: 0;
+        }
+        .nav-item-b { 
+            display: flex; flex-direction: column; align-items: center; 
+            color: var(--text-sec); font-size: 11px; padding: 5px; cursor: pointer;
+            transition: 0.2s; flex: 1; min-width: 0;
+        }
+        .nav-item-b.active { color: var(--primary); }
+        .nav-item-b .material-icons-round { font-size: 20px; margin-bottom: 2px; transition: 0.2s; }
+        .nav-item-b.active .material-icons-round { background: #e8f0fe; padding: 6px; border-radius: 50%; }
+
+        /* FAB */
+        .fab-container { position: fixed; bottom: 80px; right: 20px; z-index: 50; }
+        .fab-main {
+            width: 56px; height: 56px; border-radius: 50%; background: var(--primary);
+            box-shadow: var(--shadow); display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: white; font-size: 28px; transition: 0.2s;
+        }
+        .fab-main:hover { background: var(--primary-dark); }
+        .fab-menu {
+            position: absolute; bottom: 70px; right: 0; background: var(--surface);
+            border-radius: var(--radius-lg); box-shadow: var(--shadow); width: 200px;
+            display: none; flex-direction: column; overflow: hidden; border: 1px solid var(--border);
+        }
+        .fab-item { 
+            padding: 12px 15px; display: flex; align-items: center; gap: 10px; 
+            font-size: 14px; cursor: pointer; color: var(--text-main); transition: 0.2s;
+        }
+        .fab-item:hover { background: var(--hover); }
+
+        /* Modals */
+        .modal-mask {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            z-index: -1; opacity: 0.7;
-        }
-
-        /* 3D tilt cards extension */
-        .tilt-card {
-            transform-style: preserve-3d;
-            will-change: transform;
-        }
-
-        /* Filter chip styling */
-        .filter-chip {
-            padding: 0.5rem 1.2rem;
-            border-radius: 40px;
-            background: rgba(255,255,255,0.03);
-            border: 1px solid rgba(255,255,255,0.1);
-            font-size: 0.8rem;
-            font-weight: 500;
-            letter-spacing: 0.5px;
-            transition: all 0.2s;
-            cursor: pointer;
+            background: rgba(0,0,0,0.6); z-index: 1000; display: none;
+            justify-content: center; align-items: flex-end;
             backdrop-filter: blur(5px);
         }
-        .filter-chip.active {
-            background: rgba(0, 240, 255, 0.15);
-            border-color: #00f0ff;
-            color: #00f0ff;
-            box-shadow: 0 0 20px rgba(0,240,255,0.3);
+        .modal-sheet {
+            background: var(--surface); width: 100%; max-width: 600px;
+            border-radius: 16px 16px 0 0; padding: 20px;
+            animation: slideUp 0.2s ease-out; max-height: 80vh; overflow-y: auto;
+            color: var(--text-main);
+        }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        
+        .sheet-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px solid var(--border); }
+        .sheet-title { font-family: 'Outfit'; font-size: 18px; font-weight: 500; }
+        .action-list div { 
+            padding: 15px 0; display: flex; align-items: center; gap: 15px; 
+            border-bottom: 1px solid var(--border); cursor: pointer; color: var(--text-main);
+        }
+        .action-list div:last-child { border: none; }
+        .action-list div:hover { background: var(--hover); }
+
+        /* Progress box */
+        .progress-box {
+            background: var(--surface); padding: 20px; border-radius: var(--radius-lg); 
+            width: 90%; max-width: 400px; margin: auto; box-shadow: var(--shadow); 
+            display: none; position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); z-index: 2000; border: 1px solid var(--border);
+        }
+        .progress-header { display:flex; justify-content:space-between; margin-bottom:5px; }
+        .progress-details { font-size:12px; color:var(--text-sec); margin-bottom:10px; }
+        .progress-bar { height: 6px; background: var(--hover); border-radius: 3px; margin-top: 10px; overflow: hidden; }
+        .progress-fill { height: 100%; background: linear-gradient(90deg, var(--primary), var(--secondary)); width: 0%; transition: width 0.3s; border-radius: 3px; }
+        .progress-stats { display: flex; justify-content: space-between; margin-top: 8px; font-size: 11px; color: var(--text-sec); }
+
+        /* Media viewer */
+        .media-viewer {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: #000; z-index: 2500; display: none; flex-direction: column;
+        }
+        .media-header { 
+            padding: 15px; color: #fff; display: flex; justify-content: space-between; 
+            align-items: center; background: rgba(0,0,0,0.7); backdrop-filter: blur(10px); flex-shrink: 0;
+        }
+        .media-iframe { flex: 1; border: none; background: #fff; min-height: 0; }
+
+        /* Cancel button */
+        .cancel-btn {
+            position: absolute; top: 15px; right: 15px; z-index: 3000;
+            background: rgba(0,0,0,0.5); color: white; border: none;
+            width: 40px; height: 40px; border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; font-size: 20px;
         }
 
-        /* Video thumbnail overlay */
-        .video-thumb-overlay {
-            position: absolute;
-            inset: 0;
-            background: rgba(0,0,0,0.3);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-        .tilt-card:hover .video-thumb-overlay {
-            opacity: 1;
+        /* Empty state */
+        .empty-state { text-align: center; padding: 50px 20px; color: var(--text-sec); }
+        .empty-icon { font-size: 64px; margin-bottom: 20px; opacity: 0.5; }
+
+        /* Loading */
+        .loading { display: flex; justify-content: center; align-items: center; height: 100%; color: var(--text-sec); }
+
+        /* Sort options */
+        .sort-options { display: flex; flex-direction: column; gap: 10px; padding: 15px 0; }
+        .sort-option { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; border-bottom: 1px solid var(--border); cursor: pointer; }
+        .sort-option.active { color: var(--primary); }
+        .sort-option:hover { background: var(--hover); }
+
+        /* File info */
+        .file-info { padding: 15px 0; }
+        .info-row { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid var(--border); }
+        .info-label { color: var(--text-sec); }
+        .info-value { font-weight: 500; }
+
+        /* Photo gallery */
+        .photo-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 10px; padding: 10px; }
+        .photo-item { position: relative; cursor: pointer; }
+        .photo-thumb { width: 100%; height: 150px; object-fit: cover; border-radius: var(--radius); }
+        .photo-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.7));
+            color: white; padding: 10px; font-size: 12px;
+            border-radius: 0 0 var(--radius) var(--radius);
         }
 
-        /* Loading skeleton */
-        .skeleton {
-            background: linear-gradient(90deg, rgba(30,35,55,0.5) 25%, rgba(50,60,85,0.7) 50%, rgba(30,35,55,0.5) 75%);
-            background-size: 200% 100%;
-            animation: shimmer 1.5s infinite;
+        /* Switch */
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { 
+            position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; 
+            background-color: #ccc; transition: .4s; border-radius: 24px; 
         }
-        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
-
-        /* Media viewer enhancements */
-        #media-view {
-            background: rgba(5,5,15,0.98);
-            backdrop-filter: blur(30px);
+        .slider:before { 
+            position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; 
+            background-color: white; transition: .4s; border-radius: 50%; 
         }
-
-        /* Toast notification */
-        .toast {
-            position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-            background: rgba(0,240,255,0.2); border-left: 4px solid #00f0ff;
-            backdrop-filter: blur(20px);
-            padding: 0.8rem 2rem; border-radius: 60px;
-            color: white; font-family: monospace; z-index: 300;
-            box-shadow: 0 0 30px rgba(0,240,255,0.3);
-            transition: opacity 0.3s;
-        }
-
-        /* Breadcrumb animation */
-        .breadcrumb-item {
-            transition: all 0.2s;
-        }
+        input:checked + .slider { background-color: var(--primary); }
+        input:checked + .slider:before { transform: translateX(20px); }
     </style>
 </head>
-<body class="antialiased selection:bg-neon-blue selection:text-black">
-
-    <canvas id="bg-canvas"></canvas>
-
-    <!-- [LOCK SCREEN] with fixed keypad -->
-    <div id="lock-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4">
-        <div class="relative w-full max-w-md perspective-container">
-            <div class="ultra-glass rounded-3xl p-8 transform transition-transform duration-700 hover:scale-[1.03] hover:border-neon-blue/30">
-                <div class="text-center mb-8">
-                    <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-neon-blue to-neon-purple mb-4 shadow-[0_0_30px_rgba(0,240,255,0.6)] animate-pulse-slow">
-                        <span class="material-icons-round text-3xl text-white">lock</span>
-                    </div>
-                    <h1 class="text-3xl font-bold font-mono tracking-tight text-white mb-2 animate-glow">DRIVE OS <span class="text-neon-blue">NEBULA</span></h1>
-                    <p class="text-gray-400 text-sm">identity verification</p>
-                </div>
-                <!-- PIN dots indicator -->
-                <div class="flex justify-center gap-4 mb-8" id="pin-dots">
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300"></div>
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300"></div>
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300"></div>
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300"></div>
-                </div>
-                <!-- keypad buttons (onclick works globally) -->
-                <div class="grid grid-cols-3 gap-4 px-4 font-mono">
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(1)">1</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(2)">2</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(3)">3</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(4)">4</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(5)">5</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(6)">6</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(7)">7</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(8)">8</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(9)">9</button>
-                    <button class="h-16 flex items-center justify-center text-red-400 hover:text-red-300 transition-colors" onclick="window.keypadClear()">CLR</button>
-                    <button class="h-16 rounded-2xl bg-white/5 hover:bg-white/15 active:bg-neon-blue/20 border border-white/5 text-xl font-medium transition-all hover:border-neon-blue/50" onclick="window.keypadPress(0)">0</button>
-                    <button class="h-16 flex items-center justify-center text-neon-blue hover:text-white transition-colors" onclick="window.keypadBackspace()">
-                        <span class="material-icons-round">backspace</span>
-                    </button>
-                </div>
+<body>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <h3 style="margin: 0;">VAULT DRIVE</h3>
+            <span class="material-icons-round" onclick="UI.toggleSidebar()" style="cursor: pointer;">close</span>
+        </div>
+        <div class="sidebar-user">
+            <img id="sidebar-avatar" class="user-avatar" src="" alt="User">
+            <div class="user-info">
+                <h3 id="sidebar-name">User</h3>
+                <p id="sidebar-email">user@example.com</p>
             </div>
         </div>
-    </div>
-
-    <!-- [AUTH SCREEN] with enhanced glow -->
-    <div id="auth-screen" class="hidden fixed inset-0 z-40 flex items-center justify-center">
-        <div class="ultra-glass p-10 rounded-3xl text-center max-w-sm w-full mx-4 border border-neon-purple/40 glow-box animate-float">
-            <h2 class="text-3xl font-bold mb-2 bg-gradient-to-r from-neon-blue to-neon-pink bg-clip-text text-transparent">🔐 CONNECT</h2>
-            <p class="text-gray-400 mb-8 text-sm">initialize google cloud secure link</p>
-            <button onclick="window.authSignIn()" class="w-full py-4 rounded-xl bg-white text-black font-bold flex items-center justify-center gap-3 hover:scale-105 transition-transform duration-200 shadow-[0_0_30px_rgba(255,255,255,0.4)] hover:shadow-neon-blue/50">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
-                <span>Sign in with Google</span>
+        <div class="sidebar-nav">
+            <div class="nav-section">
+                <div class="nav-title">Storage</div>
+                <div class="nav-item" onclick="Nav.switchTab('storage', this)">
+                    <span class="material-icons-round">storage</span> Storage Usage
+                    <span class="nav-badge" id="storage-badge">15 GB</span>
+                </div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-title">Views</div>
+                <div class="nav-item" onclick="UI.switchView('list')"><span class="material-icons-round">view_list</span> List View</div>
+                <div class="nav-item" onclick="UI.switchView('grid')"><span class="material-icons-round">grid_view</span> Grid View</div>
+                <div class="nav-item" onclick="UI.switchView('gallery')"><span class="material-icons-round">collections</span> Gallery View</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-title">Sort By</div>
+                <div class="nav-item" onclick="Drive.sort('name', 'asc')"><span class="material-icons-round">sort_by_alpha</span> Name (A-Z)</div>
+                <div class="nav-item" onclick="Drive.sort('name', 'desc')"><span class="material-icons-round">sort_by_alpha</span> Name (Z-A)</div>
+                <div class="nav-item" onclick="Drive.sort('size', 'asc')"><span class="material-icons-round">arrow_upward</span> Size (Small-Large)</div>
+                <div class="nav-item" onclick="Drive.sort('size', 'desc')"><span class="material-icons-round">arrow_downward</span> Size (Large-Small)</div>
+                <div class="nav-item" onclick="Drive.sort('date', 'desc')"><span class="material-icons-round">schedule</span> Date (Newest)</div>
+                <div class="nav-item" onclick="Drive.sort('date', 'asc')"><span class="material-icons-round">schedule</span> Date (Oldest)</div>
+            </div>
+            <div class="nav-section">
+                <div class="nav-title">Settings</div>
+                <div class="nav-item" onclick="Settings.open()"><span class="material-icons-round">settings</span> App Settings</div>
+                <div class="nav-item" onclick="Settings.security()"><span class="material-icons-round">security</span> Security</div>
+                <div class="nav-item" onclick="Settings.about()"><span class="material-icons-round">info</span> About</div>
+            </div>
+        </div>
+        <div style="padding: 20px; border-top: 1px solid var(--border);">
+            <button onclick="Auth.logout()" style="background: transparent; border: 1px solid var(--border); color: var(--text-main); padding: 10px; border-radius: var(--radius); width: 100%; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 10px;">
+                <span class="material-icons-round">logout</span> Sign Out
             </button>
         </div>
     </div>
 
-    <!-- [MAIN APP] -->
-    <div id="app-screen" class="hidden fixed inset-0 flex overflow-hidden">
-
-        <!-- SIDEBAR (same structure, upgraded class) -->
-        <aside id="sidebar" class="w-72 h-full ultra-glass border-r border-glass-border transform -translate-x-full md:translate-x-0 transition-transform duration-500 absolute md:relative z-30 flex flex-col">
-            <div class="p-6 border-b border-glass-border flex justify-between items-center">
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded bg-gradient-to-br from-neon-blue to-neon-purple shadow-[0_0_15px_rgba(0,240,255,0.6)]"></div>
-                    <span class="font-mono font-bold text-lg tracking-wider">NEBULA_OS</span>
-                </div>
-                <button class="md:hidden text-gray-400" onclick="UI.toggleSidebar()"><span class="material-icons-round">close</span></button>
+    <!-- LOCK SCREEN -->
+    <div id="lock-screen" class="screen active">
+        <div class="pin-container">
+            <div class="logo-area">VAULT DRIVE NEBULA</div>
+            <div class="logo-subtitle">Enter your PIN to continue</div>
+            <div class="pin-dots" id="pin-dots">
+                <div class="dot"></div><div class="dot"></div><div class="dot"></div><div class="dot"></div>
             </div>
-            <div class="p-6">
-                <div class="bg-white/5 rounded-2xl p-4 border border-white/10 flex items-center gap-3 mb-6 hover:border-neon-blue/40 transition">
-                    <img id="sidebar-avatar" src="" class="w-10 h-10 rounded-full ring-2 ring-neon-blue/70">
-                    <div class="overflow-hidden">
-                        <h3 id="sidebar-name" class="font-bold text-sm truncate">User</h3>
-                        <p id="sidebar-email" class="text-xs text-gray-400 truncate">...</p>
-                    </div>
-                </div>
-                <nav class="space-y-2 font-mono text-sm">
-                    <button class="w-full text-left px-4 py-3 rounded-xl bg-neon-blue/10 text-neon-blue border border-neon-blue/30 flex items-center gap-3 shadow-[0_0_10px_rgba(0,240,255,0.2)]"><span class="material-icons-round text-lg">dashboard</span> Dashboard</button>
-                    <button onclick="window.Nav.switchTab('photos')" class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 text-gray-300 flex items-center gap-3 transition-colors hover:border-l-2 hover:border-neon-blue"><span class="material-icons-round text-lg">photo_library</span> Gallery</button>
-                    <button class="w-full text-left px-4 py-3 rounded-xl hover:bg-white/5 text-gray-300 flex items-center gap-3 transition-colors hover:border-l-2 hover:border-neon-purple"><span class="material-icons-round text-lg">folder_shared</span> Shared</button>
-                </nav>
-                <div class="mt-8">
-                    <p class="text-xs text-gray-500 uppercase tracking-widest mb-4 font-bold">Storage</p>
-                    <div class="relative w-full h-2 bg-gray-800/50 rounded-full overflow-hidden">
-                        <div id="storage-bar" class="absolute left-0 top-0 h-full bg-gradient-to-r from-neon-blue via-neon-purple to-neon-pink w-[0%] transition-all duration-1000"></div>
-                    </div>
-                    <div class="flex justify-between text-xs mt-2 text-gray-400 font-mono">
-                        <span id="storage-used">0 GB</span>
-                        <span id="storage-total">15 GB</span>
-                    </div>
-                </div>
+            <div class="keypad">
+                <div class="key" onclick="Keypad.press(1)">1</div>
+                <div class="key" onclick="Keypad.press(2)">2</div>
+                <div class="key" onclick="Keypad.press(3)">3</div>
+                <div class="key" onclick="Keypad.press(4)">4</div>
+                <div class="key" onclick="Keypad.press(5)">5</div>
+                <div class="key" onclick="Keypad.press(6)">6</div>
+                <div class="key" onclick="Keypad.press(7)">7</div>
+                <div class="key" onclick="Keypad.press(8)">8</div>
+                <div class="key" onclick="Keypad.press(9)">9</div>
+                <div class="key clear" onclick="Keypad.clear()">CLEAR</div>
+                <div class="key" onclick="Keypad.press(0)">0</div>
+                <div class="key backspace" onclick="Keypad.backspace()"><span class="material-icons-round">backspace</span></div>
             </div>
-            <div class="mt-auto p-6 border-t border-glass-border">
-                <button onclick="window.authLogout()" class="w-full py-2 rounded-lg border border-red-500/30 text-red-400 hover:bg-red-500/10 hover:border-red-400 text-sm font-bold transition-all">TERMINATE SESSION</button>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col relative bg-transparent z-10 overflow-hidden">
-
-            <!-- HEADER with filter chips -->
-            <header class="h-auto min-h-[5rem] px-6 py-3 flex flex-wrap items-center justify-between ultra-glass m-4 rounded-2xl border-glass-border z-20">
-                <div class="flex items-center gap-4 flex-wrap">
-                    <button onclick="UI.toggleSidebar()" class="md:hidden text-white"><span class="material-icons-round">menu</span></button>
-                    <!-- search -->
-                    <div class="relative group">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="material-icons-round text-gray-500 group-focus-within:text-neon-blue transition-colors">search</span>
-                        </div>
-                        <input type="text" id="search-input" onkeyup="window.driveSearch(this.value)" 
-                            class="bg-black/40 border border-white/10 text-white rounded-xl pl-10 pr-4 py-2 w-40 sm:w-48 focus:w-64 transition-all duration-300 outline-none focus:border-neon-blue/50 focus:shadow-[0_0_15px_rgba(0,240,255,0.2)] placeholder-gray-600 font-mono text-sm" 
-                            placeholder="SEARCH...">
-                    </div>
-                    <!-- FILTER CHIPS (gallery/video/all) -->
-                    <div class="flex gap-2 ml-2">
-                        <div class="filter-chip active" data-filter="all" onclick="window.filterSet('all')">ALL</div>
-                        <div class="filter-chip" data-filter="image" onclick="window.filterSet('image')">IMAGES</div>
-                        <div class="filter-chip" data-filter="video" onclick="window.filterSet('video')">VIDEOS</div>
-                        <div class="filter-chip" data-filter="document" onclick="window.filterSet('document')">DOCS</div>
-                    </div>
-                </div>
-
-                <div class="flex items-center gap-3 mt-2 sm:mt-0">
-                    <button onclick="window.driveSortMenu()" class="p-2 rounded-lg hover:bg-white/10 transition-colors text-gray-300"><span class="material-icons-round">sort</span></button>
-                    <div class="bg-black/40 rounded-lg p-1 flex border border-white/10">
-                        <button onclick="window.uiSwitchView('grid')" class="p-2 rounded hover:bg-white/10 text-white transition-colors"><span class="material-icons-round text-sm">grid_view</span></button>
-                        <button onclick="window.uiSwitchView('list')" class="p-2 rounded hover:bg-white/10 text-gray-400 transition-colors"><span class="material-icons-round text-sm">view_list</span></button>
-                    </div>
-                    <button class="bg-neon-blue text-black font-bold px-4 py-2 rounded-lg hover:shadow-[0_0_25px_rgba(0,240,255,0.7)] transition-all flex items-center gap-2" onclick="UI.toggleFab()">
-                        <span class="material-icons-round text-sm">add</span> <span class="text-sm hidden sm:inline">NEW</span>
-                    </button>
-                </div>
-            </header>
-
-            <!-- BREADCRUMB -->
-            <div class="px-8 pb-2 flex items-center text-sm font-mono text-gray-400">
-                <span onclick="window.driveGoBack()" id="back-btn" class="hidden material-icons-round mr-4 cursor-pointer hover:text-white transition">arrow_back</span>
-                <div id="breadcrumb" class="flex items-center gap-2 overflow-x-auto no-scrollbar"></div>
-            </div>
-
-            <!-- FILE GRID (with dynamic classes) -->
-            <div id="file-container" class="flex-1 overflow-y-auto p-4 sm:p-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 content-start pb-32"></div>
-
-            <!-- FAB MENU (upgraded) -->
-            <div id="fab-menu" class="hidden absolute bottom-24 right-8 ultra-glass rounded-2xl p-2 flex-col gap-1 min-w-[220px] origin-bottom-right shadow-2xl z-50 border border-neon-blue/20">
-                <label class="flex items-center gap-3 p-3 hover:bg-white/15 rounded-xl cursor-pointer transition-colors text-sm hover:border-l-2 border-neon-green">
-                    <span class="material-icons-round text-neon-green">upload_file</span> Upload File
-                    <input type="file" hidden multiple onchange="window.uploadHandleFiles(this.files)">
-                </label>
-                <label class="flex items-center gap-3 p-3 hover:bg-white/15 rounded-xl cursor-pointer transition-colors text-sm hover:border-l-2 border-neon-green">
-                    <span class="material-icons-round text-neon-green">drive_folder_upload</span> Upload Folder
-                    <input type="file" hidden webkitdirectory onchange="window.uploadHandleFiles(this.files)">
-                </label>
-                <div class="h-px bg-white/10 my-1"></div>
-                <div class="flex items-center gap-3 p-3 hover:bg-white/15 rounded-xl cursor-pointer transition-colors text-sm" onclick="window.opsCreateFolder()">
-                    <span class="material-icons-round text-neon-blue">create_new_folder</span> New Folder
-                </div>
-                <div class="flex items-center gap-3 p-3 hover:bg-white/15 rounded-xl cursor-pointer transition-colors text-sm" onclick="window.opsCreateDocument()">
-                    <span class="material-icons-round text-neon-purple">description</span> Google Doc
-                </div>
-            </div>
-        </main>
-    </div>
-
-    <!-- MODALS (upgraded) -->
-    <!-- Upload progress -->
-    <div id="progress-modal" class="hidden fixed bottom-8 left-1/2 -translate-x-1/2 w-96 ultra-glass rounded-2xl p-5 border-t-2 border-neon-blue z-50 shadow-2xl">
-        <div class="flex justify-between items-end mb-2">
-            <h4 class="font-mono text-neon-blue text-sm font-bold animate-pulse">UPLOADING...</h4>
-            <span id="prog-pct" class="font-mono text-2xl font-bold text-neon-blue">0%</span>
-        </div>
-        <div class="relative h-1.5 bg-gray-800 rounded overflow-hidden mb-3">
-            <div id="prog-bar" class="absolute top-0 left-0 h-full bg-gradient-to-r from-neon-blue to-neon-purple shadow-[0_0_10px_#00f0ff]" style="width: 0%"></div>
-        </div>
-        <div class="flex justify-between text-xs font-mono text-gray-400">
-            <span id="prog-file" class="truncate max-w-[150px]">filename.ext</span>
-            <span id="prog-speed">0 MB/s</span>
-        </div>
-        <button onclick="window.uploadCancel()" class="absolute -top-3 -right-3 w-8 h-8 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 shadow-lg"><span class="material-icons-round text-sm">close</span></button>
-    </div>
-
-    <!-- Context modal -->
-    <div id="ctx-modal" class="hidden fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm" onclick="if(event.target===this)window.uiCloseModal('ctx-modal')">
-        <div class="ultra-glass w-full max-w-sm rounded-2xl overflow-hidden border border-neon-blue/30 animate-[fadeInUp_0.3s]">
-            <div class="p-4 border-b border-white/10 bg-white/5 flex justify-between items-center">
-                <h3 id="ctx-name" class="font-bold truncate pr-4">Options</h3>
-                <span class="material-icons-round cursor-pointer text-gray-400 hover:text-white" onclick="window.uiCloseModal('ctx-modal')">close</span>
-            </div>
-            <div class="p-2">
-                <button onclick="window.opsPreview()" class="w-full text-left p-3 rounded-lg hover:bg-white/10 flex items-center gap-3 transition-colors"><span class="material-icons-round text-gray-400">visibility</span> Preview</button>
-                <button onclick="window.opsDownload()" class="w-full text-left p-3 rounded-lg hover:bg-white/10 flex items-center gap-3 transition-colors"><span class="material-icons-round text-gray-400">download</span> Download</button>
-                <button onclick="window.opsRename()" class="w-full text-left p-3 rounded-lg hover:bg-white/10 flex items-center gap-3 transition-colors"><span class="material-icons-round text-gray-400">edit</span> Rename</button>
-                <button onclick="window.opsInfo()" class="w-full text-left p-3 rounded-lg hover:bg-white/10 flex items-center gap-3 transition-colors"><span class="material-icons-round text-gray-400">info</span> Info</button>
-                <div class="h-px bg-white/10 my-1"></div>
-                <button onclick="window.opsDelete()" class="w-full text-left p-3 rounded-lg hover:bg-red-500/20 text-red-400 flex items-center gap-3 transition-colors"><span class="material-icons-round">delete</span> Delete</button>
+            <div class="biometric-btn" onclick="Keypad.useFingerprint()"><span class="material-icons-round">fingerprint</span> Use Fingerprint</div>
+            <div style="margin-top: 20px; font-size: 12px; color: var(--text-sec);">
+                Forgot PIN? <a href="#" onclick="Keypad.resetPin()" style="color: var(--primary);">Reset</a>
             </div>
         </div>
     </div>
 
-    <!-- Media viewer with native video support -->
-    <div id="media-view" class="hidden fixed inset-0 z-[200] bg-black/95 flex flex-col">
-        <div class="h-16 flex items-center justify-between px-6 ultra-glass z-10">
-            <span id="media-title" class="font-mono text-sm truncate max-w-md text-neon-blue">Preview</span>
-            <div class="flex gap-4">
-                <button onclick="window.opsOpenExternal()" class="text-neon-blue hover:text-white transition"><span class="material-icons-round">open_in_new</span></button>
-                <button onclick="window.uiCloseMedia()" class="text-red-400 hover:text-white transition"><span class="material-icons-round">close</span></button>
+    <!-- AUTH SCREEN -->
+    <div id="auth-screen" class="screen">
+        <div class="auth-card">
+            <h2 style="font-family: 'Outfit'; margin-bottom: 10px; color: var(--text-main);">Welcome Back</h2>
+            <p style="color: var(--text-sec); margin-bottom: 30px;">Sign in to access your Google Drive</p>
+            <button class="auth-btn" onclick="Auth.signIn()">
+                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" width="20">
+                Sign in with Google
+            </button>
+            <div style="text-align: center; margin: 20px 0; color: var(--text-sec); font-size: 14px;">
+                By signing in, you agree to our Terms of Service
             </div>
-        </div>
-        <div id="media-frame" class="flex-1 w-full flex items-center justify-center bg-black/80">
-            <!-- iframe or video will be injected here -->
         </div>
     </div>
 
-    <!-- Toast placeholder -->
-    <div id="toast" class="toast hidden">✨ action complete</div>
+    <!-- APP SCREEN -->
+    <div id="app-screen" class="screen">
+        <!-- Cancel Upload Button -->
+        <div class="cancel-btn" id="cancel-btn" onclick="Upload.cancel()" style="display: none;"><span class="material-icons-round">close</span></div>
+
+        <div class="app-header">
+            <span class="material-icons-round" onclick="UI.toggleSidebar()" style="cursor: pointer;">menu</span>
+            <div class="search-bar">
+                <span class="material-icons-round">search</span>
+                <input type="text" class="search-input" placeholder="Search files..." id="search-input" onkeyup="Drive.search(this.value)">
+            </div>
+            <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="material-icons-round" onclick="Drive.refresh()" style="cursor: pointer;" title="Refresh">refresh</span>
+                <img id="user-avatar" src="" style="width: 32px; height: 32px; border-radius: 50%; cursor: pointer;" onclick="UI.toggleSidebar()">
+            </div>
+        </div>
+
+        <div class="toolbar">
+            <div class="back-btn" id="back-btn" onclick="Drive.goBack()" style="display: none;"><span class="material-icons-round">arrow_back</span></div>
+            <div class="breadcrumb" id="breadcrumb"><span class="crumb-item" onclick="Drive.load('root')">My Drive</span></div>
+            <div class="toolbar-actions">
+                <span class="material-icons-round" onclick="Drive.sortMenu()" style="cursor: pointer;" title="Sort">sort</span>
+                <div class="view-switcher">
+                    <div class="view-btn active" onclick="UI.switchView('list')" data-view="list" title="List View"><span class="material-icons-round">view_list</span></div>
+                    <div class="view-btn" onclick="UI.switchView('grid')" data-view="grid" title="Grid View"><span class="material-icons-round">grid_view</span></div>
+                    <div class="view-btn" onclick="UI.switchView('gallery')" data-view="gallery" title="Gallery View"><span class="material-icons-round">collections</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- File Container -->
+        <div id="file-container" class="file-viewer file-list-view"></div>
+
+        <!-- FAB -->
+        <div class="fab-container">
+            <div class="fab-menu" id="fab-menu">
+                <label class="fab-item"><span class="material-icons-round">upload_file</span> Upload File<input type="file" hidden multiple onchange="Upload.handleFiles(this.files)"></label>
+                <label class="fab-item"><span class="material-icons-round">drive_folder_upload</span> Upload Folder<input type="file" hidden webkitdirectory onchange="Upload.handleFiles(this.files)"></label>
+                <div class="fab-item" onclick="Ops.createFolder()"><span class="material-icons-round">create_new_folder</span> New Folder</div>
+                <div class="fab-item" onclick="Ops.createDocument()"><span class="material-icons-round">description</span> New Document</div>
+            </div>
+            <div class="fab-main" onclick="UI.toggleFab()"><span class="material-icons-round">add</span></div>
+        </div>
+
+        <!-- Bottom Nav -->
+        <div class="bottom-nav">
+            <div class="nav-item-b active" onclick="Nav.switchTab('home', this)"><span class="material-icons-round">home</span> Home</div>
+            <div class="nav-item-b" onclick="Nav.switchTab('photos', this)"><span class="material-icons-round">photo</span> Photos</div>
+            <div class="nav-item-b" onclick="Nav.switchTab('vault', this)"><span class="material-icons-round">lock</span> Vault</div>
+            <div class="nav-item-b" onclick="Nav.switchTab('shared', this)"><span class="material-icons-round">share</span> Shared</div>
+            <div class="nav-item-b" onclick="Nav.switchTab('recent', this)"><span class="material-icons-round">schedule</span> Recent</div>
+        </div>
+    </div>
+
+    <!-- MODALS -->
+    <!-- Context Menu -->
+    <div id="ctx-modal" class="modal-mask" onclick="if(event.target===this) UI.closeModal('ctx-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head"><span class="sheet-title" id="ctx-name">Filename</span><span class="material-icons-round" onclick="UI.closeModal('ctx-modal')">close</span></div>
+            <div class="action-list">
+                <div onclick="Ops.preview()"><span class="material-icons-round">visibility</span> Preview</div>
+                <div onclick="Ops.download()"><span class="material-icons-round">download</span> Download</div>
+                <div onclick="Ops.share()"><span class="material-icons-round">share</span> Share</div>
+                <div onclick="Ops.rename()"><span class="material-icons-round">edit</span> Rename</div>
+                <div onclick="Ops.info()"><span class="material-icons-round">info</span> File Info</div>
+                <div onclick="Ops.delete()" style="color: #d93025;"><span class="material-icons-round">delete</span> Delete</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Info Modal -->
+    <div id="info-modal" class="modal-mask" onclick="if(event.target===this) UI.closeModal('info-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head"><span class="sheet-title">File Information</span><span class="material-icons-round" onclick="UI.closeModal('info-modal')">close</span></div>
+            <div class="file-info">
+                <div class="info-row"><span class="info-label">Name:</span><span class="info-value" id="info-name">-</span></div>
+                <div class="info-row"><span class="info-label">Type:</span><span class="info-value" id="info-type">-</span></div>
+                <div class="info-row"><span class="info-label">Size:</span><span class="info-value" id="info-size">-</span></div>
+                <div class="info-row"><span class="info-label">Created:</span><span class="info-value" id="info-created">-</span></div>
+                <div class="info-row"><span class="info-label">Modified:</span><span class="info-value" id="info-modified">-</span></div>
+                <div class="info-row"><span class="info-label">Location:</span><span class="info-value" id="info-location">-</span></div>
+                <div class="info-row"><span class="info-label">ID:</span><span class="info-value" id="info-id" style="font-size:11px;">-</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Sort Modal -->
+    <div id="sort-modal" class="modal-mask" onclick="if(event.target===this) UI.closeModal('sort-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head"><span class="sheet-title">Sort By</span><span class="material-icons-round" onclick="UI.closeModal('sort-modal')">close</span></div>
+            <div class="sort-options">
+                <div class="sort-option" onclick="Drive.applySort('name', 'asc')"><span>Name (A to Z)</span><span class="material-icons-round" id="sort-name-asc" style="display:none;">check</span></div>
+                <div class="sort-option" onclick="Drive.applySort('name', 'desc')"><span>Name (Z to A)</span><span class="material-icons-round" id="sort-name-desc" style="display:none;">check</span></div>
+                <div class="sort-option" onclick="Drive.applySort('size', 'asc')"><span>Size (Small to Large)</span><span class="material-icons-round" id="sort-size-asc" style="display:none;">check</span></div>
+                <div class="sort-option" onclick="Drive.applySort('size', 'desc')"><span>Size (Large to Small)</span><span class="material-icons-round" id="sort-size-desc" style="display:none;">check</span></div>
+                <div class="sort-option" onclick="Drive.applySort('date', 'desc')"><span>Date (Newest First)</span><span class="material-icons-round" id="sort-date-desc" style="display:none;">check</span></div>
+                <div class="sort-option" onclick="Drive.applySort('date', 'asc')"><span>Date (Oldest First)</span><span class="material-icons-round" id="sort-date-asc" style="display:none;">check</span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="modal-mask" onclick="if(event.target===this) UI.closeModal('settings-modal')">
+        <div class="modal-sheet">
+            <div class="sheet-head"><span class="sheet-title">Settings</span></div>
+            <div class="action-list">
+                <div style="justify-content: space-between; cursor: default;">
+                    <div><div>Dark Mode</div><div class="setting-desc">Enable dark theme</div></div>
+                    <label class="switch"><input type="checkbox" id="dark-mode" onchange="Settings.toggleDarkMode()"><span class="slider"></span></label>
+                </div>
+                <div style="justify-content: space-between; cursor: default;">
+                    <div><div>External Player</div><div class="setting-desc">Open files in new tab</div></div>
+                    <label class="switch"><input type="checkbox" id="ext-player" onchange="Settings.save()"><span class="slider"></span></label>
+                </div>
+                <div style="justify-content: space-between; cursor: default;">
+                    <div><div>Auto-sync</div><div class="setting-desc">Sync files automatically</div></div>
+                    <label class="switch"><input type="checkbox" id="auto-sync" onchange="Settings.save()"><span class="slider"></span></label>
+                </div>
+                <div onclick="Settings.storage()"><span class="material-icons-round">storage</span> Storage Management</div>
+                <div onclick="Settings.security()"><span class="material-icons-round">security</span> Security & Privacy</div>
+                <div onclick="Settings.about()"><span class="material-icons-round">info</span> About</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Progress Modal -->
+    <div id="progress-modal" class="progress-box">
+        <div class="progress-header"><strong id="prog-title">Uploading...</strong><span id="prog-pct">0%</span></div>
+        <div class="progress-details"><div id="prog-file">Preparing...</div><div id="prog-size">0 MB / 0 MB</div></div>
+        <div class="progress-bar"><div class="progress-fill" id="prog-bar"></div></div>
+        <div class="progress-stats"><span id="prog-speed">Speed: 0 KB/s</span><span id="prog-time">Time: --</span></div>
+        <div style="margin-top: 15px; display: flex; gap: 10px;">
+            <button onclick="Upload.cancel()" style="flex:1; background:transparent; border:1px solid var(--border); color:var(--text-main); padding:8px; border-radius:var(--radius); cursor:pointer;">Cancel</button>
+            <button onclick="Upload.pause()" id="pause-btn" style="flex:1; background:var(--primary); border:none; color:white; padding:8px; border-radius:var(--radius); cursor:pointer;">Pause</button>
+        </div>
+    </div>
+
+    <!-- Media Viewer -->
+    <div id="media-view" class="media-viewer">
+        <div class="media-header"><span id="media-title">Preview</span><div style="display:flex; gap:15px;"><span class="material-icons-round" onclick="Ops.openExternal()" style="cursor:pointer;">open_in_new</span><span class="material-icons-round" onclick="UI.closeMedia()" style="cursor:pointer;">close</span></div></div>
+        <iframe id="media-frame" class="media-iframe" src=""></iframe>
+    </div>
 
     <script>
-        // ---------- GLOBAL FIXES: PIN KEYPAD AND ALL FUNCTIONS ----------
-        (function(){
-            // ---- PIN handling (now guaranteed to work) ----
-            let pinInput = "";
-            const pinDots = () => document.getElementById('pin-dots')?.children;
+        const CONFIG = {
+            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+            vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn' // Your secret vault folder ID
+        };
 
-            function updatePinDots() {
-                const dots = pinDots();
-                if (!dots) return;
-                for (let i = 0; i < 4; i++) {
-                    if (i < pinInput.length) {
-                        dots[i].classList.add('bg-neon-blue', 'border-neon-blue', 'shadow-[0_0_10px_#00f0ff]');
-                        dots[i].classList.remove('bg-transparent', 'border-white/20');
-                    } else {
-                        dots[i].classList.remove('bg-neon-blue', 'border-neon-blue', 'shadow-[0_0_10px_#00f0ff]');
-                        dots[i].classList.add('bg-transparent', 'border-white/20');
-                    }
+        const STATE = {
+            token: localStorage.getItem('g_token'),
+            currFolder: 'root',
+            folderStack: [],
+            files: [],
+            selected: null,
+            viewMode: localStorage.getItem('viewMode') || 'list',
+            sortBy: localStorage.getItem('sortBy') || 'name',
+            sortOrder: localStorage.getItem('sortOrder') || 'asc',
+            theme: localStorage.getItem('theme') || 'light',
+            settings: JSON.parse(localStorage.getItem('d_settings') || '{"extPlayer":false,"autoSync":true}'),
+            uploadQueue: [],
+            currentUpload: null,
+            uploadCanceled: false
+        };
+
+        /* --- PIN SYSTEM (fixed) --- */
+        const Keypad = {
+            input: "",
+            press: (num) => {
+                if(Keypad.input.length < 4) {
+                    Keypad.input += num;
+                    Keypad.updateDots();
+                    if(Keypad.input.length === 4) setTimeout(Keypad.check, 200);
                 }
-            }
-
-            window.keypadPress = function(n) {
-                if (pinInput.length < 4) {
-                    pinInput += n;
-                    updatePinDots();
-                    if (pinInput.length === 4) {
-                        setTimeout(() => verifyPin(), 200);
-                    }
-                }
-            };
-
-            window.keypadClear = function() {
-                pinInput = "";
-                updatePinDots();
-            };
-
-            window.keypadBackspace = function() {
-                pinInput = pinInput.slice(0, -1);
-                updatePinDots();
-            };
-
-            function verifyPin() {
+            },
+            clear: () => { Keypad.input = ""; Keypad.updateDots(); },
+            backspace: () => { if(Keypad.input.length > 0) { Keypad.input = Keypad.input.slice(0,-1); Keypad.updateDots(); } },
+            updateDots: () => {
+                const dots = document.querySelectorAll('#pin-dots .dot');
+                dots.forEach((d,i) => d.classList.toggle('filled', i < Keypad.input.length));
+            },
+            check: () => {
                 const stored = localStorage.getItem('app_pin');
-                if (!stored) {
-                    localStorage.setItem('app_pin', btoa(pinInput));
-                    showToast('PIN established');
-                    window.authCheck();  // proceed
-                } else if (btoa(pinInput) === stored) {
-                    window.authCheck();
+                const hash = btoa(Keypad.input);
+                if(!stored) {
+                    localStorage.setItem('app_pin', hash);
+                    alert("PIN set to " + Keypad.input);
+                    Auth.check();
+                } else if(stored === hash) {
+                    Auth.check();
                 } else {
-                    gsap.to('#lock-screen > div', { x: [-10, 10, -10, 10, 0], duration: 0.4 });
-                    pinInput = "";
-                    updatePinDots();
+                    Keypad.clear();
+                    alert("Wrong PIN.");
                 }
-            }
+            },
+            useFingerprint: () => alert("Fingerprint simulation (WebAuthn not implemented)"),
+            resetPin: () => { if(confirm("Reset PIN?")) { localStorage.removeItem('app_pin'); location.reload(); } }
+        };
 
-            // ---- Toast helper ----
-            function showToast(msg, duration = 2000) {
-                const t = document.getElementById('toast');
-                t.innerText = msg;
-                t.classList.remove('hidden');
-                if (window.toastTimeout) clearTimeout(window.toastTimeout);
-                window.toastTimeout = setTimeout(() => t.classList.add('hidden'), duration);
-            }
-
-            // ---- Background Canvas (same as before) ----
-            const canvas = document.getElementById('bg-canvas');
-            const ctx = canvas.getContext('2d');
-            let width, height;
-            function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
-            window.addEventListener('resize', resize); resize();
-
-            const stars = [];
-            for (let i = 0; i < 500; i++) stars.push({ x: Math.random() * width - width / 2, y: Math.random() * height - height / 2, z: Math.random() * 2000, color: `hsl(${Math.random() * 60 + 180}, 80%, 70%)` });
-
-            function animateBg() {
-                ctx.fillStyle = 'rgba(5,5,15,0.25)';
-                ctx.fillRect(0, 0, width, height);
-                stars.forEach(s => {
-                    s.z -= 8;
-                    if (s.z <= 0) { s.z = 2000; s.x = Math.random() * width - width / 2; s.y = Math.random() * height - height / 2; }
-                    const sx = (s.x / s.z) * width + width / 2, sy = (s.y / s.z) * height + height / 2, r = (1 - s.z / 2000) * 2.5;
-                    ctx.beginPath();
-                    ctx.fillStyle = s.color;
-                    ctx.arc(sx, sy, r, 0, 2 * Math.PI);
-                    ctx.fill();
-                });
-                requestAnimationFrame(animateBg);
-            }
-            animateBg();
-
-            // ---- AUTH (using global access) ----
-            let tokenClient;
-            const CONFIG = { clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com', scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email' };
-
-            window.authInit = function() {
+        /* --- AUTH --- */
+        let tokenClient;
+        const Auth = {
+            init: () => {
                 tokenClient = google.accounts.oauth2.initTokenClient({
-                    client_id: CONFIG.clientId,
-                    scope: CONFIG.scopes,
+                    client_id: CONFIG.clientId, scope: CONFIG.scopes,
                     callback: (r) => {
-                        if (r.error) return alert('Auth Error');
-                        localStorage.setItem('g_token', r.access_token);
-                        localStorage.setItem('g_exp', Date.now() + 3500 * 1000);
-                        window.uiEnterApp();
+                        if(r.error) return alert("Login failed");
+                        STATE.token = r.access_token;
+                        localStorage.setItem('g_token', STATE.token);
+                        localStorage.setItem('g_exp', Date.now() + 3500*1000);
+                        UI.switchScreen('app-screen');
+                        Drive.load('root');
+                        Auth.loadProfile();
                     }
                 });
-            };
+            },
+            check: () => {
+                const exp = localStorage.getItem('g_exp');
+                if(STATE.token && exp && Date.now() < exp) {
+                    UI.switchScreen('app-screen');
+                    Drive.load('root');
+                    Auth.loadProfile();
+                } else UI.switchScreen('auth-screen');
+            },
+            signIn: () => tokenClient.requestAccessToken(),
+            loadProfile: () => {
+                fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: {'Authorization': `Bearer ${STATE.token}`} })
+                    .then(r=>r.json()).then(d => {
+                        document.getElementById('user-avatar').src = d.picture;
+                        document.getElementById('sidebar-avatar').src = d.picture;
+                        document.getElementById('sidebar-name').textContent = d.name || 'User';
+                        document.getElementById('sidebar-email').textContent = d.email || 'user@example.com';
+                    });
+            },
+            logout: () => { localStorage.clear(); location.reload(); }
+        };
 
-            window.authCheck = function() {
-                const lock = document.getElementById('lock-screen');
-                gsap.to(lock, {
-                    opacity: 0, scale: 1.5, duration: 0.5, onComplete: () => {
-                        lock.style.display = 'none';
-                        const exp = localStorage.getItem('g_exp');
-                        const token = localStorage.getItem('g_token');
-                        if (token && exp && Date.now() < exp) {
-                            window.uiEnterApp();
-                        } else {
-                            document.getElementById('auth-screen').style.display = 'flex';
-                            gsap.from('#auth-screen > div', { y: 50, opacity: 0, duration: 0.8, ease: 'back.out(1.7)' });
-                        }
-                    }
-                });
-            };
-
-            window.authSignIn = function() { tokenClient.requestAccessToken(); };
-            window.authLogout = function() { localStorage.clear(); location.reload(); };
-
-            // ---- UI Manager (exposed) ----
-            const STATE = {
-                token: localStorage.getItem('g_token'),
-                currFolder: 'root',
-                folderStack: [],
-                files: [],
-                filteredFiles: [],
-                viewMode: 'grid',
-                activeFilter: 'all',
-                selectedFile: null
-            };
-
-            window.filterSet = function(type) {
-                STATE.activeFilter = type;
-                document.querySelectorAll('.filter-chip').forEach(chip => chip.classList.remove('active'));
-                document.querySelector(`.filter-chip[data-filter="${type}"]`).classList.add('active');
-                driveRender();
-            };
-
-            function filterApply(files) {
-                if (STATE.activeFilter === 'all') return files;
-                return files.filter(f => {
-                    const mime = f.mimeType || '';
-                    if (STATE.activeFilter === 'image') return mime.includes('image');
-                    if (STATE.activeFilter === 'video') return mime.includes('video');
-                    if (STATE.activeFilter === 'document') return mime.includes('document') || mime.includes('text') || mime.includes('pdf') || mime.includes('application/vnd.google-apps');
-                    return true;
-                });
-            }
-
-            // ---- Drive Core (fixed fields string) ----
-            window.driveLoad = async function(id, name = 'ROOT') {
+        /* --- DRIVE CORE (with vault support) --- */
+        const Drive = {
+            load: async (id, name) => {
+                const con = document.getElementById('file-container');
+                con.innerHTML = '<div class="loading"><span class="material-icons-round">hourglass_empty</span> Loading...</div>';
                 STATE.currFolder = id;
-                document.getElementById('file-container').innerHTML = '<div class="col-span-full flex justify-center"><div class="loader-ring"></div></div>';
-                document.getElementById('back-btn').style.display = id === 'root' ? 'none' : 'block';
-                const crumb = document.getElementById('breadcrumb');
-                crumb.innerHTML = id === 'root' ? '<span class="text-neon-blue cursor-pointer breadcrumb-item" onclick="window.driveLoad(\'root\')">ROOT</span>' : `<span class="text-gray-500 cursor-pointer breadcrumb-item" onclick="window.driveLoad('root')">ROOT</span> <span class="text-gray-600">/</span> <span class="text-neon-blue breadcrumb-item">${name}</span>`;
+                document.getElementById('back-btn').style.display = id !== 'root' ? 'flex' : 'none';
+                Drive.updateBreadcrumb(name);
 
                 const q = `'${id}' in parents and trashed = false`;
-                // Corrected fields string: added closing parenthesis
-                const fields = "files(id,name,mimeType,size,thumbnailLink,webViewLink,webContentLink,iconLink,videoMediaMetadata)";
+                const fields = "files(id,name,mimeType,size,iconLink,thumbnailLink,webViewLink,webContentLink,createdTime,modifiedTime,shared)";
+                const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(fields)}&pageSize=1000`;
                 try {
-                    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${fields}&pageSize=100`, {
-                        headers: { 'Authorization': `Bearer ${STATE.token}` }
-                    });
+                    const res = await fetch(url, { headers: { 'Authorization': `Bearer ${STATE.token}` } });
                     const data = await res.json();
                     STATE.files = data.files || [];
-                    driveRender();
-                } catch (e) { console.error(e); localStorage.removeItem('g_token'); location.reload(); }
-            };
+                    Drive.applyCurrentSort();
+                    Drive.render(STATE.files);
+                } catch(e) { con.innerHTML = '<div class="empty-state">Failed to load</div>'; }
+            },
+            render: (files) => {
+                const con = document.getElementById('file-container');
+                con.innerHTML = "";
+                if(!files.length) { con.innerHTML = '<div class="empty-state"><span class="material-icons-round empty-icon">folder_open</span>No files</div>'; return; }
 
-            function driveRender() {
-                const filtered = filterApply(STATE.files);
-                const con = document.getElementById('file-container'); con.innerHTML = '';
-                if (filtered.length === 0) {
-                    con.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center text-gray-500 mt-20"><span class="material-icons-round text-6xl mb-4 opacity-20">folder_off</span><p class="font-mono text-sm tracking-widest">NO FILES FOUND</p></div>';
-                    return;
-                }
-
-                filtered.forEach((f) => {
+                files.forEach(f => {
                     const isDir = f.mimeType === 'application/vnd.google-apps.folder';
-                    const isImg = f.mimeType?.includes('image');
-                    const isVid = f.mimeType?.includes('video');
-                    const size = isDir ? '' : fmtSize(f.size);
-                    let icon = 'insert_drive_file', color = 'text-gray-400';
-                    if (isDir) { icon = 'folder'; color = 'text-yellow-400'; }
-                    else if (isImg) { icon = 'image'; color = 'text-neon-green'; }
-                    else if (isVid) { icon = 'videocam'; color = 'text-neon-pink'; }
-                    else if (f.mimeType?.includes('pdf')) { icon = 'picture_as_pdf'; color = 'text-red-400'; }
-
                     const el = document.createElement('div');
-                    if (STATE.viewMode === 'grid') {
-                        el.className = `tilt-card group relative card-glass rounded-xl p-4 flex flex-col items-center justify-center gap-3 cursor-pointer overflow-hidden`;
-                        el.style.opacity = '0';
-                        let visual = `<span class="material-icons-round text-5xl ${color} opacity-80 group-hover:scale-110 transition-transform duration-300">${icon}</span>`;
-                        if (isImg && f.thumbnailLink) visual = `<img src="${f.thumbnailLink.replace('=s220', '=s400')}" class="w-full h-32 object-cover rounded-lg group-hover:scale-105 transition-transform duration-500">`;
-                        if (isVid && f.thumbnailLink) visual = `<div class="relative w-full"><img src="${f.thumbnailLink}" class="w-full h-32 object-cover rounded-lg"><div class="video-thumb-overlay"><span class="material-icons-round text-5xl text-white/80">play_circle</span></div></div>`;
-                        el.innerHTML = `${visual}<div class="w-full text-center z-10"><p class="text-sm font-medium truncate text-gray-200 group-hover:text-neon-blue transition-colors">${f.name}</p><p class="text-xs text-gray-500 font-mono mt-1">${size}</p></div><button onclick="event.stopPropagation(); window.opsMenu('${f.id}')" class="absolute top-2 right-2 p-1 rounded-full hover:bg-white/10 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-icons-round text-sm">more_vert</span></button>`;
-                    } else {
-                        el.className = `w-full flex items-center justify-between p-4 border-b border-white/5 hover:bg-white/5 transition-colors cursor-pointer group`;
-                        el.innerHTML = `<div class="flex items-center gap-4"><span class="material-icons-round ${color}">${icon}</span><span class="text-sm group-hover:text-neon-blue transition-colors truncate w-64 md:w-auto">${f.name}</span></div><div class="flex items-center gap-4"><span class="text-xs font-mono text-gray-500">${size}</span><button onclick="event.stopPropagation(); window.opsMenu('${f.id}')" class="p-1 rounded-full hover:bg-white/10"><span class="material-icons-round text-sm">more_vert</span></button></div>`;
+
+                    if(STATE.viewMode === 'list') {
+                        el.className = 'list-item';
+                        let icon = 'insert_drive_file', iconClass = 'item-icon';
+                        if(isDir) { icon='folder'; iconClass+=' folder-icon'; }
+                        else if(f.mimeType.includes('image')) { icon='image'; iconClass+=' image-icon'; }
+                        else if(f.mimeType.includes('video')) { icon='movie'; iconClass+=' video-icon'; }
+                        else if(f.mimeType.includes('pdf')) { icon='picture_as_pdf'; iconClass+=' pdf-icon'; }
+
+                        const size = isDir ? 'Folder' : Ops.formatSize(f.size);
+                        const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : '';
+                        el.innerHTML = `<span class="material-icons-round ${iconClass}">${icon}</span><div class="item-text"><span class="item-name">${f.name}</span><span class="item-meta"><span class="item-size">${size}</span> • <span class="item-date">${date}</span></span></div><div class="file-actions"><div class="action-btn" onclick="event.stopPropagation(); Ops.menu('${f.id}')"><span class="material-icons-round">more_vert</span></div></div>`;
+                        el.onclick = () => isDir ? Drive.load(f.id, f.name) : Ops.previewFile(f);
+                    } else if(STATE.viewMode === 'grid') {
+                        el.className = 'grid-item';
+                        let icon = 'insert_drive_file', iconClass = 'item-icon';
+                        if(isDir) icon='folder'; else if(f.mimeType.includes('image')) icon='image'; else if(f.mimeType.includes('video')) icon='movie'; else if(f.mimeType.includes('pdf')) icon='picture_as_pdf';
+                        const size = isDir ? '' : Ops.formatSize(f.size);
+                        el.innerHTML = `<span class="material-icons-round ${iconClass}">${icon}</span><div class="item-text"><span class="item-name">${f.name}</span>${size ? `<span class="item-meta">${size}</span>` : ''}</div>`;
+                        el.onclick = () => isDir ? Drive.load(f.id, f.name) : Ops.previewFile(f);
+                    } else if(STATE.viewMode === 'gallery' && f.mimeType.includes('image')) {
+                        el.className = 'photo-item';
+                        const thumb = f.thumbnailLink || `https://drive.google.com/thumbnail?id=${f.id}&sz=w300`;
+                        el.innerHTML = `<img src="${thumb}" class="photo-thumb"><div class="photo-overlay">${f.name}</div>`;
+                        el.onclick = () => Ops.previewFile(f);
                     }
-                    el.onclick = () => isDir ? window.driveLoad(f.id, f.name) : window.opsOpen(f);
-                    con.appendChild(el);
+                    if(el.innerHTML) con.appendChild(el);
                 });
+            },
+            search: (q) => {
+                if(!q.trim()) Drive.render(STATE.files);
+                else Drive.render(STATE.files.filter(f => f.name.toLowerCase().includes(q.toLowerCase())));
+            },
+            goBack: () => Drive.load('root'),
+            updateBreadcrumb: (name) => {
+                const b = document.getElementById('breadcrumb');
+                b.innerHTML = STATE.currFolder === 'root' ? '<span class="crumb-item" onclick="Drive.load(\'root\')">My Drive</span>' : `<span class="crumb-item" onclick="Drive.load(\'root\')">My Drive</span><span class="crumb-sep">/</span><span class="crumb-item">${name||'Folder'}</span>`;
+            },
+            sortMenu: () => { document.getElementById('sort-modal').style.display = 'flex'; Drive.updateSortIcons(); },
+            applySort: (by, order) => {
+                STATE.sortBy = by; STATE.sortOrder = order;
+                localStorage.setItem('sortBy', by); localStorage.setItem('sortOrder', order);
+                Drive.applyCurrentSort();
+                Drive.render(STATE.files);
+                UI.closeModal('sort-modal');
+            },
+            applyCurrentSort: () => {
+                if(!STATE.files.length) return;
+                STATE.files.sort((a,b) => {
+                    let aVal,bVal;
+                    if(STATE.sortBy === 'name') {
+                        aVal = a.name.toLowerCase(); bVal = b.name.toLowerCase();
+                        return STATE.sortOrder === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+                    } else if(STATE.sortBy === 'size') {
+                        aVal = a.size || 0; bVal = b.size || 0;
+                        return STATE.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                    } else if(STATE.sortBy === 'date') {
+                        aVal = new Date(a.modifiedTime||0).getTime(); bVal = new Date(b.modifiedTime||0).getTime();
+                        return STATE.sortOrder === 'asc' ? aVal - bVal : bVal - aVal;
+                    }
+                    return 0;
+                });
+            },
+            updateSortIcons: () => {
+                document.querySelectorAll('.sort-option .material-icons-round').forEach(i=>i.style.display='none');
+                const active = document.getElementById(`sort-${STATE.sortBy}-${STATE.sortOrder}`);
+                if(active) active.style.display = 'inline';
+            },
+            refresh: () => Drive.load(STATE.currFolder),
+            sort: (by, order) => Drive.applySort(by, order)
+        };
 
-                gsap.to(".tilt-card", { y: 0, opacity: 1, duration: 0.4, stagger: 0.03, ease: "power2.out" });
-            }
-
-            function fmtSize(b) { if (!b) return '0 B'; const i = Math.floor(Math.log(b) / Math.log(1024)); return (b / Math.pow(1024, i)).toFixed(1) + ' ' + ['B', 'KB', 'MB', 'GB'][i]; }
-
-            window.driveRender = driveRender;
-            window.driveGoBack = function() { window.driveLoad('root'); };
-            window.driveSearch = function(query) {
-                if (!query) driveRender();
-                else {
-                    const filtered = STATE.files.filter(f => f.name.toLowerCase().includes(query.toLowerCase()));
-                    STATE.filteredFiles = filtered;
-                    driveRender();
-                }
-            };
-
-            // ---- Operations ----
-            window.opsMenu = function(id) {
-                STATE.selectedFile = STATE.files.find(f => f.id === id);
-                document.getElementById('ctx-name').innerText = STATE.selectedFile.name;
-                document.getElementById('ctx-modal').style.display = 'flex';
-            };
-            window.opsOpen = function(f) { STATE.selectedFile = f; window.opsPreview(); };
-            window.opsPreview = function() {
-                window.uiCloseModal('ctx-modal');
-                const v = document.getElementById('media-view'); v.style.display = 'flex';
-                document.getElementById('media-title').innerText = STATE.selectedFile.name;
-                const frameDiv = document.getElementById('media-frame'); frameDiv.innerHTML = '';
-                const mime = STATE.selectedFile.mimeType || '';
-                if (mime.includes('video')) {
-                    const link = STATE.selectedFile.webContentLink || STATE.selectedFile.webViewLink;
-                    frameDiv.innerHTML = `<video controls autoplay class="max-h-full max-w-full"><source src="${link}" type="${mime}">Your browser does not support video.</video>`;
-                } else {
-                    const iframe = document.createElement('iframe');
-                    iframe.src = STATE.selectedFile.webViewLink?.replace('/view', '/preview') || '';
-                    iframe.className = 'w-full h-full border-none';
-                    frameDiv.appendChild(iframe);
-                }
-                gsap.fromTo(v, { opacity: 0, scale: 0.95 }, { opacity: 1, scale: 1, duration: 0.3 });
-            };
-            window.opsDownload = function() { showToast('Download started (mock)'); };
-            window.opsRename = function() { showToast('Rename feature (demo)'); };
-            window.opsInfo = function() { showToast('Info: ' + STATE.selectedFile?.name); };
-            window.opsDelete = function() { showToast('Delete not implemented in demo'); };
-            window.opsCreateFolder = function() { showToast('Create folder (demo)'); UI.toggleFab(); };
-            window.opsCreateDocument = function() { showToast('Create doc (demo)'); UI.toggleFab(); };
-            window.opsOpenExternal = function() { window.open(STATE.selectedFile?.webViewLink, '_blank'); };
-
-            // ---- UI (exposed) ----
-            window.uiEnterApp = async function() {
-                document.getElementById('auth-screen').style.display = 'none';
-                document.getElementById('app-screen').style.display = 'flex';
-                const tl = gsap.timeline();
-                tl.from("#sidebar", { x: -300, duration: 0.8, ease: "power4.out" })
-                  .from("header", { y: -100, opacity: 0, duration: 0.6 }, "-=0.4")
-                  .from("#file-container", { opacity: 0, duration: 0.6 }, "-=0.2");
-                const user = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { 'Authorization': `Bearer ${localStorage.getItem('g_token')}` } }).then(r => r.json());
-                document.getElementById('sidebar-avatar').src = user.picture;
-                document.getElementById('sidebar-name').innerText = user.name;
-                document.getElementById('sidebar-email').innerText = user.email;
-                window.driveLoad('root');
-            };
-
-            window.uiSwitchView = function(m) { STATE.viewMode = m; driveRender(); };
-            window.uiCloseModal = function(id) { document.getElementById(id).style.display = 'none'; };
-            window.uiCloseMedia = function() {
-                const v = document.getElementById('media-view');
-                gsap.to(v, { opacity: 0, scale: 0.95, duration: 0.2, onComplete: () => { v.style.display = 'none'; document.getElementById('media-frame').innerHTML = ''; } });
-            };
-
-            // Upload mocks
-            window.uploadHandleFiles = function(files) {
+        /* --- UPLOAD with speed --- */
+        const Upload = {
+            handleFiles: (files) => {
+                if(!files.length) return;
                 UI.toggleFab();
-                const m = document.getElementById('progress-modal');
-                m.classList.remove('hidden'); gsap.from(m, { y: 100, opacity: 0 });
-                let prog = 0; document.getElementById('prog-file').innerText = files[0].name;
-                const int = setInterval(() => {
-                    prog += Math.random() * 8;
-                    if (prog >= 100) { prog = 100; clearInterval(int); setTimeout(() => { gsap.to(m, { y: 100, opacity: 0, onComplete: () => m.classList.add('hidden') }); window.driveLoad(STATE.currFolder); }, 800); }
-                    document.getElementById('prog-bar').style.width = prog + '%';
-                    document.getElementById('prog-pct').innerText = Math.floor(prog) + '%';
-                }, 200);
-            };
-            window.uploadCancel = function() { document.getElementById('progress-modal').classList.add('hidden'); };
+                document.getElementById('cancel-btn').style.display = 'flex';
+                STATE.uploadQueue = Array.from(files);
+                Upload.processQueue();
+            },
+            processQueue: async () => {
+                if(STATE.uploadQueue.length === 0) {
+                    document.getElementById('progress-modal').style.display = 'none';
+                    document.getElementById('cancel-btn').style.display = 'none';
+                    Drive.refresh(); return;
+                }
+                const file = STATE.uploadQueue.shift();
+                STATE.currentUpload = file;
+                STATE.uploadCanceled = false;
+                const modal = document.getElementById('progress-modal');
+                const pBar = document.getElementById('prog-bar');
+                const pPct = document.getElementById('prog-pct');
+                const pFile = document.getElementById('prog-file');
+                const pSize = document.getElementById('prog-size');
+                const pSpeed = document.getElementById('prog-speed');
+                const pTime = document.getElementById('prog-time');
+                modal.style.display = 'block';
+                pFile.textContent = file.name;
+                pSize.textContent = `0 MB / ${(file.size/(1024*1024)).toFixed(2)} MB`;
 
-            // Stubs
-            window.Nav = { switchTab: (t) => showToast('Switch to ' + t) };
-            window.driveSortMenu = () => showToast('Sort (demo)');
-            window.UI = { toggleSidebar: () => document.getElementById('sidebar').classList.toggle('-translate-x-full'), toggleFab: () => {
+                const meta = { name: file.name, mimeType: file.type, parents: [STATE.currFolder] };
+                try {
+                    const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(meta)
+                    });
+                    const location = init.headers.get('Location');
+                    await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('PUT', location, true);
+                        xhr.setRequestHeader('Content-Type', file.type);
+                        let startTime = Date.now(), lastLoaded = 0, lastTime = startTime, speedSamples = [];
+                        xhr.upload.onprogress = (e) => {
+                            if(STATE.uploadCanceled) { xhr.abort(); return; }
+                            if(e.lengthComputable) {
+                                const now = Date.now();
+                                const elapsed = (now - startTime)/1000;
+                                const timeDiff = (now - lastTime)/1000;
+                                if(timeDiff >= 0.5) {
+                                    const loadedDiff = e.loaded - lastLoaded;
+                                    const speed = loadedDiff / timeDiff;
+                                    speedSamples.push(speed);
+                                    if(speedSamples.length>5) speedSamples.shift();
+                                    const avgSpeed = speedSamples.reduce((a,b)=>a+b,0)/speedSamples.length;
+                                    pSpeed.textContent = `Speed: ${Ops.formatSize(avgSpeed)}/s`;
+                                    const remaining = e.total - e.loaded;
+                                    const timeRemaining = remaining / avgSpeed;
+                                    if(timeRemaining > 0 && timeRemaining < 3600) {
+                                        const mins = Math.floor(timeRemaining/60);
+                                        const secs = Math.floor(timeRemaining%60);
+                                        pTime.textContent = `Time: ${mins}m ${secs}s`;
+                                    } else pTime.textContent = 'Time: --';
+                                    lastLoaded = e.loaded;
+                                    lastTime = now;
+                                }
+                                const percent = (e.loaded/e.total)*100;
+                                pBar.style.width = percent+'%';
+                                pPct.textContent = Math.floor(percent)+'%';
+                                pSize.textContent = `${Ops.formatSize(e.loaded)} / ${Ops.formatSize(e.total)}`;
+                            }
+                        };
+                        xhr.onload = () => { if(xhr.status===200||xhr.status===201) resolve(); else reject(); };
+                        xhr.onerror = reject;
+                        xhr.send(file);
+                    });
+                } catch(e) { if(!STATE.uploadCanceled) alert(`Upload failed: ${file.name}`); }
+                if(!STATE.uploadCanceled) setTimeout(()=>Upload.processQueue(),500);
+                else { modal.style.display='none'; document.getElementById('cancel-btn').style.display='none'; }
+            },
+            cancel: () => { STATE.uploadCanceled = true; STATE.uploadQueue = []; document.getElementById('progress-modal').style.display='none'; document.getElementById('cancel-btn').style.display='none'; },
+            pause: () => alert("Pause/resume not implemented")
+        };
+
+        /* --- OPERATIONS --- */
+        const Ops = {
+            menu: (id) => { STATE.selected = STATE.files.find(f=>f.id===id); document.getElementById('ctx-name').textContent = STATE.selected.name; document.getElementById('ctx-modal').style.display='flex'; },
+            previewFile: (f) => { STATE.selected = f; Ops.preview(); },
+            preview: () => {
+                UI.closeModal('ctx-modal');
+                if(STATE.settings.extPlayer) { window.open(STATE.selected.webViewLink, '_blank'); return; }
+                document.getElementById('media-title').textContent = STATE.selected.name;
+                document.getElementById('media-frame').src = `https://drive.google.com/file/d/${STATE.selected.id}/preview`;
+                document.getElementById('media-view').style.display = 'flex';
+            },
+            openExternal: () => { if(STATE.selected) window.open(STATE.selected.webViewLink, '_blank'); },
+            download: () => { if(STATE.selected) window.open(STATE.selected.webContentLink, '_blank'); },
+            share: () => { if(STATE.selected) { navigator.clipboard.writeText(STATE.selected.webViewLink); alert("Link copied!"); } },
+            rename: async () => {
+                const newName = prompt("New name:", STATE.selected.name);
+                if(!newName || newName===STATE.selected.name) return;
+                try {
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                        method: 'PATCH', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({name: newName})
+                    });
+                    Drive.refresh(); alert("Renamed!");
+                } catch { alert("Failed"); }
+            },
+            info: () => {
+                const f = STATE.selected;
+                document.getElementById('info-name').textContent = f.name;
+                document.getElementById('info-type').textContent = f.mimeType;
+                document.getElementById('info-size').textContent = Ops.formatSize(f.size);
+                document.getElementById('info-created').textContent = f.createdTime ? new Date(f.createdTime).toLocaleString() : '-';
+                document.getElementById('info-modified').textContent = f.modifiedTime ? new Date(f.modifiedTime).toLocaleString() : '-';
+                document.getElementById('info-location').textContent = 'My Drive';
+                document.getElementById('info-id').textContent = f.id;
+                UI.closeModal('ctx-modal');
+                document.getElementById('info-modal').style.display = 'flex';
+            },
+            delete: async () => {
+                if(!confirm("Delete?")) return;
+                try {
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${STATE.token}` } });
+                    UI.closeModal('ctx-modal'); Drive.refresh(); alert("Deleted");
+                } catch { alert("Failed"); }
+            },
+            createFolder: async () => {
+                const name = prompt("Folder name:");
+                if(!name) return;
+                try {
+                    await fetch('https://www.googleapis.com/drive/v3/files', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [STATE.currFolder] })
+                    });
+                    Drive.refresh(); alert("Folder created");
+                } catch { alert("Failed"); }
+            },
+            createDocument: () => window.open('https://docs.google.com/document/create', '_blank'),
+            formatSize: (bytes) => {
+                if(!bytes || bytes===0) return '0 Bytes';
+                const k=1024, sizes=['Bytes','KB','MB','GB','TB'];
+                const i = Math.floor(Math.log(bytes)/Math.log(k));
+                return parseFloat((bytes/Math.pow(k,i)).toFixed(2))+' '+sizes[i];
+            }
+        };
+
+        /* --- UI CONTROLLER --- */
+        const UI = {
+            switchScreen: (id) => {
+                document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+                if(id==='app-screen') history.pushState({screen:'app'},'','');
+            },
+            toggleFab: () => {
                 const m = document.getElementById('fab-menu');
-                if (m.classList.contains('hidden')) { m.classList.remove('hidden'); m.style.display = 'flex'; gsap.fromTo(m, { opacity: 0, scale: 0.8, y: 20 }, { opacity: 1, scale: 1, y: 0, duration: 0.3, ease: "back.out(1.7)" }); }
-                else { gsap.to(m, { opacity: 0, scale: 0.8, y: 20, duration: 0.2, onComplete: () => m.classList.add('hidden') }); }
-            } };
+                m.style.display = m.style.display==='flex' ? 'none' : 'flex';
+            },
+            switchView: (mode) => {
+                STATE.viewMode = mode;
+                localStorage.setItem('viewMode', mode);
+                const con = document.getElementById('file-container');
+                con.className = `file-viewer file-${mode}-view`;
+                document.querySelectorAll('.view-btn').forEach(btn => btn.classList.toggle('active', btn.dataset.view===mode));
+                Drive.render(STATE.files);
+            },
+            toggleSidebar: () => document.getElementById('sidebar').classList.toggle('active'),
+            closeModal: (id) => document.getElementById(id).style.display = 'none',
+            closeMedia: () => { document.getElementById('media-view').style.display='none'; document.getElementById('media-frame').src=''; }
+        };
 
-            // Init
-            window.onload = function() {
-                window.authInit();
-                // Prefill dots
-                updatePinDots();
-            };
-        })();
+        /* --- NAVIGATION (VAULT TAB) --- */
+        const Nav = {
+            switchTab: (tab, el) => {
+                document.querySelectorAll('.nav-item-b').forEach(e=>e.classList.remove('active'));
+                if(el) el.classList.add('active');
+                if(tab === 'home') Drive.load('root');
+                else if(tab === 'photos') {
+                    const images = STATE.files.filter(f => f.mimeType && f.mimeType.includes('image'));
+                    if(images.length) UI.switchView('gallery');
+                    else alert("No images in current folder");
+                } else if(tab === 'vault') Drive.load(CONFIG.vaultId, 'Vault');
+                else if(tab === 'shared') alert("Shared files coming");
+                else if(tab === 'recent') { Drive.applySort('date','desc'); Drive.render(STATE.files); }
+            }
+        };
+
+        /* --- SETTINGS --- */
+        const Settings = {
+            open: () => {
+                document.getElementById('ext-player').checked = STATE.settings.extPlayer;
+                document.getElementById('auto-sync').checked = STATE.settings.autoSync;
+                document.getElementById('dark-mode').checked = STATE.theme === 'dark';
+                document.getElementById('settings-modal').style.display = 'flex';
+            },
+            save: () => {
+                STATE.settings.extPlayer = document.getElementById('ext-player').checked;
+                STATE.settings.autoSync = document.getElementById('auto-sync').checked;
+                localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
+            },
+            toggleDarkMode: () => {
+                STATE.theme = document.getElementById('dark-mode').checked ? 'dark' : 'light';
+                document.body.classList.toggle('dark-theme', STATE.theme==='dark');
+                localStorage.setItem('theme', STATE.theme);
+                Settings.save();
+            },
+            storage: () => {
+                fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', { headers: { 'Authorization': `Bearer ${STATE.token}` } })
+                    .then(r=>r.json()).then(d => {
+                        const used = Ops.formatSize(d.storageQuota.usage);
+                        const limit = Ops.formatSize(d.storageQuota.limit);
+                        alert(`Storage: ${used} of ${limit} (${((d.storageQuota.usage/d.storageQuota.limit)*100).toFixed(1)}% used)`);
+                    });
+            },
+            security: () => alert("PIN protection enabled\nAuto-lock: 5 min"),
+            about: () => alert("VAULT DRIVE NEBULA\nVersion 3.0\n© 2025")
+        };
+
+        // Initialize
+        window.onload = () => {
+            if(!localStorage.getItem('app_pin')) {
+                const pin = prompt("Set a 4-digit PIN (e.g., 1234):");
+                if(pin && /^\d{4}$/.test(pin)) localStorage.setItem('app_pin', btoa(pin));
+                else localStorage.setItem('app_pin', btoa('1234'));
+            }
+            const savedSort = localStorage.getItem('sortBy');
+            if(savedSort) { STATE.sortBy = savedSort; STATE.sortOrder = localStorage.getItem('sortOrder') || 'asc'; }
+            if(STATE.theme === 'dark') document.body.classList.add('dark-theme');
+            Auth.init();
+            history.replaceState({screen:'lock'},'','');
+        };
     </script>
 </body>
 </html>
