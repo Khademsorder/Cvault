@@ -607,515 +607,528 @@
     </div>
 
     <script>
-        (function(){
-            // -------------------- CONFIG & STATE --------------------
-            const CONFIG = {
-                clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
-                scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
-                vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn' // Secret vault folder
-            };
+        // -------------------- GLOBALS (attached to window for onclick handlers) --------------------
+        const CONFIG = {
+            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+            vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn' // Secret vault folder
+        };
 
-            const STATE = {
-                token: localStorage.getItem('g_token'),
-                currFolder: 'root',
-                folderStack: [],
-                files: [],
-                selected: null,
-                viewMode: localStorage.getItem('viewMode') || 'list',
-                sortBy: localStorage.getItem('sortBy') || 'name',
-                sortOrder: localStorage.getItem('sortOrder') || 'asc',
-                activeFilter: 'all',
-                theme: localStorage.getItem('theme') || 'dark',
-                settings: JSON.parse(localStorage.getItem('d_settings') || '{"extPlayer":false,"autoSync":true}'),
-                uploadQueue: [],
-                currentUpload: null,
-                uploadCanceled: false
-            };
+        const STATE = {
+            token: localStorage.getItem('g_token'),
+            currFolder: 'root',
+            folderStack: [],
+            files: [],
+            selected: null,
+            viewMode: localStorage.getItem('viewMode') || 'list',
+            sortBy: localStorage.getItem('sortBy') || 'name',
+            sortOrder: localStorage.getItem('sortOrder') || 'asc',
+            activeFilter: 'all',
+            theme: localStorage.getItem('theme') || 'dark',
+            settings: JSON.parse(localStorage.getItem('d_settings') || '{"extPlayer":false,"autoSync":true}'),
+            uploadQueue: [],
+            currentUpload: null,
+            uploadCanceled: false
+        };
 
-            // -------------------- STARFIELD BACKGROUND --------------------
-            const canvas = document.getElementById('bg-canvas');
-            const ctx = canvas.getContext('2d');
-            let width, height;
-            function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
-            window.addEventListener('resize', resize); resize();
+        // -------------------- STARFIELD BACKGROUND --------------------
+        const canvas = document.getElementById('bg-canvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+        function resize() { width = canvas.width = window.innerWidth; height = canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize); resize();
 
-            const stars = [];
-            for(let i=0; i<400; i++) stars.push({ x: Math.random()*width-width/2, y: Math.random()*height-height/2, z: Math.random()*2000, color: `hsl(${Math.random()*60+180},80%,70%)` });
+        const stars = [];
+        for(let i=0; i<400; i++) stars.push({ x: Math.random()*width-width/2, y: Math.random()*height-height/2, z: Math.random()*2000, color: `hsl(${Math.random()*60+180},80%,70%)` });
 
-            function animateBg() {
-                ctx.fillStyle = 'rgba(5,5,15,0.25)';
-                ctx.fillRect(0,0,width,height);
-                stars.forEach(s => {
-                    s.z -= 6;
-                    if(s.z <= 0) { s.z = 2000; s.x = Math.random()*width-width/2; s.y = Math.random()*height-height/2; }
-                    const sx = (s.x/s.z)*width + width/2, sy = (s.y/s.z)*height + height/2, r = (1 - s.z/2000)*2.5;
-                    ctx.beginPath(); ctx.fillStyle = s.color; ctx.arc(sx, sy, r, 0, 2*Math.PI); ctx.fill();
-                });
-                requestAnimationFrame(animateBg);
-            }
-            animateBg();
+        function animateBg() {
+            ctx.fillStyle = 'rgba(5,5,15,0.25)';
+            ctx.fillRect(0,0,width,height);
+            stars.forEach(s => {
+                s.z -= 6;
+                if(s.z <= 0) { s.z = 2000; s.x = Math.random()*width-width/2; s.y = Math.random()*height-height/2; }
+                const sx = (s.x/s.z)*width + width/2, sy = (s.y/s.z)*height + height/2, r = (1 - s.z/2000)*2.5;
+                ctx.beginPath(); ctx.fillStyle = s.color; ctx.arc(sx, sy, r, 0, 2*Math.PI); ctx.fill();
+            });
+            requestAnimationFrame(animateBg);
+        }
+        animateBg();
 
-            // -------------------- TOAST --------------------
-            function showToast(msg, dur=2000) {
-                const t = document.getElementById('toast');
-                t.textContent = msg;
-                t.classList.remove('hidden');
-                setTimeout(() => t.classList.add('hidden'), dur);
-            }
+        // -------------------- TOAST --------------------
+        function showToast(msg, dur=2000) {
+            const t = document.getElementById('toast');
+            t.textContent = msg;
+            t.classList.remove('hidden');
+            setTimeout(() => t.classList.add('hidden'), dur);
+        }
 
-            // -------------------- PIN SYSTEM --------------------
-            const Keypad = {
-                input: "",
-                press(n) { if(this.input.length<4) { this.input+=n; this.updateDots(); if(this.input.length===4) setTimeout(()=>this.check(),200); } },
-                clear() { this.input=""; this.updateDots(); },
-                backspace() { this.input=this.input.slice(0,-1); this.updateDots(); },
-                updateDots() {
-                    const dots = document.querySelectorAll('#pin-dots .dot');
-                    dots.forEach((d,i) => {
-                        if(i < this.input.length) {
-                            d.classList.add('bg-neon-blue', 'border-neon-blue', 'shadow-[0_0_10px_#00f0ff]');
-                        } else {
-                            d.classList.remove('bg-neon-blue', 'border-neon-blue', 'shadow-[0_0_10px_#00f0ff]');
-                        }
-                    });
-                },
-                check() {
-                    const stored = localStorage.getItem('app_pin');
-                    const hash = btoa(this.input);
-                    if(!stored) {
-                        localStorage.setItem('app_pin', hash);
-                        showToast('PIN set');
-                        Auth.check();
-                    } else if(stored === hash) {
-                        Auth.check();
+        // -------------------- PIN SYSTEM (global) --------------------
+        const Keypad = {
+            input: "",
+            press: function(n) { 
+                if(this.input.length < 4) { 
+                    this.input += n; 
+                    this.updateDots(); 
+                    if(this.input.length === 4) setTimeout(() => this.check(), 200); 
+                } 
+            },
+            clear: function() { this.input = ""; this.updateDots(); },
+            backspace: function() { this.input = this.input.slice(0, -1); this.updateDots(); },
+            updateDots: function() {
+                const dots = document.querySelectorAll('#pin-dots .dot');
+                dots.forEach((d, i) => {
+                    if(i < this.input.length) {
+                        d.classList.add('bg-neon-blue', 'border-neon-blue', 'shadow-[0_0_10px_#00f0ff]');
                     } else {
-                        this.clear();
-                        showToast('Wrong PIN');
+                        d.classList.remove('bg-neon-blue', 'border-neon-blue', 'shadow-[0_0_10px_#00f0ff]');
                     }
-                },
-                useFingerprint() { showToast('Fingerprint simulation'); },
-                resetPin() { if(confirm('Reset PIN?')) { localStorage.removeItem('app_pin'); location.reload(); } }
-            };
+                });
+            },
+            check: function() {
+                const stored = localStorage.getItem('app_pin');
+                const hash = btoa(this.input);
+                if(!stored) {
+                    localStorage.setItem('app_pin', hash);
+                    showToast('PIN set');
+                    Auth.check();
+                } else if(stored === hash) {
+                    Auth.check();
+                } else {
+                    this.clear();
+                    showToast('Wrong PIN');
+                }
+            },
+            useFingerprint: function() { showToast('Fingerprint simulation'); },
+            resetPin: function() { if(confirm('Reset PIN?')) { localStorage.removeItem('app_pin'); location.reload(); } }
+        };
+        window.Keypad = Keypad;
 
-            // -------------------- AUTH --------------------
-            let tokenClient;
-            const Auth = {
-                init() {
-                    tokenClient = google.accounts.oauth2.initTokenClient({
-                        client_id: CONFIG.clientId, scope: CONFIG.scopes,
-                        callback: (r) => {
-                            if(r.error) return alert('Login failed');
-                            STATE.token = r.access_token;
-                            localStorage.setItem('g_token', STATE.token);
-                            localStorage.setItem('g_exp', Date.now() + 3500*1000);
-                            UI.switchScreen('app-screen');
-                            Drive.load('root');
-                            Auth.loadProfile();
-                        }
-                    });
-                },
-                check() {
-                    const exp = localStorage.getItem('g_exp');
-                    if(STATE.token && exp && Date.now() < exp) {
+        // -------------------- AUTH --------------------
+        let tokenClient;
+        const Auth = {
+            init: function() {
+                tokenClient = google.accounts.oauth2.initTokenClient({
+                    client_id: CONFIG.clientId, scope: CONFIG.scopes,
+                    callback: (r) => {
+                        if(r.error) return alert('Login failed');
+                        STATE.token = r.access_token;
+                        localStorage.setItem('g_token', STATE.token);
+                        localStorage.setItem('g_exp', Date.now() + 3500*1000);
                         UI.switchScreen('app-screen');
                         Drive.load('root');
                         Auth.loadProfile();
-                    } else {
-                        UI.switchScreen('auth-screen');
                     }
-                },
-                signIn() { tokenClient.requestAccessToken(); },
-                async loadProfile() {
-                    try {
-                        const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { 'Authorization': `Bearer ${STATE.token}` } });
-                        const d = await res.json();
-                        document.getElementById('user-avatar').src = d.picture;
-                        document.getElementById('sidebar-avatar').src = d.picture;
-                        document.getElementById('sidebar-name').textContent = d.name || 'User';
-                        document.getElementById('sidebar-email').textContent = d.email || '';
-                    } catch(e) { console.warn('Profile load failed', e); }
-                },
-                logout() { localStorage.clear(); location.reload(); }
-            };
-
-            // -------------------- FILTER --------------------
-            const Filter = {
-                set(type) {
-                    STATE.activeFilter = type;
-                    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-                    document.querySelector(`.filter-chip[data-filter="${type}"]`).classList.add('active');
-                    Drive.render(STATE.files);
-                },
-                apply(files) {
-                    if(STATE.activeFilter === 'all') return files;
-                    return files.filter(f => {
-                        const m = f.mimeType || '';
-                        if(STATE.activeFilter === 'image') return m.includes('image');
-                        if(STATE.activeFilter === 'video') return m.includes('video');
-                        if(STATE.activeFilter === 'document') return m.includes('document')||m.includes('pdf')||m.includes('text')||m.includes('application/vnd.google-apps');
-                        return true;
-                    });
+                });
+            },
+            check: function() {
+                const exp = localStorage.getItem('g_exp');
+                if(STATE.token && exp && Date.now() < exp) {
+                    UI.switchScreen('app-screen');
+                    Drive.load('root');
+                    Auth.loadProfile();
+                } else {
+                    UI.switchScreen('auth-screen');
                 }
-            };
+            },
+            signIn: function() { tokenClient.requestAccessToken(); },
+            loadProfile: async function() {
+                try {
+                    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', { headers: { 'Authorization': `Bearer ${STATE.token}` } });
+                    const d = await res.json();
+                    document.getElementById('user-avatar').src = d.picture;
+                    document.getElementById('sidebar-avatar').src = d.picture;
+                    document.getElementById('sidebar-name').textContent = d.name || 'User';
+                    document.getElementById('sidebar-email').textContent = d.email || '';
+                } catch(e) { console.warn('Profile load failed', e); }
+            },
+            logout: function() { localStorage.clear(); location.reload(); }
+        };
+        window.Auth = Auth;
 
-            // -------------------- DRIVE CORE --------------------
-            const Drive = {
-                async load(id, name='ROOT') {
-                    STATE.currFolder = id;
-                    const con = document.getElementById('file-container');
-                    con.innerHTML = '<div class="col-span-full flex justify-center"><div class="loader-ring"></div></div>';
-                    document.getElementById('back-btn').style.display = id==='root'?'none':'block';
-                    const b = document.getElementById('breadcrumb');
-                    b.innerHTML = id==='root' ? '<span class="crumb-item text-neon-blue cursor-pointer" onclick="Drive.load(\'root\')">My Drive</span>' : `<span class="crumb-item text-gray-400 cursor-pointer" onclick="Drive.load(\'root\')">My Drive</span><span class="crumb-sep text-gray-600">/</span><span class="crumb-item text-neon-blue">${name}</span>`;
+        // -------------------- FILTER --------------------
+        const Filter = {
+            set: function(type) {
+                STATE.activeFilter = type;
+                document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+                document.querySelector(`.filter-chip[data-filter="${type}"]`).classList.add('active');
+                Drive.render(STATE.files);
+            },
+            apply: function(files) {
+                if(STATE.activeFilter === 'all') return files;
+                return files.filter(f => {
+                    const m = f.mimeType || '';
+                    if(STATE.activeFilter === 'image') return m.includes('image');
+                    if(STATE.activeFilter === 'video') return m.includes('video');
+                    if(STATE.activeFilter === 'document') return m.includes('document')||m.includes('pdf')||m.includes('text')||m.includes('application/vnd.google-apps');
+                    return true;
+                });
+            }
+        };
+        window.Filter = Filter;
 
-                    const q = `'${id}' in parents and trashed = false`;
-                    const fields = "files(id,name,mimeType,size,iconLink,thumbnailLink,webViewLink,webContentLink,createdTime,modifiedTime)";
-                    try {
-                        const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${fields}&pageSize=1000`, {
-                            headers: { 'Authorization': `Bearer ${STATE.token}` }
-                        });
-                        const data = await res.json();
-                        STATE.files = data.files || [];
-                        Drive.applyCurrentSort();
-                        Drive.render(STATE.files);
-                    } catch(e) { 
-                        console.error(e);
-                        con.innerHTML = '<div class="col-span-full text-center text-gray-400">Failed to load</div>';
-                    }
-                },
-                render(files) {
-                    const filtered = Filter.apply(files);
-                    const con = document.getElementById('file-container');
-                    con.innerHTML = '';
-                    if(!filtered.length) { 
-                        con.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center text-gray-500 mt-20"><span class="material-icons-round text-6xl mb-4 opacity-20">folder_off</span><p class="font-mono">NO FILES</p></div>'; 
-                        return; 
-                    }
+        // -------------------- DRIVE CORE --------------------
+        const Drive = {
+            load: async function(id, name='ROOT') {
+                STATE.currFolder = id;
+                const con = document.getElementById('file-container');
+                con.innerHTML = '<div class="col-span-full flex justify-center"><div class="loader-ring"></div></div>';
+                document.getElementById('back-btn').style.display = id==='root'?'none':'block';
+                const b = document.getElementById('breadcrumb');
+                b.innerHTML = id==='root' ? '<span class="crumb-item text-neon-blue cursor-pointer" onclick="Drive.load(\'root\')">My Drive</span>' : `<span class="crumb-item text-gray-400 cursor-pointer" onclick="Drive.load(\'root\')">My Drive</span><span class="crumb-sep text-gray-600">/</span><span class="crumb-item text-neon-blue">${name}</span>`;
 
-                    filtered.forEach(f => {
-                        const isDir = f.mimeType === 'application/vnd.google-apps.folder';
-                        const el = document.createElement('div');
-
-                        if(STATE.viewMode === 'list') {
-                            el.className = 'list-item ultra-glass p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:border-neon-blue/30 transition';
-                            let icon = 'insert_drive_file', color = 'text-gray-400';
-                            if(isDir) { icon='folder'; color='text-yellow-400'; }
-                            else if(f.mimeType.includes('image')) { icon='image'; color='text-neon-green'; }
-                            else if(f.mimeType.includes('video')) { icon='play_circle'; color='text-neon-pink'; }
-                            else if(f.mimeType.includes('pdf')) { icon='picture_as_pdf'; color='text-red-400'; }
-
-                            const size = isDir ? 'Folder' : Ops.formatSize(f.size);
-                            const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : '';
-                            el.innerHTML = `
-                                <span class="material-icons-round ${color} text-3xl">${icon}</span>
-                                <div class="flex-1 min-w-0">
-                                    <p class="text-sm font-medium truncate">${f.name}</p>
-                                    <p class="text-xs text-gray-400">${size} • ${date}</p>
-                                </div>
-                                <button class="p-2 hover:bg-white/10 rounded-full" onclick="event.stopPropagation(); Ops.menu('${f.id}')"><span class="material-icons-round text-gray-400">more_vert</span></button>
-                            `;
-                            el.onclick = () => isDir ? Drive.load(f.id, f.name) : Ops.previewFile(f);
-                        } else if(STATE.viewMode === 'grid') {
-                            el.className = 'tilt-card card-glass rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer group relative';
-                            let icon = 'insert_drive_file', color = 'text-gray-400';
-                            if(isDir) { icon='folder'; color='text-yellow-400'; }
-                            else if(f.mimeType.includes('image')) { icon='image'; color='text-neon-green'; }
-                            else if(f.mimeType.includes('video')) { icon='play_circle'; color='text-neon-pink'; }
-                            else if(f.mimeType.includes('pdf')) { icon='picture_as_pdf'; color='text-red-400'; }
-
-                            const size = isDir ? '' : Ops.formatSize(f.size);
-                            el.innerHTML = `
-                                <span class="material-icons-round ${color} text-5xl">${icon}</span>
-                                <p class="text-sm font-medium truncate w-full text-center">${f.name}</p>
-                                ${size ? `<p class="text-xs text-gray-400">${size}</p>` : ''}
-                                <button class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition" onclick="event.stopPropagation(); Ops.menu('${f.id}')"><span class="material-icons-round text-gray-400">more_vert</span></button>
-                            `;
-                            el.onclick = () => isDir ? Drive.load(f.id, f.name) : Ops.previewFile(f);
-                        } else if(STATE.viewMode === 'gallery' && f.mimeType.includes('image')) {
-                            el.className = 'photo-item rounded-xl overflow-hidden cursor-pointer';
-                            const thumb = f.thumbnailLink || `https://drive.google.com/thumbnail?id=${f.id}&sz=w300`;
-                            el.innerHTML = `<img src="${thumb}" class="photo-thumb" alt=""><div class="photo-overlay">${f.name}</div>`;
-                            el.onclick = () => Ops.previewFile(f);
-                        }
-                        if(el.innerHTML) con.appendChild(el);
+                const q = `'${id}' in parents and trashed = false`;
+                const fields = "files(id,name,mimeType,size,iconLink,thumbnailLink,webViewLink,webContentLink,createdTime,modifiedTime)";
+                try {
+                    const res = await fetch(`https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${fields}&pageSize=1000`, {
+                        headers: { 'Authorization': `Bearer ${STATE.token}` }
                     });
-
-                    // GSAP tilt effect for grid cards
-                    if(STATE.viewMode === 'grid') {
-                        gsap.fromTo('.tilt-card', { y:20, opacity:0 }, { y:0, opacity:1, duration:0.4, stagger:0.02 });
-                    }
-                },
-                search(q) {
-                    if(!q.trim()) Drive.render(STATE.files);
-                    else Drive.render(STATE.files.filter(f => f.name.toLowerCase().includes(q.toLowerCase())));
-                },
-                goBack() { Drive.load('root'); },
-                sortMenu() { document.getElementById('sort-modal').style.display = 'flex'; Drive.updateSortIcons(); },
-                applySort(by, order) {
-                    STATE.sortBy = by; STATE.sortOrder = order;
-                    localStorage.setItem('sortBy', by); localStorage.setItem('sortOrder', order);
+                    const data = await res.json();
+                    STATE.files = data.files || [];
                     Drive.applyCurrentSort();
                     Drive.render(STATE.files);
-                    UI.closeModal('sort-modal');
-                },
-                applyCurrentSort() {
-                    if(!STATE.files.length) return;
-                    STATE.files.sort((a,b) => {
-                        if(STATE.sortBy === 'name') {
-                            return STATE.sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
-                        } else if(STATE.sortBy === 'size') {
-                            return STATE.sortOrder === 'asc' ? (a.size||0)-(b.size||0) : (b.size||0)-(a.size||0);
-                        } else {
-                            return STATE.sortOrder === 'asc' ? new Date(a.modifiedTime||0)-new Date(b.modifiedTime||0) : new Date(b.modifiedTime||0)-new Date(a.modifiedTime||0);
-                        }
-                    });
-                },
-                updateSortIcons() {
-                    document.querySelectorAll('.sort-option .material-icons-round').forEach(i=>i.style.display='none');
-                    const active = document.getElementById(`sort-${STATE.sortBy}-${STATE.sortOrder}`);
-                    if(active) active.style.display = 'inline';
-                },
-                refresh() { Drive.load(STATE.currFolder); }
-            };
+                } catch(e) { 
+                    console.error(e);
+                    con.innerHTML = '<div class="col-span-full text-center text-gray-400">Failed to load</div>';
+                }
+            },
+            render: function(files) {
+                const filtered = Filter.apply(files);
+                const con = document.getElementById('file-container');
+                con.innerHTML = '';
+                if(!filtered.length) { 
+                    con.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center text-gray-500 mt-20"><span class="material-icons-round text-6xl mb-4 opacity-20">folder_off</span><p class="font-mono">NO FILES</p></div>'; 
+                    return; 
+                }
 
-            // -------------------- UPLOAD (with speed) --------------------
-            const Upload = {
-                handleFiles(files) {
-                    if(!files.length) return;
-                    UI.toggleFab();
-                    document.getElementById('cancel-btn').style.display = 'flex';
-                    STATE.uploadQueue = Array.from(files);
-                    Upload.processQueue();
-                },
-                async processQueue() {
-                    if(STATE.uploadQueue.length === 0) {
-                        document.getElementById('progress-modal').style.display = 'none';
-                        document.getElementById('cancel-btn').style.display = 'none';
-                        Drive.refresh(); return;
+                filtered.forEach(f => {
+                    const isDir = f.mimeType === 'application/vnd.google-apps.folder';
+                    const el = document.createElement('div');
+
+                    if(STATE.viewMode === 'list') {
+                        el.className = 'list-item ultra-glass p-3 rounded-xl flex items-center gap-3 cursor-pointer hover:border-neon-blue/30 transition';
+                        let icon = 'insert_drive_file', color = 'text-gray-400';
+                        if(isDir) { icon='folder'; color='text-yellow-400'; }
+                        else if(f.mimeType.includes('image')) { icon='image'; color='text-neon-green'; }
+                        else if(f.mimeType.includes('video')) { icon='play_circle'; color='text-neon-pink'; }
+                        else if(f.mimeType.includes('pdf')) { icon='picture_as_pdf'; color='text-red-400'; }
+
+                        const size = isDir ? 'Folder' : Ops.formatSize(f.size);
+                        const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString() : '';
+                        el.innerHTML = `
+                            <span class="material-icons-round ${color} text-3xl">${icon}</span>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium truncate">${f.name}</p>
+                                <p class="text-xs text-gray-400">${size} • ${date}</p>
+                            </div>
+                            <button class="p-2 hover:bg-white/10 rounded-full" onclick="event.stopPropagation(); Ops.menu('${f.id}')"><span class="material-icons-round text-gray-400">more_vert</span></button>
+                        `;
+                        el.onclick = () => isDir ? Drive.load(f.id, f.name) : Ops.previewFile(f);
+                    } else if(STATE.viewMode === 'grid') {
+                        el.className = 'tilt-card card-glass rounded-xl p-4 flex flex-col items-center gap-2 cursor-pointer group relative';
+                        let icon = 'insert_drive_file', color = 'text-gray-400';
+                        if(isDir) { icon='folder'; color='text-yellow-400'; }
+                        else if(f.mimeType.includes('image')) { icon='image'; color='text-neon-green'; }
+                        else if(f.mimeType.includes('video')) { icon='play_circle'; color='text-neon-pink'; }
+                        else if(f.mimeType.includes('pdf')) { icon='picture_as_pdf'; color='text-red-400'; }
+
+                        const size = isDir ? '' : Ops.formatSize(f.size);
+                        el.innerHTML = `
+                            <span class="material-icons-round ${color} text-5xl">${icon}</span>
+                            <p class="text-sm font-medium truncate w-full text-center">${f.name}</p>
+                            ${size ? `<p class="text-xs text-gray-400">${size}</p>` : ''}
+                            <button class="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition" onclick="event.stopPropagation(); Ops.menu('${f.id}')"><span class="material-icons-round text-gray-400">more_vert</span></button>
+                        `;
+                        el.onclick = () => isDir ? Drive.load(f.id, f.name) : Ops.previewFile(f);
+                    } else if(STATE.viewMode === 'gallery' && f.mimeType.includes('image')) {
+                        el.className = 'photo-item rounded-xl overflow-hidden cursor-pointer';
+                        const thumb = f.thumbnailLink || `https://drive.google.com/thumbnail?id=${f.id}&sz=w300`;
+                        el.innerHTML = `<img src="${thumb}" class="photo-thumb" alt=""><div class="photo-overlay">${f.name}</div>`;
+                        el.onclick = () => Ops.previewFile(f);
                     }
-                    const file = STATE.uploadQueue.shift();
-                    STATE.currentUpload = file;
-                    STATE.uploadCanceled = false;
-                    const modal = document.getElementById('progress-modal');
-                    const pBar = document.getElementById('prog-bar');
-                    const pPct = document.getElementById('prog-pct');
-                    const pFile = document.getElementById('prog-file');
-                    const pSize = document.getElementById('prog-size');
-                    const pSpeed = document.getElementById('prog-speed');
-                    const pTime = document.getElementById('prog-time');
-                    modal.style.display = 'block';
-                    pFile.textContent = file.name;
-                    pSize.textContent = `0 MB / ${(file.size/(1024*1024)).toFixed(2)} MB`;
+                    if(el.innerHTML) con.appendChild(el);
+                });
 
-                    const meta = { name: file.name, mimeType: file.type, parents: [STATE.currFolder] };
-                    try {
-                        const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
-                            method: 'POST', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify(meta)
-                        });
-                        const location = init.headers.get('Location');
-                        await new Promise((resolve, reject) => {
-                            const xhr = new XMLHttpRequest();
-                            xhr.open('PUT', location, true);
-                            xhr.setRequestHeader('Content-Type', file.type);
-                            let startTime = Date.now(), lastLoaded = 0, lastTime = startTime, speedSamples = [];
-                            xhr.upload.onprogress = (e) => {
-                                if(STATE.uploadCanceled) { xhr.abort(); return; }
-                                if(e.lengthComputable) {
-                                    const now = Date.now();
-                                    const timeDiff = (now - lastTime)/1000;
-                                    if(timeDiff >= 0.5) {
-                                        const loadedDiff = e.loaded - lastLoaded;
-                                        const speed = loadedDiff / timeDiff;
-                                        speedSamples.push(speed);
-                                        if(speedSamples.length>5) speedSamples.shift();
-                                        const avgSpeed = speedSamples.reduce((a,b)=>a+b,0)/speedSamples.length;
-                                        pSpeed.textContent = `Speed: ${Ops.formatSize(avgSpeed)}/s`;
-                                        const remaining = e.total - e.loaded;
-                                        const timeRemaining = remaining / avgSpeed;
-                                        if(timeRemaining > 0 && timeRemaining < 3600) {
-                                            const mins = Math.floor(timeRemaining/60);
-                                            const secs = Math.floor(timeRemaining%60);
-                                            pTime.textContent = `Time: ${mins}m ${secs}s`;
-                                        } else pTime.textContent = 'Time: --';
-                                        lastLoaded = e.loaded;
-                                        lastTime = now;
-                                    }
-                                    const percent = (e.loaded/e.total)*100;
-                                    pBar.style.width = percent+'%';
-                                    pPct.textContent = Math.floor(percent)+'%';
-                                    pSize.textContent = `${Ops.formatSize(e.loaded)} / ${Ops.formatSize(e.total)}`;
+                // GSAP tilt effect for grid cards
+                if(STATE.viewMode === 'grid') {
+                    gsap.fromTo('.tilt-card', { y:20, opacity:0 }, { y:0, opacity:1, duration:0.4, stagger:0.02 });
+                }
+            },
+            search: function(q) {
+                if(!q.trim()) Drive.render(STATE.files);
+                else Drive.render(STATE.files.filter(f => f.name.toLowerCase().includes(q.toLowerCase())));
+            },
+            goBack: function() { Drive.load('root'); },
+            sortMenu: function() { document.getElementById('sort-modal').style.display = 'flex'; Drive.updateSortIcons(); },
+            applySort: function(by, order) {
+                STATE.sortBy = by; STATE.sortOrder = order;
+                localStorage.setItem('sortBy', by); localStorage.setItem('sortOrder', order);
+                Drive.applyCurrentSort();
+                Drive.render(STATE.files);
+                UI.closeModal('sort-modal');
+            },
+            applyCurrentSort: function() {
+                if(!STATE.files.length) return;
+                STATE.files.sort((a,b) => {
+                    if(STATE.sortBy === 'name') {
+                        return STATE.sortOrder === 'asc' ? a.name.localeCompare(b.name) : b.name.localeCompare(a.name);
+                    } else if(STATE.sortBy === 'size') {
+                        return STATE.sortOrder === 'asc' ? (a.size||0)-(b.size||0) : (b.size||0)-(a.size||0);
+                    } else {
+                        return STATE.sortOrder === 'asc' ? new Date(a.modifiedTime||0)-new Date(b.modifiedTime||0) : new Date(b.modifiedTime||0)-new Date(a.modifiedTime||0);
+                    }
+                });
+            },
+            updateSortIcons: function() {
+                document.querySelectorAll('.sort-option .material-icons-round').forEach(i=>i.style.display='none');
+                const active = document.getElementById(`sort-${STATE.sortBy}-${STATE.sortOrder}`);
+                if(active) active.style.display = 'inline';
+            },
+            refresh: function() { Drive.load(STATE.currFolder); }
+        };
+        window.Drive = Drive;
+
+        // -------------------- UPLOAD (with speed) --------------------
+        const Upload = {
+            handleFiles: function(files) {
+                if(!files.length) return;
+                UI.toggleFab();
+                document.getElementById('cancel-btn').style.display = 'flex';
+                STATE.uploadQueue = Array.from(files);
+                Upload.processQueue();
+            },
+            processQueue: async function() {
+                if(STATE.uploadQueue.length === 0) {
+                    document.getElementById('progress-modal').style.display = 'none';
+                    document.getElementById('cancel-btn').style.display = 'none';
+                    Drive.refresh(); return;
+                }
+                const file = STATE.uploadQueue.shift();
+                STATE.currentUpload = file;
+                STATE.uploadCanceled = false;
+                const modal = document.getElementById('progress-modal');
+                const pBar = document.getElementById('prog-bar');
+                const pPct = document.getElementById('prog-pct');
+                const pFile = document.getElementById('prog-file');
+                const pSize = document.getElementById('prog-size');
+                const pSpeed = document.getElementById('prog-speed');
+                const pTime = document.getElementById('prog-time');
+                modal.style.display = 'block';
+                pFile.textContent = file.name;
+                pSize.textContent = `0 MB / ${(file.size/(1024*1024)).toFixed(2)} MB`;
+
+                const meta = { name: file.name, mimeType: file.type, parents: [STATE.currFolder] };
+                try {
+                    const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify(meta)
+                    });
+                    const location = init.headers.get('Location');
+                    await new Promise((resolve, reject) => {
+                        const xhr = new XMLHttpRequest();
+                        xhr.open('PUT', location, true);
+                        xhr.setRequestHeader('Content-Type', file.type);
+                        let startTime = Date.now(), lastLoaded = 0, lastTime = startTime, speedSamples = [];
+                        xhr.upload.onprogress = (e) => {
+                            if(STATE.uploadCanceled) { xhr.abort(); return; }
+                            if(e.lengthComputable) {
+                                const now = Date.now();
+                                const timeDiff = (now - lastTime)/1000;
+                                if(timeDiff >= 0.5) {
+                                    const loadedDiff = e.loaded - lastLoaded;
+                                    const speed = loadedDiff / timeDiff;
+                                    speedSamples.push(speed);
+                                    if(speedSamples.length>5) speedSamples.shift();
+                                    const avgSpeed = speedSamples.reduce((a,b)=>a+b,0)/speedSamples.length;
+                                    pSpeed.textContent = `Speed: ${Ops.formatSize(avgSpeed)}/s`;
+                                    const remaining = e.total - e.loaded;
+                                    const timeRemaining = remaining / avgSpeed;
+                                    if(timeRemaining > 0 && timeRemaining < 3600) {
+                                        const mins = Math.floor(timeRemaining/60);
+                                        const secs = Math.floor(timeRemaining%60);
+                                        pTime.textContent = `Time: ${mins}m ${secs}s`;
+                                    } else pTime.textContent = 'Time: --';
+                                    lastLoaded = e.loaded;
+                                    lastTime = now;
                                 }
-                            };
-                            xhr.onload = () => { if(xhr.status===200||xhr.status===201) resolve(); else reject(); };
-                            xhr.onerror = reject;
-                            xhr.send(file);
-                        });
-                    } catch(e) { if(!STATE.uploadCanceled) alert(`Upload failed: ${file.name}`); }
-                    if(!STATE.uploadCanceled) setTimeout(()=>Upload.processQueue(),500);
-                    else { modal.style.display='none'; document.getElementById('cancel-btn').style.display='none'; }
-                },
-                cancel() { STATE.uploadCanceled = true; STATE.uploadQueue = []; document.getElementById('progress-modal').style.display='none'; document.getElementById('cancel-btn').style.display='none'; },
-                pause() { showToast('Pause/Resume not implemented'); }
-            };
-
-            // -------------------- OPERATIONS --------------------
-            const Ops = {
-                menu(id) { STATE.selected = STATE.files.find(f=>f.id===id); document.getElementById('ctx-name').textContent = STATE.selected.name; document.getElementById('ctx-modal').style.display = 'flex'; },
-                previewFile(f) { STATE.selected = f; Ops.preview(); },
-                preview() {
-                    UI.closeModal('ctx-modal');
-                    if(STATE.settings.extPlayer) { window.open(STATE.selected.webViewLink, '_blank'); return; }
-                    document.getElementById('media-title').textContent = STATE.selected.name;
-                    document.getElementById('media-frame').src = `https://drive.google.com/file/d/${STATE.selected.id}/preview`;
-                    document.getElementById('media-view').style.display = 'flex';
-                },
-                openExternal() { if(STATE.selected) window.open(STATE.selected.webViewLink, '_blank'); },
-                download() { if(STATE.selected) window.open(STATE.selected.webContentLink, '_blank'); },
-                share() { if(STATE.selected) { navigator.clipboard.writeText(STATE.selected.webViewLink); showToast('Link copied!'); } },
-                async rename() {
-                    const newName = prompt('New name:', STATE.selected.name);
-                    if(!newName || newName===STATE.selected.name) return;
-                    try {
-                        await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
-                            method: 'PATCH', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({name: newName})
-                        });
-                        Drive.refresh(); showToast('Renamed');
-                    } catch { showToast('Rename failed'); }
-                },
-                info() {
-                    const f = STATE.selected;
-                    document.getElementById('info-name').textContent = f.name;
-                    document.getElementById('info-type').textContent = f.mimeType;
-                    document.getElementById('info-size').textContent = Ops.formatSize(f.size);
-                    document.getElementById('info-created').textContent = f.createdTime ? new Date(f.createdTime).toLocaleString() : '-';
-                    document.getElementById('info-modified').textContent = f.modifiedTime ? new Date(f.modifiedTime).toLocaleString() : '-';
-                    document.getElementById('info-id').textContent = f.id;
-                    UI.closeModal('ctx-modal');
-                    document.getElementById('info-modal').style.display = 'flex';
-                },
-                async delete() {
-                    if(!confirm('Delete?')) return;
-                    try {
-                        await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${STATE.token}` } });
-                        UI.closeModal('ctx-modal'); Drive.refresh(); showToast('Deleted');
-                    } catch { showToast('Delete failed'); }
-                },
-                async createFolder() {
-                    const name = prompt('Folder name:');
-                    if(!name) return;
-                    try {
-                        await fetch('https://www.googleapis.com/drive/v3/files', {
-                            method: 'POST', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [STATE.currFolder] })
-                        });
-                        Drive.refresh(); showToast('Folder created');
-                    } catch { showToast('Failed'); }
-                },
-                createDocument() { window.open('https://docs.google.com/document/create', '_blank'); },
-                formatSize(b) { if(!b) return '0 B'; const i = Math.floor(Math.log(b)/Math.log(1024)); return (b/Math.pow(1024,i)).toFixed(1)+' '+['B','KB','MB','GB','TB'][i]; }
-            };
-
-            // -------------------- UI --------------------
-            const UI = {
-                switchScreen(id) {
-                    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-                    document.getElementById(id).classList.add('active');
-                },
-                toggleFab() {
-                    const m = document.getElementById('fab-menu');
-                    m.classList.toggle('hidden');
-                    if(!m.classList.contains('hidden')) gsap.fromTo(m, {opacity:0,scale:0.8}, {opacity:1,scale:1,duration:0.2});
-                },
-                switchView(mode) {
-                    STATE.viewMode = mode;
-                    localStorage.setItem('viewMode', mode);
-                    document.querySelectorAll('.view-btn').forEach(btn => {
-                        if(btn.dataset.view === mode) btn.classList.add('text-white');
-                        else btn.classList.remove('text-white');
+                                const percent = (e.loaded/e.total)*100;
+                                pBar.style.width = percent+'%';
+                                pPct.textContent = Math.floor(percent)+'%';
+                                pSize.textContent = `${Ops.formatSize(e.loaded)} / ${Ops.formatSize(e.total)}`;
+                            }
+                        };
+                        xhr.onload = () => { if(xhr.status===200||xhr.status===201) resolve(); else reject(); };
+                        xhr.onerror = reject;
+                        xhr.send(file);
                     });
-                    Drive.render(STATE.files);
-                },
-                toggleSidebar() {
-                    const sidebar = document.getElementById('sidebar');
-                    const backdrop = document.getElementById('sidebar-backdrop');
-                    sidebar.classList.toggle('-translate-x-full');
-                    backdrop.classList.toggle('active');
-                },
-                closeModal(id) { document.getElementById(id).style.display = 'none'; },
-                closeMedia() { document.getElementById('media-view').style.display = 'none'; document.getElementById('media-frame').src = ''; }
-            };
+                } catch(e) { if(!STATE.uploadCanceled) alert(`Upload failed: ${file.name}`); }
+                if(!STATE.uploadCanceled) setTimeout(()=>Upload.processQueue(),500);
+                else { modal.style.display='none'; document.getElementById('cancel-btn').style.display='none'; }
+            },
+            cancel: function() { STATE.uploadCanceled = true; STATE.uploadQueue = []; document.getElementById('progress-modal').style.display='none'; document.getElementById('cancel-btn').style.display='none'; },
+            pause: function() { showToast('Pause/Resume not implemented'); }
+        };
+        window.Upload = Upload;
 
-            // -------------------- NAVIGATION (VAULT) --------------------
-            const Nav = {
-                switchTab(tab, el) {
-                    document.querySelectorAll('.nav-item-b').forEach(e => e.classList.remove('active', 'text-neon-blue'));
-                    if(el) {
-                        el.classList.add('active');
-                        el.classList.add('text-neon-blue');
-                    }
-                    if(tab === 'home') Drive.load('root');
-                    else if(tab === 'photos') { 
-                        STATE.activeFilter = 'image';
-                        document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
-                        document.querySelector('.filter-chip[data-filter="image"]').classList.add('active');
-                        UI.switchView('gallery');
-                    }
-                    else if(tab === 'vault') Drive.load(CONFIG.vaultId, 'Vault');
-                    else if(tab === 'recent') { Drive.applySort('date','desc'); Drive.render(STATE.files); }
+        // -------------------- OPERATIONS --------------------
+        const Ops = {
+            menu: function(id) { STATE.selected = STATE.files.find(f=>f.id===id); document.getElementById('ctx-name').textContent = STATE.selected.name; document.getElementById('ctx-modal').style.display = 'flex'; },
+            previewFile: function(f) { STATE.selected = f; Ops.preview(); },
+            preview: function() {
+                UI.closeModal('ctx-modal');
+                if(STATE.settings.extPlayer) { window.open(STATE.selected.webViewLink, '_blank'); return; }
+                document.getElementById('media-title').textContent = STATE.selected.name;
+                document.getElementById('media-frame').src = `https://drive.google.com/file/d/${STATE.selected.id}/preview`;
+                document.getElementById('media-view').style.display = 'flex';
+            },
+            openExternal: function() { if(STATE.selected) window.open(STATE.selected.webViewLink, '_blank'); },
+            download: function() { if(STATE.selected) window.open(STATE.selected.webContentLink, '_blank'); },
+            share: function() { if(STATE.selected) { navigator.clipboard.writeText(STATE.selected.webViewLink); showToast('Link copied!'); } },
+            rename: async function() {
+                const newName = prompt('New name:', STATE.selected.name);
+                if(!newName || newName===STATE.selected.name) return;
+                try {
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                        method: 'PATCH', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({name: newName})
+                    });
+                    Drive.refresh(); showToast('Renamed');
+                } catch { showToast('Rename failed'); }
+            },
+            info: function() {
+                const f = STATE.selected;
+                document.getElementById('info-name').textContent = f.name;
+                document.getElementById('info-type').textContent = f.mimeType;
+                document.getElementById('info-size').textContent = Ops.formatSize(f.size);
+                document.getElementById('info-created').textContent = f.createdTime ? new Date(f.createdTime).toLocaleString() : '-';
+                document.getElementById('info-modified').textContent = f.modifiedTime ? new Date(f.modifiedTime).toLocaleString() : '-';
+                document.getElementById('info-id').textContent = f.id;
+                UI.closeModal('ctx-modal');
+                document.getElementById('info-modal').style.display = 'flex';
+            },
+            delete: async function() {
+                if(!confirm('Delete?')) return;
+                try {
+                    await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, { method: 'DELETE', headers: { 'Authorization': `Bearer ${STATE.token}` } });
+                    UI.closeModal('ctx-modal'); Drive.refresh(); showToast('Deleted');
+                } catch { showToast('Delete failed'); }
+            },
+            createFolder: async function() {
+                const name = prompt('Folder name:');
+                if(!name) return;
+                try {
+                    await fetch('https://www.googleapis.com/drive/v3/files', {
+                        method: 'POST', headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [STATE.currFolder] })
+                    });
+                    Drive.refresh(); showToast('Folder created');
+                } catch { showToast('Failed'); }
+            },
+            createDocument: function() { window.open('https://docs.google.com/document/create', '_blank'); },
+            formatSize: function(b) { if(!b) return '0 B'; const i = Math.floor(Math.log(b)/Math.log(1024)); return (b/Math.pow(1024,i)).toFixed(1)+' '+['B','KB','MB','GB','TB'][i]; }
+        };
+        window.Ops = Ops;
+
+        // -------------------- UI --------------------
+        const UI = {
+            switchScreen: function(id) {
+                document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+                document.getElementById(id).classList.add('active');
+            },
+            toggleFab: function() {
+                const m = document.getElementById('fab-menu');
+                m.classList.toggle('hidden');
+                if(!m.classList.contains('hidden')) gsap.fromTo(m, {opacity:0,scale:0.8}, {opacity:1,scale:1,duration:0.2});
+            },
+            switchView: function(mode) {
+                STATE.viewMode = mode;
+                localStorage.setItem('viewMode', mode);
+                document.querySelectorAll('.view-btn').forEach(btn => {
+                    if(btn.dataset.view === mode) btn.classList.add('text-white');
+                    else btn.classList.remove('text-white');
+                });
+                Drive.render(STATE.files);
+            },
+            toggleSidebar: function() {
+                const sidebar = document.getElementById('sidebar');
+                const backdrop = document.getElementById('sidebar-backdrop');
+                sidebar.classList.toggle('-translate-x-full');
+                backdrop.classList.toggle('active');
+            },
+            closeModal: function(id) { document.getElementById(id).style.display = 'none'; },
+            closeMedia: function() { document.getElementById('media-view').style.display = 'none'; document.getElementById('media-frame').src = ''; }
+        };
+        window.UI = UI;
+
+        // -------------------- NAVIGATION (VAULT) --------------------
+        const Nav = {
+            switchTab: function(tab, el) {
+                document.querySelectorAll('.nav-item-b').forEach(e => e.classList.remove('active', 'text-neon-blue'));
+                if(el) {
+                    el.classList.add('active');
+                    el.classList.add('text-neon-blue');
                 }
-            };
-
-            // -------------------- SETTINGS --------------------
-            const Settings = {
-                open() {
-                    document.getElementById('ext-player').checked = STATE.settings.extPlayer;
-                    document.getElementById('auto-sync').checked = STATE.settings.autoSync;
-                    document.getElementById('dark-mode').checked = STATE.theme === 'dark';
-                    document.getElementById('settings-modal').style.display = 'flex';
-                },
-                save() {
-                    STATE.settings.extPlayer = document.getElementById('ext-player').checked;
-                    STATE.settings.autoSync = document.getElementById('auto-sync').checked;
-                    localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
-                },
-                toggleDarkMode() {
-                    STATE.theme = document.getElementById('dark-mode').checked ? 'dark' : 'light';
-                    if(STATE.theme === 'dark') document.documentElement.classList.add('dark');
-                    else document.documentElement.classList.remove('dark');
-                    localStorage.setItem('theme', STATE.theme);
-                    Settings.save();
-                },
-                async storage() {
-                    try {
-                        const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', { headers: { 'Authorization': `Bearer ${STATE.token}` } });
-                        const d = await res.json();
-                        const used = Ops.formatSize(d.storageQuota.usage);
-                        const limit = Ops.formatSize(d.storageQuota.limit);
-                        alert(`Storage: ${used} of ${limit}`);
-                    } catch { alert('Storage info unavailable'); }
-                },
-                security() { alert('PIN protection enabled\nAuto-lock: 5 min'); },
-                about() { alert('VAULT DRIVE NEBULA\nVersion 5.0\nFull glass morphism + Tailwind'); }
-            };
-
-            // -------------------- INIT --------------------
-            window.onload = () => {
-                if(!localStorage.getItem('app_pin')) {
-                    const pin = prompt('Set 4-digit PIN (e.g. 1234):');
-                    if(pin && /^\d{4}$/.test(pin)) localStorage.setItem('app_pin', btoa(pin));
-                    else localStorage.setItem('app_pin', btoa('1234'));
+                if(tab === 'home') Drive.load('root');
+                else if(tab === 'photos') { 
+                    STATE.activeFilter = 'image';
+                    document.querySelectorAll('.filter-chip').forEach(c=>c.classList.remove('active'));
+                    document.querySelector('.filter-chip[data-filter="image"]').classList.add('active');
+                    UI.switchView('gallery');
                 }
+                else if(tab === 'vault') Drive.load(CONFIG.vaultId, 'Vault');
+                else if(tab === 'recent') { Drive.applySort('date','desc'); Drive.render(STATE.files); }
+            }
+        };
+        window.Nav = Nav;
+
+        // -------------------- SETTINGS --------------------
+        const Settings = {
+            open: function() {
+                document.getElementById('ext-player').checked = STATE.settings.extPlayer;
+                document.getElementById('auto-sync').checked = STATE.settings.autoSync;
+                document.getElementById('dark-mode').checked = STATE.theme === 'dark';
+                document.getElementById('settings-modal').style.display = 'flex';
+            },
+            save: function() {
+                STATE.settings.extPlayer = document.getElementById('ext-player').checked;
+                STATE.settings.autoSync = document.getElementById('auto-sync').checked;
+                localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
+            },
+            toggleDarkMode: function() {
+                STATE.theme = document.getElementById('dark-mode').checked ? 'dark' : 'light';
                 if(STATE.theme === 'dark') document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
-                Auth.init();
+                localStorage.setItem('theme', STATE.theme);
+                Settings.save();
+            },
+            storage: async function() {
+                try {
+                    const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', { headers: { 'Authorization': `Bearer ${STATE.token}` } });
+                    const d = await res.json();
+                    const used = Ops.formatSize(d.storageQuota.usage);
+                    const limit = Ops.formatSize(d.storageQuota.limit);
+                    alert(`Storage: ${used} of ${limit}`);
+                } catch { alert('Storage info unavailable'); }
+            },
+            security: function() { alert('PIN protection enabled\nAuto-lock: 5 min'); },
+            about: function() { alert('VAULT DRIVE NEBULA\nVersion 5.0\nFull glass morphism + Tailwind'); }
+        };
+        window.Settings = Settings;
 
-                document.querySelectorAll('.view-btn').forEach(btn => {
-                    if(btn.dataset.view === STATE.viewMode) btn.classList.add('text-white');
-                });
-            };
-        })();
+        // -------------------- INIT --------------------
+        window.onload = function() {
+            if(!localStorage.getItem('app_pin')) {
+                const pin = prompt('Set 4-digit PIN (e.g. 1234):');
+                if(pin && /^\d{4}$/.test(pin)) localStorage.setItem('app_pin', btoa(pin));
+                else localStorage.setItem('app_pin', btoa('1234'));
+            }
+            if(STATE.theme === 'dark') document.documentElement.classList.add('dark');
+            else document.documentElement.classList.remove('dark');
+            Auth.init();
+
+            document.querySelectorAll('.view-btn').forEach(btn => {
+                if(btn.dataset.view === STATE.viewMode) btn.classList.add('text-white');
+            });
+        };
     </script>
 </body>
 </html>
