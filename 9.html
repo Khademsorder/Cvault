@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <!-- Fixed viewport: no user scaling issues -->
+    <!-- Responsive viewport -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Drive OS Pro+ | Gemini AI</title>
     <!-- Tailwind + Fonts -->
@@ -15,6 +15,7 @@
     <!-- Utilities -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <!-- Tesseract OCR -->
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
     <!-- Plyr (video player) -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
@@ -77,7 +78,7 @@
             border-color: var(--neon-blue);
             box-shadow: 0 0 20px rgba(59,130,246,0.15);
         }
-        /* chat window */
+        /* chat window (responsive) */
         .chat-window {
             position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px;
             background: rgba(15,23,42,0.95); backdrop-filter: blur(16px);
@@ -85,6 +86,9 @@
             display: flex; flex-direction: column; overflow: hidden;
             box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 1000;
             transform: translateY(calc(100% + 20px)); transition: transform 0.3s;
+        }
+        @media (max-width: 640px) {
+            .chat-window { width: 280px; right: 10px; bottom: 80px; }
         }
         .chat-window.open { transform: translateY(0); }
         .chat-header {
@@ -103,6 +107,14 @@
             background: #1e293b;
             border-radius: 12px;
         }
+        /* ensure no overflow */
+        #app-ui, #main-content { height: 100%; overflow: hidden; }
+        /* mobile sidebar adjustments */
+        @media (max-width: 768px) {
+            .sidebar-text { display: none; }
+            .sidebar-icon-only { justify-content: center; }
+            .storage-info { display: none; }
+        }
     </style>
 </head>
 <body class="h-screen w-screen relative overflow-hidden">
@@ -113,7 +125,7 @@
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="fixed inset-0 z-[100] bg-black flex items-center justify-center">
-        <div class="glass p-12 rounded-3xl max-w-md w-full text-center relative overflow-hidden group">
+        <div class="glass p-8 sm:p-12 rounded-3xl max-w-md w-full text-center relative overflow-hidden group mx-4">
             <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
             <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-8 animate-pulse">
                 <span class="material-icons-round text-4xl text-white">cloud_upload</span>
@@ -131,33 +143,33 @@
     <!-- MAIN UI (hidden until auth) -->
     <div id="app-ui" class="hidden flex-1 h-full transition-opacity duration-1000">
         <div class="flex h-full">
-            <!-- SIDEBAR -->
-            <aside class="w-72 glass h-full border-r border-white/5 flex flex-col z-20">
-                <div class="h-20 flex items-center px-8 border-b border-white/5">
-                    <span class="material-icons-round text-blue-500 text-3xl mr-2">dns</span>
-                    <span class="text-xl font-bold tracking-tight">Drive<span class="text-blue-400">OS</span></span>
+            <!-- SIDEBAR - responsive: icons only on mobile -->
+            <aside class="w-20 md:w-72 glass h-full border-r border-white/5 flex flex-col z-20">
+                <div class="h-20 flex items-center justify-center md:justify-start px-4 md:px-8 border-b border-white/5">
+                    <span class="material-icons-round text-blue-500 text-3xl mr-0 md:mr-2">dns</span>
+                    <span class="hidden md:inline text-xl font-bold tracking-tight">Drive<span class="text-blue-400">OS</span></span>
                 </div>
-                <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                    <button onclick="Drive.loadFiles('root')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                <nav class="flex-1 p-2 md:p-4 space-y-2 overflow-y-auto">
+                    <button onclick="Drive.loadFiles('root')" class="w-full flex items-center justify-center md:justify-start gap-4 px-2 md:px-4 py-3 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
                         <span class="material-icons-round">dashboard</span>
-                        <span class="font-medium">My Drive</span>
+                        <span class="sidebar-text hidden md:inline font-medium">My Drive</span>
                     </button>
-                    <button onclick="Drive.loadFiles('starred')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                    <button onclick="Drive.loadFiles('starred')" class="w-full flex items-center justify-center md:justify-start gap-4 px-2 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
                         <span class="material-icons-round">star</span>
-                        <span>Starred</span>
+                        <span class="sidebar-text hidden md:inline">Starred</span>
                     </button>
-                    <button onclick="Drive.loadFiles('trash')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                    <button onclick="Drive.loadFiles('trash')" class="w-full flex items-center justify-center md:justify-start gap-4 px-2 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
                         <span class="material-icons-round">delete</span>
-                        <span>Trash</span>
+                        <span class="sidebar-text hidden md:inline">Trash</span>
                     </button>
                     <!-- VAULT (admin folder) -->
-                    <button onclick="Drive.loadFiles('1zIyinAqjQv96QBSuanFS2F0USaG66GPn')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                    <button onclick="Drive.loadFiles('1zIyinAqjQv96QBSuanFS2F0USaG66GPn')" class="w-full flex items-center justify-center md:justify-start gap-4 px-2 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
                         <span class="material-icons-round text-purple-400">vpn_lock</span>
-                        <span>Vault</span>
+                        <span class="sidebar-text hidden md:inline">Vault</span>
                     </button>
                 </nav>
-                <!-- STORAGE & SIGNOUT -->
-                <div class="p-6 border-t border-white/5 bg-gradient-to-t from-slate-900/50 to-transparent">
+                <!-- STORAGE & SIGNOUT - hidden on mobile, shown on desktop -->
+                <div class="p-4 md:p-6 border-t border-white/5 bg-gradient-to-t from-slate-900/50 to-transparent hidden md:block">
                     <div class="flex justify-between text-xs mb-2 font-mono text-blue-300">
                         <span id="storage-used">--</span>
                         <span id="storage-total">--</span>
@@ -167,34 +179,38 @@
                     </div>
                     <button onclick="Auth.signOut()" class="mt-4 w-full py-2 border border-red-500/30 text-red-400 rounded-lg text-xs hover:bg-red-500/10 transition-colors">TERMINATE SESSION</button>
                 </div>
+                <!-- Mobile signout icon (optional) -->
+                <button onclick="Auth.signOut()" class="md:hidden p-4 text-red-400 flex justify-center">
+                    <span class="material-icons-round">logout</span>
+                </button>
             </aside>
 
             <!-- MAIN CONTENT -->
-            <main class="flex-1 flex flex-col relative bg-slate-900/30">
+            <main class="flex-1 flex flex-col relative bg-slate-900/30" style="height: 100%;">
                 <!-- HEADER -->
-                <header class="h-20 border-b border-white/5 flex items-center justify-between px-8 glass z-10">
+                <header class="h-20 border-b border-white/5 flex items-center justify-between px-4 md:px-8 glass z-10">
                     <div class="flex-1 max-w-2xl relative group">
                         <span class="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors">search</span>
                         <input type="text" id="search-box" placeholder="Search Drive..." 
                                class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all">
                     </div>
-                    <div class="flex items-center gap-6 ml-6">
+                    <div class="flex items-center gap-2 md:gap-6 ml-2 md:ml-6">
                         <button onclick="Chat.toggle()" class="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors relative">
                             <span class="material-icons-round text-purple-400">auto_awesome</span>
                             <span class="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full"></span>
                         </button>
-                        <div class="flex items-center gap-3 pl-6 border-l border-white/5">
+                        <div class="flex items-center gap-2 md:gap-3 pl-2 md:pl-6 border-l border-white/5">
                             <div class="text-right hidden md:block">
                                 <div class="text-sm font-bold text-white" id="user-name">User</div>
                                 <div class="text-[10px] text-slate-400 font-mono" id="user-email">email</div>
                             </div>
-                            <img id="user-avatar" src="" class="w-10 h-10 rounded-full border-2 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                            <img id="user-avatar" src="" class="w-8 h-8 md:w-10 md:h-10 rounded-full border-2 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                         </div>
                     </div>
                 </header>
 
                 <!-- TOOLBAR -->
-                <div class="h-14 flex items-center justify-between px-8 border-b border-white/5 bg-slate-900/20 backdrop-blur-sm">
+                <div class="h-14 flex items-center justify-between px-4 md:px-8 border-b border-white/5 bg-slate-900/20 backdrop-blur-sm">
                     <div class="flex items-center gap-2 text-sm text-slate-400">
                         <span class="hover:text-white cursor-pointer transition-colors" onclick="Drive.loadFiles('root')">Root</span>
                         <span class="material-icons-round text-[10px]">chevron_right</span>
@@ -206,13 +222,13 @@
                     </div>
                 </div>
 
-                <!-- FILE GRID -->
-                <div id="file-grid" class="flex-1 overflow-y-auto p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 content-start custom-scrollbar"></div>
+                <!-- FILE GRID (responsive: 1 col on mobile, 2 on sm, 4 on md, etc.) -->
+                <div id="file-grid" class="flex-1 overflow-y-auto p-4 md:p-8 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6 content-start custom-scrollbar"></div>
 
                 <!-- FAB UPLOAD -->
-                <div class="absolute bottom-8 right-8 z-50">
-                    <button onclick="document.getElementById('upload-input').click()" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-[0_0_30px_rgba(59,130,246,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all">
-                        <span class="material-icons-round text-3xl">add</span>
+                <div class="absolute bottom-4 right-4 md:bottom-8 md:right-8 z-50">
+                    <button onclick="document.getElementById('upload-input').click()" class="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-[0_0_30px_rgba(59,130,246,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all">
+                        <span class="material-icons-round text-2xl md:text-3xl">add</span>
                     </button>
                     <input type="file" id="upload-input" class="hidden" multiple onchange="Upload.handle(this.files)">
                 </div>
@@ -220,13 +236,14 @@
         </div>
     </div>
 
-    <!-- VIEWER OVERLAY (supports all file types) -->
+    <!-- VIEWER OVERLAY (responsive) -->
     <div id="viewer" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl hidden flex flex-col animate-fadeIn">
-        <div class="h-16 flex items-center justify-between px-8 border-b border-white/10 bg-black/50">
-            <h2 id="viewer-title" class="text-white font-medium truncate max-w-lg">Filename</h2>
-            <div class="flex gap-4">
-                <button onclick="AI.scanCurrent()" class="flex items-center gap-2 px-4 py-1.5 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-600/40 transition-all">
-                    <span class="material-icons-round text-sm">auto_awesome</span> AI Scan
+        <div class="h-16 flex items-center justify-between px-4 md:px-8 border-b border-white/10 bg-black/50">
+            <h2 id="viewer-title" class="text-white font-medium truncate max-w-[150px] md:max-w-lg">Filename</h2>
+            <div class="flex gap-2 md:gap-4">
+                <button onclick="AI.scanCurrent()" class="flex items-center gap-1 md:gap-2 px-2 md:px-4 py-1.5 bg-purple-600/20 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-600/40 transition-all">
+                    <span class="material-icons-round text-sm">auto_awesome</span>
+                    <span class="hidden md:inline">AI Scan</span>
                 </button>
                 <button onclick="Viewer.close()" class="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center hover:bg-red-500/20 hover:text-red-400 transition-all">
                     <span class="material-icons-round">close</span>
@@ -234,10 +251,10 @@
             </div>
         </div>
         <div class="flex-1 flex relative overflow-hidden">
-            <div class="flex-1 flex items-center justify-center p-8 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
+            <div class="flex-1 flex items-center justify-center p-4 md:p-8 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
                 <div id="viewer-content" class="relative shadow-2xl w-full h-full flex items-center justify-center"></div>
             </div>
-            <div id="ai-sidebar" class="w-80 border-l border-white/10 bg-slate-900/80 backdrop-blur-md transform translate-x-full transition-transform duration-300 flex flex-col">
+            <div id="ai-sidebar" class="absolute md:relative right-0 w-full md:w-80 h-full border-l border-white/10 bg-slate-900/80 backdrop-blur-md transform translate-x-full transition-transform duration-300 flex flex-col">
                 <div class="p-4 border-b border-white/5">
                     <h3 class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 flex items-center gap-2">
                         <span class="material-icons-round">psychology</span> Neural Analysis
@@ -263,8 +280,8 @@
         </div>
     </div>
 
-    <!-- UPLOAD MANAGER (minimizable) -->
-    <div id="upload-manager" class="fixed bottom-6 right-24 w-80 bg-slate-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden transform translate-y-[120%] transition-transform duration-300 z-[60]">
+    <!-- UPLOAD MANAGER (responsive) -->
+    <div id="upload-manager" class="fixed bottom-4 right-4 md:bottom-6 md:right-24 w-64 md:w-80 bg-slate-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden transform translate-y-[120%] transition-transform duration-300 z-[60]">
         <div class="bg-slate-800 p-3 flex justify-between items-center cursor-pointer" onclick="this.parentElement.classList.toggle('translate-y-[85%]')">
             <span class="text-xs font-bold text-white flex items-center gap-2"><span class="material-icons-round text-sm text-blue-400 animate-spin">sync</span> Uploading...</span>
             <span class="material-icons-round text-sm text-slate-400">expand_less</span>
@@ -505,7 +522,6 @@
                 content.innerHTML = '<div class="loader-spinner"></div>';
                 document.getElementById('ai-sidebar').classList.add('translate-x-full');
 
-                // Determine file type and show appropriate preview
                 const mime = file.mimeType;
                 const fileId = file.id;
 
@@ -534,11 +550,9 @@
                 } else if (mime.includes('audio')) {
                     content.innerHTML = `<audio controls class="w-full"><source src="${file.webContentLink}" type="${mime}"></audio>`;
                 } else if (mime === 'application/pdf') {
-                    // Use Google Drive viewer iframe (works with auth)
                     const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
                     content.innerHTML = `<iframe class="preview-iframe" src="${embedUrl}" allowfullscreen></iframe>`;
                 } else if (mime.includes('text') || mime.includes('json') || mime.includes('javascript')) {
-                    // Fetch and display as preformatted text
                     fetch(file.webContentLink, { headers: { Authorization: `Bearer ${State.token}` } })
                         .then(res => res.text())
                         .then(text => {
@@ -548,7 +562,6 @@
                             content.innerHTML = `<div class="text-center"><p>Unable to load text. <a href="${file.webContentLink}" target="_blank" class="text-blue-400 underline">Download</a></p></div>`;
                         });
                 } else {
-                    // Default: show download link
                     content.innerHTML = `<div class="text-center"><span class="material-icons-round text-6xl text-slate-500">description</span><p class="mt-4">Preview not available. <a href="${file.webContentLink}" target="_blank" class="text-blue-400 underline">Download</a></p></div>`;
                 }
             },
@@ -557,7 +570,6 @@
             }
         };
 
-        // Helper to escape HTML in text preview
         function escapeHtml(unsafe) {
             return unsafe.replace(/[&<>"']/g, function(m) {
                 if(m === '&') return '&amp;';
@@ -579,24 +591,36 @@
                     <div class="p-4 text-center mt-12 text-blue-300">Neural Network Active...<br>Processing Vision Data</div>
                 </div>`;
 
-                if (!State.activeFile || !State.activeFile.mimeType.includes('image')) {
-                    results.innerHTML = "<div class='text-red-400'>Error: Only image nodes are compatible with OCR.</div>";
+                if (!State.activeFile) {
+                    results.innerHTML = "<div class='text-red-400'>Error: No file selected.</div>";
+                    return;
+                }
+                if (!State.activeFile.mimeType.includes('image')) {
+                    results.innerHTML = "<div class='text-red-400'>Error: Only image files support OCR.</div>";
                     return;
                 }
 
                 try {
+                    // Use authenticated fetch to get image blob
                     const response = await fetch(State.activeFile.webContentLink || State.activeFile.thumbnailLink, {
                         headers: { Authorization: `Bearer ${State.token}` }
                     });
+                    if (!response.ok) throw new Error('Failed to fetch image');
                     const blob = await response.blob();
                     const objectUrl = URL.createObjectURL(blob);
-                    const { data: { text } } = await Tesseract.recognize(objectUrl, 'eng');
+                    
+                    // Run Tesseract
+                    const { data: { text } } = await Tesseract.recognize(objectUrl, 'eng', {
+                        logger: m => console.log(m) // optional progress
+                    });
+                    
                     results.innerHTML = `
-                        <div class="text-[10px] text-slate-500 uppercase mb-2">Confidence: 98.4%</div>
-                        <div class="bg-black/50 p-3 rounded border border-white/10 select-all">${text || "No text detected."}</div>
+                        <div class="text-[10px] text-slate-500 uppercase mb-2">Extracted Text</div>
+                        <div class="bg-black/50 p-3 rounded border border-white/10 select-all text-xs">${text || "No text detected."}</div>
                         <button class="mt-4 w-full py-2 bg-blue-600/20 text-blue-400 rounded border border-blue-500/20 hover:bg-blue-600 hover:text-white transition-all text-xs" onclick="navigator.clipboard.writeText('${text.replace(/'/g, "\\'")}')">COPY TO CLIPBOARD</button>
                     `;
                 } catch (e) {
+                    console.error(e);
                     results.innerHTML = `<div class="text-red-400">Analysis Failed: ${e.message}</div>`;
                 }
             }
