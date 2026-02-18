@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <!-- Fixed viewport: no user scaling issues -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Drive OS Pro+ | Gemini AI</title>
     <!-- Tailwind + Fonts -->
@@ -29,6 +30,10 @@
             color: #e2e8f0;
             overflow: hidden;
             user-select: none;
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            width: 100vw;
         }
         /* ambient glow */
         .ambient-glow {
@@ -90,6 +95,14 @@
         .chat-input { display: flex; border-top: 1px solid rgba(255,255,255,0.1); }
         .chat-input input { flex:1; background:transparent; border:none; padding:10px; color:white; outline:none; }
         .chat-input button { background:#3b82f6; border:none; padding:8px 12px; color:white; cursor:pointer; }
+        /* iframe preview */
+        .preview-iframe {
+            width: 100%;
+            height: 80vh;
+            border: none;
+            background: #1e293b;
+            border-radius: 12px;
+        }
     </style>
 </head>
 <body class="h-screen w-screen relative overflow-hidden">
@@ -111,6 +124,7 @@
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-6 h-6">
                 <span>Authenticate with Google</span>
             </button>
+            <p class="text-xs text-slate-600 mt-4">⚠️ Please allow popups for Google sign-in</p>
         </div>
     </div>
 
@@ -206,7 +220,7 @@
         </div>
     </div>
 
-    <!-- VIEWER OVERLAY -->
+    <!-- VIEWER OVERLAY (supports all file types) -->
     <div id="viewer" class="fixed inset-0 z-[200] bg-black/95 backdrop-blur-xl hidden flex flex-col animate-fadeIn">
         <div class="h-16 flex items-center justify-between px-8 border-b border-white/10 bg-black/50">
             <h2 id="viewer-title" class="text-white font-medium truncate max-w-lg">Filename</h2>
@@ -221,7 +235,7 @@
         </div>
         <div class="flex-1 flex relative overflow-hidden">
             <div class="flex-1 flex items-center justify-center p-8 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')]">
-                <div id="viewer-content" class="relative shadow-2xl"></div>
+                <div id="viewer-content" class="relative shadow-2xl w-full h-full flex items-center justify-center"></div>
             </div>
             <div id="ai-sidebar" class="w-80 border-l border-white/10 bg-slate-900/80 backdrop-blur-md transform translate-x-full transition-transform duration-300 flex flex-col">
                 <div class="p-4 border-b border-white/5">
@@ -307,7 +321,7 @@
                     }
                 });
             },
-            signIn() { Auth.client.requestAccessToken(); },
+            signIn() { Auth.client.requestAccessToken(); }, // direct user gesture
             signOut() {
                 google.accounts.oauth2.revoke(State.token, () => {
                     localStorage.removeItem('g_token');
@@ -378,7 +392,7 @@
                     const response = await Drive.call(() => gapi.client.drive.files.list({
                         q: query,
                         pageSize: 50,
-                        fields: 'files(id, name, mimeType, iconLink, thumbnailLink, webContentLink, size, modifiedTime)',
+                        fields: 'files(id, name, mimeType, iconLink, thumbnailLink, webContentLink, webViewLink, size, modifiedTime)',
                         orderBy: 'folder,modifiedTime desc'
                     }));
                     State.files = response.result.files || [];
@@ -400,7 +414,7 @@
                     try {
                         const response = await Drive.call(() => gapi.client.drive.files.list({
                             q: `name contains '${term}' and trashed = false`,
-                            fields: 'files(id, name, mimeType, iconLink, thumbnailLink, webContentLink, size, modifiedTime)'
+                            fields: 'files(id, name, mimeType, iconLink, thumbnailLink, webContentLink, webViewLink, size, modifiedTime)'
                         }));
                         State.files = response.result.files || [];
                         UI.renderGrid(State.files);
@@ -480,7 +494,7 @@
             }
         };
 
-        // ================= VIEWER & AI (CORS-safe) =================
+        // ================= VIEWER (supports all file types) =================
         const Viewer = {
             open(file) {
                 State.activeFile = file;
@@ -491,31 +505,51 @@
                 content.innerHTML = '<div class="loader-spinner"></div>';
                 document.getElementById('ai-sidebar').classList.add('translate-x-full');
 
-                if (file.mimeType.includes('image')) {
-                    // fetch with auth to avoid CORS
+                // Determine file type and show appropriate preview
+                const mime = file.mimeType;
+                const fileId = file.id;
+
+                if (mime.includes('image')) {
+                    // image: fetch with auth to avoid CORS
                     fetch(file.webContentLink || file.thumbnailLink, { headers: { Authorization: `Bearer ${State.token}` } })
                         .then(res => res.blob())
                         .then(blob => {
                             const url = URL.createObjectURL(blob);
                             const img = new Image();
                             img.src = url;
-                            img.className = 'max-h-[80vh] rounded-lg shadow-2xl';
+                            img.className = 'max-h-[80vh] max-w-full rounded-lg shadow-2xl';
                             content.innerHTML = '';
                             content.appendChild(img);
                         })
                         .catch(() => {
-                            // fallback to thumbnail
                             const img = new Image();
                             img.src = file.thumbnailLink.replace('=s220', '=s1600');
-                            img.className = 'max-h-[80vh] rounded-lg shadow-2xl';
+                            img.className = 'max-h-[80vh] max-w-full rounded-lg shadow-2xl';
                             content.innerHTML = '';
                             content.appendChild(img);
                         });
-                } else if (file.mimeType.includes('video')) {
-                    content.innerHTML = `<video id="player" controls class="max-h-[80vh] rounded-lg w-full max-w-4xl"><source src="${file.webContentLink}" type="${file.mimeType}" /></video>`;
+                } else if (mime.includes('video')) {
+                    content.innerHTML = `<video id="player" controls class="max-h-[80vh] max-w-full rounded-lg"><source src="${file.webContentLink}" type="${mime}"></video>`;
                     new Plyr('#player');
+                } else if (mime.includes('audio')) {
+                    content.innerHTML = `<audio controls class="w-full"><source src="${file.webContentLink}" type="${mime}"></audio>`;
+                } else if (mime === 'application/pdf') {
+                    // Use Google Drive viewer iframe (works with auth)
+                    const embedUrl = `https://drive.google.com/file/d/${fileId}/preview`;
+                    content.innerHTML = `<iframe class="preview-iframe" src="${embedUrl}" allowfullscreen></iframe>`;
+                } else if (mime.includes('text') || mime.includes('json') || mime.includes('javascript')) {
+                    // Fetch and display as preformatted text
+                    fetch(file.webContentLink, { headers: { Authorization: `Bearer ${State.token}` } })
+                        .then(res => res.text())
+                        .then(text => {
+                            content.innerHTML = `<pre class="bg-slate-900 p-4 rounded-lg overflow-auto max-h-[80vh] text-sm font-mono">${escapeHtml(text)}</pre>`;
+                        })
+                        .catch(() => {
+                            content.innerHTML = `<div class="text-center"><p>Unable to load text. <a href="${file.webContentLink}" target="_blank" class="text-blue-400 underline">Download</a></p></div>`;
+                        });
                 } else {
-                    content.innerHTML = `<div class="text-center"><span class="material-icons-round text-6xl text-slate-500">description</span><p class="mt-4 text-slate-400">Preview not supported.<br><a href="${file.webContentLink}" target="_blank" class="text-blue-400 underline">Download</a></p></div>`;
+                    // Default: show download link
+                    content.innerHTML = `<div class="text-center"><span class="material-icons-round text-6xl text-slate-500">description</span><p class="mt-4">Preview not available. <a href="${file.webContentLink}" target="_blank" class="text-blue-400 underline">Download</a></p></div>`;
                 }
             },
             close() {
@@ -523,6 +557,18 @@
             }
         };
 
+        // Helper to escape HTML in text preview
+        function escapeHtml(unsafe) {
+            return unsafe.replace(/[&<>"']/g, function(m) {
+                if(m === '&') return '&amp;';
+                if(m === '<') return '&lt;';
+                if(m === '>') return '&gt;';
+                if(m === '"') return '&quot;';
+                return '&#039;';
+            });
+        }
+
+        // ================= AI (OCR) =================
         const AI = {
             async scanCurrent() {
                 const sidebar = document.getElementById('ai-sidebar');
