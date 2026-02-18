@@ -30,6 +30,7 @@
             overflow: hidden;
             margin: 0; padding: 0;
             height: 100vh; width: 100vw;
+            font-size: 14px; /* Standardize font size */
         }
 
         /* Background Effects */
@@ -53,9 +54,9 @@
         }
         
         /* Scrollbars */
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; height: 6px; }
+        .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
 
         /* Loader */
@@ -73,12 +74,11 @@
         .animate-slideUp { animation: slideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards; }
 
         /* File Card */
-        .file-card { transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1); }
+        .file-card { transition: all 0.2s ease-out; }
         .file-card:hover {
-            transform: translateY(-4px);
+            transform: translateY(-2px);
             background: rgba(30, 41, 59, 0.9);
             border-color: rgba(59, 130, 246, 0.5);
-            box-shadow: 0 10px 30px -10px rgba(59, 130, 246, 0.3);
         }
 
         /* Chat Window */
@@ -131,54 +131,53 @@
             
             <!-- SIDEBAR -->
             <aside class="w-20 md:w-64 glass h-full border-r border-white/5 flex flex-col z-20 flex-shrink-0">
-                <div class="h-16 flex items-center justify-center md:justify-start px-0 md:px-6 border-b border-white/5">
+                <div class="h-16 flex items-center justify-center md:justify-start px-0 md:px-6 border-b border-white/5 shrink-0">
                     <span class="material-icons-round text-blue-500 text-2xl md:mr-3">dns</span>
                     <span class="hidden md:inline text-lg font-bold tracking-tight">Drive<span class="text-blue-400">OS</span></span>
                 </div>
                 
                 <nav class="flex-1 p-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    <button onclick="Drive.loadFiles('root')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-3 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                        <span class="material-icons-round">dashboard</span>
-                        <span class="hidden md:inline font-medium">My Drive</span>
+                    <button onclick="Drive.loadFiles('root')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-2.5 rounded-xl bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                        <span class="material-icons-round text-xl">dashboard</span>
+                        <span class="hidden md:inline font-medium text-sm">My Drive</span>
                     </button>
-                    <button onclick="Drive.loadFiles('starred')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                        <span class="material-icons-round">star</span>
-                        <span class="hidden md:inline">Starred</span>
+                    <button onclick="Drive.loadFiles('starred')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                        <span class="material-icons-round text-xl">star</span>
+                        <span class="hidden md:inline text-sm">Starred</span>
                     </button>
-                    <button onclick="Drive.loadFiles('trash')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
-                        <span class="material-icons-round">delete</span>
-                        <span class="hidden md:inline">Trash</span>
+                    <button onclick="Drive.loadFiles('trash')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-2.5 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-colors">
+                        <span class="material-icons-round text-xl">delete</span>
+                        <span class="hidden md:inline text-sm">Trash</span>
                     </button>
-                     <!-- Hardcoded Vault ID from your request -->
-                    <button onclick="Drive.loadFiles('1zIyinAqjQv96QBSuanFS2F0USaG66GPn')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-3 rounded-xl text-purple-400 hover:bg-purple-500/10 transition-colors">
-                        <span class="material-icons-round">vpn_lock</span>
-                        <span class="hidden md:inline">Vault</span>
+                    <button onclick="Drive.loadFiles('1zIyinAqjQv96QBSuanFS2F0USaG66GPn')" class="w-full flex items-center justify-center md:justify-start gap-3 px-0 md:px-4 py-2.5 rounded-xl text-purple-400 hover:bg-purple-500/10 transition-colors">
+                        <span class="material-icons-round text-xl">vpn_lock</span>
+                        <span class="hidden md:inline text-sm">Vault</span>
                     </button>
                 </nav>
 
-                <div class="p-4 border-t border-white/5 bg-slate-900/40 hidden md:block">
-                    <div class="flex justify-between text-xs mb-2 font-mono text-blue-300">
+                <div class="p-4 border-t border-white/5 bg-slate-900/40 hidden md:block shrink-0">
+                    <div class="flex justify-between text-[11px] mb-2 font-mono text-blue-300">
                         <span id="storage-used">0 GB</span>
                         <span id="storage-total">/ 0 GB</span>
                     </div>
-                    <div class="w-full h-1 bg-slate-700 rounded-full overflow-hidden">
+                    <div class="w-full h-1.5 bg-slate-700 rounded-full overflow-hidden">
                         <div id="storage-bar" class="h-full bg-blue-500 w-0 transition-all duration-1000"></div>
                     </div>
-                    <button onclick="Auth.signOut()" class="mt-4 w-full py-1.5 border border-red-500/20 text-red-400 rounded hover:bg-red-500/10 transition-colors text-xs uppercase tracking-wider">Log Out</button>
+                    <button onclick="Auth.signOut()" class="mt-4 w-full py-2 border border-red-500/20 text-red-400 rounded hover:bg-red-500/10 transition-colors text-[10px] uppercase tracking-wider font-semibold">Log Out</button>
                 </div>
                 <!-- Mobile Logout -->
                 <button onclick="Auth.signOut()" class="md:hidden p-4 text-red-400 border-t border-white/5"><span class="material-icons-round">logout</span></button>
             </aside>
 
             <!-- CONTENT AREA -->
-            <main class="flex-1 flex flex-col relative min-w-0">
+            <main class="flex-1 flex flex-col relative min-w-0 bg-slate-900/30">
                 
                 <!-- HEADER -->
-                <header class="h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 glass z-10">
+                <header class="h-16 border-b border-white/5 flex items-center justify-between px-4 md:px-8 glass z-10 shrink-0">
                     <div class="flex-1 max-w-xl relative group">
-                        <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors">search</span>
+                        <span class="material-icons-round absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-lg group-focus-within:text-blue-400 transition-colors">search</span>
                         <input type="text" id="search-box" placeholder="Search files..." 
-                               class="w-full bg-slate-800/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-white focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-slate-500">
+                               class="w-full bg-slate-800/50 border border-white/10 rounded-lg py-2 pl-10 pr-4 text-white text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500 transition-all placeholder-slate-500">
                     </div>
                     
                     <div class="flex items-center gap-4 ml-4">
@@ -187,7 +186,7 @@
                         </button>
                         <div class="flex items-center gap-3 pl-4 border-l border-white/5">
                             <div class="text-right hidden sm:block leading-tight">
-                                <div class="font-bold text-white" id="user-name">Guest</div>
+                                <div class="font-bold text-white text-sm" id="user-name">Guest</div>
                                 <div class="text-[10px] text-slate-400 font-mono" id="user-email">@google</div>
                             </div>
                             <img id="user-avatar" src="https://via.placeholder.com/40" class="w-8 h-8 rounded-full ring-2 ring-white/10">
@@ -196,7 +195,7 @@
                 </header>
 
                 <!-- BREADCRUMBS / TOOLBAR -->
-                <div class="h-12 flex items-center justify-between px-4 md:px-8 border-b border-white/5 bg-slate-900/30">
+                <div class="h-12 flex items-center justify-between px-4 md:px-8 border-b border-white/5 bg-slate-900/30 shrink-0">
                     <div class="flex items-center gap-1 text-slate-400 text-xs md:text-sm overflow-hidden whitespace-nowrap">
                         <button class="hover:text-white transition-colors" onclick="Drive.loadFiles('root')">Drive</button>
                         <span class="material-icons-round text-[14px] text-slate-600">chevron_right</span>
@@ -209,14 +208,15 @@
                 </div>
 
                 <!-- MAIN FILE GRID -->
-                <div id="file-grid" class="flex-1 overflow-y-auto p-4 md:p-8 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-6 gap-4 content-start custom-scrollbar">
+                <!-- FIXED: Added more grid columns (grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7) and reduced gap -->
+                <div id="file-grid" class="flex-1 overflow-y-auto p-4 md:p-6 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-7 2xl:grid-cols-8 gap-3 content-start custom-scrollbar">
                     <!-- Files injected here -->
                 </div>
 
                 <!-- FAB -->
                 <div class="absolute bottom-6 right-6 z-40">
-                    <button onclick="document.getElementById('upload-input').click()" class="w-14 h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-600/30 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all">
-                        <span class="material-icons-round text-3xl">add</span>
+                    <button onclick="document.getElementById('upload-input').click()" class="w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 shadow-lg shadow-blue-600/30 flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all">
+                        <span class="material-icons-round text-2xl md:text-3xl">add</span>
                     </button>
                     <input type="file" id="upload-input" class="hidden" multiple onchange="Upload.handle(this.files)">
                 </div>
@@ -227,14 +227,14 @@
     <!-- VIEWER OVERLAY -->
     <div id="viewer" class="fixed inset-0 z-[60] bg-slate-950/95 backdrop-blur-xl hidden flex flex-col animate-fadeIn">
         <div class="h-14 flex items-center justify-between px-4 border-b border-white/10 bg-slate-900/80">
-            <h2 id="viewer-title" class="text-white font-medium truncate flex-1">Preview</h2>
+            <h2 id="viewer-title" class="text-white font-medium truncate flex-1 text-sm">Preview</h2>
             <div class="flex gap-3">
                 <button onclick="AI.scanCurrent()" class="flex items-center gap-2 px-3 py-1.5 bg-purple-500/10 text-purple-400 border border-purple-500/30 rounded-lg hover:bg-purple-500/20 transition-all text-xs font-medium uppercase tracking-wide">
                     <span class="material-icons-round text-sm">psychology</span>
                     <span class="hidden sm:inline">AI Extract</span>
                 </button>
                 <button onclick="Viewer.close()" class="w-8 h-8 rounded-full bg-white/5 flex items-center justify-center hover:bg-red-500/20 hover:text-red-400 transition-all">
-                    <span class="material-icons-round">close</span>
+                    <span class="material-icons-round text-lg">close</span>
                 </button>
             </div>
         </div>
@@ -248,7 +248,7 @@
             <!-- AI Sidebar -->
             <div id="ai-sidebar" class="absolute right-0 top-0 bottom-0 w-80 bg-slate-900 border-l border-white/10 transform translate-x-full transition-transform duration-300 z-10 flex flex-col shadow-2xl">
                 <div class="p-4 border-b border-white/5 flex justify-between items-center bg-slate-800/50">
-                    <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400">Analysis Results</span>
+                    <span class="font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-400 to-pink-400 text-sm">Analysis Results</span>
                     <button onclick="document.getElementById('ai-sidebar').classList.add('translate-x-full')" class="text-slate-500 hover:text-white"><span class="material-icons-round">close</span></button>
                 </div>
                 <div id="ai-results" class="flex-1 p-4 overflow-y-auto text-slate-300 text-xs custom-scrollbar"></div>
@@ -501,36 +501,37 @@
                     }
 
                     if (State.viewMode === 'grid') {
+                        // FIXED: Reduced height to h-36, smaller icon text-4xl
                         return `
-                            <div class="file-card glass rounded-xl overflow-hidden cursor-pointer flex flex-col h-44 animate-slideUp relative group" 
+                            <div class="file-card glass rounded-xl overflow-hidden cursor-pointer flex flex-col h-36 animate-slideUp relative group" 
                                  style="animation-delay:${index*0.03}s" 
                                  onclick="UI.handleClick('${file.id}', '${file.mimeType}')">
-                                <div class="h-28 bg-slate-800/50 flex items-center justify-center relative overflow-hidden">
+                                <div class="h-20 bg-slate-800/50 flex items-center justify-center relative overflow-hidden">
                                     ${thumb ? 
                                         `<img src="${thumb}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" loading="lazy" referrerpolicy="no-referrer">` : 
-                                        `<span class="material-icons-round ${color} text-5xl opacity-80 group-hover:scale-110 transition-transform">${icon}</span>`
+                                        `<span class="material-icons-round ${color} text-4xl opacity-80 group-hover:scale-110 transition-transform">${icon}</span>`
                                     }
                                 </div>
-                                <div class="p-3 flex-1 flex flex-col justify-center">
+                                <div class="p-2.5 flex-1 flex flex-col justify-center min-w-0">
                                     <h3 class="text-xs font-medium text-slate-200 truncate leading-tight">${file.name}</h3>
                                     <div class="flex justify-between items-center mt-1">
-                                        <span class="text-[10px] text-slate-500 font-mono">${size}</span>
-                                        <button class="text-slate-500 hover:text-white" onclick="event.stopPropagation(); ContextMenu.show('${file.id}')"><span class="material-icons-round text-sm">more_vert</span></button>
+                                        <span class="text-[9px] text-slate-500 font-mono">${size}</span>
+                                        <button class="text-slate-500 hover:text-white" onclick="event.stopPropagation(); ContextMenu.show('${file.id}')"><span class="material-icons-round text-base">more_vert</span></button>
                                     </div>
                                 </div>
                             </div>
                         `;
                     } else {
                         return `
-                            <div class="col-span-full file-card glass rounded-lg p-3 flex items-center gap-4 animate-slideUp cursor-pointer hover:bg-white/5" 
+                            <div class="col-span-full file-card glass rounded-lg p-2.5 flex items-center gap-3 animate-slideUp cursor-pointer hover:bg-white/5" 
                                  style="animation-delay:${index*0.02}s"
                                  onclick="UI.handleClick('${file.id}', '${file.mimeType}')">
-                                <span class="material-icons-round ${color} text-2xl">${icon}</span>
+                                <span class="material-icons-round ${color} text-xl">${icon}</span>
                                 <div class="flex-1 min-w-0">
                                     <h3 class="text-sm font-medium text-slate-200 truncate">${file.name}</h3>
                                     <span class="text-[10px] text-slate-500">${size}</span>
                                 </div>
-                                <button class="text-slate-500 hover:text-white" onclick="event.stopPropagation(); ContextMenu.show('${file.id}')"><span class="material-icons-round text-lg">more_vert</span></button>
+                                <button class="text-slate-500 hover:text-white" onclick="event.stopPropagation(); ContextMenu.show('${file.id}')"><span class="material-icons-round text-base">more_vert</span></button>
                             </div>
                         `;
                     }
