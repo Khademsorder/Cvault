@@ -3,171 +3,207 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Drive OS Pro+ | AI Gemini</title>
-    <!-- CDNs -->
+    <title>Drive OS Pro+ | Gemini AI</title>
+    <!-- Tailwind + Fonts -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Google Identity & API -->
     <script src="https://accounts.google.com/gsi/client" async defer></script>
-    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <!-- Utilities -->
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+    <!-- Plyr (video player) -->
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
     <script src="https://cdn.plyr.io/3.7.8/plyr.js"></script>
     <style>
         :root {
-            --glass-border: rgba(255, 255, 255, 0.08);
             --glass-bg: rgba(15, 23, 42, 0.6);
             --neon-blue: #3b82f6;
-            --neon-purple: #8b5cf6;
         }
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: #000000;
+            background: #000;
             color: #e2e8f0;
             overflow: hidden;
             user-select: none;
-            -webkit-font-smoothing: antialiased;
         }
+        /* ambient glow */
         .ambient-glow {
             position: absolute;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, rgba(0,0,0,0) 70%);
+            background: radial-gradient(circle, rgba(59,130,246,0.15) 0%, transparent 70%);
             border-radius: 50%;
             pointer-events: none;
             z-index: 0;
             animation: breathe 10s infinite ease-in-out;
         }
         @keyframes breathe { 0%,100%{transform:scale(1);opacity:0.5} 50%{transform:scale(1.2);opacity:0.8} }
-        ::-webkit-scrollbar { width:6px; height:6px; }
-        ::-webkit-scrollbar-track { background:transparent; }
-        ::-webkit-scrollbar-thumb { background:rgba(255,255,255,0.1); border-radius:10px; }
-        ::-webkit-scrollbar-thumb:hover { background:rgba(255,255,255,0.3); }
-        .glass { background:var(--glass-bg); backdrop-filter:blur(16px); border:1px solid var(--glass-border); }
-        .glass-card { background:linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter:blur(10px); border:1px solid rgba(255,255,255,0.05); box-shadow:0 8px 32px 0 rgba(0,0,0,0.37); }
-        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
-        @keyframes slideUp { from{transform:translateY(20px);opacity:0} to{transform:translateY(0);opacity:1} }
-        @keyframes pulse-glow { 0%,100%{box-shadow:0 0 10px rgba(59,130,246,0.2)} 50%{box-shadow:0 0 20px rgba(59,130,246,0.6)} }
-        .file-card:hover { transform:translateY(-4px) scale(1.02); background:rgba(30,41,59,0.8); border-color:var(--neon-blue); box-shadow:0 0 20px rgba(59,130,246,0.15); }
-        .loader-spinner { width:50px; height:50px; border:3px solid rgba(255,255,255,0.1); border-radius:50%; border-top-color:var(--neon-blue); animation:spin 1s ease-in-out infinite; }
-        @keyframes spin { to{transform:rotate(360deg)} }
-        @keyframes scanLine { 0%{top:0%;opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{top:100%;opacity:0} }
-        .animate-scan { animation:scanLine 2s linear infinite; }
-        /* Floating chat */
-        .chat-window { position:fixed; bottom:90px; right:20px; width:320px; height:400px; background:rgba(15,23,42,0.95); backdrop-filter:blur(16px); border:1px solid rgba(255,255,255,0.1); border-radius:20px; display:flex; flex-direction:column; overflow:hidden; box-shadow:0 20px 40px rgba(0,0,0,0.5); z-index:1000; transition:transform 0.3s; transform:translateY(calc(100% + 20px)); }
-        .chat-window.open { transform:translateY(0); }
-        .chat-header { padding:12px; background:linear-gradient(90deg, #3b82f6, #8b5cf6); color:white; font-weight:bold; display:flex; justify-content:space-between; cursor:pointer; }
-        .chat-messages { flex:1; padding:10px; overflow-y:auto; font-size:13px; }
-        .chat-input { display:flex; border-top:1px solid rgba(255,255,255,0.1); }
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
+        /* glass */
+        .glass {
+            background: var(--glass-bg);
+            backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.08);
+        }
+        /* animations */
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        .animate-slideUp { animation: slideUp 0.3s ease forwards; }
+        .loader-spinner {
+            width: 50px; height: 50px;
+            border: 3px solid rgba(255,255,255,0.1);
+            border-radius: 50%;
+            border-top-color: var(--neon-blue);
+            animation: spin 1s ease-in-out infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        /* file card */
+        .file-card:hover {
+            transform: translateY(-4px) scale(1.02);
+            background: rgba(30,41,59,0.8);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 20px rgba(59,130,246,0.15);
+        }
+        /* chat window */
+        .chat-window {
+            position: fixed; bottom: 90px; right: 20px; width: 320px; height: 400px;
+            background: rgba(15,23,42,0.95); backdrop-filter: blur(16px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+            display: flex; flex-direction: column; overflow: hidden;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 1000;
+            transform: translateY(calc(100% + 20px)); transition: transform 0.3s;
+        }
+        .chat-window.open { transform: translateY(0); }
+        .chat-header {
+            padding: 12px; background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+            color: white; font-weight: bold; display: flex; justify-content: space-between; cursor: pointer;
+        }
+        .chat-messages { flex: 1; padding: 10px; overflow-y: auto; font-size: 13px; }
+        .chat-input { display: flex; border-top: 1px solid rgba(255,255,255,0.1); }
         .chat-input input { flex:1; background:transparent; border:none; padding:10px; color:white; outline:none; }
         .chat-input button { background:#3b82f6; border:none; padding:8px 12px; color:white; cursor:pointer; }
     </style>
 </head>
 <body class="h-screen w-screen relative overflow-hidden">
 
-    <!-- Ambient -->
+    <!-- Ambient glow -->
     <div class="ambient-glow" style="top:-20%; left:-10%;"></div>
-    <div class="ambient-glow" style="bottom:-20%; right:-10%; background:radial-gradient(circle, rgba(139,92,246,0.15) 0%, rgba(0,0,0,0) 70%); animation-delay:2s;"></div>
+    <div class="ambient-glow" style="bottom:-20%; right:-10%; background:radial-gradient(circle, rgba(139,92,246,0.15) 0%, transparent 70%); animation-delay:2s;"></div>
 
     <!-- AUTH SCREEN -->
     <div id="auth-screen" class="fixed inset-0 z-[100] bg-black flex items-center justify-center">
         <div class="glass p-12 rounded-3xl max-w-md w-full text-center relative overflow-hidden group">
-            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500"></div>
-            <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-8 animate-pulse-glow">
+            <div class="absolute inset-0 bg-gradient-to-br from-blue-500/10 to-purple-500/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
+            <div class="w-20 h-20 mx-auto bg-gradient-to-tr from-blue-600 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 mb-8 animate-pulse">
                 <span class="material-icons-round text-4xl text-white">cloud_upload</span>
             </div>
             <h1 class="text-3xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-blue-400 to-purple-400 mb-2">Drive OS Pro+</h1>
-            <p class="text-slate-400 mb-8 font-light">Gemini AI integrated</p>
+            <p class="text-slate-400 mb-8 font-light">with Gemini AI & Vault</p>
             <button onclick="Auth.signIn()" class="relative w-full py-4 bg-white text-slate-900 rounded-xl font-bold hover:bg-slate-100 transition-all active:scale-95 flex items-center justify-center gap-3 shadow-[0_0_30px_rgba(255,255,255,0.1)]">
                 <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-6 h-6">
-                <span>Continue with Google</span>
+                <span>Authenticate with Google</span>
             </button>
         </div>
     </div>
 
-    <!-- MAIN UI (hidden initially) -->
-    <div id="app-ui" class="flex-1 flex h-full opacity-0 transition-opacity duration-1000 hidden">
-        <!-- SIDEBAR -->
-        <aside class="w-72 glass h-full border-r border-white/5 flex flex-col z-20">
-            <div class="h-20 flex items-center px-8 border-b border-white/5">
-                <span class="material-icons-round text-blue-500 text-3xl mr-2">dns</span>
-                <span class="text-xl font-bold tracking-tight">Drive<span class="text-blue-400">OS</span></span>
-            </div>
-            <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
-                <button onclick="Drive.loadFiles('root')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
-                    <span class="material-icons-round">dashboard</span>
-                    <span class="font-medium">My Drive</span>
-                </button>
-                <button onclick="Drive.loadFiles('starred')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span class="material-icons-round">star</span>
-                    <span>Starred</span>
-                </button>
-                <button onclick="Drive.loadFiles('trash')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
-                    <span class="material-icons-round">delete</span>
-                    <span>Trash</span>
-                </button>
-            </nav>
-            <div class="p-6 border-t border-white/5 bg-gradient-to-t from-slate-900/50 to-transparent">
-                <div class="flex justify-between text-xs mb-2 font-mono text-blue-300">
-                    <span id="storage-used">--</span>
-                    <span id="storage-total">--</span>
+    <!-- MAIN UI (hidden until auth) -->
+    <div id="app-ui" class="hidden flex-1 h-full transition-opacity duration-1000">
+        <div class="flex h-full">
+            <!-- SIDEBAR -->
+            <aside class="w-72 glass h-full border-r border-white/5 flex flex-col z-20">
+                <div class="h-20 flex items-center px-8 border-b border-white/5">
+                    <span class="material-icons-round text-blue-500 text-3xl mr-2">dns</span>
+                    <span class="text-xl font-bold tracking-tight">Drive<span class="text-blue-400">OS</span></span>
                 </div>
-                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
-                    <div id="storage-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-0 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
-                </div>
-                <button onclick="Auth.signOut()" class="mt-4 w-full py-2 border border-red-500/30 text-red-400 rounded-lg text-xs hover:bg-red-500/10 transition-colors">TERMINATE SESSION</button>
-            </div>
-        </aside>
-
-        <!-- MAIN CONTENT -->
-        <main class="flex-1 flex flex-col relative bg-slate-900/30">
-            <header class="h-20 border-b border-white/5 flex items-center justify-between px-8 glass z-10">
-                <div class="flex-1 max-w-2xl relative group">
-                    <span class="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors">search</span>
-                    <input type="text" id="search-box" placeholder="Search Drive..." 
-                           class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all">
-                </div>
-                <div class="flex items-center gap-6 ml-6">
-                    <button onclick="Chat.toggle()" class="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors relative">
-                        <span class="material-icons-round text-purple-400">auto_awesome</span>
-                        <span class="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full"></span>
+                <nav class="flex-1 p-4 space-y-2 overflow-y-auto">
+                    <button onclick="Drive.loadFiles('root')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl bg-blue-600/20 text-blue-400 border border-blue-500/20 shadow-[0_0_15px_rgba(59,130,246,0.2)]">
+                        <span class="material-icons-round">dashboard</span>
+                        <span class="font-medium">My Drive</span>
                     </button>
-                    <div class="flex items-center gap-3 pl-6 border-l border-white/5">
-                        <div class="text-right hidden md:block">
-                            <div class="text-sm font-bold text-white" id="user-name">User</div>
-                            <div class="text-[10px] text-slate-400 font-mono" id="user-email">email</div>
+                    <button onclick="Drive.loadFiles('starred')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                        <span class="material-icons-round">star</span>
+                        <span>Starred</span>
+                    </button>
+                    <button onclick="Drive.loadFiles('trash')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                        <span class="material-icons-round">delete</span>
+                        <span>Trash</span>
+                    </button>
+                    <!-- VAULT (admin folder) -->
+                    <button onclick="Drive.loadFiles('1zIyinAqjQv96QBSuanFS2F0USaG66GPn')" class="w-full flex items-center gap-4 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                        <span class="material-icons-round text-purple-400">vpn_lock</span>
+                        <span>Vault</span>
+                    </button>
+                </nav>
+                <!-- STORAGE & SIGNOUT -->
+                <div class="p-6 border-t border-white/5 bg-gradient-to-t from-slate-900/50 to-transparent">
+                    <div class="flex justify-between text-xs mb-2 font-mono text-blue-300">
+                        <span id="storage-used">--</span>
+                        <span id="storage-total">--</span>
+                    </div>
+                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div id="storage-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-0 transition-all duration-1000 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                    </div>
+                    <button onclick="Auth.signOut()" class="mt-4 w-full py-2 border border-red-500/30 text-red-400 rounded-lg text-xs hover:bg-red-500/10 transition-colors">TERMINATE SESSION</button>
+                </div>
+            </aside>
+
+            <!-- MAIN CONTENT -->
+            <main class="flex-1 flex flex-col relative bg-slate-900/30">
+                <!-- HEADER -->
+                <header class="h-20 border-b border-white/5 flex items-center justify-between px-8 glass z-10">
+                    <div class="flex-1 max-w-2xl relative group">
+                        <span class="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition-colors">search</span>
+                        <input type="text" id="search-box" placeholder="Search Drive..." 
+                               class="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-3 pl-12 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-transparent transition-all">
+                    </div>
+                    <div class="flex items-center gap-6 ml-6">
+                        <button onclick="Chat.toggle()" class="w-10 h-10 rounded-full bg-slate-800 border border-white/10 flex items-center justify-center hover:bg-white/10 transition-colors relative">
+                            <span class="material-icons-round text-purple-400">auto_awesome</span>
+                            <span class="absolute top-2 right-2 w-2 h-2 bg-green-500 rounded-full"></span>
+                        </button>
+                        <div class="flex items-center gap-3 pl-6 border-l border-white/5">
+                            <div class="text-right hidden md:block">
+                                <div class="text-sm font-bold text-white" id="user-name">User</div>
+                                <div class="text-[10px] text-slate-400 font-mono" id="user-email">email</div>
+                            </div>
+                            <img id="user-avatar" src="" class="w-10 h-10 rounded-full border-2 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
                         </div>
-                        <img id="user-avatar" src="" class="w-10 h-10 rounded-full border-2 border-blue-500/50 shadow-[0_0_15px_rgba(59,130,246,0.3)]">
+                    </div>
+                </header>
+
+                <!-- TOOLBAR -->
+                <div class="h-14 flex items-center justify-between px-8 border-b border-white/5 bg-slate-900/20 backdrop-blur-sm">
+                    <div class="flex items-center gap-2 text-sm text-slate-400">
+                        <span class="hover:text-white cursor-pointer transition-colors" onclick="Drive.loadFiles('root')">Root</span>
+                        <span class="material-icons-round text-[10px]">chevron_right</span>
+                        <span class="text-blue-400 font-medium" id="folder-name">Dashboard</span>
+                    </div>
+                    <div class="flex gap-2">
+                        <button class="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all" onclick="UI.setView('grid')"><span class="material-icons-round">grid_view</span></button>
+                        <button class="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all" onclick="UI.setView('list')"><span class="material-icons-round">view_list</span></button>
                     </div>
                 </div>
-            </header>
 
-            <!-- TOOLBAR -->
-            <div class="h-14 flex items-center justify-between px-8 border-b border-white/5 bg-slate-900/20 backdrop-blur-sm">
-                <div class="flex items-center gap-2 text-sm text-slate-400">
-                    <span class="hover:text-white cursor-pointer transition-colors" onclick="Drive.loadFiles('root')">Root</span>
-                    <span class="material-icons-round text-[10px]">chevron_right</span>
-                    <span class="text-blue-400 font-medium" id="folder-name">Dashboard</span>
+                <!-- FILE GRID -->
+                <div id="file-grid" class="flex-1 overflow-y-auto p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 content-start custom-scrollbar"></div>
+
+                <!-- FAB UPLOAD -->
+                <div class="absolute bottom-8 right-8 z-50">
+                    <button onclick="document.getElementById('upload-input').click()" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-[0_0_30px_rgba(59,130,246,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all">
+                        <span class="material-icons-round text-3xl">add</span>
+                    </button>
+                    <input type="file" id="upload-input" class="hidden" multiple onchange="Upload.handle(this.files)">
                 </div>
-                <div class="flex gap-2">
-                    <button class="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all" onclick="UI.setView('grid')"><span class="material-icons-round">grid_view</span></button>
-                    <button class="p-2 rounded-lg hover:bg-white/5 text-slate-400 hover:text-white transition-all" onclick="UI.setView('list')"><span class="material-icons-round">view_list</span></button>
-                </div>
-            </div>
-
-            <!-- FILES GRID -->
-            <div id="file-grid" class="flex-1 overflow-y-auto p-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6 content-start custom-scrollbar"></div>
-
-            <!-- FAB UPLOAD -->
-            <div class="absolute bottom-8 right-8 z-50">
-                <button onclick="document.getElementById('upload-input').click()" class="w-16 h-16 rounded-2xl bg-gradient-to-br from-blue-600 to-purple-600 shadow-[0_0_30px_rgba(59,130,246,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all">
-                    <span class="material-icons-round text-3xl">add</span>
-                </button>
-                <input type="file" id="upload-input" class="hidden" multiple onchange="Upload.handle(this.files)">
-            </div>
-        </main>
+            </main>
+        </div>
     </div>
 
     <!-- VIEWER OVERLAY -->
@@ -213,7 +249,7 @@
         </div>
     </div>
 
-    <!-- UPLOAD MANAGER -->
+    <!-- UPLOAD MANAGER (minimizable) -->
     <div id="upload-manager" class="fixed bottom-6 right-24 w-80 bg-slate-900 border border-white/10 rounded-xl shadow-2xl overflow-hidden transform translate-y-[120%] transition-transform duration-300 z-[60]">
         <div class="bg-slate-800 p-3 flex justify-between items-center cursor-pointer" onclick="this.parentElement.classList.toggle('translate-y-[85%]')">
             <span class="text-xs font-bold text-white flex items-center gap-2"><span class="material-icons-round text-sm text-blue-400 animate-spin">sync</span> Uploading...</span>
@@ -225,10 +261,11 @@
     <script>
         // ================= CONFIG =================
         const AppConfig = {
-            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com', // Replace if needed
+            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com', // replace if needed
             scope: 'https://www.googleapis.com/auth/drive.file https://www.googleapis.com/auth/drive.metadata.readonly https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/userinfo.profile',
             discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
-            geminiKey: 'AIzaSyD0hkckrFjwctBCvbWjYYRxTfYkoAbPf4A' // Your provided key
+            geminiKey: 'AIzaSyD0hkckrFjwctBCvbWjYYRxTfYkoAbPf4A', // your key
+            vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn' // admin vault folder
         };
 
         const State = {
@@ -244,7 +281,7 @@
         // ================= AUTH =================
         const Auth = {
             client: null,
-            init: () => {
+            init() {
                 Auth.client = google.accounts.oauth2.initTokenClient({
                     client_id: AppConfig.clientId,
                     scope: AppConfig.scope,
@@ -254,45 +291,47 @@
                             return;
                         }
                         State.token = response.access_token;
+                        localStorage.setItem('g_token', State.token);
                         gapi.client.setToken({ access_token: State.token });
                         Auth.onSuccess();
                     }
                 });
                 gapi.load('client', async () => {
                     await gapi.client.init({ discoveryDocs: AppConfig.discoveryDocs });
-                    // Silent sign-in if token exists
-                    const savedToken = localStorage.getItem('g_token');
-                    if (savedToken) {
-                        State.token = savedToken;
-                        gapi.client.setToken({ access_token: savedToken });
+                    // try silent sign-in
+                    const saved = localStorage.getItem('g_token');
+                    if (saved) {
+                        State.token = saved;
+                        gapi.client.setToken({ access_token: saved });
                         Auth.onSuccess();
                     }
                 });
             },
-            signIn: () => Auth.client.requestAccessToken(),
-            signOut: () => {
+            signIn() { Auth.client.requestAccessToken(); },
+            signOut() {
                 google.accounts.oauth2.revoke(State.token, () => {
                     localStorage.removeItem('g_token');
                     location.reload();
                 });
             },
-            onSuccess: async () => {
-                localStorage.setItem('g_token', State.token);
+            async onSuccess() {
+                // hide auth screen, show main ui
                 gsap.to('#auth-screen', { opacity: 0, duration: 0.5, onComplete: () => {
                     document.getElementById('auth-screen').style.display = 'none';
                     document.getElementById('app-ui').classList.remove('hidden');
                     document.getElementById('app-ui').style.opacity = 1;
                 }});
-                // Load user profile
+
+                // load user profile
                 try {
-                    const userReq = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${State.token}`);
-                    const user = await userReq.json();
+                    const res = await fetch(`https://www.googleapis.com/oauth2/v1/userinfo?alt=json&access_token=${State.token}`);
+                    const user = await res.json();
                     document.getElementById('user-name').innerText = user.name || 'User';
                     document.getElementById('user-email').innerText = user.email || '';
                     document.getElementById('user-avatar').src = user.picture || '';
-                } catch (e) { console.warn('User info failed', e); }
+                } catch (e) { console.warn('user info error', e); }
 
-                // Load storage quota
+                // load storage quota
                 try {
                     const about = await gapi.client.drive.about.get({ fields: 'storageQuota' });
                     const quota = about.result.storageQuota;
@@ -301,26 +340,24 @@
                     document.getElementById('storage-used').innerText = `${used} GB`;
                     document.getElementById('storage-total').innerText = `/ ${total} GB`;
                     document.getElementById('storage-bar').style.width = `${(quota.usage / quota.limit) * 100}%`;
-                } catch (e) { console.warn('Storage quota failed', e); }
+                } catch (e) { console.warn('storage error', e); }
 
+                // load root folder
                 Drive.loadFiles('root');
             }
         };
 
-        // ================= DRIVE API (with token refresh handling) =================
+        // ================= DRIVE API (with token refresh) =================
         const Drive = {
             async call(fn, ...args) {
                 try {
                     return await fn(...args);
                 } catch (err) {
                     if (err.status === 401) {
-                        // Token expired – refresh by re-authenticating silently
+                        // token expired – try silent refresh
                         return new Promise((resolve) => {
                             Auth.client.requestAccessToken({ prompt: '', callback: async (resp) => {
-                                if (resp.error) {
-                                    Auth.signIn(); // fallback to interactive
-                                    return;
-                                }
+                                if (resp.error) { Auth.signIn(); return; }
                                 State.token = resp.access_token;
                                 localStorage.setItem('g_token', State.token);
                                 gapi.client.setToken({ access_token: State.token });
@@ -346,13 +383,16 @@
                     }));
                     State.files = response.result.files || [];
                     UI.renderGrid(State.files);
-                    document.getElementById('folder-name').innerText = folderId === 'root' ? 'My Drive' : 
-                                                                        folderId === 'starred' ? 'Starred' : 'Trash';
+                    document.getElementById('folder-name').innerText = 
+                        folderId === 'root' ? 'My Drive' : 
+                        folderId === 'starred' ? 'Starred' : 
+                        folderId === 'trash' ? 'Trash' : 
+                        folderId === AppConfig.vaultId ? 'Vault' : 'Folder';
                 } catch (e) {
                     Swal.fire({ icon: 'error', title: 'Drive Error', text: e.message, background: '#1e293b', color: '#fff' });
                 }
             },
-            search: (term) => {
+            search(term) {
                 clearTimeout(searchTimeout);
                 searchTimeout = setTimeout(async () => {
                     if (!term.trim()) { Drive.loadFiles(State.currentFolder); return; }
@@ -426,9 +466,10 @@
                     }
                 });
                 grid.innerHTML = html;
-                // Attach click handlers
+                // attach click listeners
                 document.querySelectorAll('[data-id]').forEach(el => {
                     el.addEventListener('click', (e) => {
+                        if (e.target.closest('.material-icons-round')?.onclick) return; // ignore more_vert
                         const id = el.dataset.id;
                         const type = el.dataset.type;
                         const file = State.files.find(f => f.id === id);
@@ -439,7 +480,7 @@
             }
         };
 
-        // ================= VIEWER & AI (with CORS fix) =================
+        // ================= VIEWER & AI (CORS-safe) =================
         const Viewer = {
             open(file) {
                 State.activeFile = file;
@@ -451,7 +492,7 @@
                 document.getElementById('ai-sidebar').classList.add('translate-x-full');
 
                 if (file.mimeType.includes('image')) {
-                    // Use authenticated fetch to bypass CORS (blob)
+                    // fetch with auth to avoid CORS
                     fetch(file.webContentLink || file.thumbnailLink, { headers: { Authorization: `Bearer ${State.token}` } })
                         .then(res => res.blob())
                         .then(blob => {
@@ -471,7 +512,6 @@
                             content.appendChild(img);
                         });
                 } else if (file.mimeType.includes('video')) {
-                    // Use direct link with auth header (if possible, else fallback)
                     content.innerHTML = `<video id="player" controls class="max-h-[80vh] rounded-lg w-full max-w-4xl"><source src="${file.webContentLink}" type="${file.mimeType}" /></video>`;
                     new Plyr('#player');
                 } else {
@@ -499,7 +539,6 @@
                 }
 
                 try {
-                    // Fetch image with auth header to bypass CORS
                     const response = await fetch(State.activeFile.webContentLink || State.activeFile.thumbnailLink, {
                         headers: { Authorization: `Bearer ${State.token}` }
                     });
@@ -533,7 +572,6 @@
                 messagesDiv.innerHTML += `<div class="text-right text-blue-300 mb-2">You: ${msg}</div>`;
                 input.value = '';
 
-                // If a file is active, include its content (text/OCR)
                 let context = '';
                 if (State.activeFile) {
                     if (State.activeFile.mimeType.includes('text') || State.activeFile.mimeType.includes('json')) {
@@ -542,7 +580,6 @@
                             context = await resp.text();
                         } catch (e) {}
                     } else if (State.activeFile.mimeType.includes('image')) {
-                        // OCR via Tesseract (simplified)
                         try {
                             const resp = await fetch(State.activeFile.webContentLink, { headers: { Authorization: `Bearer ${State.token}` } });
                             const blob = await resp.blob();
@@ -570,7 +607,7 @@
             }
         };
 
-        // ================= UPLOAD (simplified with progress) =================
+        // ================= UPLOAD (with progress) =================
         const Upload = {
             handle(files) {
                 const manager = document.getElementById('upload-manager');
@@ -650,10 +687,10 @@
             }
         };
 
-        // ================= EVENT BINDINGS =================
+        // ================= EVENT LISTENERS =================
         document.getElementById('search-box').addEventListener('keyup', (e) => Drive.search(e.target.value));
 
-        // Initialize
+        // start
         window.onload = Auth.init;
     </script>
 </body>
