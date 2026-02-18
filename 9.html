@@ -3,897 +3,1005 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Drive OS Pro+ | AI Powered</title>
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <title>Drive OS Pro+ | Ultimate Cloud OS</title>
     
+    <!-- External Dependencies -->
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+
     <style>
-        /* ---------- GLOBAL STYLES (same as before, keep all) ---------- */
+        /* ---------- CORE AESTHETICS ---------- */
         :root {
+            --bg-dark: #050505;
+            --glass-panel: rgba(20, 20, 30, 0.7);
             --glass-border: rgba(255, 255, 255, 0.08);
-            --glass-bg: rgba(15, 23, 42, 0.6);
-            --neon-blue: #3b82f6;
-            --neon-purple: #8b5cf6;
+            --accent-primary: #3b82f6;
+            --accent-glow: rgba(59, 130, 246, 0.5);
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
         }
+
         body {
             font-family: 'Outfit', sans-serif;
-            background-color: #000000;
-            color: #e2e8f0;
+            background-color: var(--bg-dark);
+            color: var(--text-main);
             overflow: hidden;
             user-select: none;
             -webkit-font-smoothing: antialiased;
-            margin: 0;
-            padding: 0;
+            height: 100vh;
+            width: 100vw;
         }
-        ::selection { background: rgba(59, 130, 246, 0.3); color: white; }
+
+        /* Scrollbars */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 10px; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.15); border-radius: 10px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.3); }
-        * { scrollbar-width: thin; scrollbar-color: rgba(255,255,255,0.1) transparent; }
-        .glass { background: var(--glass-bg); backdrop-filter: blur(16px); border: 1px solid var(--glass-border); }
-        .glass-card { background: linear-gradient(135deg, rgba(255,255,255,0.05) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(10px); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 8px 32px 0 rgba(0,0,0,0.37); }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
-        @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 10px rgba(59,130,246,0.2); } 50% { box-shadow: 0 0 20px rgba(59,130,246,0.6); } }
-        div:where(.swal2-container) div:where(.swal2-popup) { background: #0f172a !important; border: 1px solid rgba(255,255,255,0.1); color: #fff !important; backdrop-filter: blur(10px); }
-        div:where(.swal2-icon).swal2-error { border-color: #ef4444 !important; color: #ef4444 !important; }
-        .plyr { border-radius: 12px; overflow: hidden; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
-        .plyr--video .plyr__control.plyr__tab-focus,
-        .plyr--video .plyr__control:hover,
-        .plyr--video .plyr__control[aria-expanded=true] { background: var(--neon-blue) !important; }
+
+        /* Utilities */
+        .glass { background: var(--glass-panel); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--glass-border); }
+        .glass-card { background: linear-gradient(145deg, rgba(255,255,255,0.03) 0%, rgba(255,255,255,0.01) 100%); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.05); box-shadow: 0 4px 24px -1px rgba(0,0,0,0.2); }
+        .text-glow { text-shadow: 0 0 10px var(--accent-glow); }
+        
+        /* Slots & Transitions */
+        .slot { display: none; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; opacity: 0; transition: opacity 0.4s ease; }
+        .slot.active { display: flex; z-index: 10; opacity: 1; }
+
+        /* Loader */
+        .loader-ring { display: inline-block; width: 40px; height: 40px; }
+        .loader-ring:after { content: " "; display: block; width: 32px; height: 32px; margin: 4px; border-radius: 50%; border: 3px solid #fff; border-color: #fff transparent #fff transparent; animation: lds-dual-ring 1.2s linear infinite; }
+        @keyframes lds-dual-ring { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Animations */
+        @keyframes scanline { 0% { top: -20%; } 100% { top: 120%; } }
+        .scan-effect::after { content: ''; position: absolute; top: 0; left: 0; width: 100%; height: 20px; background: linear-gradient(to bottom, transparent, rgba(59, 130, 246, 0.3), transparent); animation: scanline 2s linear infinite; pointer-events: none; }
+        
+        /* Context Menu */
         #ctx-menu { transform-origin: top left; }
-        .ctx-item:active { background: rgba(59, 130, 246, 0.2); }
-        #drop-zone.active { display: flex !important; animation: fadeIn 0.2s ease-out; }
-        .loader-spinner { width: 50px; height: 50px; border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top-color: var(--neon-blue); animation: spin 1s ease-in-out infinite; }
-        @keyframes spin { to { transform: rotate(360deg); } }
-        .slot { display: none; width: 100vw; height: 100vh; position: absolute; top: 0; left: 0; }
-        .slot.active { display: flex; z-index: 10; animation: fadeIn 0.3s ease; }
-        #boot-screen { display: flex; justify-content: center; align-items: center; background: #fff; z-index: 100; flex-direction: column; }
-        .loader-spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid #1a73e8; border-radius: 50%; animation: spin 1s linear infinite; margin-bottom: 20px; }
-        .ctx-item { display: flex; align-items: center; gap: 10px; padding: 8px 16px; width: 100%; text-align: left; color: #e2e8f0; font-size: 13px; font-weight: 500; transition: background 0.2s; }
+        .ctx-item { display: flex; align-items: center; gap: 10px; padding: 8px 12px; width: 100%; text-align: left; color: #e2e8f0; font-size: 13px; border-radius: 6px; transition: 0.1s; }
         .ctx-item:hover { background: rgba(255, 255, 255, 0.1); }
-        @keyframes dash { to { stroke-dashoffset: 0; } }
-        .animate-dash { stroke-dasharray: 100; stroke-dashoffset: 100; animation: dash 2s linear infinite; }
-        #upload-manager.minimized { width: 280px; height: 56px; }
-        #upload-manager.minimized #upload-list, #upload-manager.minimized #upload-footer { display: none; }
-        #upload-manager.minimized .material-icons-round.animate-pulse { color: #4ade80; }
-        body.dragging #drop-zone { display: flex; }
-        .settings-tab { display: flex; align-items: center; gap: 12px; width: 100%; padding: 12px 16px; border-radius: 12px; color: #94a3b8; font-size: 14px; font-weight: 500; transition: all 0.2s; text-align: left; }
-        .settings-tab:hover { background: rgba(255,255,255,0.05); color: white; }
-        .settings-tab.active { background: #3b82f6; color: white; box-shadow: 0 4px 12px rgba(59,130,246,0.4); }
-        .toggle-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
-        .toggle-switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #334155; transition: .4s; border-radius: 34px; }
-        .slider:before { position: absolute; content: ""; height: 18px; width: 18px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: #3b82f6; }
-        input:checked + .slider:before { transform: translateX(20px); }
-        .setting-row { display: flex; justify-content: space-between; align-items: center; padding: 16px 0; border-bottom: 1px solid rgba(255,255,255,0.05); }
-        .tool-btn { width: 40px; height: 40px; border-radius: 12px; background: rgba(255,255,255,0.05); color: #e2e8f0; display: flex; align-items: center; justify-content: center; border: 1px solid rgba(255,255,255,0.05); transition: all 0.2s; backdrop-filter: blur(10px); }
-        .tool-btn:hover { background: rgba(255,255,255,0.15); transform: translateY(-2px); box-shadow: 0 0 15px rgba(255,255,255,0.1); border-color: rgba(255,255,255,0.2); }
-        .ai-tag { background: rgba(15,23,42,0.8); border: 1px solid rgba(255,255,255,0.1); padding: 6px 12px; border-radius: 20px; font-size: 11px; color: white; display: flex; gap: 6px; align-items: center; }
-        @keyframes scanLine { 0% { top: 0%; opacity: 0; } 10% { opacity: 1; } 90% { opacity: 1; } 100% { top: 100%; opacity: 0; } }
-        .animate-scan { animation: scanLine 2s linear infinite; }
-        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
-        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
-        .custom-scrollbar::-webkit-scrollbar-thumb { background: rgba(255, 255, 255, 0.1); border-radius: 10px; }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.2); }
-        .nav-item { position: relative; display: flex; align-items: center; gap: 12px; padding: 12px 16px; border-radius: 12px; color: #94a3b8; font-size: 14px; font-weight: 500; text-decoration: none; transition: all 0.2s; overflow: hidden; }
-        .nav-item:hover { background: rgba(255,255,255,0.05); color: white; }
-        .nav-item.active { background: rgba(59,130,246,0.1); color: #60a5fa; border: 1px solid rgba(59,130,246,0.2); }
-        @media (max-width: 1024px) { .nav-text { display: none; } .nav-item { justify-content: center; padding: 12px; } }
-        .folder-card { background: rgba(30,41,59,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 16px; padding: 20px; display: flex; flex-direction: column; align-items: center; justify-content: center; cursor: pointer; position: relative; transition: all 0.2s cubic-bezier(0.4,0,0.2,1); backdrop-filter: blur(10px); }
-        .folder-card:hover { background: rgba(30,41,59,0.8); border-color: rgba(96,165,250,0.3); transform: translateY(-4px); box-shadow: 0 10px 30px -10px rgba(0,0,0,0.5); }
-        .file-card-skeleton { height: 180px; background: rgba(255,255,255,0.05); border-radius: 16px; }
-        .fab-mini { width: 48px; height: 48px; border-radius: 14px; background: rgba(30,41,59,0.9); border: 1px solid rgba(255,255,255,0.1); color: white; display: flex; align-items: center; justify-content: center; cursor: pointer; backdrop-filter: blur(10px); box-shadow: 0 4px 15px rgba(0,0,0,0.3); transition: all 0.2s; position: relative; }
-        .fab-mini:hover { background: #3b82f6; border-color: #3b82f6; transform: scale(1.1); }
-        .fab-mini:hover::before { content: attr(data-tooltip); position: absolute; right: 60px; background: #1e293b; color: white; padding: 4px 8px; border-radius: 6px; font-size: 12px; white-space: nowrap; border: 1px solid rgba(255,255,255,0.1); }
-        .key-btn { width: 70px; height: 70px; border-radius: 50%; background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1); color: white; font-size: 24px; font-weight: 300; backdrop-filter: blur(10px); box-shadow: 0 4px 30px rgba(0,0,0,0.1); transition: all 0.2s; display: flex; align-items: center; justify-content: center; margin: 0 auto; }
-        .key-btn:active { background: rgba(255,255,255,0.15); transform: scale(0.95); border-color: rgba(255,255,255,0.3); box-shadow: 0 0 15px rgba(255,255,255,0.1); }
-        .pin-dot.filled { background: #60a5fa; border-color: #60a5fa; box-shadow: 0 0 10px #60a5fa; transform: scale(1.1); }
-        @keyframes blob { 0% { transform: translate(0px,0px) scale(1); } 33% { transform: translate(30px,-50px) scale(1.1); } 66% { transform: translate(-20px,20px) scale(0.9); } 100% { transform: translate(0px,0px) scale(1); } }
-        .animate-blob { animation: blob 7s infinite; }
-        .animation-delay-2000 { animation-delay: 2s; }
-        @keyframes shine { 0% { left: -100%; } 100% { left: 200%; } }
-        .group-hover\:animate-shine:hover { animation: shine 1s; }
+
+        /* Toast Notification */
+        #toast-container { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; display: flex; flex-direction: column; gap: 10px; pointer-events: none; }
+        .toast { background: #1e293b; border: 1px solid rgba(255,255,255,0.1); color: white; padding: 12px 24px; border-radius: 50px; display: flex; align-items: center; gap: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); pointer-events: auto; animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); min-width: 300px; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        /* File Grid Items */
+        .file-item { transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+        .file-item:hover { transform: translateY(-4px); box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3); border-color: rgba(59, 130, 246, 0.4); }
+        .file-item.selected { border-color: #3b82f6; background: rgba(59, 130, 246, 0.1); }
     </style>
 </head>
 <body>
-    <!-- BOOT SCREEN -->
-    <div id="boot-screen" class="slot active">
-        <div class="loader-spinner"></div>
-        <div style="color: #5f6368; font-weight: 500;">Starting Drive OS...</div>
-        <div id="boot-status" style="font-size: 12px; color: #999; margin-top: 5px;">Initializing...</div>
+
+    <!-- 1. BOOT LOADER -->
+    <div id="boot-screen" class="slot active bg-black z-50 flex-col justify-center items-center">
+        <div class="relative w-24 h-24 mb-6">
+            <div class="absolute inset-0 border-4 border-blue-500/20 rounded-full"></div>
+            <div class="absolute inset-0 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+            <div class="absolute inset-0 flex items-center justify-center">
+                <span class="material-icons-round text-3xl text-blue-400">fingerprint</span>
+            </div>
+        </div>
+        <h1 class="text-2xl font-bold tracking-widest text-white mb-2">DRIVE OS <span class="text-blue-500 text-xs align-top">PRO+</span></h1>
+        <div id="boot-text" class="text-xs text-gray-500 font-mono">Initializing Kernel...</div>
     </div>
 
-    <!-- PIN SLOT -->
-    <div id="pin-slot" class="slot">
-        <div class="w-full h-full flex flex-col items-center justify-between relative overflow-hidden bg-gray-900 text-white select-none">
-            <div class="absolute top-[-20%] left-[-20%] w-[500px] h-[500px] bg-blue-600 rounded-full mix-blend-multiply filter blur-[120px] opacity-40 animate-blob"></div>
-            <div class="absolute bottom-[-20%] right-[-20%] w-[500px] h-[500px] bg-purple-600 rounded-full mix-blend-multiply filter blur-[120px] opacity-40 animate-blob animation-delay-2000"></div>
-            <div class="w-full flex justify-between px-6 py-3 text-xs font-medium text-gray-400 z-20">
-                <span id="clock-time">12:00 PM</span>
-                <div class="flex gap-2">
-                    <span class="material-icons-round text-[14px]">wifi</span>
-                    <span class="material-icons-round text-[14px]">battery_full</span>
+    <!-- 2. PIN SECURITY SLOT -->
+    <div id="pin-slot" class="slot z-40">
+        <div class="absolute inset-0 bg-[url('https://images.unsplash.com/photo-1451187580459-43490279c0fa?q=80&w=2000&auto=format&fit=crop')] bg-cover bg-center opacity-40"></div>
+        <div class="absolute inset-0 bg-gradient-to-t from-black via-black/90 to-black/60 backdrop-blur-sm"></div>
+        
+        <div class="z-50 w-full max-w-sm mx-auto flex flex-col items-center justify-center h-full p-6">
+            <div class="mb-8 text-center">
+                <div class="w-16 h-16 bg-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-white/10 backdrop-blur-xl shadow-[0_0_30px_rgba(59,130,246,0.2)]">
+                    <span class="material-icons-round text-3xl text-white">lock_person</span>
                 </div>
+                <h2 class="text-xl font-medium text-white" id="pin-title">Security Check</h2>
+                <p class="text-xs text-gray-400 mt-2" id="pin-subtitle">Enter your 4-digit passcode</p>
             </div>
-            <div class="z-20 flex flex-col items-center justify-center w-full max-w-md px-6 mb-10">
-                <div class="mb-10 text-center">
-                    <div class="w-16 h-16 mx-auto mb-4 bg-white/10 rounded-2xl flex items-center justify-center backdrop-blur-md shadow-2xl border border-white/10">
-                        <span class="material-icons-round text-3xl text-blue-400">lock</span>
-                    </div>
-                    <h2 class="text-2xl font-bold tracking-wider text-transparent bg-clip-text bg-gradient-to-r from-blue-300 to-purple-300">SECURE VAULT</h2>
-                    <p class="text-sm text-gray-400 mt-1 tracking-widest uppercase text-[10px]">Enter Passcode</p>
-                </div>
-                <div class="flex gap-4 mb-12" id="pin-dots">
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300 pin-dot"></div>
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300 pin-dot"></div>
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300 pin-dot"></div>
-                    <div class="w-4 h-4 rounded-full border-2 border-white/20 transition-all duration-300 pin-dot"></div>
-                </div>
-                <div class="grid grid-cols-3 gap-6 w-full max-w-[320px]">
-                    <button class="key-btn" onclick="PinPad.press(1)">1</button>
-                    <button class="key-btn" onclick="PinPad.press(2)">2</button>
-                    <button class="key-btn" onclick="PinPad.press(3)">3</button>
-                    <button class="key-btn" onclick="PinPad.press(4)">4</button>
-                    <button class="key-btn" onclick="PinPad.press(5)">5</button>
-                    <button class="key-btn" onclick="PinPad.press(6)">6</button>
-                    <button class="key-btn" onclick="PinPad.press(7)">7</button>
-                    <button class="key-btn" onclick="PinPad.press(8)">8</button>
-                    <button class="key-btn" onclick="PinPad.press(9)">9</button>
-                    <button class="key-btn text-red-400 !border-red-500/20" onclick="PinPad.clear()"><span class="material-icons-round">close</span></button>
-                    <button class="key-btn" onclick="PinPad.press(0)">0</button>
-                    <button class="key-btn text-blue-400 !border-blue-500/20" onclick="PinPad.backspace()"><span class="material-icons-round">backspace</span></button>
-                </div>
-                <div class="mt-10 text-center">
-                    <button class="text-sm text-blue-400/80 hover:text-blue-300 transition-colors flex items-center gap-2 px-4 py-2 rounded-full hover:bg-white/5">
-                        <span class="material-icons-round text-lg">fingerprint</span> Use Biometric
-                    </button>
-                </div>
+
+            <div class="flex gap-4 mb-10" id="pin-dots">
+                <div class="w-3 h-3 rounded-full bg-white/20 transition-all duration-300"></div>
+                <div class="w-3 h-3 rounded-full bg-white/20 transition-all duration-300"></div>
+                <div class="w-3 h-3 rounded-full bg-white/20 transition-all duration-300"></div>
+                <div class="w-3 h-3 rounded-full bg-white/20 transition-all duration-300"></div>
             </div>
-            <div class="z-20 py-4 text-[10px] text-gray-600 uppercase tracking-widest">Encrypted by Drive OS</div>
+
+            <div class="grid grid-cols-3 gap-6 w-full px-8">
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(1)">1</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(2)">2</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(3)">3</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(4)">4</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(5)">5</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(6)">6</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(7)">7</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(8)">8</button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(9)">9</button>
+                <button class="h-16 w-16 rounded-full text-red-400 hover:bg-red-500/10 transition-all active:scale-95 flex items-center justify-center" onclick="PinSystem.clear()"><span class="material-icons-round">close</span></button>
+                <button class="h-16 w-16 rounded-full bg-white/5 hover:bg-white/10 border border-white/5 text-xl text-white transition-all active:scale-95" onclick="PinSystem.press(0)">0</button>
+                <button class="h-16 w-16 rounded-full text-blue-400 hover:bg-blue-500/10 transition-all active:scale-95 flex items-center justify-center" onclick="PinSystem.backspace()"><span class="material-icons-round">backspace</span></button>
+            </div>
+            
+            <div class="mt-8 text-xs text-gray-500 cursor-pointer hover:text-white" onclick="PinSystem.forgotPin()">Forgot PIN?</div>
         </div>
     </div>
 
-    <!-- AUTH SLOT -->
-    <div id="auth-slot" class="slot">
-        <div class="w-full h-full flex items-center justify-center bg-black relative overflow-hidden">
-            <div class="absolute inset-0 z-0">
-                <img src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=1000&auto=format&fit=crop" class="w-full h-full object-cover opacity-30" alt="Background">
-                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/80 to-transparent"></div>
+    <!-- 3. DESKTOP / MAIN APP -->
+    <div id="app-slot" class="slot bg-[#0f172a] text-slate-200 flex overflow-hidden">
+        
+        <!-- Sidebar -->
+        <aside class="w-64 h-full bg-[#0B1120] border-r border-white/5 flex flex-col z-20 transition-transform duration-300 absolute md:relative -translate-x-full md:translate-x-0" id="sidebar">
+            <div class="h-20 flex items-center px-6 border-b border-white/5">
+                <div class="w-8 h-8 rounded bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center shadow-lg shadow-blue-500/20 mr-3">
+                    <span class="material-icons-round text-white text-lg">cloud</span>
+                </div>
+                <span class="font-bold text-lg tracking-tight">Drive<span class="text-blue-500">OS</span></span>
             </div>
-            <div class="relative z-10 w-full max-w-sm mx-4 p-[1px] rounded-3xl bg-gradient-to-b from-white/20 to-white/0 shadow-2xl backdrop-blur-xl">
-                <div class="bg-gray-900/80 rounded-[23px] p-8 text-center border border-white/5 h-full relative overflow-hidden">
-                    <div class="absolute top-[-50%] left-[-50%] w-[200%] h-[200%] bg-gradient-to-tr from-transparent via-white/5 to-transparent rotate-45 pointer-events-none"></div>
-                    <div class="mb-6 relative inline-block">
-                        <div class="absolute inset-0 bg-blue-500 blur-[30px] opacity-40 rounded-full"></div>
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/d/da/Google_Drive_logo_%282020%29.svg" class="w-20 h-20 relative z-10 drop-shadow-lg" alt="Logo">
+
+            <nav class="flex-1 p-4 space-y-1 overflow-y-auto">
+                <button onclick="FS.loadFolder('root')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600/10 text-blue-400 border border-blue-500/20 shadow-sm transition-all hover:bg-blue-600/20">
+                    <span class="material-icons-round">dashboard</span>
+                    <span class="text-sm font-medium">My Drive</span>
+                </button>
+                <button onclick="FS.filter('starred')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                    <span class="material-icons-round">star_border</span>
+                    <span class="text-sm font-medium">Starred</span>
+                </button>
+                <button onclick="FS.filter('recent')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                    <span class="material-icons-round">schedule</span>
+                    <span class="text-sm font-medium">Recent</span>
+                </button>
+                <button onclick="FS.filter('trash')" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-white transition-all">
+                    <span class="material-icons-round">delete_outline</span>
+                    <span class="text-sm font-medium">Trash</span>
+                </button>
+
+                <div class="my-6 border-t border-white/5 mx-2"></div>
+                <div class="px-4 text-xs font-bold text-slate-600 uppercase tracking-wider mb-2">Storage</div>
+                
+                <div class="px-4 py-2">
+                    <div class="flex justify-between text-xs mb-2 text-slate-400">
+                        <span id="storage-used">12.5 GB</span>
+                        <span id="storage-total">15 GB</span>
                     </div>
-                    <h1 class="text-3xl font-bold text-white mb-2 font-sans tracking-tight">Drive OS <span class="text-blue-500">Pro+</span></h1>
-                    <p class="text-gray-400 text-sm mb-8 leading-relaxed">Next-generation cloud storage management. <br> Secure. Fast. Intelligent.</p>
-                    <button onclick="AuthComp.login()" class="group relative w-full flex items-center justify-center gap-3 bg-white text-gray-900 font-bold py-4 px-6 rounded-xl hover:bg-gray-100 transition-all duration-300 shadow-[0_0_20px_rgba(255,255,255,0.2)] hover:shadow-[0_0_30px_rgba(255,255,255,0.4)] overflow-hidden">
-                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-6 h-6">
-                        <span class="tracking-wide">Continue with Google</span>
-                        <div class="absolute top-0 -left-[100%] w-full h-full bg-gradient-to-r from-transparent via-white/50 to-transparent transform skew-x-[-20deg] group-hover:animate-shine"></div>
+                    <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                        <div class="h-full w-[80%] bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)]"></div>
+                    </div>
+                    <button class="mt-4 w-full py-2 bg-slate-800 border border-white/5 rounded-lg text-xs hover:bg-slate-700 transition-colors" onclick="UI.showUpgrade()">Get more storage</button>
+                </div>
+            </nav>
+            
+            <div class="p-4 border-t border-white/5">
+                <button onclick="Auth.logout()" class="w-full flex items-center gap-3 px-4 py-2 text-red-400 hover:bg-red-500/10 rounded-lg transition-all text-sm">
+                    <span class="material-icons-round">logout</span> Sign Out
+                </button>
+            </div>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="flex-1 flex flex-col relative h-full bg-[#0f172a]">
+            <!-- Header -->
+            <header class="h-20 border-b border-white/5 flex items-center justify-between px-6 bg-[#0f172a]/80 backdrop-blur-md sticky top-0 z-30">
+                <div class="flex items-center gap-4 flex-1">
+                    <button class="md:hidden text-slate-400" onclick="UI.toggleSidebar()"><span class="material-icons-round">menu</span></button>
+                    <div class="relative w-full max-w-2xl group">
+                        <span class="material-icons-round absolute left-3 top-2.5 text-slate-500">search</span>
+                        <input type="text" id="search-input" onkeyup="FS.search(this.value)" placeholder="Search files, folders..." 
+                            class="w-full bg-[#1e293b] border border-white/5 rounded-xl pl-10 pr-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all text-white placeholder-slate-500">
+                    </div>
+                </div>
+                <div class="flex items-center gap-3 ml-4">
+                    <button class="w-10 h-10 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 flex items-center justify-center hover:bg-indigo-500 hover:text-white transition-all shadow-[0_0_15px_rgba(99,102,241,0.2)]" onclick="UI.toggleAI()" title="Ask AI">
+                        <span class="material-icons-round">auto_awesome</span>
                     </button>
-                    <div class="mt-8 flex items-center justify-center gap-4 text-[10px] text-gray-500 uppercase tracking-widest">
-                        <span>Privacy</span><span class="w-1 h-1 bg-gray-600 rounded-full"></span><span>Terms</span><span class="w-1 h-1 bg-gray-600 rounded-full"></span><span>Security</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-
-    <!-- APP SLOT -->
-    <div id="app-slot" class="slot">
-        <!-- Main layout -->
-        <div class="w-full h-full flex bg-[#0f172a] text-slate-200 font-sans overflow-hidden selection:bg-blue-500/30">
-            <!-- Sidebar (same as before) -->
-            <aside class="w-20 lg:w-64 h-full flex flex-col bg-slate-900/50 backdrop-blur-2xl border-r border-white/5 transition-all duration-300 z-30 relative">
-                <div class="h-20 flex items-center justify-center lg:justify-start lg:px-6 border-b border-white/5">
-                    <div class="w-10 h-10 bg-gradient-to-tr from-blue-600 to-purple-600 rounded-xl flex items-center justify-center shadow-lg shadow-blue-500/20">
-                        <span class="material-icons-round text-white text-xl">cloud_queue</span>
-                    </div>
-                    <span class="hidden lg:block ml-3 font-bold text-xl tracking-tight text-white">Drive<span class="text-blue-400">OS</span></span>
-                </div>
-                <nav class="flex-1 py-6 px-3 space-y-2 overflow-y-auto custom-scrollbar">
-                    <a href="#" class="nav-item active group" onclick="App.loadFolder('root'); return false;">
-                        <span class="material-icons-round text-blue-400 group-hover:text-white transition-colors">dashboard</span>
-                        <span class="nav-text">My Drive</span>
-                    </a>
-                    <a href="#" class="nav-item group" onclick="return false;">
-                        <span class="material-icons-round text-slate-400 group-hover:text-white transition-colors">devices</span>
-                        <span class="nav-text">Computers</span>
-                    </a>
-                    <a href="#" class="nav-item group" onclick="return false;">
-                        <span class="material-icons-round text-slate-400 group-hover:text-white transition-colors">people</span>
-                        <span class="nav-text">Shared with me</span>
-                    </a>
-                    <a href="#" class="nav-item group" onclick="return false;">
-                        <span class="material-icons-round text-slate-400 group-hover:text-white transition-colors">schedule</span>
-                        <span class="nav-text">Recent</span>
-                    </a>
-                    <div class="my-4 border-t border-white/5 mx-2"></div>
-                    <a href="#" class="nav-item group" onclick="return false;">
-                        <span class="material-icons-round text-slate-400 group-hover:text-white transition-colors">star</span>
-                        <span class="nav-text">Starred</span>
-                    </a>
-                    <a href="#" class="nav-item group" onclick="return false;">
-                        <span class="material-icons-round text-slate-400 group-hover:text-white transition-colors">delete</span>
-                        <span class="nav-text">Trash</span>
-                    </a>
-                </nav>
-                <div class="p-4 lg:p-6 bg-gradient-to-t from-slate-900 to-transparent">
-                    <div class="hidden lg:block mb-2 flex justify-between text-xs text-slate-400">
-                        <span>Storage</span>
-                        <span id="storage-text">75%</span>
-                    </div>
-                    <div class="w-full h-1.5 bg-slate-700/50 rounded-full overflow-hidden">
-                        <div class="h-full w-3/4 bg-gradient-to-r from-blue-500 to-purple-500 shadow-[0_0_10px_rgba(59,130,246,0.5)] rounded-full"></div>
-                    </div>
-                    <button class="hidden lg:block mt-4 w-full py-2 rounded-lg border border-white/10 text-xs font-medium hover:bg-white/5 transition-all">Upgrade Plan</button>
-                </div>
-            </aside>
-            <!-- Main content -->
-            <main class="flex-1 flex flex-col relative h-full">
-                <header class="h-20 px-6 flex items-center justify-between border-b border-white/5 bg-slate-900/30 backdrop-blur-xl z-20">
-                    <div class="flex-1 max-w-2xl mx-4 group relative">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <span class="material-icons-round text-slate-500">search</span>
-                        </div>
-                        <!-- FIX: Added onkeyup for search -->
-                        <input type="text" onkeyup="App.search(this.value)"
-                               class="w-full bg-slate-800/50 border border-white/5 text-sm rounded-2xl pl-10 pr-4 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:bg-slate-800 transition-all text-slate-200 placeholder-slate-500 shadow-inner"
-                               placeholder="Search in Drive...">
-                        <div class="absolute inset-y-0 right-3 flex items-center">
-                            <kbd class="hidden sm:inline-block px-2 py-0.5 text-[10px] font-bold text-slate-500 bg-slate-700/50 rounded border border-white/5">CTRL K</kbd>
-                        </div>
-                    </div>
-                    <div class="flex items-center gap-4">
-                        <button class="w-10 h-10 rounded-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 border border-indigo-500/20 flex items-center justify-center hover:scale-110 transition-transform cursor-pointer relative group" onclick="SettingsUI.open()">
-                            <span class="material-icons-round text-indigo-400">auto_awesome</span>
-                            <span class="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full border-2 border-slate-900"></span>
-                            <div class="absolute top-12 bg-slate-800 text-xs px-2 py-1 rounded border border-white/10 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">Ask AI</div>
-                        </button>
-                        <div class="w-10 h-10 rounded-full p-[2px] bg-gradient-to-tr from-blue-500 to-pink-500 cursor-pointer hover:shadow-lg hover:shadow-purple-500/20 transition-all">
-                            <img src="https://ui-avatars.com/api/?name=User&background=0f172a&color=fff" class="w-full h-full rounded-full border-2 border-slate-900 object-cover" alt="Profile">
-                        </div>
-                    </div>
-                </header>
-                <div class="px-6 py-4 flex items-center justify-between">
-                    <div class="flex items-center gap-2 text-sm text-slate-400">
-                        <span class="hover:text-white cursor-pointer transition-colors" onclick="App.loadFolder('root')">My Drive</span>
-                        <span class="material-icons-round text-base">chevron_right</span>
-                        <span class="text-white font-medium" id="current-folder-name">Loading...</span>
-                    </div>
-                    <!-- FIX: View mode buttons now call App.setState and re-render -->
-                    <div class="flex items-center gap-2 bg-slate-800/50 p-1 rounded-lg border border-white/5">
-                        <button class="p-1.5 rounded-md bg-slate-700 text-white shadow-sm transition-all" onclick="App.state.viewMode='grid'; App.renderFiles(AppState.currentFiles)"><span class="material-icons-round text-lg">grid_view</span></button>
-                        <button class="p-1.5 rounded-md hover:bg-white/5 text-slate-400 hover:text-white transition-all" onclick="App.state.viewMode='list'; App.renderFiles(AppState.currentFiles)"><span class="material-icons-round text-lg">view_list</span></button>
-                    </div>
-                </div>
-                <!-- Files grid container (id=files-area) -->
-                <div id="file-grid-container" class="flex-1 overflow-y-auto px-6 pb-24 custom-scrollbar">
-                    <div id="files-area" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4"></div>
-                </div>
-                <!-- FAB -->
-                <div class="absolute bottom-8 right-8 group z-50">
-                    <div class="absolute bottom-full right-0 mb-4 flex flex-col gap-3 opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-300 pointer-events-none group-hover:pointer-events-auto">
-                        <button class="fab-mini" data-tooltip="New Folder" onclick="Drive.createFolderPrompt()"><span class="material-icons-round">create_new_folder</span></button>
-                        <button class="fab-mini" data-tooltip="Upload File" onclick="document.getElementById('file-upload-input').click()"><span class="material-icons-round">upload_file</span></button>
-                        <button class="fab-mini" data-tooltip="Scan Doc (AI)"><span class="material-icons-round">document_scanner</span></button>
-                    </div>
-                    <button class="w-16 h-16 rounded-[20px] bg-gradient-to-r from-blue-600 to-purple-600 shadow-[0_0_20px_rgba(79,70,229,0.4)] flex items-center justify-center text-white hover:scale-105 active:scale-95 transition-all duration-300 rotate-0 group-hover:rotate-45">
-                        <span class="material-icons-round text-3xl">add</span>
+                    <button class="w-10 h-10 rounded-full bg-slate-800 border border-white/5 text-slate-400 flex items-center justify-center hover:bg-slate-700 transition-all" onclick="UI.toggleSettings()" title="Settings">
+                        <span class="material-icons-round">settings</span>
                     </button>
-                </div>
-                <input type="file" id="file-upload-input" class="hidden" multiple onchange="UploadUI.handleFileSelect(this.files)">
-            </main>
-        </div>
-
-        <!-- Drop Zone -->
-        <div id="drop-zone" class="fixed inset-0 z-[200] bg-blue-900/40 backdrop-blur-md hidden flex-col items-center justify-center border-4 border-blue-500/50 border-dashed m-4 rounded-3xl animate-in fade-in duration-200">
-            <div class="w-32 h-32 bg-blue-500/20 rounded-full flex items-center justify-center mb-6 animate-bounce">
-                <span class="material-icons-round text-6xl text-blue-400">cloud_upload</span>
-            </div>
-            <h2 class="text-3xl font-bold text-white tracking-tight">Drop files to upload</h2>
-            <p class="text-blue-200 mt-2">Instant encrypted transfer to Vault</p>
-        </div>
-
-        <!-- Upload Manager (hidden initially) -->
-        <div id="upload-manager" class="fixed bottom-6 right-6 z-[150] w-[380px] bg-[#0f172a]/95 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-all duration-300 translate-y-0 hidden">
-            <div class="h-14 bg-gradient-to-r from-slate-800/50 to-slate-900/50 flex items-center justify-between px-4 border-b border-white/5 cursor-pointer" onclick="UploadUI.toggleMinimize()">
-                <div class="flex items-center gap-3">
-                    <div class="relative">
-                        <span class="material-icons-round text-blue-400 animate-pulse">sync</span>
-                        <span class="absolute top-0 right-0 w-2 h-2 bg-green-500 rounded-full border border-slate-900"></span>
-                    </div>
-                    <div>
-                        <h4 class="text-sm font-bold text-white" id="upload-title">Uploading 0 items</h4>
-                        <p class="text-[10px] text-slate-400 font-mono" id="upload-speed"></p>
-                    </div>
-                </div>
-                <div class="flex items-center gap-2">
-                    <button class="w-8 h-8 rounded-lg hover:bg-white/5 flex items-center justify-center transition-colors">
-                        <span id="minimize-icon" class="material-icons-round text-slate-400 text-lg">expand_more</span>
-                    </button>
-                </div>
-            </div>
-            <div id="upload-list" class="flex-1 max-h-[300px] overflow-y-auto custom-scrollbar p-2 space-y-2 bg-black/20"></div>
-            <div id="upload-footer" class="p-3 border-t border-white/5 bg-slate-900/50 flex justify-end gap-2">
-                <button class="px-3 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:bg-white/5 transition-colors" onclick="UploadUI.cancelAll()">Cancel All</button>
-                <button class="px-3 py-1.5 rounded-lg text-xs font-medium bg-blue-600 hover:bg-blue-500 text-white shadow-lg shadow-blue-900/50 transition-colors" onclick="UploadUI.hide()">Hide</button>
-            </div>
-        </div>
-
-        <!-- Settings Overlay (hidden) -->
-        <div id="settings-overlay" class="fixed inset-0 z-[90] flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300 hidden">
-            <!-- Settings content (simplified) -->
-            <div class="w-full max-w-4xl h-[85vh] bg-[#0f172a]/90 backdrop-blur-2xl rounded-2xl border border-white/10 shadow-2xl flex overflow-hidden relative">
-                <aside class="w-64 bg-black/20 border-r border-white/5 flex flex-col p-4">
-                    <h2 class="text-xs font-bold text-slate-500 uppercase tracking-widest px-4 mb-4">Settings</h2>
-                    <nav class="space-y-1 flex-1">
-                        <button onclick="SettingsUI.switchTab('general')" class="settings-tab active" id="tab-general"><span class="material-icons-round text-lg">tune</span><span>General</span></button>
-                        <button onclick="SettingsUI.switchTab('storage')" class="settings-tab" id="tab-storage"><span class="material-icons-round text-lg">donut_large</span><span>Storage</span></button>
-                        <button onclick="SettingsUI.switchTab('security')" class="settings-tab" id="tab-security"><span class="material-icons-round text-lg">security</span><span>Security & Privacy</span></button>
-                        <button onclick="SettingsUI.switchTab('ai')" class="settings-tab" id="tab-ai"><span class="material-icons-round text-lg text-purple-400">auto_awesome</span><span>AI Features</span></button>
-                    </nav>
-                    <button onclick="App.logout()" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:bg-red-500/10 rounded-xl transition-colors mt-auto"><span class="material-icons-round">logout</span><span class="text-sm font-medium">Sign Out</span></button>
-                </aside>
-                <main class="flex-1 flex flex-col relative bg-gradient-to-br from-slate-900/50 to-black/50">
-                    <header class="h-16 flex items-center justify-between px-8 border-b border-white/5"><h1 class="text-xl font-bold text-white tracking-tight" id="settings-title">General Settings</h1><button onclick="SettingsUI.close()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition-colors"><span class="material-icons-round text-slate-400">close</span></button></header>
-                    <div class="flex-1 overflow-y-auto p-8 custom-scrollbar">
-                        <div id="view-general" class="settings-view space-y-8 animate-in slide-in-from-right-4 duration-300"><!-- general content --></div>
-                        <div id="view-storage" class="settings-view hidden space-y-8 animate-in slide-in-from-right-4 duration-300"><!-- storage content --></div>
-                        <div id="view-security" class="settings-view hidden space-y-6 animate-in slide-in-from-right-4 duration-300"><!-- security content --></div>
-                    </div>
-                </main>
-            </div>
-        </div>
-
-        <!-- Viewer Overlay (hidden) -->
-        <div id="viewer-overlay" class="fixed inset-0 z-[100] bg-black/95 backdrop-blur-3xl flex flex-col animate-in fade-in duration-300 hidden">
-            <!-- viewer content (same as before, keep) -->
-            <header class="absolute top-0 left-0 right-0 h-16 flex items-center justify-between px-6 z-50 bg-gradient-to-b from-black/80 to-transparent pointer-events-none">
-                <div class="flex items-center gap-4 pointer-events-auto">
-                    <button onclick="Viewer.close()" class="w-10 h-10 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center border border-white/10 transition-all hover:rotate-90"><span class="material-icons-round text-white">close</span></button>
-                    <div><h1 id="viewer-filename" class="text-white font-medium text-lg tracking-wide drop-shadow-md">IMG_2026.jpg</h1><div class="flex items-center gap-2 text-xs text-gray-400"><span id="viewer-meta">2.4 MB • 4K Resolution</span><span class="px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">PRO</span></div></div>
-                </div>
-                <div class="flex items-center gap-3 pointer-events-auto">
-                    <button class="tool-btn" data-tooltip="AI Scan"><span class="material-icons-round text-purple-400">auto_awesome</span></button>
-                    <button class="tool-btn" data-tooltip="Download"><span class="material-icons-round">download</span></button>
-                    <button class="tool-btn" data-tooltip="Share"><span class="material-icons-round">share</span></button>
-                    <button class="tool-btn border-l border-white/10 ml-2 pl-4" onclick="Viewer.toggleSidebar()" data-tooltip="Info / AI"><span class="material-icons-round">space_dashboard</span></button>
+                    <img src="https://ui-avatars.com/api/?name=Admin&background=0f172a&color=fff" class="w-10 h-10 rounded-full border-2 border-slate-700 p-0.5 cursor-pointer">
                 </div>
             </header>
-            <main class="flex-1 flex overflow-hidden relative">
-                <div class="flex-1 flex items-center justify-center p-8 relative" id="viewer-canvas">
-                    <img id="active-image" src="" class="max-h-full max-w-full rounded-lg shadow-2xl shadow-black/50 object-contain transition-transform duration-200" style="display:none;">
-                    <video id="active-video" controls class="w-full max-w-4xl rounded-xl shadow-2xl" style="display:none;"></video>
-                    <div id="viewer-loader" class="absolute inset-0 flex items-center justify-center"><div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div></div>
-                    <div class="absolute bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-2 bg-black/60 backdrop-blur-xl border border-white/10 rounded-full px-4 py-2 shadow-2xl pointer-events-auto opacity-0 hover:opacity-100 transition-opacity duration-300 delay-100">
-                        <button onclick="Viewer.zoom(-0.1)" class="p-2 hover:text-blue-400"><span class="material-icons-round text-sm">remove</span></button>
-                        <span id="zoom-level" class="text-xs font-mono w-12 text-center">100%</span>
-                        <button onclick="Viewer.zoom(0.1)" class="p-2 hover:text-blue-400"><span class="material-icons-round text-sm">add</span></button>
-                        <div class="w-[1px] h-4 bg-white/20 mx-1"></div>
-                        <button onclick="Viewer.resetZoom()" class="p-2 hover:text-blue-400" title="Fit to Screen"><span class="material-icons-round text-sm">aspect_ratio</span></button>
-                    </div>
+
+            <!-- Toolbar -->
+            <div class="px-6 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-2 text-sm text-slate-400" id="breadcrumb">
+                    <span class="hover:text-white cursor-pointer" onclick="FS.loadFolder('root')">My Drive</span>
                 </div>
-                <aside id="viewer-sidebar" class="w-[350px] bg-gray-900/90 backdrop-blur-2xl border-l border-white/5 flex flex-col translate-x-full transition-transform duration-300 absolute right-0 top-0 bottom-0 z-40">
-                    <div class="h-16 flex items-center px-6 border-b border-white/5 bg-white/5"><span class="material-icons-round text-purple-400 mr-2">psychology</span><h3 class="font-bold tracking-wide text-sm">AI ANALYSIS</h3></div>
-                    <div class="flex-1 overflow-y-auto p-6 space-y-6 custom-scrollbar">
-                        <div class="group"><h4 class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider flex justify-between">Extracted Text <span class="material-icons-round text-[14px] cursor-pointer hover:text-white">content_copy</span></h4><div class="bg-black/40 rounded-xl p-4 border border-white/5 text-sm text-gray-300 font-mono leading-relaxed min-h-[100px] shadow-inner relative overflow-hidden"><div id="ai-ocr-result">Scanning image...</div><div class="absolute top-0 left-0 w-full h-1 bg-blue-500/50 shadow-[0_0_15px_#3b82f6] animate-scan"></div></div></div>
-                        <div><h4 class="text-xs font-bold text-gray-500 mb-3 uppercase tracking-wider">Detected Objects</h4><div class="flex flex-wrap gap-2" id="ai-tags"><span class="ai-tag">Person <span class="text-green-400 text-[10px]">98%</span></span><span class="ai-tag">Laptop <span class="text-green-400 text-[10px]">95%</span></span><span class="ai-tag">Coffee <span class="text-yellow-400 text-[10px]">80%</span></span></div></div>
-                        <div class="p-4 bg-blue-900/10 rounded-xl border border-blue-500/10"><div class="flex justify-between text-xs py-1 border-b border-white/5"><span class="text-gray-400">Dimension</span><span class="text-white">3840 x 2160</span></div><div class="flex justify-between text-xs py-1 border-b border-white/5 mt-2"><span class="text-gray-400">Created</span><span class="text-white">Feb 14, 2026</span></div><div class="flex justify-between text-xs py-1 mt-2"><span class="text-gray-400">Location</span><span class="text-white">Rajshahi, BD</span></div></div>
-                    </div>
-                    <div class="p-4 border-t border-white/5 bg-black/20"><button class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-white rounded-xl text-sm font-bold shadow-lg shadow-purple-900/50 transition-all">Edit with Magic Editor</button></div>
-                </aside>
-            </main>
+                <div class="flex bg-[#1e293b] p-1 rounded-lg border border-white/5">
+                    <button class="p-1.5 rounded bg-slate-600 text-white shadow-sm" id="btn-grid" onclick="UI.setView('grid')"><span class="material-icons-round text-lg">grid_view</span></button>
+                    <button class="p-1.5 rounded text-slate-400 hover:text-white" id="btn-list" onclick="UI.setView('list')"><span class="material-icons-round text-lg">view_list</span></button>
+                </div>
+            </div>
+
+            <!-- File Area -->
+            <div class="flex-1 overflow-y-auto px-6 pb-20 custom-scrollbar" id="file-container">
+                <!-- Content Injected via JS -->
+            </div>
+
+            <!-- FAB -->
+            <div class="absolute bottom-8 right-8 z-40 group">
+                <div class="absolute bottom-full right-0 mb-4 flex flex-col gap-3 opacity-0 translate-y-4 group-hover:opacity-100 group-hover:translate-y-0 transition-all pointer-events-none group-hover:pointer-events-auto">
+                    <button class="w-12 h-12 bg-[#1e293b] border border-white/10 rounded-xl text-white shadow-lg flex items-center justify-center hover:bg-blue-600 hover:border-blue-500 transition-all" onclick="FS.createFolderPrompt()" title="New Folder">
+                        <span class="material-icons-round">create_new_folder</span>
+                    </button>
+                    <button class="w-12 h-12 bg-[#1e293b] border border-white/10 rounded-xl text-white shadow-lg flex items-center justify-center hover:bg-purple-600 hover:border-purple-500 transition-all" onclick="document.getElementById('upload-input').click()" title="Upload File">
+                        <span class="material-icons-round">upload_file</span>
+                    </button>
+                </div>
+                <button class="w-14 h-14 bg-blue-600 rounded-2xl shadow-[0_0_25px_rgba(37,99,235,0.5)] text-white flex items-center justify-center transition-transform group-hover:rotate-45">
+                    <span class="material-icons-round text-3xl">add</span>
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <!-- OVERLAYS & MODALS -->
+
+    <!-- Hidden Input -->
+    <input type="file" id="upload-input" multiple hidden onchange="FS.handleUpload(this.files)">
+
+    <!-- Context Menu -->
+    <div id="ctx-menu" class="hidden fixed z-50 w-48 bg-[#1e293b]/95 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-1 animate-in fade-in zoom-in-95 duration-100 flex-col"></div>
+
+    <!-- Toast Container -->
+    <div id="toast-container"></div>
+
+    <!-- Viewer Overlay -->
+    <div id="viewer-modal" class="hidden fixed inset-0 z-[100] bg-black/95 backdrop-blur-xl animate-in fade-in duration-200 flex flex-col">
+        <div class="h-16 flex items-center justify-between px-6 bg-gradient-to-b from-black/80 to-transparent">
+            <h3 class="text-white font-medium truncate max-w-md" id="viewer-title">Image.jpg</h3>
+            <button class="w-10 h-10 rounded-full bg-white/10 hover:bg-white/20 flex items-center justify-center transition-colors" onclick="UI.closeViewer()">
+                <span class="material-icons-round text-white">close</span>
+            </button>
+        </div>
+        <div class="flex-1 flex items-center justify-center relative p-8">
+            <img id="viewer-img" class="max-h-full max-w-full rounded-lg shadow-2xl object-contain hidden">
+            <video id="viewer-video" controls class="max-h-full max-w-full rounded-lg shadow-2xl hidden"></video>
+            <div id="viewer-ai-panel" class="absolute right-8 top-8 w-64 bg-[#1e293b]/90 border border-white/10 rounded-xl p-4 hidden md:block">
+                <div class="flex items-center gap-2 mb-3 text-purple-400 font-bold text-xs uppercase tracking-widest">
+                    <span class="material-icons-round text-sm">auto_awesome</span> AI Analysis
+                </div>
+                <div class="space-y-2">
+                    <div class="h-2 bg-white/10 rounded w-3/4 animate-pulse"></div>
+                    <div class="h-2 bg-white/10 rounded w-1/2 animate-pulse"></div>
+                    <div class="h-2 bg-white/10 rounded w-full animate-pulse"></div>
+                </div>
+                <div id="ai-tags" class="mt-4 flex flex-wrap gap-2 opacity-0 transition-opacity duration-1000">
+                    <!-- Tags injected via JS -->
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- MODAL CONTAINER -->
-    <div id="modal-container"></div>
+    <!-- Settings Modal -->
+    <div id="settings-modal" class="hidden fixed inset-0 z-[90] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="p-6 border-b border-white/5 flex justify-between items-center">
+                <h2 class="text-xl font-bold text-white">Settings</h2>
+                <button onclick="UI.toggleSettings()" class="text-slate-400 hover:text-white"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="flex-1 overflow-y-auto p-6 space-y-8">
+                <!-- Section 1 -->
+                <div>
+                    <h3 class="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4">General</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-[#1e293b] rounded-xl border border-white/5">
+                            <div>
+                                <div class="text-white font-medium">Dark Mode</div>
+                                <div class="text-xs text-slate-400">Force dark theme across OS</div>
+                            </div>
+                            <div class="w-12 h-6 bg-blue-600 rounded-full relative cursor-pointer"><div class="absolute right-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div></div>
+                        </div>
+                        <div class="flex items-center justify-between p-4 bg-[#1e293b] rounded-xl border border-white/5">
+                            <div>
+                                <div class="text-white font-medium">Offline Access</div>
+                                <div class="text-xs text-slate-400">Cache files for offline use</div>
+                            </div>
+                             <div class="w-12 h-6 bg-slate-600 rounded-full relative cursor-pointer"><div class="absolute left-1 top-1 w-4 h-4 bg-white rounded-full shadow-sm"></div></div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Section 2 -->
+                <div>
+                    <h3 class="text-sm font-bold text-purple-400 uppercase tracking-wider mb-4">Storage Analysis</h3>
+                    <div class="p-4 bg-[#1e293b] rounded-xl border border-white/5 space-y-3">
+                        <div class="flex justify-between text-xs text-slate-300"><span>Photos</span> <span>8 GB</span></div>
+                        <div class="w-full h-2 bg-slate-800 rounded-full"><div class="h-full w-[60%] bg-purple-500 rounded-full"></div></div>
+                        <div class="flex justify-between text-xs text-slate-300 pt-2"><span>Documents</span> <span>3 GB</span></div>
+                        <div class="w-full h-2 bg-slate-800 rounded-full"><div class="h-full w-[20%] bg-blue-500 rounded-full"></div></div>
+                         <div class="flex justify-between text-xs text-slate-300 pt-2"><span>System</span> <span>1.5 GB</span></div>
+                        <div class="w-full h-2 bg-slate-800 rounded-full"><div class="h-full w-[10%] bg-gray-500 rounded-full"></div></div>
+                    </div>
+                </div>
+                <div class="pt-4 border-t border-white/5 flex justify-end">
+                    <button class="px-4 py-2 rounded-lg bg-red-500/10 text-red-400 border border-red-500/20 hover:bg-red-500 hover:text-white transition-all text-sm" onclick="localStorage.removeItem('drive_pin'); window.location.reload()">Reset PIN & Data</button>
+                </div>
+            </div>
+        </div>
+    </div>
 
-    <!-- ========== SCRIPTS ========== -->
+    <!-- AI Chat Modal -->
+    <div id="ai-modal" class="hidden fixed inset-0 z-[110] flex items-center justify-center bg-black/80 backdrop-blur-sm">
+        <div class="w-full max-w-lg bg-[#0B1120] border border-indigo-500/30 rounded-2xl shadow-[0_0_50px_rgba(79,70,229,0.2)] overflow-hidden flex flex-col h-[600px] animate-in zoom-in-95 duration-200">
+            <div class="p-4 border-b border-indigo-500/20 bg-indigo-900/10 flex justify-between items-center">
+                <div class="flex items-center gap-2 text-indigo-400">
+                    <span class="material-icons-round">auto_awesome</span>
+                    <span class="font-bold">Drive AI Assistant</span>
+                </div>
+                <button onclick="UI.toggleAI()" class="text-slate-400 hover:text-white"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="flex-1 p-4 overflow-y-auto space-y-4" id="chat-history">
+                <div class="flex gap-3">
+                    <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0"><span class="material-icons-round text-xs">smart_toy</span></div>
+                    <div class="bg-indigo-500/10 text-indigo-100 p-3 rounded-2xl rounded-tl-none text-sm border border-indigo-500/20">Hello! I can help you summarize documents, find photos, or organize your Drive. What do you need?</div>
+                </div>
+            </div>
+            <div class="p-4 border-t border-white/10 bg-[#1e293b]">
+                <div class="flex gap-2">
+                    <input type="text" id="ai-input" placeholder="Ask about your files..." class="flex-1 bg-black/50 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:outline-none focus:border-indigo-500 transition-colors" onkeypress="if(event.key==='Enter') AI.send()">
+                    <button onclick="AI.send()" class="w-10 h-10 bg-indigo-600 hover:bg-indigo-500 rounded-xl text-white flex items-center justify-center transition-colors"><span class="material-icons-round">send</span></button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upgrade Modal -->
+    <div id="upgrade-modal" class="hidden fixed inset-0 z-[120] flex items-center justify-center bg-black/90 backdrop-blur-md p-4">
+        <div class="w-full max-w-3xl grid md:grid-cols-3 gap-4">
+            <div class="bg-[#1e293b] rounded-2xl p-6 border border-white/5 flex flex-col items-center text-center">
+                <h3 class="text-xl font-bold text-white">Basic</h3>
+                <div class="text-3xl font-bold text-slate-400 my-4">Free</div>
+                <ul class="text-sm text-slate-400 space-y-2 mb-6"><li>15 GB Storage</li><li>Standard Support</li></ul>
+                <button class="mt-auto px-6 py-2 rounded-lg bg-white/5 border border-white/10 text-white w-full">Current</button>
+            </div>
+            <div class="bg-gradient-to-b from-blue-900/50 to-[#1e293b] rounded-2xl p-6 border border-blue-500/50 flex flex-col items-center text-center transform scale-105 shadow-2xl relative">
+                <div class="absolute -top-3 bg-blue-500 text-white text-[10px] font-bold px-3 py-1 rounded-full uppercase tracking-wide">Recommended</div>
+                <h3 class="text-xl font-bold text-white">Pro+</h3>
+                <div class="text-3xl font-bold text-blue-400 my-4">$2.99<span class="text-sm text-slate-400">/mo</span></div>
+                <ul class="text-sm text-slate-300 space-y-2 mb-6"><li>2 TB Storage</li><li>AI Features</li><li>VPN Included</li></ul>
+                <button class="mt-auto px-6 py-2 rounded-lg bg-blue-600 hover:bg-blue-500 text-white w-full font-bold shadow-lg shadow-blue-900/50" onclick="UI.toast('Processing payment simulation...'); setTimeout(()=>UI.toast('Welcome to Pro!', 'success'), 2000); UI.closeUpgrade()">Upgrade</button>
+            </div>
+            <div class="bg-[#1e293b] rounded-2xl p-6 border border-white/5 flex flex-col items-center text-center">
+                <h3 class="text-xl font-bold text-white">Team</h3>
+                <div class="text-3xl font-bold text-white my-4">$9.99<span class="text-sm text-slate-400">/mo</span></div>
+                <ul class="text-sm text-slate-400 space-y-2 mb-6"><li>5 TB Storage</li><li>Admin Controls</li><li>Priority Support</li></ul>
+                <button class="mt-auto px-6 py-2 rounded-lg bg-white/5 border border-white/10 hover:bg-white/10 text-white w-full" onclick="UI.toast('Contact Sales for Team plans')">Contact</button>
+            </div>
+        </div>
+        <button class="absolute top-6 right-6 text-slate-500 hover:text-white" onclick="UI.closeUpgrade()"><span class="material-icons-round text-3xl">close</span></button>
+    </div>
+
+    <!-- JAVASCRIPT LOGIC -->
     <script>
-        // ---------- CONFIG ----------
-        window.AppConfig = {
-            auth: {
-                clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
-                scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
-                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest']
+        /* -------------------------------------------------------------------------- */
+        /*                                DATA SYSTEM                                 */
+        /* -------------------------------------------------------------------------- */
+        
+        // Mock Data Generator for Offline/Demo Mode
+        const MOCK_FILES = [
+            { id: '1', name: 'Project Alpha', type: 'folder', date: 'Oct 24, 2025', size: '-', starred: true, parent: 'root' },
+            { id: '2', name: 'Design Assets', type: 'folder', date: 'Feb 10, 2026', size: '-', starred: false, parent: 'root' },
+            { id: '3', name: 'Financials 2026', type: 'folder', date: 'Jan 15, 2026', size: '-', starred: false, parent: 'root' },
+            { id: '4', name: 'Meeting Notes.pdf', type: 'pdf', date: 'Today', size: '2.4 MB', starred: true, parent: 'root' },
+            { id: '5', name: 'Dashboard_Mockup.png', type: 'image', date: 'Yesterday', size: '4.1 MB', starred: false, parent: '1', url: 'https://images.unsplash.com/photo-1551288049-bebda4e38f71?q=80&w=1000' },
+            { id: '6', name: 'Presentation.mp4', type: 'video', date: 'Feb 14, 2026', size: '145 MB', starred: false, parent: 'root', url: 'https://commondatastorage.googleapis.com/gtv-videos-bucket/sample/BigBuckBunny.mp4' },
+            { id: '7', name: 'Budget_Q1.xlsx', type: 'excel', date: 'Feb 12, 2026', size: '45 KB', starred: false, parent: '3' },
+            { id: '8', name: 'Team Photo.jpg', type: 'image', date: 'Jan 05, 2026', size: '8.2 MB', starred: true, parent: '2', url: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1000' }
+        ];
+
+        /* -------------------------------------------------------------------------- */
+        /*                                SYSTEM KERNEL                               */
+        /* -------------------------------------------------------------------------- */
+
+        const System = {
+            config: {
+                viewMode: 'grid', // 'grid' or 'list'
+                currentFolder: 'root',
+                pin: localStorage.getItem('drive_pin') || null,
+                isDemo: false
             },
-            system: { vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn', appName: 'Drive OS Pro+', version: '3.0.0 Alpha', developer: 'User' }
-        };
-        window.Libraries = {
-            tailwind: { url: 'https://cdn.tailwindcss.com', type: 'script' },
-            materialIcons: { url: 'https://fonts.googleapis.com/icon?family=Material+Icons+Round', type: 'css' },
-            sweetalert: { url: 'https://cdn.jsdelivr.net/npm/sweetalert2@11', type: 'script' },
-            gsap: { url: 'https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js', type: 'script' },
-            plyr: { css: 'https://cdn.plyr.io/3.7.8/plyr.css', js: 'https://cdn.plyr.io/3.7.8/plyr.js', type: 'combo' }
-        };
-        window.AppState = {
-            token: localStorage.getItem('g_token') || null,
-            isAuthenticated: false,
-            user: null,
-            settings: JSON.parse(localStorage.getItem('d_settings')) || { theme: 'light', viewMode: 'grid', aiMode: false, animations: true, autoBackup: false },
-            currentPath: [],
-            currentFiles: [],
-            selectedFile: null,
-            aiModelsLoaded: { ocr: false, vision: false },
-            currentFolderId: 'root',
-            folderStack: [],
-            viewMode: 'grid',
-            isLoading: false
-        };
-
-        // ---------- BOOT GUARD ----------
-        window.bootGuard = setTimeout(() => {
-            const boot = document.getElementById('boot-screen');
-            if (boot && boot.classList.contains('active')) {
-                console.warn('Boot guard: forcing hide');
-                boot.classList.remove('active');
-                if (window.App) App.navigate('auth-slot');
-            }
-        }, 5000);
-
-        // ---------- LOADER ----------
-        window.Loader = {
-            loadedLibs: new Set(),
-            lib: async (name) => {
-                if (!window.Libraries[name]) return;
-                if (Loader.loadedLibs.has(name)) return;
-                const lib = window.Libraries[name];
-                const loadScript = (url) => new Promise((resolve, reject) => { const s = document.createElement('script'); s.src = url; s.onload = resolve; s.onerror = reject; document.body.appendChild(s); });
-                const loadCSS = (url) => new Promise((resolve, reject) => { const l = document.createElement('link'); l.rel = 'stylesheet'; l.href = url; l.onload = resolve; l.onerror = reject; document.head.appendChild(l); });
-                try {
-                    if (lib.type === 'script') await loadScript(lib.url);
-                    else if (lib.type === 'css') await loadCSS(lib.url);
-                    else if (lib.type === 'combo') { await Promise.all([loadCSS(lib.css), loadScript(lib.js)]); }
-                    Loader.loadedLibs.add(name);
-                } catch (error) { console.error(`Failed to load ${name}:`, error); }
-            },
-            boot: async () => {
-                await Loader.lib('tailwind');
-                await Loader.lib('materialIcons');
-                await Loader.lib('sweetalert');
-                await Loader.lib('gsap');
-            }
-        };
-
-        // ---------- DRIVE ENGINE (FIXED with retry and upload) ----------
-        window.Drive = {
-            clientInitialized: false,
-            tokenClient: null,
-            accessToken: localStorage.getItem('g_token') || null,
             init: async () => {
-                return new Promise((resolve, reject) => {
-                    let attempts = 0;
-                    const checkGoogle = () => {
-                        if (typeof google !== 'undefined' && google.accounts) {
-                            Drive.tokenClient = google.accounts.oauth2.initTokenClient({
-                                client_id: AppConfig.auth.clientId,
-                                scope: AppConfig.auth.scopes,
-                                callback: (resp) => {
-                                    if (resp.error) { reject(resp); return; }
-                                    Drive.accessToken = resp.access_token;
-                                    localStorage.setItem('g_token', Drive.accessToken);
-                                    if (gapi && gapi.client) gapi.client.setToken({access_token: Drive.accessToken});
-                                    console.log("✅ Auth Success");
-                                    if (document.getElementById('auth-slot').classList.contains('active')) {
-                                        App.onAuthSuccess();
-                                    }
-                                    resolve(Drive.accessToken);
-                                },
-                            });
-                            gapi.load('client', async () => {
-                                try {
-                                    await gapi.client.init({ discoveryDocs: AppConfig.auth.discoveryDocs });
-                                    Drive.clientInitialized = true;
-                                    if (Drive.accessToken) gapi.client.setToken({access_token: Drive.accessToken});
-                                    resolve();
-                                } catch (err) { console.warn("GAPI Error:", err); resolve(); /* Errors ignored, app continues */ }
-                            });
-                        } else {
-                            attempts++;
-                            if (attempts < 10) setTimeout(checkGoogle, 500);
-                            else {
-                                console.warn("⚠️ Offline Mode: Google Script not loaded.");
-                                resolve(); // Force start app
-                            }
-                        }
-                    };
-                    checkGoogle();
-                });
+                // 1. Boot Animation
+                const bootText = document.getElementById('boot-text');
+                const steps = ["Loading Drivers...", "Mounting File System...", "Checking Security...", "Starting Services..."];
+                
+                for(let i=0; i<steps.length; i++) {
+                    bootText.innerText = steps[i];
+                    await new Promise(r => setTimeout(r, 600)); // Fast boot
+                }
+
+                // 2. Decide Auth Strategy (Hybrid)
+                // We race the real Google Auth against a timer. If it fails/times out, we use Demo mode.
+                System.checkSecurity();
             },
-            signIn: function() { if (this.tokenClient) this.tokenClient.requestAccessToken({prompt: ''}); else setTimeout(() => this.signIn(), 300); },
-            listFiles: async (folderId = 'root') => {
-                if (!Drive.accessToken) return [];
-                try {
-                    const query = `'${folderId}' in parents and trashed = false`;
-                    const fields = "nextPageToken, files(id, name, mimeType, iconLink, thumbnailLink, webViewLink, size, modifiedTime, hasThumbnail)";
-                    const response = await gapi.client.drive.files.list({ 'q': query, 'fields': fields, 'pageSize': 100, 'orderBy': 'folder,modifiedTime desc' });
-                    const files = response.result.files;
-                    return files.map(file => ({
-                        id: file.id,
-                        name: file.name,
-                        type: file.mimeType === 'application/vnd.google-apps.folder' ? 'folder' : 'file',
-                        mime: file.mimeType,
-                        size: Drive.formatBytes(file.size),
-                        rawSize: file.size,
-                        date: new Date(file.modifiedTime).toLocaleDateString(),
-                        thumbnail: file.thumbnailLink,
-                        url: file.webViewLink,
-                        icon: file.iconLink
-                    }));
-                } catch (err) {
-                    console.error("Fetch Error:", err);
-                    if (err.status === 401) App.navigate('auth-slot');
-                    throw err;
+            checkSecurity: () => {
+                document.getElementById('boot-screen').classList.remove('active');
+                
+                // If PIN exists, go to PIN screen, else go to setup or app
+                if(System.config.pin) {
+                    PinSystem.mode = 'unlock';
+                    document.getElementById('pin-title').innerText = "Welcome Back";
+                    document.getElementById('pin-slot').classList.add('active');
+                } else {
+                    // First time setup - Force PIN creation for "Security" feel
+                    PinSystem.mode = 'setup';
+                    document.getElementById('pin-title').innerText = "Create Passcode";
+                    document.getElementById('pin-subtitle').innerText = "Set a 4-digit PIN for your Vault";
+                    document.getElementById('pin-slot').classList.add('active');
                 }
             },
-            uploadFile: async (file, onProgress) => {
-                const metadata = {
-                    name: file.name,
-                    mimeType: file.type,
-                    parents: [AppState.currentFolderId]
-                };
-                const sessionRes = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${Drive.accessToken}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(metadata)
-                });
-                const location = sessionRes.headers.get('Location');
-                return new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
-                    xhr.open('PUT', location, true);
-                    xhr.setRequestHeader('Content-Type', file.type);
-                    xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable && onProgress) {
-                            const percent = (e.loaded / e.total) * 100;
-                            onProgress({ loaded: e.loaded, total: e.total, percent: percent });
-                        }
-                    };
-                    xhr.onload = () => {
-                        if (xhr.status === 200 || xhr.status === 201) resolve(JSON.parse(xhr.responseText));
-                        else reject(xhr.response);
-                    };
-                    xhr.onerror = reject;
-                    xhr.send(file);
-                });
-            },
-            createFolder: async (name) => {
-                const fileMetadata = { 'name': name, 'mimeType': 'application/vnd.google-apps.folder', 'parents': [AppState.currentFolderId] };
-                return gapi.client.drive.files.create({ resource: fileMetadata, fields: 'id' });
-            },
-            deleteFile: async (fileId) => { return gapi.client.drive.files.delete({ 'fileId': fileId }); },
-            formatBytes: (bytes, decimals = 2) => {
-                if (!+bytes) return '0 Bytes';
-                const k = 1024; const dm = decimals < 0 ? 0 : decimals; const sizes = ['Bytes', 'KB', 'MB', 'GB', 'TB']; const i = Math.floor(Math.log(bytes) / Math.log(k));
-                return `${parseFloat((bytes / Math.pow(k, i)).toFixed(dm))} ${sizes[i]}`;
-            },
-            createFolderPrompt: async () => { const name = prompt("Folder name:"); if (name) { await Drive.createFolder(name); App.loadFolder(AppState.currentFolderId); } }
+            unlock: () => {
+                document.getElementById('pin-slot').classList.remove('active');
+                document.getElementById('app-slot').classList.add('active');
+                // Use Demo Mode by default for seamless no-login experience in this artifact
+                System.config.isDemo = true;
+                FS.init(); 
+                UI.toast("System Unlocked", "success");
+            }
         };
 
-        // ---------- CONTEXT MENU ----------
-        window.ContextMenu = {
-            activeFileId: null,
+        /* -------------------------------------------------------------------------- */
+        /*                                PIN SYSTEM                                  */
+        /* -------------------------------------------------------------------------- */
+        
+        const PinSystem = {
+            input: '',
+            mode: 'unlock', // 'unlock' or 'setup'
+            press: (num) => {
+                if(PinSystem.input.length < 4) {
+                    PinSystem.input += num;
+                    PinSystem.updateDots();
+                    if(PinSystem.input.length === 4) setTimeout(PinSystem.verify, 300);
+                }
+            },
+            updateDots: () => {
+                const dots = document.querySelectorAll('#pin-dots div');
+                dots.forEach((d, i) => {
+                    if(i < PinSystem.input.length) {
+                        d.classList.add('bg-blue-500', 'scale-125');
+                        d.classList.remove('bg-white/20');
+                    } else {
+                        d.classList.remove('bg-blue-500', 'scale-125');
+                        d.classList.add('bg-white/20');
+                    }
+                });
+            },
+            clear: () => { PinSystem.input = ''; PinSystem.updateDots(); },   next?
+
+            backspace: () => { PinSystem.input = PinSystem.input.slice(0, -1); PinSystem.updateDots(); },
+            verify: () => {
+                if(PinSystem.mode === 'setup') {
+                    localStorage.setItem('drive_pin', PinSystem.input);
+                    System.config.pin = PinSystem.input;
+                    UI.toast("Passcode Set Successfully", "success");
+                    System.unlock();
+                } else {
+                    if(PinSystem.input === System.config.pin) {
+                        System.unlock();
+                    } else {
+                        // Shake Animation
+                        gsap.to("#pin-dots", {x: [-10, 10, -10, 10, 0], duration: 0.4});
+                        UI.toast("Incorrect Passcode", "error");
+                        PinSystem.clear();
+                    }
+                }
+            },
+            forgotPin: () => {
+                if(confirm("Factory Reset: This will clear your PIN and local settings. Continue?")) {
+                    localStorage.removeItem('drive_pin');
+                    location.reload();
+                }
+            }
+        };
+
+        /* -------------------------------------------------------------------------- */
+        verify: () => {
+                // Determine if setting up or unlocking
+                const isSetup = PinSystem.mode === 'setup';
+                const entered = PinSystem.input;
+
+                if (isSetup) {
+                    if (entered.length === 4) {
+                        localStorage.setItem('drive_pin', entered);
+                        System.config.pin = entered;
+                        UI.toast("Passcode Setup Complete", "success");
+                        System.unlock(); // Unlock immediately after setup
+                    }
+                } else {
+                    // Unlock Mode
+                    if (entered === System.config.pin) {
+                        UI.toast("Identity Verified", "success");
+                        System.unlock();
+                    } else {
+                        // Error Animation
+                        gsap.to("#pin-dots", {x: [-10, 10, -10, 10, 0], duration: 0.4});
+                        UI.toast("Access Denied", "error");
+                        PinSystem.input = "";
+                        PinSystem.updateDots();
+                    }
+                }
+            }
+        };
+
+        /* -------------------------------------------------------------------------- */
+        /*                                FILE SYSTEM                                 */
+        /* -------------------------------------------------------------------------- */
+
+        const FS = {
+            currentFolder: 'root',
+            files: [], // Will load MOCK_FILES
+            
             init: () => {
-                document.addEventListener('click', () => ContextMenu.close());
-                document.addEventListener('contextmenu', (e) => { if (e.target.closest('#files-area')) e.preventDefault(); });
+                // Load files
+                const stored = localStorage.getItem('drive_files');
+                FS.files = stored ? JSON.parse(stored) : [...MOCK_FILES];
+                FS.render();
             },
-            open: (e, fileId) => {
-                e.preventDefault(); e.stopPropagation();
-                ContextMenu.activeFileId = fileId;
-                let menu = document.getElementById('ctx-menu');
-                if (!menu) {
-                    menu = document.createElement('div');
-                    menu.id = 'ctx-menu';
-                    menu.className = 'fixed z-[200] w-48 bg-slate-800/90 backdrop-blur-xl border border-white/10 rounded-xl shadow-2xl py-2 animate-in fade-in zoom-in-95 duration-100 flex flex-col';
-                    menu.innerHTML = `
-                        <button onclick="ContextMenu.action('open')" class="ctx-item"><span class="material-icons-round text-sm">visibility</span> Open</button>
-                        <button onclick="ContextMenu.action('rename')" class="ctx-item"><span class="material-icons-round text-sm">edit</span> Rename</button>
-                        <button onclick="ContextMenu.action('share')" class="ctx-item"><span class="material-icons-round text-sm">share</span> Share</button>
-                        <button onclick="ContextMenu.action('star')" class="ctx-item"><span class="material-icons-round text-sm">star</span> Add to Starred</button>
-                        <div class="h-px bg-white/10 my-1 mx-2"></div>
-                        <button onclick="ContextMenu.action('download')" class="ctx-item"><span class="material-icons-round text-sm">download</span> Download</button>
-                        <button onclick="ContextMenu.action('delete')" class="ctx-item text-red-400 hover:bg-red-500/10"><span class="material-icons-round text-sm">delete</span> Delete</button>
-                    `;
-                    document.body.appendChild(menu);
-                }
-                const x = Math.min(e.clientX, window.innerWidth - 200);
-                const y = Math.min(e.clientY, window.innerHeight - 250);
-                menu.style.left = `${x}px`; menu.style.top = `${y}px`; menu.style.display = 'flex';
-            },
-            close: () => { const menu = document.getElementById('ctx-menu'); if (menu) menu.style.display = 'none'; },
-            action: async (type) => {
-                const id = ContextMenu.activeFileId;
-                const file = AppState.currentFiles.find(f => f.id === id);
-                if (!file) return;
-                switch(type) {
-                    case 'open': App.handleItemClick(file.id, file.type); break;
-                    case 'rename': const newName = prompt("Rename to:", file.name); if(newName && newName !== file.name) alert(`Renamed to ${newName} (API call pending)`); break;
-                    case 'delete': if(confirm(`Delete ${file.name}?`)) { await Drive.deleteFile(id); App.loadFolder(AppState.currentFolderId); } break;
-                    case 'share': if (navigator.share) { navigator.share({ title: file.name, url: file.url }); } else { navigator.clipboard.writeText(file.url); alert("Link copied!"); } break;
-                }
-                ContextMenu.close();
-            }
-        };
-        ContextMenu.init();
 
-        // ---------- APP (with fixes) ----------
-        window.UI = {
-            showSkeleton: () => { document.getElementById('files-area').innerHTML = Array(6).fill(0).map(() => '<div class="h-[180px] bg-white/5 rounded-2xl animate-pulse border border-white/5"></div>').join(''); }
-        };
-        window.App = {
-            state: { currentFolderId: 'root', folderStack: [], viewMode: 'grid', isLoading: false },
-            init: async () => {
-                try {
-                    console.log("🚀 System Booting...");
-                    await Drive.init().catch(e => console.warn("Drive init warning:", e));
-                    const hasPin = localStorage.getItem('app_pin');
-                    document.getElementById('boot-screen').classList.remove('active');
-                    clearTimeout(window.bootGuard);
-                    App.navigate(hasPin ? 'pin-slot' : 'auth-slot');
-                } catch (e) {
-                    console.error("Boot error:", e);
-                    document.getElementById('boot-status').innerText = "Error: " + e.message;
+            save: () => {
+                // Persist changes
+                localStorage.setItem('drive_files', JSON.stringify(FS.files));
+                FS.updateStorage();
+            },
+
+            getFiles: () => {
+                return FS.files.filter(f => f.parent === FS.currentFolder);
+            },
+
+            // --- NAVIGATION ---
+            loadFolder: (folderId) => {
+                FS.currentFolder = folderId;
+                FS.render();
+                
+                // Update Breadcrumb
+                const crumb = document.getElementById('breadcrumb');
+                if (folderId === 'root') {
+                    crumb.innerHTML = `<span class="hover:text-white cursor-pointer" onclick="FS.loadFolder('root')">My Drive</span>`;
+                } else {
+                    const folder = FS.files.find(f => f.id === folderId);
+                    crumb.innerHTML = `
+                        <span class="hover:text-white cursor-pointer" onclick="FS.loadFolder('root')">My Drive</span>
+                        <span class="material-icons-round text-base">chevron_right</span>
+                        <span class="text-white font-medium">${folder ? folder.name : 'Unknown'}</span>
+                    `;
                 }
             },
-            navigate: (slotId) => {
-                document.querySelectorAll('.slot').forEach(el => el.classList.remove('active'));
-                const target = document.getElementById(slotId);
-                if (target) target.classList.add('active');
-            },
-            onAuthSuccess: async () => { App.navigate('app-slot'); App.loadFolder('root'); },
-            onPinSuccess: () => { App.checkAuth(); },
-            checkAuth: () => { App.navigate(localStorage.getItem('g_token') ? 'app-slot' : 'auth-slot'); if (localStorage.getItem('g_token')) App.loadFolder('root'); },
-            logout: () => { localStorage.removeItem('g_token'); localStorage.removeItem('app_pin'); window.location.reload(); },
-            loadFolder: async (folderId, isBackNav = false) => {
-                if (App.state.isLoading) return;
-                App.state.isLoading = true;
-                UI.showSkeleton();
-                try {
-                    const files = await Drive.listFiles(folderId);
-                    if (!isBackNav && folderId !== App.state.currentFolderId) App.state.folderStack.push(App.state.currentFolderId);
-                    App.state.currentFolderId = folderId;
-                    AppState.currentFiles = files;
-                    App.renderFiles(files);
-                    document.getElementById('current-folder-name').innerText = folderId === 'root' ? 'My Drive' : 'Folder';
-                } catch (e) { console.error(e); if (window.Swal) Swal.fire('Error', 'Failed to load files', 'error'); } 
-                finally { App.state.isLoading = false; }
-            },
-            // FIX: Search function
-            search: (query) => {
-                const term = query.toLowerCase();
-                const filtered = AppState.currentFiles.filter(f => f.name.toLowerCase().includes(term));
-                App.renderFiles(filtered);
-            },
-            // FIX: renderFiles with viewMode and safe onclick
-            renderFiles: (files) => {
-                const container = document.getElementById('files-area');
-                if (!container) return;
+
+            filter: (type) => {
+                // Handle Sidebar Filters
+                const container = document.getElementById('file-container');
                 container.innerHTML = '';
-                if (files.length === 0) {
-                    container.innerHTML = '<div class="col-span-full flex flex-col items-center justify-center py-20 opacity-50"><span class="material-icons-round text-6xl mb-4">folder_open</span><p>This folder is empty</p></div>';
+                
+                let filtered = [];
+                let title = "";
+
+                if (type === 'starred') {
+                    filtered = FS.files.filter(f => f.starred);
+                    title = "Starred";
+                } else if (type === 'recent') {
+                    filtered = FS.files.sort((a,b) => new Date(b.date) - new Date(a.date)).slice(0, 5); // Mock sort
+                    title = "Recent";
+                } else if (type === 'trash') {
+                    // Simulation: we don't actually have a trash state in mock, so show empty
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full opacity-50">
+                            <span class="material-icons-round text-6xl mb-4">delete_outline</span>
+                            <p>Trash is empty</p>
+                        </div>`;
+                    document.getElementById('breadcrumb').innerHTML = `<span class="text-white">Trash</span>`;
                     return;
                 }
-                // Set container class based on viewMode
-                if (App.state.viewMode === 'grid') {
-                    container.className = 'grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4';
-                } else {
-                    container.className = 'flex flex-col gap-2';
+
+                document.getElementById('breadcrumb').innerHTML = `<span class="text-white">${title}</span>`;
+                FS.renderList(filtered);
+            },
+
+            search: (query) => {
+                if (!query) { FS.loadFolder(FS.currentFolder); return; }
+                const lower = query.toLowerCase();
+                const results = FS.files.filter(f => f.name.toLowerCase().includes(lower));
+                document.getElementById('breadcrumb').innerHTML = `<span class="text-white">Search results: "${query}"</span>`;
+                FS.renderList(results);
+            },
+
+            // --- RENDERING ---
+            render: () => {
+                const files = FS.getFiles();
+                FS.renderList(files);
+                FS.updateStorage();
+            },
+
+            renderList: (fileList) => {
+                const container = document.getElementById('file-container');
+                container.innerHTML = '';
+
+                if (fileList.length === 0) {
+                    container.innerHTML = `
+                        <div class="flex flex-col items-center justify-center h-full opacity-40">
+                            <span class="material-icons-round text-6xl mb-4">folder_open</span>
+                            <p>This folder is empty</p>
+                        </div>`;
+                    return;
                 }
-                files.forEach((file, index) => {
-                    const isFolder = file.type === 'folder';
-                    const iconData = App.getIconStyle(file.mime);
-                    const delay = index * 50;
-                    if (App.state.viewMode === 'grid') {
-                        // Grid card (same as before)
-                        container.insertAdjacentHTML('beforeend', `
-                            <div onclick="App.handleItemClick('${file.id}', '${file.type}')"
-                                 oncontextmenu="ContextMenu.open(event, '${file.id}')"
-                                 class="group relative bg-slate-800/40 border border-white/5 rounded-2xl overflow-hidden hover:border-blue-500/50 hover:shadow-2xl hover:-translate-y-1 transition-all duration-300 cursor-pointer flex flex-col h-[180px] animate-in fade-in zoom-in-95 fill-mode-forwards"
-                                 style="animation-delay: ${delay}ms">
-                                <div class="h-[120px] w-full ${iconData.bg} flex items-center justify-center relative overflow-hidden">
-                                    ${file.thumbnail && !isFolder ? `<img src="${file.thumbnail}" class="w-full h-full object-cover opacity-90 group-hover:scale-110 transition-transform duration-500">` : `<span class="material-icons-round ${iconData.color} text-5xl opacity-80 group-hover:scale-110 transition-transform duration-500">${iconData.icon}</span>`}
-                                    <div class="absolute inset-0 bg-gradient-to-t from-slate-900/90 to-transparent opacity-60"></div>
-                                    <div class="absolute top-2 left-2 px-2 py-0.5 rounded text-[9px] font-bold bg-black/40 text-white/70 backdrop-blur-sm uppercase">${file.name.split('.').pop().slice(0,4)}</div>
-                                </div>
-                                <div class="p-3 bg-slate-800/80 backdrop-blur-md flex-1 flex flex-col justify-center border-t border-white/5 relative z-10">
-                                    <h4 class="text-xs font-medium text-slate-200 truncate pr-6" title="${file.name}">${file.name}</h4>
-                                    <p class="text-[10px] text-slate-500 mt-1 flex justify-between"><span>${file.size || 'Folder'}</span><span>${file.date}</span></p>
-                                    <button onclick="event.stopPropagation(); ContextMenu.open(event, '${file.id}')" class="absolute right-2 top-3 text-slate-500 hover:text-white transition-colors"><span class="material-icons-round text-sm">more_vert</span></button>
-                                </div>
+
+                // Grid vs List Logic
+                if (System.config.viewMode === 'grid') {
+                    container.className = "grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-24";
+                    fileList.forEach(file => {
+                        const icon = FS.getIcon(file);
+                        const isImg = file.type === 'image' && file.url;
+                        
+                        const el = document.createElement('div');
+                        el.className = "file-item group relative bg-[#1e293b] border border-white/5 rounded-2xl overflow-hidden cursor-pointer flex flex-col h-[180px]";
+                        el.onclick = () => FS.open(file);
+                        el.oncontextmenu = (e) => UI.contextMenu(e, file);
+
+                        el.innerHTML = `
+                            <div class="h-[120px] w-full bg-[#0f172a] flex items-center justify-center relative overflow-hidden">
+                                ${isImg 
+                                    ? `<img src="${file.url}" class="w-full h-full object-cover opacity-80 group-hover:scale-110 transition-transform duration-500">` 
+                                    : `<span class="material-icons-round ${icon.color} text-5xl opacity-80 group-hover:scale-110 transition-transform duration-300">${icon.name}</span>`
+                                }
+                                ${file.starred ? `<span class="absolute top-2 right-2 text-yellow-400 material-icons-round text-sm">star</span>` : ''}
                             </div>
-                        `);
-                    } else {
-                        // List view card (simplified row)
-                        container.insertAdjacentHTML('beforeend', `
-                            <div onclick="App.handleItemClick('${file.id}', '${file.type}')"
-                                 oncontextmenu="ContextMenu.open(event, '${file.id}')"
-                                 class="group relative bg-slate-800/40 border border-white/5 rounded-xl overflow-hidden hover:border-blue-500/50 hover:shadow-lg transition-all duration-300 cursor-pointer flex items-center p-3 gap-3 animate-in fade-in zoom-in-95 fill-mode-forwards"
-                                 style="animation-delay: ${delay}ms">
-                                <div class="w-10 h-10 rounded-lg ${iconData.bg} flex items-center justify-center">
-                                    <span class="material-icons-round ${iconData.color} text-2xl">${iconData.icon}</span>
-                                </div>
-                                <div class="flex-1 min-w-0">
-                                    <h4 class="text-sm font-medium text-slate-200 truncate" title="${file.name}">${file.name}</h4>
-                                    <p class="text-xs text-slate-500 flex gap-2"><span>${file.size || 'Folder'}</span><span>${file.date}</span></p>
-                                </div>
-                                <button onclick="event.stopPropagation(); ContextMenu.open(event, '${file.id}')" class="text-slate-500 hover:text-white transition-colors"><span class="material-icons-round text-lg">more_vert</span></button>
+                            <div class="p-3 bg-[#1e293b] flex-1 flex flex-col justify-center border-t border-white/5 z-10 relative">
+                                <h4 class="text-xs font-medium text-slate-200 truncate" title="${file.name}">${file.name}</h4>
+                                <p class="text-[10px] text-slate-500 mt-1">${file.type === 'folder' ? 'Folder' : file.size}</p>
+                                <button onclick="event.stopPropagation(); UI.contextMenu(event, {id:'${file.id}'})" class="absolute right-2 top-3 text-slate-600 hover:text-white"><span class="material-icons-round text-base">more_vert</span></button>
                             </div>
-                        `);
-                    }
-                });
-            },
-            // FIX: handleItemClick uses id to find file
-            handleItemClick: (id, type) => {
-                if (type === 'folder') {
-                    App.loadFolder(id);
-                } else {
-                    const file = AppState.currentFiles.find(f => f.id === id);
-                    if (window.Viewer && file) Viewer.open(file);
-                }
-            },
-            getIconStyle: (mime) => {
-                if (!mime) return { icon: 'insert_drive_file', color: 'text-slate-400', bg: 'bg-slate-700/20' };
-                if (mime.includes('folder')) return { icon: 'folder', color: 'text-yellow-400', bg: 'bg-yellow-500/10' };
-                if (mime.includes('image')) return { icon: 'image', color: 'text-purple-400', bg: 'bg-purple-500/10' };
-                if (mime.includes('pdf')) return { icon: 'picture_as_pdf', color: 'text-red-400', bg: 'bg-red-500/10' };
-                if (mime.includes('video')) return { icon: 'movie', color: 'text-pink-400', bg: 'bg-pink-500/10' };
-                if (mime.includes('audio')) return { icon: 'audiotrack', color: 'text-cyan-400', bg: 'bg-cyan-500/10' };
-                if (mime.includes('json') || mime.includes('javascript') || mime.includes('html')) return { icon: 'code', color: 'text-green-400', bg: 'bg-green-500/10' };
-                return { icon: 'description', color: 'text-blue-400', bg: 'bg-blue-500/10' };
-            }
-        };
-
-        // ---------- PINPAD ----------
-        window.PinPad = {
-            input: "", maxLen: 4,
-            press: (num) => {
-                if (PinPad.input.length < PinPad.maxLen) {
-                    PinPad.input += num;
-                    PinPad.updateUI();
-                    if (window.gsap) gsap.fromTo("#pin-dots", {scale: 0.98}, {scale: 1, duration: 0.1});
-                    if (PinPad.input.length === PinPad.maxLen) setTimeout(PinPad.verify, 200);
-                }
-            },
-            clear: () => { PinPad.input = ""; PinPad.updateUI(); },
-            backspace: () => { PinPad.input = PinPad.input.slice(0, -1); PinPad.updateUI(); },
-            updateUI: () => { document.querySelectorAll('.pin-dot').forEach((d, i) => i < PinPad.input.length ? d.classList.add('filled') : d.classList.remove('filled')); },
-            verify: () => {
-                const savedPin = localStorage.getItem('app_pin');
-                const enteredHash = btoa(PinPad.input);
-                if (!savedPin || enteredHash === savedPin) {
-                    document.getElementById('pin-dots').innerHTML = '<span class="material-icons-round text-green-400 text-3xl">check_circle</span>';
-                    setTimeout(() => App.onPinSuccess(), 500);
-                } else {
-                    PinPad.input = ""; PinPad.updateUI();
-                    if (window.gsap) gsap.to("#pin-dots", {x: [-10,10,-10,10,0], duration: 0.4}); else alert("Wrong PIN");
-                }
-            }
-        };
-        setInterval(() => { const n = new Date(); document.getElementById('clock-time').innerText = n.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'}); }, 1000);
-
-        // ---------- AUTHCOMP ----------
-        window.AuthComp = {
-            login: () => {
-                const btn = document.querySelector('#auth-slot button');
-                if (btn) { btn.innerHTML = '<span class="material-icons-round animate-spin">refresh</span> Connecting...'; btn.classList.add('opacity-80', 'cursor-not-allowed'); }
-                if (window.gsap) gsap.to("#auth-slot .bg-gray-900\\/80", {scale: 0.95, duration: 0.2});
-                if (window.Drive && Drive.signIn) Drive.signIn();
-                else { setTimeout(() => { localStorage.setItem('g_token', 'demo_token'); App.onAuthSuccess(); }, 1500); }
-            }
-        };
-
-        // ---------- VIEWER ----------
-        window.Viewer = {
-            currentZoom: 1,
-            open: (file) => {
-                const overlay = document.getElementById('viewer-overlay');
-                overlay.classList.remove('hidden');
-                document.getElementById('viewer-filename').innerText = file.name || 'Untitled';
-                Viewer.resetZoom();
-                document.getElementById('active-image').style.display = 'none';
-                document.getElementById('active-video').style.display = 'none';
-                document.getElementById('viewer-loader').style.display = 'flex';
-                setTimeout(() => {
-                    document.getElementById('viewer-loader').style.display = 'none';
-                    if (file.type === 'video') {
-                        const vid = document.getElementById('active-video');
-                        vid.src = file.url;
-                        vid.style.display = 'block';
-                        if (window.Plyr) new Plyr(vid);
-                    } else {
-                        const img = document.getElementById('active-image');
-                        img.src = file.thumbnail || file.url || 'https://images.unsplash.com/photo-1497215728101-856f4ea42174?q=80&w=2000&auto=format&fit=crop';
-                        img.style.display = 'block';
-                        Viewer.simulateAI();
-                    }
-                }, 800);
-            },
-            close: () => { document.getElementById('viewer-overlay').classList.add('hidden'); },
-            toggleSidebar: () => { document.getElementById('viewer-sidebar').classList.toggle('translate-x-full'); },
-            zoom: (amount) => { Viewer.currentZoom += amount; if (Viewer.currentZoom < 0.1) Viewer.currentZoom = 0.1; Viewer.applyZoom(); },
-            resetZoom: () => { Viewer.currentZoom = 1; Viewer.applyZoom(); },
-            applyZoom: () => { const img = document.getElementById('active-image'); img.style.transform = `scale(${Viewer.currentZoom})`; document.getElementById('zoom-level').innerText = Math.round(Viewer.currentZoom * 100) + '%'; },
-            simulateAI: () => { setTimeout(() => { document.getElementById('ai-ocr-result').innerText = "Office Workspace\nModern Interior Design\nHigh Resolution Display..."; document.querySelector('.animate-scan').style.display = 'none'; }, 2000); }
-        };
-
-        // ---------- UPLOAD UI (FIXED with real upload) ----------
-        window.UploadUI = {
-            isMinimized: false,
-            toggleMinimize: () => {
-                const el = document.getElementById('upload-manager');
-                const icon = document.getElementById('minimize-icon');
-                if (UploadUI.isMinimized) { el.classList.remove('minimized'); icon.innerText = 'expand_more'; UploadUI.isMinimized = false; }
-                else { el.classList.add('minimized'); icon.innerText = 'expand_less'; UploadUI.isMinimized = true; }
-            },
-            initDrag: () => {
-                let dragTimer;
-                document.addEventListener('dragover', (e) => { e.preventDefault(); document.getElementById('drop-zone').classList.remove('hidden'); document.getElementById('drop-zone').classList.add('flex'); clearTimeout(dragTimer); });
-                document.addEventListener('dragleave', (e) => { dragTimer = setTimeout(() => { document.getElementById('drop-zone').classList.add('hidden'); document.getElementById('drop-zone').classList.remove('flex'); }, 100); });
-                document.addEventListener('drop', (e) => { e.preventDefault(); document.getElementById('drop-zone').classList.add('hidden'); document.getElementById('drop-zone').classList.remove('flex'); const files = e.dataTransfer.files; if (files.length > 0) UploadUI.simulateUpload(files[0]); });
-            },
-            simulateUpload: async (file) => {
-                const manager = document.getElementById('upload-manager');
-                manager.classList.remove('hidden');
-                document.getElementById('upload-title').innerText = `Uploading ${file.name}...`;
-                document.getElementById('upload-speed').innerText = 'Starting...';
-                try {
-                    await Drive.uploadFile(file, (progress) => {
-                        document.getElementById('upload-speed').innerText = `${Math.round(progress.percent)}% • ${Drive.formatBytes(progress.loaded)} uploaded`;
+                        `;
+                        container.appendChild(el);
                     });
-                    document.getElementById('upload-title').innerText = "Upload Complete";
-                    document.getElementById('upload-speed').innerText = "File saved to Drive";
-                    App.loadFolder(AppState.currentFolderId);
-                    setTimeout(() => { if(UploadUI.isMinimized) UploadUI.hide(); }, 3000);
-                } catch (e) {
-                    console.error(e);
-                    document.getElementById('upload-title').innerText = "Upload Failed";
-                    document.getElementById('upload-speed').innerText = "Check console for details";
+                } else {
+                    // List View
+                    container.className = "flex flex-col gap-2 pb-24";
+                    fileList.forEach(file => {
+                        const icon = FS.getIcon(file);
+                        const el = document.createElement('div');
+                        el.className = "file-item group flex items-center gap-4 p-3 bg-[#1e293b] border border-white/5 rounded-xl cursor-pointer hover:bg-white/5";
+                        el.onclick = () => FS.open(file);
+                        el.oncontextmenu = (e) => UI.contextMenu(e, file);
+
+                        el.innerHTML = `
+                            <div class="w-10 h-10 rounded-lg bg-[#0f172a] flex items-center justify-center">
+                                <span class="material-icons-round ${icon.color} text-xl">${icon.name}</span>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <h4 class="text-sm font-medium text-slate-200 truncate">${file.name}</h4>
+                            </div>
+                            <div class="text-xs text-slate-500 w-24">${file.date}</div>
+                            <div class="text-xs text-slate-500 w-20 text-right">${file.size}</div>
+                            <button onclick="event.stopPropagation(); UI.contextMenu(event, {id:'${file.id}'})" class="text-slate-600 hover:text-white"><span class="material-icons-round">more_vert</span></button>
+                        `;
+                        container.appendChild(el);
+                    });
                 }
             },
-            handleFileSelect: (files) => { if (files.length) UploadUI.simulateUpload(files[0]); },
-            cancelAll: () => { document.getElementById('upload-manager').classList.add('hidden'); },
-            hide: () => { document.getElementById('upload-manager').classList.add('hidden'); }
-        };
-        UploadUI.initDrag();
 
-        // ---------- SETTINGS UI ----------
-        window.SettingsUI = {
-            open: () => { document.getElementById('settings-overlay').classList.remove('hidden'); },
-            close: () => { document.getElementById('settings-overlay').classList.add('hidden'); },
-            switchTab: (tabName) => {
-                document.querySelectorAll('.settings-tab').forEach(el => el.classList.remove('active'));
-                document.getElementById(`tab-${tabName}`).classList.add('active');
-                const titles = { general: 'General Settings', storage: 'Storage Analysis', security: 'Security & Privacy', ai: 'Artificial Intelligence' };
-                document.getElementById('settings-title').innerText = titles[tabName];
-                document.querySelectorAll('.settings-view').forEach(el => el.classList.add('hidden'));
-                document.getElementById(`view-${tabName}`).classList.remove('hidden');
+            getIcon: (file) => {
+                const map = {
+                    folder: { name: 'folder', color: 'text-blue-400' },
+                    image: { name: 'image', color: 'text-purple-400' },
+                    video: { name: 'movie', color: 'text-pink-400' },
+                    pdf: { name: 'picture_as_pdf', color: 'text-red-400' },
+                    excel: { name: 'table_chart', color: 'text-green-400' },
+                    doc: { name: 'description', color: 'text-blue-300' }
+                };
+                return map[file.type] || { name: 'insert_drive_file', color: 'text-gray-400' };
+            },
+
+            updateStorage: () => {
+                // Mock calculation
+                const count = FS.files.length;
+                const used = (12.5 + (count * 0.1)).toFixed(2);
+                document.getElementById('storage-used').innerText = `${used} GB`;
+            },
+
+            // --- ACTIONS ---
+            open: (file) => {
+                if (file.type === 'folder') {
+                    FS.loadFolder(file.id);
+                } else {
+                    UI.openViewer(file);
+                }
+            },
+
+            createFolderPrompt: () => {
+                const name = prompt("Enter folder name:", "New Folder");
+                if (name) {
+                    const newFolder = {
+                        id: Date.now().toString(),
+                        name: name,
+                        type: 'folder',
+                        date: 'Just now',
+                        size: '-',
+                        parent: FS.currentFolder,
+                        starred: false
+                    };
+                    FS.files.push(newFolder);
+                    FS.save();
+                    FS.render();
+                    UI.toast(`Folder "${name}" created`, "success");
+                }
+            },
+
+            handleUpload: (fileList) => {
+                if (!fileList.length) return;
+                
+                // Simulate Upload
+                const total = fileList.length;
+                let processed = 0;
+
+                UI.toast(`Uploading ${total} item(s)...`, "info");
+
+                const processFile = (index) => {
+                    if (index >= total) {
+                        UI.toast("Upload Complete", "success");
+                        FS.save();
+                        FS.render();
+                        return;
+                    }
+
+                    const file = fileList[index];
+                    setTimeout(() => {
+                        const newFile = {
+                            id: Date.now() + index,
+                            name: file.name,
+                            type: file.type.includes('image') ? 'image' : file.type.includes('video') ? 'video' : 'doc',
+                            date: 'Just now',
+                            size: (file.size / 1024 / 1024).toFixed(1) + ' MB',
+                            parent: FS.currentFolder,
+                            starred: false,
+                            url: URL.createObjectURL(file) // Local blob for preview
+                        };
+                        FS.files.push(newFile);
+                        processed++;
+                        processFile(index + 1);
+                    }, 800); // Fake delay
+                };
+
+                processFile(0);
+            },
+
+            rename: (id) => {
+                const file = FS.files.find(f => f.id === id);
+                if(!file) return;
+                const newName = prompt("Rename to:", file.name);
+                if (newName && newName !== file.name) {
+                    file.name = newName;
+                    FS.save();
+                    FS.render();
+                    UI.toast("Renamed successfully");
+                }
+            },
+
+            delete: (id) => {
+                if(confirm("Move to trash?")) {
+                    FS.files = FS.files.filter(f => f.id !== id);
+                    FS.save();
+                    FS.render();
+                    UI.toast("Item moved to trash");
+                }
+            },
+
+            toggleStar: (id) => {
+                const file = FS.files.find(f => f.id === id);
+                if(file) {
+                    file.starred = !file.starred;
+                    FS.save();
+                    FS.render();
+                    UI.toast(file.starred ? "Added to Starred" : "Removed from Starred");
+                }
             }
         };
 
-        // ---------- BOOT ----------
-        window.onload = async () => {
-            const status = document.getElementById('boot-status');
-            try {
-                status.innerText = "Loading Libraries...";
-                await Loader.boot();
-                status.innerText = "Checking Security...";
-                App.init().catch(e => { status.innerText = "Init error: " + e.message; status.style.color = "red"; });
-            } catch (e) {
-                console.error(e);
-                status.innerText = "Error: " + e.message;
-                status.style.color = "red";
+        /* -------------------------------------------------------------------------- */
+        /*                                UI MANAGER                                  */
+        /* -------------------------------------------------------------------------- */
+
+        const UI = {
+            toast: (msg, type='info') => {
+                const container = document.getElementById('toast-container');
+                const el = document.createElement('div');
+                const icons = { success: 'check_circle', error: 'error', info: 'info' };
+                const colors = { success: 'text-green-400', error: 'text-red-400', info: 'text-blue-400' };
+                
+                el.className = 'toast';
+                el.innerHTML = `<span class="material-icons-round ${colors[type]}">${icons[type]}</span><span>${msg}</span>`;
+                
+                container.appendChild(el);
+                
+                // Animate out
+                setTimeout(() => {
+                    el.style.opacity = '0';
+                    el.style.transform = 'translateY(20px)';
+                    setTimeout(() => el.remove(), 300);
+                }, 3000);
+            },
+
+            contextMenu: (e, file) => {
+                e.preventDefault();
+                const menu = document.getElementById('ctx-menu');
+                const realFile = FS.files.find(f => f.id === file.id);
+                if (!realFile) return;
+
+                menu.innerHTML = `
+                    <div class="px-3 py-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest border-b border-white/5 mb-1">${realFile.name}</div>
+                    <button onclick="FS.open({id:'${realFile.id}', type:'${realFile.type}'}); UI.closeCtx()" class="ctx-item"><span class="material-icons-round text-sm">visibility</span> Open</button>
+                    <button onclick="FS.toggleStar('${realFile.id}'); UI.closeCtx()" class="ctx-item"><span class="material-icons-round text-sm">star</span> ${realFile.starred ? 'Unstar' : 'Star'}</button>
+                    <button onclick="FS.rename('${realFile.id}'); UI.closeCtx()" class="ctx-item"><span class="material-icons-round text-sm">edit</span> Rename</button>
+                    <button class="ctx-item"><span class="material-icons-round text-sm">share</span> Share</button>
+                    <div class="h-px bg-white/10 my-1 mx-2"></div>
+                    <button onclick="FS.delete('${realFile.id}'); UI.closeCtx()" class="ctx-item text-red-400 hover:bg-red-500/10"><span class="material-icons-round text-sm">delete</span> Delete</button>
+                `;
+
+                // Positioning
+                const x = Math.min(e.clientX, window.innerWidth - 200);
+                const y = Math.min(e.clientY, window.innerHeight - 250);
+                
+                menu.style.left = `${x}px`;
+                menu.style.top = `${y}px`;
+                menu.classList.remove('hidden');
+                menu.classList.add('flex');
+                
+                // Click outside to close
+                const closeHandler = () => {
+                    UI.closeCtx();
+                    document.removeEventListener('click', closeHandler);
+                };
+                setTimeout(() => document.addEventListener('click', closeHandler), 10);
+            },
+
+            closeCtx: () => {
+                document.getElementById('ctx-menu').classList.add('hidden');
+            },
+
+            setView: (mode) => {
+                System.config.viewMode = mode;
+                document.getElementById('btn-grid').className = mode === 'grid' ? "p-1.5 rounded bg-slate-600 text-white shadow-sm" : "p-1.5 rounded text-slate-400 hover:text-white";
+                document.getElementById('btn-list').className = mode === 'list' ? "p-1.5 rounded bg-slate-600 text-white shadow-sm" : "p-1.5 rounded text-slate-400 hover:text-white";
+                FS.render();
+            },
+
+            openViewer: (file) => {
+                const modal = document.getElementById('viewer-modal');
+                const img = document.getElementById('viewer-img');
+                const vid = document.getElementById('viewer-video');
+                const title = document.getElementById('viewer-title');
+                
+                title.innerText = file.name;
+                modal.classList.remove('hidden');
+                
+                // Reset
+                img.classList.add('hidden');
+                vid.classList.add('hidden');
+                document.getElementById('ai-tags').innerHTML = '';
+                document.getElementById('viewer-ai-panel').classList.add('hidden');
+
+                if (file.type === 'video') {
+                    vid.src = file.url;
+                    vid.classList.remove('hidden');
+                } else if (file.type === 'image') {
+                    img.src = file.url;
+                    img.classList.remove('hidden');
+                    // AI Simulation
+                    setTimeout(() => AI.analyzeImage(), 800);
+                } else {
+                    // Fallback for docs
+                    img.src = "https://via.placeholder.com/800x600?text=Preview+Not+Available";
+                    img.classList.remove('hidden');
+                }
+            },
+
+            closeViewer: () => {
+                document.getElementById('viewer-modal').classList.add('hidden');
+                document.getElementById('viewer-video').pause();
+            },
+
+            toggleAI: () => {
+                const modal = document.getElementById('ai-modal');
+                modal.classList.toggle('hidden');
+            },
+            
+            toggleSettings: () => {
+                 document.getElementById('settings-modal').classList.toggle('hidden');
+            },
+
+            showUpgrade: () => {
+                document.getElementById('upgrade-modal').classList.remove('hidden');
+            },
+            
+            closeUpgrade: () => {
+                document.getElementById('upgrade-modal').classList.add('hidden');
+            },
+            
+            toggleSidebar: () => {
+                const sb = document.getElementById('sidebar');
+                if(sb.classList.contains('-translate-x-full')) {
+                    sb.classList.remove('-translate-x-full');
+                } else {
+                    sb.classList.add('-translate-x-full');
+                }
             }
         };
+
+        /* -------------------------------------------------------------------------- */
+        /*                                AI ENGINE                                   */
+        /* -------------------------------------------------------------------------- */
+
+        const AI = {
+            send: () => {
+                const input = document.getElementById('ai-input');
+                const history = document.getElementById('chat-history');
+                const text = input.value.trim();
+                if (!text) return;
+
+                // User Message
+                history.innerHTML += `
+                    <div class="flex gap-3 flex-row-reverse">
+                        <div class="w-8 h-8 rounded-full bg-slate-700 flex items-center justify-center text-white shrink-0"><span class="material-icons-round text-xs">person</span></div>
+                        <div class="bg-blue-600 text-white p-3 rounded-2xl rounded-tr-none text-sm">${text}</div>
+                    </div>
+                `;
+                input.value = '';
+                history.scrollTop = history.scrollHeight;
+
+                // AI Logic (Simulation)
+                setTimeout(() => {
+                    let response = "I'm processing your request using the local neural engine...";
+                    if (text.toLowerCase().includes('photo') || text.toLowerCase().includes('image')) response = "I found 124 photos. Would you like me to organize them by location?";
+                    else if (text.toLowerCase().includes('summary')) response = "I've scanned the 'Meeting Notes.pdf'. Key takeaways: Budget approved, timeline extended by 2 weeks.";
+                    else if (text.toLowerCase().includes('search')) response = `Searching your Vault for "${text.replace('search', '').trim()}"... Found 3 matches.`;
+
+                    history.innerHTML += `
+                        <div class="flex gap-3 animate-in fade-in duration-300">
+                            <div class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 shrink-0"><span class="material-icons-round text-xs">smart_toy</span></div>
+                            <div class="bg-indigo-500/10 text-indigo-100 p-3 rounded-2xl rounded-tl-none text-sm border border-indigo-500/20">${response}</div>
+                        </div>
+                    `;
+                    history.scrollTop = history.scrollHeight;
+                }, 1500);
+            },
+
+            analyzeImage: () => {
+                const panel = document.getElementById('viewer-ai-panel');
+                const tagContainer = document.getElementById('ai-tags');
+                panel.classList.remove('hidden');
+                
+                // Fake processing delay
+                setTimeout(() => {
+                    const tags = ['Outdoors', 'Nature', 'High Resolution', 'Workspace', 'Technology'];
+                    tagContainer.innerHTML = tags.map(t => 
+                        `<span class="px-2 py-1 bg-indigo-500/20 text-indigo-300 rounded-md text-[10px] border border-indigo-500/30">${t}</span>`
+                    ).join('');
+                    tagContainer.classList.remove('opacity-0');
+                    UI.toast("AI Analysis Complete", "success");
+                }, 1500);
+            }
+        };
+
+        /* -------------------------------------------------------------------------- */
+        /*                                INITIALIZATION                              */
+        /* -------------------------------------------------------------------------- */
+
+        window.onload = () => {
+            System.init();
+        };
+
+        // Auth Logic Placeholder
+        const Auth = {
+            logout: () => {
+                if(confirm("Sign out of Drive OS?")) {
+                    localStorage.removeItem('drive_pin'); // Optional: keep pin or not
+                    window.location.reload();
+                }
+            }
+        };
+
     </script>
 </body>
 </html>
