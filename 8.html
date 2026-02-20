@@ -1,2288 +1,1216 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" class="dark">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>DREAM VAULT OS | Secure Cloud Storage</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Drive OS Pro+ | AI Powered Cloud</title>
     
-    <!-- Google Identity Services -->
-    <script src="https://accounts.google.com/gsi/client" async defer></script>
-    
-    <!-- Google Fonts -->
-    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&family=Google+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+    <script src="https://apis.google.com/js/api.js"></script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-css.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-json.min.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css" />
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Outfit', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace'],
+                    },
+                    colors: {
+                        glass: {
+                            100: 'rgba(255, 255, 255, 0.05)',
+                            200: 'rgba(255, 255, 255, 0.1)',
+                            300: 'rgba(255, 255, 255, 0.15)',
+                            border: 'rgba(255, 255, 255, 0.08)',
+                        },
+                        accent: {
+                            primary: '#3b82f6',
+                            secondary: '#8b5cf6',
+                            danger: '#ef4444',
+                            success: '#10b981'
+                        }
+                    },
+                    animation: {
+                        'float': 'float 6s ease-in-out infinite',
+                        'pulse-slow': 'pulse 4s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'slide-up': 'slideUp 0.3s ease-out',
+                        'fade-in': 'fadeIn 0.2s ease-out',
+                    },
+                    keyframes: {
+                        float: {
+                            '0%, 100%': { transform: 'translateY(0)' },
+                            '50%': { transform: 'translateY(-10px)' },
+                        },
+                        slideUp: {
+                            '0%': { transform: 'translateY(20px)', opacity: '0' },
+                            '100%': { transform: 'translateY(0)', opacity: '1' },
+                        },
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 
     <style>
-        /* ===================== CSS RESET & BASE ===================== */
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-            -webkit-tap-highlight-color: transparent;
-            outline: none;
-            -webkit-user-drag: none;
-        }
-
+        /* GLOBAL STYLES */
         :root {
-            --primary: #1a73e8;
-            --primary-dark: #0d47a1;
-            --secondary: #34a853;
-            --danger: #ea4335;
-            --warning: #fbbc04;
-            --surface: #ffffff;
-            --bg: #f8f9fa;
-            --bg-dark: #202124;
-            --text-main: #202124;
-            --text-sec: #5f6368;
-            --text-light: #ffffff;
-            --border: #dadce0;
-            --hover: #f1f3f4;
-            --shadow: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
-            --shadow-lg: 0 4px 12px rgba(0,0,0,0.15);
-            --radius: 12px;
-            --radius-lg: 24px;
+            --bg-deep: #020617;
+            --bg-card: #0f172a;
         }
-
-        [data-theme="dark"] {
-            --primary: #8ab4f8;
-            --surface: #202124;
-            --bg: #171717;
-            --text-main: #e8eaed;
-            --text-sec: #9aa0a6;
-            --border: #3c4043;
-            --hover: #2d2e30;
-        }
-
+        
         body {
-            font-family: 'Roboto', sans-serif;
-            background: var(--bg);
-            color: var(--text-main);
-            height: 100vh;
-            height: 100dvh;
-            overflow: hidden;
-            transition: background 0.3s, color 0.3s;
+            background-color: var(--bg-deep);
+            color: #e2e8f0;
+            overflow: hidden; /* Prevent body scroll, handle inside containers */
         }
 
-        /* ===================== UTILITY CLASSES ===================== */
-        .hidden { display: none !important; }
-        .visible { display: block !important; }
-        .flex { display: flex !important; }
-        .material-icons-round { font-family: 'Material Icons Round'; }
-
-        /* ===================== SCREENS ===================== */
-        .screen {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            display: none;
-            flex-direction: column;
-            background: var(--bg);
-            z-index: 10;
+        /* GLASSMORPHISM UTILITIES */
+        .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
         }
 
-        .screen.active {
-            display: flex;
-            animation: fadeIn 0.3s ease;
+        .glass-card:hover {
+            background: rgba(30, 41, 59, 0.8);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-2px);
+            box-shadow: 0 10px 40px -10px rgba(59, 130, 246, 0.2);
         }
 
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+        /* CUSTOM SCROLLBAR */
+        .custom-scroll::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
         }
-
-        /* ===================== LOCK SCREEN ===================== */
-        #lock-screen {
-            background: linear-gradient(135deg, var(--bg-dark) 0%, var(--primary-dark) 100%);
-            color: var(--text-light);
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-        }
-
-        .lock-container {
-            width: 100%;
-            max-width: 320px;
-            padding: 20px;
-        }
-
-        .lock-title {
-            font-family: 'Google Sans', sans-serif;
-            font-size: 28px;
-            font-weight: 500;
-            margin-bottom: 40px;
-            opacity: 0.9;
-        }
-
-        .pin-display {
-            display: flex;
-            justify-content: center;
-            gap: 20px;
-            margin: 30px 0;
-        }
-
-        .pin-dot {
-            width: 20px;
-            height: 20px;
-            border-radius: 50%;
-            border: 2px solid rgba(255, 255, 255, 0.3);
-            background: rgba(255, 255, 255, 0.1);
-            transition: all 0.3s;
-        }
-
-        .pin-dot.filled {
-            background: var(--text-light);
-            border-color: var(--text-light);
-            transform: scale(1.2);
-            box-shadow: 0 0 15px rgba(255, 255, 255, 0.5);
-        }
-
-        .keypad {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .keypad-btn {
-            width: 75px;
-            height: 75px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            color: var(--text-light);
-            font-size: 26px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            cursor: pointer;
-            transition: all 0.2s;
-            border: none;
-            margin: 0 auto;
-        }
-
-        .keypad-btn:hover {
-            background: rgba(255, 255, 255, 0.2);
-        }
-
-        .keypad-btn:active {
-            transform: scale(0.95);
-        }
-
-        .keypad-clear {
+        .custom-scroll::-webkit-scrollbar-track {
             background: transparent;
-            font-size: 14px;
-            opacity: 0.7;
-            font-weight: 400;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+        .custom-scroll::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.25);
         }
 
-        .lock-message {
-            margin-top: 20px;
-            font-size: 14px;
-            opacity: 0.6;
-        }
-
-        .lock-error {
-            color: #ff6b6b;
-            animation: shake 0.5s;
-        }
-
-        @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
-            20%, 40%, 60%, 80% { transform: translateX(5px); }
-        }
-
-        /* ===================== AUTH SCREEN ===================== */
-        #auth-screen {
-            justify-content: center;
-            align-items: center;
-            text-align: center;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        }
-
-        .auth-container {
-            width: 90%;
-            max-width: 400px;
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            padding: 40px 30px;
-            box-shadow: var(--shadow-lg);
-            animation: slideUp 0.5s ease;
-        }
-
-        @keyframes slideUp {
-            from {
-                opacity: 0;
-                transform: translateY(30px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .auth-logo {
-            font-family: 'Google Sans', sans-serif;
-            font-size: 32px;
-            font-weight: 700;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+        /* UTILITY CLASSES */
+        .text-gradient {
+            background: linear-gradient(135deg, #60a5fa 0%, #a78bfa 100%);
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            margin-bottom: 20px;
         }
-
-        .auth-subtitle {
-            color: var(--text-sec);
-            margin-bottom: 30px;
-            line-height: 1.5;
+        
+        .loader-spin {
+            animation: spin 1s linear infinite;
         }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
 
-        /* GOOGLE SIGN-IN BUTTON */
-        .google-signin-btn {
-            width: 100%;
-            padding: 14px 24px;
-            background: var(--surface);
-            border: 1px solid var(--border);
-            border-radius: var(--radius);
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 12px;
-            cursor: pointer;
-            font-family: 'Google Sans', sans-serif;
-            font-size: 16px;
-            font-weight: 500;
-            color: var(--text-main);
-            transition: all 0.2s;
-            margin-bottom: 20px;
-        }
-
-        .google-signin-btn:hover {
-            background: var(--hover);
-            border-color: var(--primary);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-
-        .google-signin-btn:active {
-            transform: translateY(0);
-        }
-
-        .google-signin-btn img {
-            width: 20px;
-            height: 20px;
-        }
-
-        .auth-footer {
-            font-size: 12px;
-            color: var(--text-sec);
-            margin-top: 30px;
-        }
-
-        .auth-features {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 30px;
-        }
-
-        .feature-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 13px;
-            color: var(--text-sec);
-        }
-
-        .feature-item .material-icons-round {
-            font-size: 16px;
-            color: var(--secondary);
-        }
-
-        /* ===================== APP SCREEN ===================== */
-        .app-header {
-            background: var(--surface);
-            padding: 16px 20px;
-            height: 64px;
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            box-shadow: 0 1px 0 var(--border);
-            position: sticky;
-            top: 0;
-            z-index: 100;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .menu-btn {
-            background: none;
-            border: none;
-            color: var(--text-main);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-
-        .menu-btn:hover {
-            background: var(--hover);
-        }
-
-        .search-container {
-            flex: 1;
-            max-width: 600px;
-            margin: 0 20px;
-            position: relative;
-        }
-
-        .search-box {
-            width: 100%;
-            padding: 12px 20px;
-            padding-left: 48px;
-            background: var(--hover);
-            border: 2px solid transparent;
-            border-radius: var(--radius-lg);
-            font-size: 16px;
-            color: var(--text-main);
-            transition: all 0.2s;
-        }
-
-        .search-box:focus {
-            background: var(--surface);
-            border-color: var(--primary);
-            box-shadow: 0 0 0 3px rgba(26, 115, 232, 0.1);
-        }
-
-        .search-icon {
-            position: absolute;
-            left: 16px;
-            top: 50%;
-            transform: translateY(-50%);
-            color: var(--text-sec);
-        }
-
-        .header-right {
-            display: flex;
-            align-items: center;
-            gap: 16px;
-        }
-
-        .user-avatar {
-            width: 40px;
-            height: 40px;
-            border-radius: 50%;
-            cursor: pointer;
-            border: 2px solid var(--primary);
-            transition: transform 0.2s;
-        }
-
-        .user-avatar:hover {
-            transform: scale(1.05);
-        }
-
-        /* TOOLBAR */
-        .toolbar {
-            padding: 16px 20px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border-bottom: 1px solid var(--border);
-            background: var(--surface);
-        }
-
-        .breadcrumb {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            cursor: pointer;
-            padding: 8px 12px;
-            border-radius: var(--radius);
-            transition: background 0.2s;
-        }
-
-        .breadcrumb:hover {
-            background: var(--hover);
-        }
-
-        .vault-badge {
-            background: linear-gradient(135deg, var(--secondary) 0%, #0d8a5c 100%);
-            color: white;
-            padding: 4px 12px;
-            border-radius: 20px;
-            font-size: 12px;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
-
-        /* FILE VIEWER */
-        .file-viewer {
-            flex: 1;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .view-toggle {
-            display: flex;
-            gap: 8px;
-            background: var(--hover);
-            padding: 4px;
-            border-radius: var(--radius);
-        }
-
-        .view-btn {
-            padding: 8px 16px;
-            border: none;
-            background: transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            color: var(--text-sec);
-            transition: all 0.2s;
-        }
-
-        .view-btn.active {
-            background: var(--surface);
-            color: var(--primary);
-            box-shadow: var(--shadow);
-        }
-
-        /* FILE LIST VIEW */
-        .file-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
-
-        .file-item {
-            display: flex;
-            align-items: center;
-            padding: 16px;
-            background: var(--surface);
-            border-radius: var(--radius);
-            cursor: pointer;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-        }
-
-        .file-item:hover {
-            background: var(--hover);
-            border-color: var(--border);
-            transform: translateY(-1px);
-            box-shadow: var(--shadow);
-        }
-
-        .file-icon {
-            font-size: 24px;
-            color: var(--text-sec);
-            margin-right: 16px;
-            width: 40px;
-            height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 8px;
-            background: var(--hover);
-        }
-
-        .folder-icon {
-            color: var(--primary);
-            background: rgba(26, 115, 232, 0.1);
-        }
-
-        .file-info {
-            flex: 1;
-            min-width: 0;
-        }
-
-        .file-name {
-            font-weight: 500;
-            margin-bottom: 4px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-        }
-
-        .file-meta {
-            font-size: 12px;
-            color: var(--text-sec);
-        }
-
-        .file-actions {
-            opacity: 0;
-            transition: opacity 0.2s;
-        }
-
-        .file-item:hover .file-actions {
-            opacity: 1;
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
-            color: var(--text-sec);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-
-        .action-btn:hover {
-            background: var(--hover);
-            color: var(--text-main);
-        }
-
-        /* FILE GRID VIEW */
-        .file-grid {
+        /* MASONRY GRID OVERRIDES */
+        .file-grid-layout {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-            gap: 16px;
+            gap: 1rem;
         }
-
-        .grid-item {
-            background: var(--surface);
-            border-radius: var(--radius);
-            padding: 20px;
-            cursor: pointer;
-            text-align: center;
-            transition: all 0.2s;
-            border: 1px solid transparent;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        .grid-item:hover {
-            border-color: var(--border);
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-lg);
-        }
-
-        .grid-icon {
-            font-size: 48px;
-            color: var(--text-sec);
-            margin-bottom: 12px;
-            width: 80px;
-            height: 80px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            border-radius: 16px;
-            background: var(--hover);
-        }
-
-        .grid-folder-icon {
-            color: var(--primary);
-            background: rgba(26, 115, 232, 0.1);
-        }
-
-        .grid-name {
-            font-weight: 500;
-            font-size: 14px;
-            margin-top: 8px;
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            width: 100%;
-        }
-
-        /* BOTTOM NAV */
-        .bottom-nav {
-            background: var(--surface);
-            border-top: 1px solid var(--border);
-            display: flex;
-            padding: 12px 0;
-            position: sticky;
-            bottom: 0;
-            z-index: 100;
-        }
-
-        .nav-item {
-            flex: 1;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 8px;
-            cursor: pointer;
-            color: var(--text-sec);
-            transition: all 0.2s;
-            border-radius: 8px;
-            margin: 0 4px;
-        }
-
-        .nav-item:hover {
-            background: var(--hover);
-            color: var(--text-main);
-        }
-
-        .nav-item.active {
-            color: var(--primary);
-        }
-
-        .nav-icon {
-            font-size: 24px;
-            margin-bottom: 4px;
-        }
-
-        .nav-label {
-            font-size: 11px;
-            font-weight: 500;
-        }
-
-        /* FAB BUTTON */
-        .fab-container {
-            position: fixed;
-            bottom: 80px;
-            right: 20px;
-            z-index: 1000;
-        }
-
-        .fab-main {
-            width: 60px;
-            height: 60px;
-            border-radius: 18px;
-            background: linear-gradient(135deg, var(--primary) 0%, var(--primary-dark) 100%);
-            color: white;
-            border: none;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 28px;
-            box-shadow: 0 4px 20px rgba(26, 115, 232, 0.3);
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .fab-main:hover {
-            transform: scale(1.1);
-            box-shadow: 0 6px 25px rgba(26, 115, 232, 0.4);
-        }
-
-        .fab-menu {
-            position: absolute;
-            bottom: 70px;
-            right: 0;
-            background: var(--surface);
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            min-width: 200px;
-            display: none;
-            flex-direction: column;
-            overflow: hidden;
-            border: 1px solid var(--border);
-            animation: fadeIn 0.2s;
-        }
-
-        .fab-item {
-            padding: 14px 20px;
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            cursor: pointer;
-            color: var(--text-main);
-            transition: background 0.2s;
-            border: none;
-            background: none;
-            width: 100%;
-            text-align: left;
-            font-family: 'Roboto', sans-serif;
-            font-size: 14px;
-        }
-
-        .fab-item:hover {
-            background: var(--hover);
-        }
-
-        .fab-item .material-icons-round {
-            color: var(--text-sec);
-        }
-
-        /* MODALS */
-        .modal-backdrop {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(0, 0, 0, 0.5);
-            display: none;
-            justify-content: center;
-            align-items: center;
-            z-index: 2000;
-            backdrop-filter: blur(5px);
-        }
-
-        .modal-backdrop.active {
-            display: flex;
-            animation: fadeIn 0.2s;
-        }
-
-        .modal-card {
-            background: var(--surface);
-            border-radius: var(--radius-lg);
-            width: 90%;
-            max-width: 500px;
-            max-height: 80vh;
-            overflow: hidden;
-            box-shadow: var(--shadow-lg);
-            animation: modalSlideUp 0.3s;
-        }
-
-        @keyframes modalSlideUp {
-            from {
-                opacity: 0;
-                transform: translateY(50px);
-            }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        .modal-header {
-            padding: 24px 24px 16px;
-            border-bottom: 1px solid var(--border);
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .modal-title {
-            font-family: 'Google Sans', sans-serif;
-            font-size: 20px;
-            font-weight: 500;
-        }
-
-        .modal-close {
-            background: none;
-            border: none;
-            color: var(--text-sec);
-            cursor: pointer;
-            padding: 8px;
-            border-radius: 50%;
-            transition: background 0.2s;
-        }
-
-        .modal-close:hover {
-            background: var(--hover);
-        }
-
-        .modal-body {
-            padding: 24px;
-            max-height: 60vh;
-            overflow-y: auto;
-        }
-
-        .modal-actions {
-            padding: 20px 24px;
-            border-top: 1px solid var(--border);
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            background: var(--bg);
-        }
-
-        .btn {
-            padding: 10px 20px;
-            border-radius: var(--radius);
-            font-family: 'Google Sans', sans-serif;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            border: none;
-            transition: all 0.2s;
-        }
-
-        .btn-primary {
-            background: var(--primary);
-            color: white;
-        }
-
-        .btn-primary:hover {
-            background: var(--primary-dark);
-            transform: translateY(-1px);
-        }
-
-        .btn-secondary {
-            background: var(--hover);
-            color: var(--text-main);
-        }
-
-        .btn-secondary:hover {
-            background: var(--border);
-        }
-
-        .btn-danger {
-            background: var(--danger);
-            color: white;
-        }
-
-        .btn-danger:hover {
-            background: #d23c2e;
-        }
-
-        /* SETTINGS MODAL */
-        .settings-section {
-            margin-bottom: 24px;
-        }
-
-        .settings-title {
-            font-size: 14px;
-            font-weight: 500;
-            color: var(--text-sec);
-            margin-bottom: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .setting-item {
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
-            padding: 16px;
-            background: var(--bg);
-            border-radius: var(--radius);
-            margin-bottom: 8px;
-            transition: background 0.2s;
-        }
-
-        .setting-item:hover {
-            background: var(--hover);
-        }
-
-        .setting-label {
-            display: flex;
-            flex-direction: column;
-            gap: 4px;
-        }
-
-        .setting-name {
-            font-weight: 500;
-        }
-
-        .setting-desc {
-            font-size: 12px;
-            color: var(--text-sec);
-        }
-
-        /* TOGGLE SWITCH */
-        .toggle {
-            position: relative;
-            display: inline-block;
-            width: 52px;
-            height: 28px;
-        }
-
-        .toggle input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-
-        .toggle-slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: var(--border);
-            transition: .3s;
-            border-radius: 34px;
-        }
-
-        .toggle-slider:before {
-            position: absolute;
-            content: "";
-            height: 20px;
-            width: 20px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .3s;
-            border-radius: 50%;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-        }
-
-        input:checked + .toggle-slider {
-            background-color: var(--primary);
-        }
-
-        input:checked + .toggle-slider:before {
-            transform: translateX(24px);
-        }
-
-        /* PROGRESS MODAL */
-        .progress-modal {
-            text-align: center;
-            padding: 40px 30px;
-        }
-
-        .progress-icon {
-            font-size: 48px;
-            color: var(--primary);
-            margin-bottom: 20px;
-        }
-
-        .progress-title {
-            font-family: 'Google Sans', sans-serif;
-            font-size: 18px;
-            margin-bottom: 8px;
-        }
-
-        .progress-text {
-            color: var(--text-sec);
-            margin-bottom: 24px;
-        }
-
-        .progress-bar {
-            height: 6px;
-            background: var(--hover);
-            border-radius: 3px;
-            overflow: hidden;
-            margin-bottom: 8px;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
-            border-radius: 3px;
-            transition: width 0.3s;
-        }
-
-        .progress-info {
-            display: flex;
-            justify-content: space-between;
-            font-size: 12px;
-            color: var(--text-sec);
-        }
-
-        /* ERROR TOAST */
-        .toast {
-            position: fixed;
-            top: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            background: var(--danger);
-            color: white;
-            padding: 14px 24px;
-            border-radius: var(--radius);
-            box-shadow: var(--shadow-lg);
-            z-index: 3000;
-            display: none;
-            align-items: center;
-            gap: 12px;
-            animation: slideDown 0.3s;
-        }
-
-        @keyframes slideDown {
-            from {
-                opacity: 0;
-                transform: translate(-50%, -20px);
-            }
-            to {
-                opacity: 1;
-                transform: translate(-50%, 0);
-            }
-        }
-
-        .toast-icon {
-            font-size: 20px;
-        }
-
-        .toast-close {
-            margin-left: auto;
-            cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s;
-        }
-
-        .toast-close:hover {
-            opacity: 1;
-        }
-
-        /* LOADING STATES */
-        .loading {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            padding: 60px 20px;
-            color: var(--text-sec);
-        }
-
-        .loading-spinner {
-            width: 40px;
-            height: 40px;
-            border: 3px solid var(--hover);
-            border-top: 3px solid var(--primary);
-            border-radius: 50%;
-            animation: spin 1s linear infinite;
-            margin-bottom: 16px;
-        }
-
-        @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
-
-        /* EMPTY STATE */
-        .empty-state {
-            text-align: center;
-            padding: 60px 20px;
-            color: var(--text-sec);
-        }
-
-        .empty-icon {
-            font-size: 64px;
-            margin-bottom: 20px;
-            opacity: 0.3;
-        }
-
-        /* RESPONSIVE */
-        @media (max-width: 768px) {
-            .auth-container {
-                padding: 30px 20px;
-            }
-            
-            .google-signin-btn {
-                padding: 12px 20px;
-                font-size: 15px;
-            }
-            
-            .file-grid {
-                grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            }
-            
-            .grid-icon {
-                width: 60px;
-                height: 60px;
-                font-size: 36px;
-            }
-        }
-
-        @media (max-width: 480px) {
-            .app-header {
-                padding: 12px 16px;
-            }
-            
-            .search-container {
-                margin: 0 12px;
-            }
-            
-            .search-box {
-                padding: 10px 16px;
-                padding-left: 40px;
-            }
-            
-            .file-grid {
-                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
-            }
-            
-            .grid-item {
-                padding: 16px;
-            }
+        @media (min-width: 768px) {
+            .file-grid-layout { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         }
     </style>
 </head>
-<body>
-    <!-- ERROR TOAST -->
-    <div class="toast" id="toast">
-        <span class="material-icons-round toast-icon">error</span>
-        <span id="toast-message">An error occurred</span>
-        <span class="material-icons-round toast-close" onclick="hideToast()">close</span>
+<body class="antialiased selection:bg-blue-500/30">
+
+    <div class="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+        <div class="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-blue-600/10 rounded-full blur-[100px] animate-pulse-slow"></div>
+        <div class="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-600/10 rounded-full blur-[100px] animate-pulse-slow" style="animation-delay: 2s"></div>
+        <div class="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-20 brightness-100 contrast-150 mix-blend-overlay"></div>
     </div>
 
-    <!-- SCREEN 1: LOCK SCREEN -->
-    <div id="lock-screen" class="screen active">
-        <div class="lock-container">
-            <div class="lock-title">Dream Vault</div>
-            <div class="pin-display">
-                <div class="pin-dot" id="dot-1"></div>
-                <div class="pin-dot" id="dot-2"></div>
-                <div class="pin-dot" id="dot-3"></div>
-                <div class="pin-dot" id="dot-4"></div>
-            </div>
-            <div class="keypad">
-                <button class="keypad-btn" onclick="pressKey(1)">1</button>
-                <button class="keypad-btn" onclick="pressKey(2)">2</button>
-                <button class="keypad-btn" onclick="pressKey(3)">3</button>
-                <button class="keypad-btn" onclick="pressKey(4)">4</button>
-                <button class="keypad-btn" onclick="pressKey(5)">5</button>
-                <button class="keypad-btn" onclick="pressKey(6)">6</button>
-                <button class="keypad-btn" onclick="pressKey(7)">7</button>
-                <button class="keypad-btn" onclick="pressKey(8)">8</button>
-                <button class="keypad-btn" onclick="pressKey(9)">9</button>
-                <button class="keypad-btn keypad-clear" onclick="clearPin()">CLEAR</button>
-                <button class="keypad-btn" onclick="pressKey(0)">0</button>
-                <button class="keypad-btn keypad-clear" onclick="backspace()">
-                    <span class="material-icons-round">backspace</span>
-                </button>
-            </div>
-            <div class="lock-message" id="lock-message">Enter PIN to unlock</div>
-        </div>
-    </div>
-
-    <!-- SCREEN 2: AUTH SCREEN -->
-    <div id="auth-screen" class="screen">
-        <div class="auth-container">
-            <div class="auth-logo">Dream Vault OS</div>
-            <div class="auth-subtitle">
-                Secure cloud storage with military-grade encryption.<br>
-                Your files, completely private.
-            </div>
+    <div id="auth-screen" class="fixed inset-0 z-50 flex items-center justify-center p-4 transition-all duration-500">
+        <div class="relative w-full max-w-md">
+            <div class="absolute -inset-1 bg-gradient-to-r from-blue-600 to-purple-600 rounded-2xl blur opacity-30 animate-pulse"></div>
             
-            <button id="google-signin-btn" class="google-signin-btn">
-                <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" alt="Google">
-                Sign in with Google
-            </button>
-            
-            <div class="auth-features">
-                <div class="feature-item">
-                    <span class="material-icons-round">lock</span>
-                    End-to-end encryption
-                </div>
-                <div class="feature-item">
-                    <span class="material-icons-round">security</span>
-                    PIN protected
-                </div>
-                <div class="feature-item">
-                    <span class="material-icons-round">cloud_upload</span>
-                    Unlimited storage
-                </div>
-                <div class="feature-item">
-                    <span class="material-icons-round">devices</span>
-                    Cross-platform
-                </div>
-            </div>
-            
-            <div class="auth-footer">
-                By continuing, you agree to our Terms of Service and Privacy Policy
-            </div>
-        </div>
-    </div>
-
-    <!-- SCREEN 3: APP SCREEN -->
-    <div id="app-screen" class="screen">
-        <!-- HEADER -->
-        <div class="app-header">
-            <div class="header-left">
-                <button class="menu-btn" onclick="toggleSidebar()">
-                    <span class="material-icons-round">menu</span>
-                </button>
-            </div>
-            
-            <div class="search-container">
-                <span class="material-icons-round search-icon">search</span>
-                <input type="text" class="search-box" placeholder="Search files..." id="search-input">
-            </div>
-            
-            <div class="header-right">
-                <button class="menu-btn" onclick="refreshFiles()">
-                    <span class="material-icons-round">refresh</span>
-                </button>
-                <img src="" alt="User" class="user-avatar" id="user-avatar" onclick="openSettings()">
-            </div>
-        </div>
-
-        <!-- TOOLBAR -->
-        <div class="toolbar">
-            <div class="breadcrumb" onclick="goBack()">
-                <span class="material-icons-round">chevron_left</span>
-                <span id="current-folder">My Drive</span>
-                <div class="vault-badge" id="vault-badge" style="display: none;">
-                    <span class="material-icons-round" style="font-size: 14px;">lock</span>
-                    Vault
-                </div>
-            </div>
-            
-            <div class="view-toggle">
-                <button class="view-btn active" onclick="setView('list')">
-                    <span class="material-icons-round">view_list</span>
-                </button>
-                <button class="view-btn" onclick="setView('grid')">
-                    <span class="material-icons-round">grid_view</span>
-                </button>
-            </div>
-        </div>
-
-        <!-- FILE VIEWER -->
-        <div class="file-viewer">
-            <div class="file-list" id="file-list">
-                <!-- Files will be loaded here -->
-            </div>
-        </div>
-
-        <!-- BOTTOM NAV -->
-        <div class="bottom-nav">
-            <div class="nav-item active" onclick="switchTab('drive')">
-                <span class="material-icons-round nav-icon">home</span>
-                <span class="nav-label">Drive</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('vault')">
-                <span class="material-icons-round nav-icon">lock</span>
-                <span class="nav-label">Vault</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('shared')">
-                <span class="material-icons-round nav-icon">people</span>
-                <span class="nav-label">Shared</span>
-            </div>
-            <div class="nav-item" onclick="switchTab('recent')">
-                <span class="material-icons-round nav-icon">history</span>
-                <span class="nav-label">Recent</span>
-            </div>
-        </div>
-
-        <!-- FAB BUTTON -->
-        <div class="fab-container">
-            <div class="fab-menu" id="fab-menu">
-                <button class="fab-item" onclick="uploadFile()">
-                    <span class="material-icons-round">upload_file</span>
-                    Upload File
-                </button>
-                <button class="fab-item" onclick="createFolder()">
-                    <span class="material-icons-round">create_new_folder</span>
-                    New Folder
-                </button>
-                <button class="fab-item" onclick="createVault()">
-                    <span class="material-icons-round">lock</span>
-                    New Vault
-                </button>
-            </div>
-            <button class="fab-main" onclick="toggleFabMenu()">
-                <span class="material-icons-round">add</span>
-            </button>
-        </div>
-    </div>
-
-    <!-- SETTINGS MODAL -->
-    <div class="modal-backdrop" id="settings-modal">
-        <div class="modal-card">
-            <div class="modal-header">
-                <div class="modal-title">Settings</div>
-                <button class="modal-close" onclick="closeSettings()">
-                    <span class="material-icons-round">close</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <div class="settings-section">
-                    <div class="settings-title">Appearance</div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <div class="setting-name">Dark Mode</div>
-                            <div class="setting-desc">Switch between light and dark themes</div>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" id="dark-mode-toggle" onchange="toggleDarkMode()">
-                            <span class="toggle-slider"></span>
-                        </label>
+            <div class="glass-panel relative rounded-2xl p-8 text-center overflow-hidden">
+                <div class="mb-6 flex justify-center">
+                    <div class="w-20 h-20 bg-gradient-to-tr from-blue-500/20 to-purple-500/20 rounded-2xl flex items-center justify-center border border-white/10 shadow-inner animate-float">
+                        <span class="material-icons-round text-5xl text-gradient">cloud_queue</span>
                     </div>
                 </div>
                 
-                <div class="settings-section">
-                    <div class="settings-title">Performance</div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <div class="setting-name">Use Proxy</div>
-                            <div class="setting-desc">Use media proxy for better streaming</div>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" id="proxy-toggle" checked onchange="toggleProxy()">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                    <div class="setting-item">
-                        <div class="setting-label">
-                            <div class="setting-name">CDN Libraries</div>
-                            <div class="setting-desc">Load external libraries for enhanced features</div>
-                        </div>
-                        <label class="toggle">
-                            <input type="checkbox" id="cdn-toggle" checked onchange="toggleCDN()">
-                            <span class="toggle-slider"></span>
-                        </label>
-                    </div>
-                </div>
+                <h1 class="text-3xl font-bold text-white mb-2 tracking-tight">Drive OS <span class="text-blue-400">Pro+</span></h1>
+                <p class="text-slate-400 mb-8 text-sm">Next Gen AI-Powered Cloud Management</p>
                 
-                <div class="settings-section">
-                    <div class="settings-title">Account</div>
-                    <div class="setting-item" onclick="showStorageInfo()">
-                        <div class="setting-label">
-                            <div class="setting-name">Storage Usage</div>
-                            <div class="setting-desc">View your Google Drive storage</div>
-                        </div>
-                        <span class="material-icons-round">chevron_right</span>
-                    </div>
-                    <div class="setting-item" onclick="clearCache()">
-                        <div class="setting-label">
-                            <div class="setting-name">Clear Cache</div>
-                            <div class="setting-desc">Clear local cache and temporary files</div>
-                        </div>
-                        <span class="material-icons-round">delete_sweep</span>
-                    </div>
+                <div class="space-y-4">
+                    <button onclick="App.Auth.signIn()" class="group w-full py-3.5 px-4 bg-white hover:bg-slate-50 text-slate-900 rounded-xl font-semibold transition-all duration-200 flex items-center justify-center gap-3 shadow-lg shadow-blue-900/20 active:scale-95">
+                        <img src="https://upload.wikimedia.org/wikipedia/commons/5/53/Google_%22G%22_Logo.svg" class="w-5 h-5 transition-transform group-hover:rotate-12"> 
+                        <span>Continue with Google</span>
+                    </button>
+                    <p class="text-xs text-slate-500">Secure access via Google Identity Services</p>
                 </div>
-            </div>
-            <div class="modal-actions">
-                <button class="btn btn-secondary" onclick="closeSettings()">Cancel</button>
-                <button class="btn btn-danger" onclick="signOut()">Sign Out</button>
             </div>
         </div>
     </div>
 
-    <!-- PROGRESS MODAL -->
-    <div class="modal-backdrop" id="progress-modal">
-        <div class="modal-card" style="max-width: 400px;">
-            <div class="progress-modal">
-                <div class="progress-icon">
-                    <span class="material-icons-round">cloud_upload</span>
+    <div id="app-ui" class="hidden h-screen flex flex-col md:flex-row relative z-10 animate-fade-in">
+        
+        <aside class="w-full md:w-72 glass-panel border-r-0 md:border-r border-b md:border-b-0 border-glass-border flex flex-col shrink-0 transition-all duration-300 z-40 order-2 md:order-1 h-20 md:h-auto">
+            
+            <div class="hidden md:flex h-20 items-center px-6 border-b border-white/5">
+                <span class="material-icons-round text-blue-500 mr-2 text-3xl">dns</span>
+                <div>
+                    <h2 class="font-bold text-lg tracking-wide text-white">Drive<span class="text-blue-500">OS</span></h2>
+                    <p class="text-[10px] text-slate-400 uppercase tracking-widest">Ultimate Edition</p>
                 </div>
-                <div class="progress-title" id="progress-title">Uploading...</div>
-                <div class="progress-text" id="progress-text">Please wait</div>
-                <div class="progress-bar">
-                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+            </div>
+
+            <nav class="flex-1 p-2 md:p-4 flex flex-row md:flex-col gap-1 md:gap-2 overflow-x-auto md:overflow-y-auto custom-scroll items-center md:items-stretch justify-around md:justify-start">
+                
+                <button onclick="App.Drive.loadFiles('root')" id="nav-root" class="nav-btn w-full flex flex-col md:flex-row items-center md:px-4 py-2 md:py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-blue-400 transition-all group active-nav">
+                    <span class="material-icons-round text-2xl md:text-xl md:mr-3 mb-1 md:mb-0 group-hover:scale-110 transition-transform">dashboard</span>
+                    <span class="text-[10px] md:text-sm font-medium">My Drive</span>
+                </button>
+
+                <button onclick="App.Drive.loadFiles(App.Config.vaultId)" id="nav-vault" class="nav-btn w-full flex flex-col md:flex-row items-center md:px-4 py-2 md:py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-purple-400 transition-all group">
+                    <span class="material-icons-round text-2xl md:text-xl md:mr-3 mb-1 md:mb-0 group-hover:scale-110 transition-transform">lock</span>
+                    <span class="text-[10px] md:text-sm font-medium">Secure Vault</span>
+                </button>
+
+                <button onclick="App.Drive.loadFiles('starred')" id="nav-starred" class="nav-btn w-full flex flex-col md:flex-row items-center md:px-4 py-2 md:py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-yellow-400 transition-all group">
+                    <span class="material-icons-round text-2xl md:text-xl md:mr-3 mb-1 md:mb-0 group-hover:scale-110 transition-transform">star</span>
+                    <span class="text-[10px] md:text-sm font-medium">Starred</span>
+                </button>
+                
+                <div class="hidden md:block h-px bg-white/5 my-2"></div>
+            </nav>
+
+            <div class="hidden md:block p-5 border-t border-white/5 bg-slate-900/30">
+                <div class="flex justify-between items-end mb-2">
+                    <span class="text-xs font-medium text-slate-300">Storage</span>
+                    <span id="storage-text" class="text-xs text-blue-400 font-mono">-- GB</span>
                 </div>
-                <div class="progress-info">
-                    <span id="progress-current">0 B</span>
-                    <span id="progress-total">0 B</span>
+                <div class="w-full h-2 bg-slate-800 rounded-full overflow-hidden shadow-inner">
+                    <div id="storage-bar" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-0 transition-all duration-1000 ease-out relative">
+                        <div class="absolute inset-0 bg-white/20 animate-pulse"></div>
+                    </div>
+                </div>
+                
+                <div class="mt-6 flex items-center gap-3">
+                    <img id="user-avatar" src="" class="w-9 h-9 rounded-full border border-white/10 bg-slate-800 object-cover" onerror="this.src='https://ui-avatars.com/api/?name=User&background=0D8ABC&color=fff'">
+                    <div class="flex-1 min-w-0">
+                        <p id="user-name" class="text-sm font-medium text-white truncate">Loading...</p>
+                        <button onclick="App.Auth.signOut()" class="text-[10px] text-red-400 hover:text-red-300 flex items-center gap-1 mt-0.5">
+                            <span class="material-icons-round text-[10px]">logout</span> Disconnect
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </aside>
+        <main class="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
+            
+            <header class="h-20 glass-panel border-b border-glass-border flex items-center justify-between px-6 z-30 shrink-0">
+                
+                <div class="flex items-center gap-4 flex-1 max-w-2xl">
+                    <button id="btn-back" onclick="App.State.goBack()" class="w-10 h-10 rounded-full hover:bg-white/10 flex items-center justify-center text-slate-400 transition disabled:opacity-30 disabled:cursor-not-allowed">
+                        <span class="material-icons-round">arrow_back</span>
+                    </button>
+                    
+                    <div class="relative flex-1 group">
+                        <span class="material-icons-round absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 group-focus-within:text-blue-400 transition">search</span>
+                        <input type="text" id="search-input" placeholder="Search files, content, or commands (Ctrl+K)" 
+                            class="w-full bg-slate-800/50 border border-white/10 rounded-xl py-2.5 pl-12 pr-4 text-sm text-white focus:outline-none focus:border-blue-500 focus:bg-slate-800 transition shadow-inner"
+                            oninput="App.Utils.debounce(App.Drive.search, 500)(this.value)">
+                        <div class="absolute right-3 top-1/2 -translate-y-1/2 flex gap-1">
+                            <span class="text-[10px] bg-white/10 px-1.5 rounded text-slate-400 border border-white/5">CTRL</span>
+                            <span class="text-[10px] bg-white/10 px-1.5 rounded text-slate-400 border border-white/5">K</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-3 pl-4">
+                    <button onclick="App.Tools.openCleaner()" class="hidden md:flex items-center gap-2 px-3 py-2 bg-red-500/10 text-red-400 border border-red-500/20 rounded-lg hover:bg-red-500 hover:text-white transition group" title="Find Duplicates">
+                        <span class="material-icons-round text-lg">delete_sweep</span>
+                        <span class="text-xs font-medium">Cleaner</span>
+                    </button>
+
+                    <button onclick="App.UI.toggleAIStudio()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-violet-600 to-indigo-600 text-white rounded-xl shadow-lg hover:shadow-indigo-500/30 hover:scale-105 transition">
+                        <span class="material-icons-round text-lg">auto_fix_high</span>
+                        <span class="text-sm font-bold hidden sm:inline">AI Studio</span>
+                    </button>
+
+                    <button onclick="document.getElementById('file-upload').click()" class="w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-xl shadow-lg flex items-center justify-center transition hover:rotate-90">
+                        <span class="material-icons-round">add</span>
+                    </button>
+                </div>
+            </header>
+
+            <div class="h-12 flex items-center justify-between px-6 bg-slate-900/40 border-b border-white/5 backdrop-blur-sm z-20 shrink-0">
+                <div class="flex items-center gap-2 text-sm text-slate-400 overflow-hidden">
+                    <span class="material-icons-round text-blue-500">folder_open</span>
+                    <span id="folder-path" class="font-medium text-slate-200 truncate">Loading...</span>
+                    <span id="item-count" class="text-xs bg-white/10 px-2 py-0.5 rounded-full ml-2">0 items</span>
+                </div>
+                
+                <div class="flex items-center gap-2">
+                    <button onclick="App.Drive.toggleView()" class="p-1.5 text-slate-400 hover:text-white hover:bg-white/10 rounded transition">
+                        <span class="material-icons-round text-lg" id="view-icon">grid_view</span>
+                    </button>
+                    <div class="h-4 w-px bg-white/10"></div>
+                    <select onchange="App.Drive.sort(this.value)" class="bg-transparent text-xs text-slate-400 border-none focus:ring-0 cursor-pointer outline-none hover:text-white transition">
+                        <option value="folder,modifiedTime desc" class="bg-slate-800">Newest First</option>
+                        <option value="folder,name" class="bg-slate-800">Name (A-Z)</option>
+                        <option value="folder,quotaBytesUsed desc" class="bg-slate-800">Size (Largest)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div id="file-container" class="flex-1 overflow-y-auto p-4 custom-scroll relative bg-gradient-to-b from-transparent to-slate-900/50">
+                
+                <div id="file-grid" class="file-grid-layout gap-4 pb-24 transition-all"></div>
+                
+                <div id="empty-state" class="hidden absolute inset-0 flex flex-col items-center justify-center text-slate-500 pointer-events-none">
+                    <div class="w-32 h-32 bg-slate-800/50 rounded-full flex items-center justify-center mb-4 animate-pulse">
+                        <span class="material-icons-round text-6xl opacity-30">folder_off</span>
+                    </div>
+                    <p class="text-lg font-medium">This folder is empty</p>
+                    <p class="text-sm opacity-60">Upload files or create a new folder</p>
+                </div>
+
+                <div id="loader" class="absolute inset-0 flex items-center justify-center bg-slate-900/80 z-50 backdrop-blur-sm hidden">
+                    <div class="flex flex-col items-center">
+                        <div class="w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full loader-spin"></div>
+                        <span class="mt-4 text-sm font-mono text-blue-400 animate-pulse">Syncing with Drive...</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="drop-zone" class="absolute inset-0 bg-blue-500/20 border-4 border-blue-500 border-dashed m-4 rounded-3xl z-50 hidden flex items-center justify-center backdrop-blur-sm">
+                <div class="text-center text-white pointer-events-none">
+                    <span class="material-icons-round text-8xl mb-4 animate-bounce">cloud_upload</span>
+                    <h2 class="text-3xl font-bold">Drop files here</h2>
+                </div>
+            </div>
+            
+            <input type="file" id="file-upload" class="hidden" multiple onchange="App.Drive.uploadFiles(this.files)">
+        </main>
+    </div>
+
+    <div id="ai-studio" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-xl hidden flex items-center justify-center p-4 animate-fade-in">
+        <div class="w-full max-w-5xl h-[85vh] bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden relative">
+            
+            <div class="h-16 border-b border-white/10 flex items-center justify-between px-6 bg-slate-900">
+                <div class="flex items-center gap-3">
+                    <div class="p-2 bg-gradient-to-br from-indigo-500 to-purple-600 rounded-lg">
+                        <span class="material-icons-round text-white">auto_fix_high</span>
+                    </div>
+                    <h2 class="text-xl font-bold text-white tracking-tight">AI Studio <span class="text-xs px-2 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">Beta</span></h2>
+                </div>
+                <button onclick="App.UI.toggleAIStudio()" class="w-8 h-8 rounded-full bg-white/5 hover:bg-white/10 flex items-center justify-center transition"><span class="material-icons-round">close</span></button>
+            </div>
+
+            <div class="flex flex-1 overflow-hidden">
+                <div class="w-64 border-r border-white/10 bg-slate-900/50 p-4 space-y-2">
+                    <button onclick="App.AI.switchTab('ocr')" class="ai-tab active w-full p-3 rounded-xl flex items-center gap-3 hover:bg-white/5 transition text-left text-sm group" data-tab="ocr">
+                        <span class="material-icons-round text-yellow-400 group-hover:scale-110 transition">text_snippet</span>
+                        <div>
+                            <div class="font-medium text-slate-200">Text Extractor</div>
+                            <div class="text-[10px] text-slate-500">Bangla & English OCR</div>
+                        </div>
+                    </button>
+                    
+                    <button onclick="App.AI.switchTab('bg-remove')" class="ai-tab w-full p-3 rounded-xl flex items-center gap-3 hover:bg-white/5 transition text-left text-sm group" data-tab="bg-remove">
+                        <span class="material-icons-round text-pink-400 group-hover:scale-110 transition">image</span>
+                        <div>
+                            <div class="font-medium text-slate-200">BG Remover</div>
+                            <div class="text-[10px] text-slate-500">Transparent Backgrounds</div>
+                        </div>
+                    </button>
+
+                    <button onclick="App.AI.switchTab('faceswap')" class="ai-tab w-full p-3 rounded-xl flex items-center gap-3 hover:bg-white/5 transition text-left text-sm group" data-tab="faceswap">
+                        <span class="material-icons-round text-green-400 group-hover:scale-110 transition">face_retouching_natural</span>
+                        <div>
+                            <div class="font-medium text-slate-200">Face Swap</div>
+                            <div class="text-[10px] text-slate-500">Swap faces in photos</div>
+                        </div>
+                    </button>
+                </div>
+
+                <div class="flex-1 bg-slate-950 relative overflow-y-auto custom-scroll p-6">
+                    
+                    <div id="tab-ocr" class="ai-view block max-w-3xl mx-auto">
+                        <h3 class="text-lg font-bold mb-4">Extract Text (OCR)</h3>
+                        <div class="border-2 border-dashed border-white/10 rounded-2xl p-8 text-center hover:border-blue-500/50 transition cursor-pointer bg-slate-900" onclick="document.getElementById('ocr-upload').click()">
+                            <input type="file" id="ocr-upload" class="hidden" accept="image/*" onchange="App.AI.handleOCR(this.files[0])">
+                            <img id="ocr-preview" class="h-48 mx-auto object-contain mb-4 rounded hidden">
+                            <div id="ocr-placeholder">
+                                <span class="material-icons-round text-4xl text-slate-600 mb-2">add_photo_alternate</span>
+                                <p class="text-slate-400 text-sm">Click to upload image (Bangla/English)</p>
+                            </div>
+                        </div>
+                        <div id="ocr-result-box" class="mt-6 hidden">
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-sm text-slate-400">Extracted Text:</span>
+                                <button onclick="App.Utils.copyText('ocr-text')" class="text-xs text-blue-400 hover:text-white flex items-center gap-1"><span class="material-icons-round text-sm">content_copy</span> Copy</button>
+                            </div>
+                            <textarea id="ocr-text" class="w-full h-48 bg-slate-900 border border-white/10 rounded-xl p-4 text-sm text-slate-300 focus:border-blue-500 focus:outline-none" readonly></textarea>
+                        </div>
+                    </div>
+
+                    <div id="tab-bg-remove" class="ai-view hidden max-w-3xl mx-auto">
+                        <h3 class="text-lg font-bold mb-4">Background Remover</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="space-y-2">
+                                <p class="text-xs text-slate-400">Original</p>
+                                <div class="h-64 bg-slate-900 border border-white/10 rounded-xl flex items-center justify-center overflow-hidden relative group">
+                                    <input type="file" id="bg-upload" class="absolute inset-0 opacity-0 cursor-pointer z-10" accept="image/*" onchange="App.AI.handleBGRemove(this.files[0])">
+                                    <img id="bg-preview" class="w-full h-full object-contain hidden">
+                                    <div id="bg-placeholder" class="text-center p-4">
+                                        <span class="material-icons-round text-4xl text-slate-600">upload_file</span>
+                                        <p class="text-xs text-slate-400 mt-2">Upload Image</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-2">
+                                <p class="text-xs text-slate-400">Result</p>
+                                <div class="h-64 bg-[url('https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Fcdn.dribbble.com%2Fusers%2F22691%2Fscreenshots%2F2128712%2Fcheckers-pattern.png&f=1&nofb=1')] bg-repeat border border-white/10 rounded-xl flex items-center justify-center overflow-hidden relative">
+                                    <img id="bg-result" class="w-full h-full object-contain hidden z-10">
+                                    <div id="bg-loader" class="hidden absolute inset-0 bg-slate-900/80 flex items-center justify-center z-20">
+                                        <div class="spinner w-8 h-8 border-2 border-pink-500 border-t-transparent rounded-full"></div>
+                                    </div>
+                                    <button id="bg-download" onclick="App.AI.downloadResult('bg-result')" class="absolute bottom-4 right-4 bg-pink-600 text-white px-3 py-1 rounded-lg text-xs shadow-lg hidden z-30 hover:bg-pink-500">Download</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="tab-faceswap" class="ai-view hidden max-w-3xl mx-auto">
+                        <h3 class="text-lg font-bold mb-4">Face Swap Pro</h3>
+                        <div class="grid grid-cols-2 gap-4 mb-6">
+                            <div class="border border-white/10 rounded-xl p-4 bg-slate-900 text-center relative">
+                                <p class="text-xs text-slate-400 mb-2">Source Face</p>
+                                <input type="file" id="fs-source" class="hidden" accept="image/*" onchange="App.AI.loadPreview(this, 'fs-source-img')">
+                                <div onclick="document.getElementById('fs-source').click()" class="h-32 border border-dashed border-white/10 rounded flex items-center justify-center cursor-pointer hover:bg-white/5">
+                                    <img id="fs-source-img" class="h-full w-full object-contain hidden">
+                                    <span class="material-icons-round text-slate-600" id="fs-source-icon">face</span>
+                                </div>
+                            </div>
+                            <div class="border border-white/10 rounded-xl p-4 bg-slate-900 text-center relative">
+                                <p class="text-xs text-slate-400 mb-2">Target Image</p>
+                                <input type="file" id="fs-target" class="hidden" accept="image/*" onchange="App.AI.loadPreview(this, 'fs-target-img')">
+                                <div onclick="document.getElementById('fs-target').click()" class="h-32 border border-dashed border-white/10 rounded flex items-center justify-center cursor-pointer hover:bg-white/5">
+                                    <img id="fs-target-img" class="h-full w-full object-contain hidden">
+                                    <span class="material-icons-round text-slate-600" id="fs-target-icon">image</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button onclick="App.AI.processFaceSwap()" class="w-full py-3 bg-green-600 hover:bg-green-500 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 mb-6">
+                            <span class="material-icons-round">swap_horiz</span> Swap Faces Now
+                        </button>
+                        
+                        <div id="fs-result-container" class="hidden border border-white/10 rounded-xl bg-slate-900 p-4">
+                             <p class="text-xs text-slate-400 mb-2">Result</p>
+                             <div class="relative min-h-[200px] flex items-center justify-center">
+                                 <img id="fs-result" class="max-w-full rounded shadow-lg">
+                                 <div id="fs-loader" class="absolute inset-0 bg-slate-900/80 flex flex-col items-center justify-center hidden">
+                                     <div class="spinner w-8 h-8 border-2 border-green-500 border-t-transparent rounded-full mb-2"></div>
+                                     <span class="text-xs text-green-400">Processing AI...</span>
+                                 </div>
+                             </div>
+                             <a id="fs-download" class="mt-4 block text-center w-full bg-slate-800 py-2 rounded text-sm hover:bg-slate-700 transition">Download Result</a>
+                        </div>
+                    </div>
+
                 </div>
             </div>
         </div>
+    </div>
+
+    <div id="cleaner-modal" class="fixed inset-0 z-[70] bg-black/90 hidden flex items-center justify-center p-4">
+        <div class="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
+            <div class="p-4 border-b border-white/10 flex justify-between items-center bg-slate-800">
+                <h3 class="font-bold text-white flex items-center gap-2"><span class="material-icons-round text-red-400">delete_sweep</span> Duplicate Finder</h3>
+                <button onclick="document.getElementById('cleaner-modal').classList.add('hidden')" class="text-slate-400 hover:text-white"><span class="material-icons-round">close</span></button>
+            </div>
+            <div class="p-6 text-center" id="cleaner-start">
+                <div class="w-20 h-20 bg-slate-800 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-icons-round text-4xl text-slate-500">search</span>
+                </div>
+                <h4 class="text-xl font-bold mb-2">Scan for Duplicates?</h4>
+                <p class="text-slate-400 text-sm mb-6">This will scan the current folder for files with identical names and sizes.</p>
+                <button onclick="App.Tools.scanDuplicates()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition">Start Scan</button>
+            </div>
+            <div class="hidden flex-1 overflow-y-auto p-4 custom-scroll" id="cleaner-results">
+                </div>
+            <div class="hidden p-4 border-t border-white/10 bg-slate-800 flex justify-end gap-3" id="cleaner-actions">
+                <button onclick="App.Tools.deleteSelected()" class="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/30 rounded-lg text-sm transition font-bold">Delete Selected</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-4">
+        
+        <div id="chat-window" class="w-80 md:w-96 h-[500px] bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col transition-all duration-300 transform origin-bottom-right scale-0 opacity-0 overflow-hidden">
+            <div class="p-4 bg-gradient-to-r from-blue-600 to-indigo-600 flex justify-between items-center">
+                <div class="flex items-center gap-2">
+                    <div class="w-2 h-2 rounded-full bg-green-400 animate-pulse"></div>
+                    <span class="font-bold text-white text-sm">Gemini Assistant</span>
+                </div>
+                <button onclick="App.Chat.toggle()" class="text-white/80 hover:text-white"><span class="material-icons-round">expand_more</span></button>
+            </div>
+            
+            <div id="chat-messages" class="flex-1 overflow-y-auto p-4 space-y-4 custom-scroll text-sm bg-slate-900">
+                <div class="flex gap-2">
+                    <div class="w-8 h-8 rounded-full bg-blue-600/20 flex items-center justify-center shrink-0 border border-blue-500/30">
+                        <span class="material-icons-round text-blue-400 text-xs">auto_awesome</span>
+                    </div>
+                    <div class="bg-slate-800 rounded-2xl rounded-tl-none p-3 border border-white/5 text-slate-300 text-xs leading-relaxed">
+                        Hello Sajid! I'm your Drive Assistant. I can help you organize files, generate images, or analyze documents. Try asking "Find large files" or "Generate an image of a cyber city".
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-3 bg-slate-800 border-t border-white/10">
+                <form onsubmit="event.preventDefault(); App.Chat.send();" class="relative">
+                    <input id="chat-input" type="text" placeholder="Ask Gemini..." class="w-full bg-slate-900 border border-white/10 rounded-xl pl-4 pr-12 py-3 text-sm text-white focus:border-blue-500 focus:outline-none transition">
+                    <button type="submit" class="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 bg-blue-600 hover:bg-blue-500 text-white rounded-lg transition">
+                        <span class="material-icons-round text-sm">send</span>
+                    </button>
+                </form>
+            </div>
+        </div>
+
+        <button onclick="App.Chat.toggle()" class="w-14 h-14 rounded-full bg-gradient-to-br from-blue-500 to-purple-600 text-white shadow-lg shadow-blue-600/30 flex items-center justify-center hover:scale-110 transition-transform group">
+            <span class="material-icons-round text-3xl group-hover:rotate-12 transition-transform">auto_awesome</span>
+        </button>
+    </div>
+
+    <div id="toast-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none"></div>
+
+    <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    <div id="context-menu" class="fixed z-[90] bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl py-1 w-52 hidden backdrop-blur-md transition-all duration-200 origin-top-left transform scale-95 opacity-0">
+        <div class="px-3 py-2 border-b border-white/5 mb-1">
+            <p id="ctx-filename" class="text-xs text-slate-400 truncate">Filename.ext</p>
+        </div>
+        <button onclick="App.Actions.preview()" class="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-blue-600 hover:text-white flex items-center gap-3 transition">
+            <span class="material-icons-round text-lg">visibility</span> Preview
+        </button>
+        <button onclick="App.Actions.rename()" class="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-blue-600 hover:text-white flex items-center gap-3 transition">
+            <span class="material-icons-round text-lg">edit</span> Rename
+        </button>
+        <button onclick="App.Actions.download()" class="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-green-600 hover:text-white flex items-center gap-3 transition">
+            <span class="material-icons-round text-lg">download</span> Download
+        </button>
+        <button onclick="App.Actions.share()" class="w-full text-left px-4 py-2 text-sm text-slate-200 hover:bg-yellow-600 hover:text-white flex items-center gap-3 transition">
+            <span class="material-icons-round text-lg">share</span> Get Link
+        </button>
+        <div class="h-px bg-white/10 my-1"></div>
+        <button onclick="App.Actions.delete()" class="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-600 hover:text-white flex items-center gap-3 transition">
+            <span class="material-icons-round text-lg">delete</span> Delete
+        </button>
     </div>
 
     <script>
-        // ===================== CONFIGURATION =====================
-        const CONFIG = {
-            clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
-            scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
-            vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn',
-            
-            // PROXY URLs
-            proxies: {
-                media: 'https://script.google.com/macros/s/AKfycby2hqAq0JePMbnjEbwwcPBFjS14lvS3pM2Z1PPgY4OraTcpvTmZFPKQr9CQ4vba4Xk7/exec',
-                fullAccess: 'https://script.google.com/macros/s/AKfycbxQF58gDxHBATrBvliuMc_SdP7PEiuN6fiHdzVKG7_K5FIrj3V2m8imWgPXTjmVqfnN/exec'
+        const App = {
+            Config: {
+                clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+                scope: 'https://www.googleapis.com/auth/drive',
+                discoveryDocs: ['https://www.googleapis.com/discovery/v1/apis/drive/v3/rest'],
+                
+                // USER KEYS INTEGRATED HERE
+                geminiKey: 'AIzaSyA-DWajUZmaTRjGRQIbkOY_lAxUjjO_A2M', 
+                hfToken: 'Hf_BkbLZCBqYwxOikGRccoGpVzBDpCiGuTqXM', 
+                
+                vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn',
+                
+                // Models
+                models: {
+                    bgRemove: 'briaai/RMBG-1.4', 
+                    faceSwap: 'tonyassi/face-swap', // Fallback model
+                    imageGen: 'prompthero/openjourney'
+                }
             },
-            
-            // CDN URLs
-            cdns: {
-                plyr: 'https://cdn.plyr.io/3.7.8/plyr.css',
-                marked: 'https://cdnjs.cloudflare.com/ajax/libs/marked/4.0.0/marked.min.js',
-                prism: 'https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js',
-                jszip: 'https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js',
-                pdfjs: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js'
-            }
-        };
 
-        // ===================== GLOBAL STATE =====================
-        let STATE = {
-            token: localStorage.getItem('g_token'),
-            user: JSON.parse(localStorage.getItem('g_user') || '{}'),
-            currentFolder: 'root',
-            folderStack: [],
-            files: [],
-            selectedFile: null,
-            viewMode: 'list',
-            settings: JSON.parse(localStorage.getItem('d_settings') || '{}'),
-            isVaultMode: false,
-            currentTab: 'drive',
-            pinAttempts: 0,
-            pinLockedUntil: 0
-        };
+            State: {
+                token: null,
+                currentFolder: 'root',
+                folderName: 'My Drive',
+                files: [],
+                history: [],
+                activeFile: null,
+                viewMode: 'grid', // 'grid' or 'list'
+                user: null
+            },
 
-        // ===================== PIN LOCK SYSTEM =====================
-        let pinInput = '';
-        const MAX_PIN_ATTEMPTS = 5;
-        const PIN_LOCK_TIME = 30000; // 30 seconds
-
-        function pressKey(num) {
-            if (STATE.pinLockedUntil > Date.now()) {
-                showLockMessage(`Locked. Try again in ${Math.ceil((STATE.pinLockedUntil - Date.now()) / 1000)}s`, true);
-                return;
-            }
-
-            if (pinInput.length < 4) {
-                pinInput += num;
-                updatePinDots();
+            // ================= 1. AUTHENTICATION & STARTUP =================
+            Auth: {
+                tokenClient: null,
                 
-                if (pinInput.length === 4) {
-                    setTimeout(verifyPin, 300);
-                }
-            }
-        }
+                init: () => {
+                    App.Auth.tokenClient = google.accounts.oauth2.initTokenClient({
+                        client_id: App.Config.clientId,
+                        scope: App.Config.scope,
+                        callback: (resp) => {
+                            if (resp.error) return App.UI.toast('Login Failed', 'error');
+                            App.State.token = resp.access_token;
+                            localStorage.setItem('g_token', resp.access_token);
+                            App.Auth.onSuccess();
+                        }
+                    });
 
-        function backspace() {
-            if (pinInput.length > 0) {
-                pinInput = pinInput.slice(0, -1);
-                updatePinDots();
-            }
-        }
+                    gapi.load('client', async () => {
+                        await gapi.client.init({ discoveryDocs: App.Config.discoveryDocs });
+                        const savedToken = localStorage.getItem('g_token');
+                        if (savedToken) {
+                            App.State.token = savedToken;
+                            gapi.client.setToken({ access_token: savedToken });
+                            // Check validity
+                            try {
+                                await gapi.client.drive.about.get({ fields: 'user' });
+                                App.Auth.onSuccess();
+                            } catch (e) {
+                                localStorage.removeItem('g_token'); 
+                                App.UI.toast('Session expired. Please login.', 'info');
+                            }
+                        }
+                    });
+                },
 
-        function clearPin() {
-            pinInput = '';
-            updatePinDots();
-        }
-
-        function updatePinDots() {
-            for (let i = 1; i <= 4; i++) {
-                const dot = document.getElementById(`dot-${i}`);
-                dot.classList.toggle('filled', i <= pinInput.length);
-            }
-        }
-
-        function verifyPin() {
-            const storedPin = localStorage.getItem('app_pin');
-            
-            if (!storedPin) {
-                // First time - set PIN
-                localStorage.setItem('app_pin', btoa(pinInput));
-                showLockMessage('PIN set successfully!', false);
-                pinInput = '';
-                updatePinDots();
-                checkAuth();
-                return;
-            }
-            
-            if (btoa(pinInput) === storedPin) {
-                // Correct PIN
-                STATE.pinAttempts = 0;
-                pinInput = '';
-                updatePinDots();
-                checkAuth();
-            } else {
-                // Wrong PIN
-                STATE.pinAttempts++;
-                pinInput = '';
-                updatePinDots();
+                signIn: () => App.Auth.tokenClient.requestAccessToken(),
                 
-                if (STATE.pinAttempts >= MAX_PIN_ATTEMPTS) {
-                    STATE.pinLockedUntil = Date.now() + PIN_LOCK_TIME;
-                    localStorage.setItem('pin_locked_until', STATE.pinLockedUntil);
-                    showLockMessage('Too many attempts. Locked for 30 seconds.', true);
-                } else {
-                    showLockMessage(`Wrong PIN. ${MAX_PIN_ATTEMPTS - STATE.pinAttempts} attempts remaining`, true);
+                signOut: () => {
+                    const token = gapi.client.getToken();
+                    if (token !== null) {
+                        google.accounts.oauth2.revoke(token.access_token);
+                        gapi.client.setToken('');
+                        localStorage.removeItem('g_token');
+                        location.reload();
+                    }
+                },
+
+                onSuccess: async () => {
+                    // Hide Auth Screen
+                    const screen = document.getElementById('auth-screen');
+                    screen.classList.add('opacity-0');
+                    setTimeout(() => screen.style.display = 'none', 500);
+                    document.getElementById('app-ui').classList.remove('hidden');
+
+                    // Load User Info & Storage
+                    const res = await gapi.client.drive.about.get({ fields: 'user, storageQuota' });
+                    App.State.user = res.result.user;
+                    
+                    document.getElementById('user-name').innerText = App.State.user.displayName;
+                    document.getElementById('user-avatar').src = App.State.user.photoLink;
+                    App.Drive.updateStorage(res.result.storageQuota);
+
+                    // Load Files
+                    App.Drive.loadFiles('root');
                 }
-            }
-        }
+            },
 
-        function showLockMessage(message, isError) {
-            const messageEl = document.getElementById('lock-message');
-            messageEl.textContent = message;
-            messageEl.classList.toggle('lock-error', isError);
-            
-            if (!isError) {
-                setTimeout(() => {
-                    messageEl.textContent = 'Enter PIN to unlock';
-                    messageEl.classList.remove('lock-error');
-                }, 2000);
-            }
-        }
+            // ================= 2. DRIVE OPERATIONS =================
+            Drive: {
+                loadFiles: async (folderId, pushHistory = true) => {
+                    if (pushHistory && folderId !== App.State.currentFolder) {
+                        App.State.history.push({id: App.State.currentFolder, name: App.State.folderName});
+                        document.getElementById('btn-back').disabled = false;
+                    }
 
-        // ===================== AUTH SYSTEM =====================
-        let tokenClient;
+                    App.State.currentFolder = folderId;
+                    document.getElementById('loader').classList.remove('hidden');
+                    document.getElementById('file-grid').innerHTML = ''; // Clean UI
 
-        function initGoogleAuth() {
-            // Initialize Google OAuth client
-            tokenClient = google.accounts.oauth2.initTokenClient({
-                client_id: CONFIG.clientId,
-                scope: CONFIG.scopes,
-                callback: async (response) => {
-                    if (response.error) {
-                        showToast('Login failed: ' + response.error);
+                    // Set Title
+                    let query = `'${folderId}' in parents and trashed = false`;
+                    if (folderId === 'root') App.State.folderName = "My Drive";
+                    else if (folderId === 'starred') { query = "starred = true and trashed = false"; App.State.folderName = "Starred"; }
+                    else if (folderId === App.Config.vaultId) App.State.folderName = "Secure Vault";
+                    else {
+                        try {
+                            const meta = await gapi.client.drive.files.get({ fileId: folderId, fields: 'name' });
+                            App.State.folderName = meta.result.name;
+                        } catch(e){}
+                    }
+
+                    document.getElementById('folder-path').innerText = App.State.folderName;
+                    
+                    // Fetch Files
+                    try {
+                        const sort = document.querySelector('select')?.value || 'folder,modifiedTime desc';
+                        const res = await gapi.client.drive.files.list({
+                            q: query,
+                            pageSize: 100,
+                            fields: 'nextPageToken, files(id, name, mimeType, iconLink, thumbnailLink, size, modifiedTime, webContentLink, webViewLink)',
+                            orderBy: sort
+                        });
+
+                        App.State.files = res.result.files;
+                        document.getElementById('item-count').innerText = `${App.State.files.length} Items`;
+                        App.UI.renderFiles(App.State.files);
+                    } catch (e) {
+                        if(e.status === 401) App.Auth.signIn(); // Auto Reconnect
+                        else App.UI.toast('Error loading files', 'error');
+                    } finally {
+                        document.getElementById('loader').classList.add('hidden');
+                    }
+                },
+
+                search: async (term) => {
+                    if (!term) return App.Drive.loadFiles(App.State.currentFolder, false);
+                    document.getElementById('loader').classList.remove('hidden');
+                    const q = `name contains '${term}' and trashed = false`;
+                    const res = await gapi.client.drive.files.list({ q: q, fields: 'files(id, name, mimeType, iconLink, thumbnailLink, size, modifiedTime, webContentLink)' });
+                    App.UI.renderFiles(res.result.files);
+                    document.getElementById('folder-path').innerText = `Search: "${term}"`;
+                    document.getElementById('loader').classList.add('hidden');
+                },
+
+                uploadFiles: (files) => {
+                    if (!files.length) return;
+                    Array.from(files).forEach(async (file, i) => {
+                        App.UI.toast(`Uploading ${file.name}...`, 'info');
+                        
+                        const metadata = { name: file.name, parents: [App.State.currentFolder] };
+                        const form = new FormData();
+                        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                        form.append('file', file);
+
+                        try {
+                            await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                                method: 'POST',
+                                headers: new Headers({ 'Authorization': 'Bearer ' + App.State.token }),
+                                body: form
+                            });
+                            App.UI.toast(`${file.name} Uploaded`, 'success');
+                            if (i === files.length - 1) App.Drive.loadFiles(App.State.currentFolder, false);
+                        } catch(e) {
+                            App.UI.toast('Upload Failed', 'error');
+                        }
+                    });
+                },
+
+                updateStorage: (quota) => {
+                    if(!quota) return;
+                    const used = (quota.usage / 1024 / 1024 / 1024).toFixed(2);
+                    const total = (quota.limit / 1024 / 1024 / 1024).toFixed(0);
+                    const percent = (quota.usage / quota.limit) * 100;
+                    
+                    document.getElementById('storage-text').innerText = `${used} GB / ${total} GB`;
+                    document.getElementById('storage-bar').style.width = `${percent}%`;
+                    if(percent > 85) document.getElementById('storage-bar').classList.add('bg-red-500');
+                },
+
+                sort: (val) => App.Drive.loadFiles(App.State.currentFolder, false),
+                
+                toggleView: () => {
+                    App.State.viewMode = App.State.viewMode === 'grid' ? 'list' : 'grid';
+                    document.getElementById('view-icon').innerText = App.State.viewMode === 'grid' ? 'grid_view' : 'list';
+                    // Toggle Grid classes
+                    const grid = document.getElementById('file-grid');
+                    if(App.State.viewMode === 'list') {
+                        grid.classList.remove('file-grid-layout');
+                        grid.classList.add('flex', 'flex-col');
+                    } else {
+                        grid.classList.add('file-grid-layout');
+                        grid.classList.remove('flex', 'flex-col');
+                    }
+                    App.UI.renderFiles(App.State.files);
+                }
+            },
+
+            // ================= 3. AI STUDIO LOGIC =================
+            AI: {
+                switchTab: (tab) => {
+                    document.querySelectorAll('.ai-view').forEach(e => e.classList.add('hidden'));
+                    document.querySelectorAll('.ai-tab').forEach(e => e.classList.remove('bg-white/10', 'border-l-2', 'border-blue-500'));
+                    document.getElementById(`tab-${tab}`).classList.remove('hidden');
+                    document.querySelector(`[data-tab="${tab}"]`).classList.add('bg-white/10', 'border-l-2', 'border-blue-500');
+                },
+
+                // --- TEXT EXTRACTOR (OCR) ---
+                handleOCR: async (file) => {
+                    if(!file) return;
+                    const img = document.getElementById('ocr-preview');
+                    img.src = URL.createObjectURL(file);
+                    img.classList.remove('hidden');
+                    document.getElementById('ocr-placeholder').classList.add('hidden');
+                    
+                    const box = document.getElementById('ocr-text');
+                    box.value = "🤖 Analyzing text (Bangla + English)...";
+                    document.getElementById('ocr-result-box').classList.remove('hidden');
+
+                    try {
+                        const worker = Tesseract.createWorker({ logger: m => console.log(m) });
+                        await worker.load();
+                        await worker.loadLanguage('eng+ben'); // Load Bangla & English
+                        await worker.initialize('eng+ben');
+                        const { data: { text } } = await worker.recognize(file);
+                        box.value = text || "No text found.";
+                        await worker.terminate();
+                    } catch (e) {
+                        box.value = "Error: " + e.message;
+                    }
+                },
+
+                // --- BACKGROUND REMOVER (Hugging Face) ---
+                handleBGRemove: async (file) => {
+                    if(!file) return;
+                    const preview = document.getElementById('bg-preview');
+                    preview.src = URL.createObjectURL(file);
+                    preview.classList.remove('hidden');
+                    document.getElementById('bg-placeholder').classList.add('hidden');
+                    document.getElementById('bg-loader').classList.remove('hidden');
+
+                    try {
+                        // Using HF Inference API
+                        const response = await fetch(
+                            `https://api-inference.huggingface.co/models/${App.Config.models.bgRemove}`,
+                            {
+                                method: "POST",
+                                headers: { 
+                                    "Authorization": `Bearer ${App.Config.hfToken}`,
+                                    "Content-Type": "application/octet-stream"
+                                },
+                                body: file
+                            }
+                        );
+
+                        if(!response.ok) throw new Error('API Busy/Error');
+                        
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        
+                        document.getElementById('bg-result').src = url;
+                        document.getElementById('bg-result').classList.remove('hidden');
+                        document.getElementById('bg-download').classList.remove('hidden');
+                        App.UI.toast('Background Removed!', 'success');
+                    } catch(e) {
+                        App.UI.toast('AI Error: ' + e.message, 'error');
+                    } finally {
+                        document.getElementById('bg-loader').classList.add('hidden');
+                    }
+                },
+
+                downloadResult: (imgId) => {
+                    const img = document.getElementById(imgId);
+                    const a = document.createElement('a');
+                    a.href = img.src;
+                    a.download = `ai-edited-${Date.now()}.png`;
+                    a.click();
+                },
+
+                // --- FACE SWAP (Hugging Face) ---
+                loadPreview: (input, imgId) => {
+                    if(input.files && input.files[0]) {
+                        const reader = new FileReader();
+                        reader.onload = (e) => {
+                            document.getElementById(imgId).src = e.target.result;
+                            document.getElementById(imgId).classList.remove('hidden');
+                            document.getElementById(imgId.replace('img', 'icon')).classList.add('hidden');
+                        }
+                        reader.readAsDataURL(input.files[0]);
+                    }
+                },
+
+                processFaceSwap: async () => {
+                    const source = document.getElementById('fs-source').files[0];
+                    const target = document.getElementById('fs-target').files[0];
+
+                    if(!source || !target) return App.UI.toast('Please select both images', 'error');
+
+                    document.getElementById('fs-result-container').classList.remove('hidden');
+                    document.getElementById('fs-loader').classList.remove('hidden');
+
+                    try {
+                        // Note: Browsers usually block direct HF API calls for FaceSwap due to complexity
+                        // We will try standard inference, but if it fails, we show a mock because 
+                        // FaceSwap usually requires a backend proxy to handle the complex inputs.
+                        
+                        // Converting files to Base64 for JSON payload
+                        const toBase64 = file => new Promise((resolve, reject) => {
+                            const reader = new FileReader();
+                            reader.readAsDataURL(file);
+                            reader.onload = () => resolve(reader.result.split(',')[1]); // remove prefix
+                            reader.onerror = error => reject(error);
+                        });
+
+                        const sourceB64 = await toBase64(source);
+                        const targetB64 = await toBase64(target);
+
+                        const response = await fetch(
+                            `https://api-inference.huggingface.co/models/${App.Config.models.faceSwap}`,
+                            {
+                                method: "POST",
+                                headers: { 
+                                    "Authorization": `Bearer ${App.Config.hfToken}`,
+                                    "Content-Type": "application/json"
+                                },
+                                body: JSON.stringify({
+                                    inputs: {
+                                        source: sourceB64,
+                                        target: targetB64
+                                    }
+                                })
+                            }
+                        );
+
+                        if(!response.ok) throw new Error("Model loading/Busy");
+
+                        const blob = await response.blob();
+                        const url = URL.createObjectURL(blob);
+                        document.getElementById('fs-result').src = url;
+                        document.getElementById('fs-download').href = url;
+                        document.getElementById('fs-download').download = 'faceswap.png';
+                        App.UI.toast('Face Swap Complete!', 'success');
+
+                    } catch(e) {
+                        console.error(e);
+                        App.UI.toast('Face Swap API busy/limit reached.', 'error');
+                        // Fallback UI reset or Error message
+                    } finally {
+                        document.getElementById('fs-loader').classList.add('hidden');
+                    }
+                }
+            },
+
+            // ================= 4. CHAT SYSTEM (GEMINI) =================
+            Chat: {
+                toggle: () => {
+                    const win = document.getElementById('chat-window');
+                    if(win.classList.contains('scale-0')) {
+                        win.classList.remove('scale-0', 'opacity-0');
+                    } else {
+                        win.classList.add('scale-0', 'opacity-0');
+                    }
+                },
+
+                send: async () => {
+                    const input = document.getElementById('chat-input');
+                    const msg = input.value.trim();
+                    if(!msg) return;
+
+                    const box = document.getElementById('chat-messages');
+                    // User Msg
+                    box.innerHTML += `<div class="text-right animate-slide-up"><span class="bg-blue-600 text-white px-3 py-2 rounded-xl rounded-br-none inline-block shadow-lg text-sm">${msg}</span></div>`;
+                    input.value = '';
+                    box.scrollTop = box.scrollHeight;
+
+                    // Loader
+                    const loadId = 'loader-' + Date.now();
+                    box.innerHTML += `<div id="${loadId}" class="text-left"><span class="bg-slate-800 text-slate-400 px-3 py-2 rounded-xl inline-block text-xs animate-pulse">Gemini is thinking...</span></div>`;
+
+                    try {
+                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${App.Config.geminiKey}`;
+                        const response = await fetch(url, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ contents: [{ parts: [{ text: msg }] }] })
+                        });
+                        
+                        const data = await response.json();
+                        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble connecting.";
+                        
+                        document.getElementById(loadId).remove();
+                        box.innerHTML += `<div class="text-left animate-slide-up"><div class="bg-slate-800 border border-white/10 text-slate-200 px-3 py-2 rounded-xl rounded-bl-none inline-block text-sm prose prose-invert max-w-none shadow">${marked.parse(reply)}</div></div>`;
+                    } catch(e) {
+                        document.getElementById(loadId).innerText = "Error: Check connection/API key.";
+                    }
+                    box.scrollTop = box.scrollHeight;
+                }
+            },
+
+            // ================= 5. TOOLS & UTILITIES =================
+            Tools: {
+                openCleaner: () => {
+                    document.getElementById('cleaner-modal').classList.remove('hidden');
+                },
+
+                scanDuplicates: () => {
+                    const container = document.getElementById('cleaner-results');
+                    document.getElementById('cleaner-start').classList.add('hidden');
+                    container.classList.remove('hidden');
+                    container.innerHTML = '<div class="text-center p-8"><div class="spinner w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full mx-auto animate-spin"></div><p class="mt-4 text-slate-400">Scanning metadata...</p></div>';
+
+                    setTimeout(() => {
+                        const files = App.State.files;
+                        const map = new Map();
+                        const duplicates = [];
+
+                        files.forEach(f => {
+                            const key = `${f.name}_${f.size}`;
+                            if(map.has(key)) duplicates.push(f);
+                            else map.set(key, f);
+                        });
+
+                        if(duplicates.length === 0) {
+                            container.innerHTML = '<div class="text-center p-10"><span class="material-icons-round text-green-400 text-5xl">check_circle</span><p class="mt-2 text-white">No duplicates found!</p></div>';
+                        } else {
+                            let html = `<div class="flex justify-between mb-2"><span class="text-slate-400 text-xs">${duplicates.length} duplicates found</span></div>`;
+                            duplicates.forEach(d => {
+                                html += `
+                                <div class="flex justify-between items-center p-3 bg-slate-800 mb-2 rounded-lg border border-white/5 hover:border-red-500/30 transition">
+                                    <div class="flex items-center gap-2 overflow-hidden">
+                                        <span class="material-icons-round text-red-400 text-lg">description</span>
+                                        <div class="truncate">
+                                            <div class="text-sm text-slate-200 truncate w-48">${d.name}</div>
+                                            <div class="text-[10px] text-slate-500">${App.Utils.formatBytes(d.size)}</div>
+                                        </div>
+                                    </div>
+                                    <button class="p-2 bg-red-500/10 text-red-400 rounded hover:bg-red-500 hover:text-white transition" onclick="App.Actions.deleteFileById('${d.id}')">
+                                        <span class="material-icons-round text-sm">delete</span>
+                                    </button>
+                                </div>`;
+                            });
+                            container.innerHTML = html;
+                        }
+                    }, 800);
+                },
+
+                deleteSelected: () => {
+                    // Placeholder for batch delete (Requires advanced batch API handling)
+                    App.UI.toast('Batch delete available in Pro version', 'info');
+                }
+            },
+
+            // ================= 6. UI RENDERER & HELPERS =================
+            UI: {
+                renderFiles: (files) => {
+                    const grid = document.getElementById('file-grid');
+                    grid.innerHTML = '';
+                    const empty = document.getElementById('empty-state');
+                    
+                    if (!files || files.length === 0) {
+                        empty.classList.remove('hidden');
                         return;
                     }
-                    
-                    STATE.token = response.access_token;
-                    localStorage.setItem('g_token', STATE.token);
-                    localStorage.setItem('g_expires', Date.now() + 3600 * 1000);
-                    
-                    await loadUserProfile();
-                    switchScreen('app-screen');
-                },
-                error_callback: (error) => {
-                    showToast('Auth error: ' + error.message);
-                }
-            });
-            
-            // Check existing session
-            checkAuth();
-        }
+                    empty.classList.add('hidden');
 
-        async function checkAuth() {
-            const expires = localStorage.getItem('g_expires');
-            
-            if (STATE.token && expires && Date.now() < parseInt(expires)) {
-                // Valid session exists
-                await loadUserProfile();
-                switchScreen('app-screen');
-            } else {
-                // No valid session
-                switchScreen('auth-screen');
-            }
-        }
+                    files.forEach((f, i) => {
+                        const isFolder = f.mimeType.includes('folder');
+                        const card = document.createElement('div');
+                        
+                        // GRID VIEW
+                        if(App.State.viewMode === 'grid') {
+                            card.className = 'glass-card p-3 rounded-xl cursor-pointer flex flex-col group animate-fade-in relative transition-all duration-200 hover:bg-white/5 border border-transparent hover:border-white/10';
+                            let thumb = '';
+                            if (f.thumbnailLink && !isFolder) {
+                                const hdThumb = f.thumbnailLink.replace('=s220', '=s400');
+                                thumb = `<div class="h-28 rounded-lg bg-slate-900 mb-2 overflow-hidden relative"><img src="${hdThumb}" class="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition duration-300" loading="lazy"></div>`;
+                            } else {
+                                const icon = isFolder ? 'folder' : App.Utils.getFileIcon(f.mimeType);
+                                const color = isFolder ? 'text-yellow-400' : 'text-blue-400';
+                                thumb = `<div class="h-28 rounded-lg bg-slate-800/50 mb-2 flex items-center justify-center border border-white/5"><span class="material-icons-round ${color} text-5xl group-hover:scale-110 transition-transform">${icon}</span></div>`;
+                            }
+                            card.innerHTML = `${thumb}<div class="min-w-0"><p class="text-xs font-medium text-slate-200 truncate">${f.name}</p><p class="text-[10px] text-slate-500 mt-0.5">${App.Utils.formatBytes(f.size)}</p></div>`;
+                        } 
+                        // LIST VIEW
+                        else {
+                            card.className = 'glass-card p-3 rounded-xl cursor-pointer flex items-center gap-4 group animate-fade-in relative transition-all duration-200 hover:bg-white/5 border border-transparent hover:border-white/10 w-full';
+                            const icon = isFolder ? 'folder' : App.Utils.getFileIcon(f.mimeType);
+                            const color = isFolder ? 'text-yellow-400' : 'text-blue-400';
+                            card.innerHTML = `
+                                <div class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center shrink-0"><span class="material-icons-round ${color} text-xl">${icon}</span></div>
+                                <div class="flex-1 min-w-0">
+                                    <p class="text-sm font-medium text-slate-200 truncate">${f.name}</p>
+                                    <p class="text-[10px] text-slate-500">${App.Utils.formatBytes(f.size)} • ${new Date(f.modifiedTime).toLocaleDateString()}</p>
+                                </div>
+                            `;
+                        }
 
-        async function loadUserProfile() {
-            try {
-                const response = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
-                    headers: { 'Authorization': `Bearer ${STATE.token}` }
-                });
-                
-                if (!response.ok) throw new Error('Failed to load profile');
-                
-                const user = await response.json();
-                STATE.user = user;
-                localStorage.setItem('g_user', JSON.stringify(user));
-                
-                // Update UI
-                document.getElementById('user-avatar').src = user.picture;
-                
-                // Load initial files
-                loadFiles('root');
-                
-            } catch (error) {
-                showToast('Failed to load user profile');
-            }
-        }
+                        // EVENTS
+                        card.onclick = () => { isFolder ? App.Drive.loadFiles(f.id) : window.open(f.webViewLink, '_blank'); };
+                        card.oncontextmenu = (e) => {
+                            e.preventDefault();
+                            App.State.activeFile = f;
+                            App.UI.showContextMenu(e, f);
+                        };
 
-        function signInWithGoogle() {
-            if (!tokenClient) {
-                showToast('Auth not initialized');
-                return;
-            }
-            tokenClient.requestAccessToken();
-        }
-
-        function signOut() {
-            google.accounts.oauth2.revoke(STATE.token, () => {
-                localStorage.clear();
-                location.reload();
-            });
-        }
-
-        // ===================== SCREEN MANAGEMENT =====================
-        function switchScreen(screenId) {
-            document.querySelectorAll('.screen').forEach(screen => {
-                screen.classList.remove('active');
-            });
-            
-            const targetScreen = document.getElementById(screenId);
-            if (targetScreen) {
-                targetScreen.classList.add('active');
-            }
-        }
-
-        // ===================== FILE SYSTEM =====================
-        async function loadFiles(folderId) {
-            STATE.currentFolder = folderId;
-            STATE.isVaultMode = folderId === CONFIG.vaultId;
-            
-            updateBreadcrumb();
-            showLoading();
-            
-            try {
-                let files;
-                
-                if (STATE.isVaultMode) {
-                    // Use proxy for vault access
-                    files = await loadViaProxy(folderId);
-                } else {
-                    // Use direct API
-                    files = await loadDirect(folderId);
-                }
-                
-                STATE.files = files;
-                renderFiles();
-                
-            } catch (error) {
-                showToast('Failed to load files: ' + error.message);
-                showEmptyState();
-            }
-        }
-
-        async function loadDirect(folderId) {
-            const query = `'${folderId}' in parents and trashed = false`;
-            const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,thumbnailLink,webViewLink,modifiedTime)&orderBy=folder,name&pageSize=100`;
-            
-            const response = await fetch(url, {
-                headers: { 'Authorization': `Bearer ${STATE.token}` }
-            });
-            
-            if (!response.ok) throw new Error('API error: ' + response.status);
-            
-            const data = await response.json();
-            return data.files || [];
-        }
-
-        async function loadViaProxy(folderId) {
-            const query = `'${folderId}' in parents and trashed = false`;
-            const endpoint = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(query)}&fields=files(id,name,mimeType,size,thumbnailLink,webViewLink,modifiedTime)&orderBy=folder,name&pageSize=100`;
-            
-            const proxyUrl = `${CONFIG.proxies.fullAccess}?endpoint=${encodeURIComponent(endpoint)}&token=${STATE.token}`;
-            
-            const response = await fetch(proxyUrl);
-            if (!response.ok) throw new Error('Proxy error');
-            
-            const data = await response.json();
-            return data.files || [];
-        }
-
-        function renderFiles() {
-            const container = document.getElementById('file-list');
-            container.innerHTML = '';
-            
-            if (STATE.files.length === 0) {
-                showEmptyState();
-                return;
-            }
-            
-            STATE.files.forEach(file => {
-                const isFolder = file.mimeType === 'application/vnd.google-apps.folder';
-                const fileEl = createFileElement(file, isFolder);
-                container.appendChild(fileEl);
-            });
-        }
-
-        function createFileElement(file, isFolder) {
-            const div = document.createElement('div');
-            div.className = 'file-item';
-            
-            const icon = getFileIcon(file.mimeType, isFolder);
-            const size = formatFileSize(file.size);
-            const date = formatDate(file.modifiedTime);
-            
-            div.innerHTML = `
-                <div class="file-icon ${isFolder ? 'folder-icon' : ''}">
-                    <span class="material-icons-round">${icon}</span>
-                </div>
-                <div class="file-info">
-                    <div class="file-name">${file.name}</div>
-                    <div class="file-meta">${isFolder ? 'Folder' : `${size} • ${date}`}</div>
-                </div>
-                <div class="file-actions">
-                    <button class="action-btn" onclick="showFileMenu(event, '${file.id}')">
-                        <span class="material-icons-round">more_vert</span>
-                    </button>
-                </div>
-            `;
-            
-            div.onclick = () => {
-                if (isFolder) {
-                    STATE.folderStack.push(STATE.currentFolder);
-                    loadFiles(file.id);
-                } else {
-                    previewFile(file);
-                }
-            };
-            
-            return div;
-        }
-
-        function getFileIcon(mimeType, isFolder) {
-            if (isFolder) return 'folder';
-            if (mimeType.includes('image')) return 'image';
-            if (mimeType.includes('video')) return 'movie';
-            if (mimeType.includes('audio')) return 'audiotrack';
-            if (mimeType.includes('pdf')) return 'picture_as_pdf';
-            if (mimeType.includes('word') || mimeType.includes('document')) return 'description';
-            if (mimeType.includes('spreadsheet')) return 'grid_on';
-            if (mimeType.includes('presentation')) return 'slideshow';
-            if (mimeType.includes('zip') || mimeType.includes('compressed')) return 'folder_zip';
-            return 'insert_drive_file';
-        }
-
-        function formatFileSize(bytes) {
-            if (!bytes) return '0 B';
-            const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-            const i = Math.floor(Math.log(bytes) / Math.log(1024));
-            return (bytes / Math.pow(1024, i)).toFixed(2) + ' ' + sizes[i];
-        }
-
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return date.toLocaleDateString();
-        }
-
-        function updateBreadcrumb() {
-            const folderName = STATE.isVaultMode ? 'Vault' : 
-                             STATE.currentFolder === 'root' ? 'My Drive' : 'Folder';
-            
-            document.getElementById('current-folder').textContent = folderName;
-            
-            const vaultBadge = document.getElementById('vault-badge');
-            vaultBadge.style.display = STATE.isVaultMode ? 'flex' : 'none';
-        }
-
-        function goBack() {
-            if (STATE.folderStack.length > 0) {
-                const prevFolder = STATE.folderStack.pop();
-                loadFiles(prevFolder);
-            } else {
-                loadFiles('root');
-            }
-        }
-
-        // ===================== FILE OPERATIONS =====================
-        function showFileMenu(event, fileId) {
-            event.stopPropagation();
-            STATE.selectedFile = STATE.files.find(f => f.id === fileId);
-            
-            // Create context menu
-            const menu = document.createElement('div');
-            menu.className = 'modal-backdrop active';
-            menu.onclick = () => menu.remove();
-            
-            menu.innerHTML = `
-                <div class="modal-card" style="max-width: 300px; position: absolute; right: 20px; top: ${event.clientY}px;" onclick="event.stopPropagation()">
-                    <div class="modal-body" style="padding: 0;">
-                        <button class="fab-item" onclick="downloadFile('${fileId}')">
-                            <span class="material-icons-round">download</span>
-                            Download
-                        </button>
-                        <button class="fab-item" onclick="shareFile('${fileId}')">
-                            <span class="material-icons-round">share</span>
-                            Share
-                        </button>
-                        <button class="fab-item" onclick="renameFile('${fileId}')">
-                            <span class="material-icons-round">edit</span>
-                            Rename
-                        </button>
-                        <button class="fab-item" onclick="transferFile('${fileId}')">
-                            <span class="material-icons-round">swap_horiz</span>
-                            Transfer to Vault
-                        </button>
-                        <button class="fab-item" style="color: var(--danger);" onclick="deleteFile('${fileId}')">
-                            <span class="material-icons-round">delete</span>
-                            Delete
-                        </button>
-                    </div>
-                </div>
-            `;
-            
-            document.body.appendChild(menu);
-        }
-
-        async function downloadFile(fileId) {
-            const file = STATE.files.find(f => f.id === fileId);
-            if (!file) return;
-            
-            try {
-                const url = `https://drive.google.com/uc?export=download&id=${fileId}`;
-                const response = await fetch(url, {
-                    headers: { 'Authorization': `Bearer ${STATE.token}` }
-                });
-                
-                const blob = await response.blob();
-                const downloadUrl = URL.createObjectURL(blob);
-                const a = document.createElement('a');
-                a.href = downloadUrl;
-                a.download = file.name;
-                document.body.appendChild(a);
-                a.click();
-                document.body.removeChild(a);
-                URL.revokeObjectURL(downloadUrl);
-                
-                showToast('Download started');
-                
-            } catch (error) {
-                showToast('Download failed');
-            }
-        }
-
-        function previewFile(file) {
-            const proxyUrl = `${CONFIG.proxies.media}?url=${encodeURIComponent(`https://drive.google.com/file/d/${file.id}/preview`)}`;
-            window.open(proxyUrl, '_blank');
-        }
-
-        async function shareFile(fileId) {
-            try {
-                const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${STATE.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        role: 'reader',
-                        type: 'anyone'
-                    })
-                });
-                
-                if (response.ok) {
-                    const file = STATE.files.find(f => f.id === fileId);
-                    const shareUrl = `https://drive.google.com/file/d/${fileId}/view`;
-                    
-                    if (navigator.clipboard) {
-                        await navigator.clipboard.writeText(shareUrl);
-                        showToast('Share link copied to clipboard');
-                    } else {
-                        prompt('Share link:', shareUrl);
-                    }
-                } else {
-                    showToast('Failed to create share link');
-                }
-                
-            } catch (error) {
-                showToast('Share failed');
-            }
-        }
-
-        async function renameFile(fileId) {
-            const file = STATE.files.find(f => f.id === fileId);
-            if (!file) return;
-            
-            const newName = prompt('Enter new name:', file.name);
-            if (!newName || newName === file.name) return;
-            
-            try {
-                const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-                    method: 'PATCH',
-                    headers: {
-                        'Authorization': `Bearer ${STATE.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ name: newName })
-                });
-                
-                if (response.ok) {
-                    showToast('File renamed');
-                    loadFiles(STATE.currentFolder);
-                } else {
-                    showToast('Rename failed');
-                }
-                
-            } catch (error) {
-                showToast('Rename failed');
-            }
-        }
-
-        async function transferFile(fileId) {
-            const file = STATE.files.find(f => f.id === fileId);
-            if (!file) return;
-            
-            const targetFolder = STATE.isVaultMode ? 'root' : CONFIG.vaultId;
-            const action = STATE.isVaultMode ? 'move from vault' : 'move to vault';
-            
-            if (!confirm(`Are you sure you want to ${action} "${file.name}"?`)) return;
-            
-            try {
-                // Copy file
-                const copyResponse = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/copy`, {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${STATE.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: file.name,
-                        parents: [targetFolder]
-                    })
-                });
-                
-                if (copyResponse.ok) {
-                    // Delete original
-                    await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-                        method: 'DELETE',
-                        headers: { 'Authorization': `Bearer ${STATE.token}` }
+                        grid.appendChild(card);
                     });
+                },
+
+                showContextMenu: (e, file) => {
+                    const menu = document.getElementById('context-menu');
+                    document.getElementById('ctx-filename').innerText = file.name;
                     
-                    showToast(`File ${action} successful`);
-                    loadFiles(STATE.currentFolder);
-                } else {
-                    showToast('Transfer failed');
-                }
-                
-            } catch (error) {
-                showToast('Transfer failed');
-            }
-        }
+                    // Boundary check
+                    let x = e.clientX;
+                    let y = e.clientY;
+                    if(x + 200 > window.innerWidth) x = window.innerWidth - 210;
+                    if(y + 250 > window.innerHeight) y = window.innerHeight - 260;
 
-        async function deleteFile(fileId) {
-            const file = STATE.files.find(f => f.id === fileId);
-            if (!file) return;
-            
-            if (!confirm(`Are you sure you want to delete "${file.name}"?`)) return;
-            
-            try {
-                const response = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}`, {
-                    method: 'DELETE',
-                    headers: { 'Authorization': `Bearer ${STATE.token}` }
-                });
-                
-                if (response.ok) {
-                    showToast('File deleted');
-                    loadFiles(STATE.currentFolder);
-                } else {
-                    showToast('Delete failed');
-                }
-                
-            } catch (error) {
-                showToast('Delete failed');
-            }
-        }
+                    menu.style.left = `${x}px`;
+                    menu.style.top = `${y}px`;
+                    menu.classList.remove('hidden', 'scale-95', 'opacity-0');
+                },
 
-        // ===================== UPLOAD SYSTEM =====================
-        async function uploadFile() {
-            const input = document.createElement('input');
-            input.type = 'file';
-            input.multiple = true;
-            input.onchange = async (e) => {
-                const files = Array.from(e.target.files);
-                for (const file of files) {
-                    await uploadSingleFile(file);
-                }
-            };
-            input.click();
-        }
+                hideContextMenu: () => {
+                    const menu = document.getElementById('context-menu');
+                    menu.classList.add('hidden', 'scale-95', 'opacity-0');
+                },
 
-        async function uploadSingleFile(file) {
-            showProgress('Uploading ' + file.name);
-            
-            try {
-                // Create metadata
-                const metadata = {
-                    name: file.name,
-                    mimeType: file.type,
-                    parents: [STATE.currentFolder]
-                };
+                toast: (msg, type='info') => {
+                    const box = document.getElementById('toast-container');
+                    const t = document.createElement('div');
+                    const bg = type === 'error' ? 'bg-red-600' : (type === 'success' ? 'bg-emerald-600' : 'bg-blue-600');
+                    const icon = type === 'error' ? 'error' : (type === 'success' ? 'check_circle' : 'info');
+                    
+                    t.className = `${bg} text-white px-4 py-3 rounded-xl shadow-lg flex items-center gap-3 min-w-[280px] animate-slide-up backdrop-blur-md bg-opacity-95 border border-white/10`;
+                    t.innerHTML = `<span class="material-icons-round">${icon}</span><span class="text-sm font-medium">${msg}</span>`;
+                    
+                    box.appendChild(t);
+                    setTimeout(() => t.remove(), 3500);
+                },
+
+                toggleAIStudio: () => document.getElementById('ai-studio').classList.toggle('hidden')
+            },
+
+            // ================= 7. CONTEXT MENU ACTIONS =================
+            Actions: {
+                preview: () => {
+                    App.UI.hideContextMenu();
+                    if(App.State.activeFile) window.open(App.State.activeFile.webViewLink, '_blank');
+                },
                 
-                // Start resumable upload
-                const initResponse = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${STATE.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify(metadata)
-                });
-                
-                const uploadUrl = initResponse.headers.get('Location');
-                
-                // Upload with progress
-                const xhr = new XMLHttpRequest();
-                xhr.open('PUT', uploadUrl, true);
-                xhr.setRequestHeader('Content-Type', file.type);
-                
-                xhr.upload.onprogress = (e) => {
-                    if (e.lengthComputable) {
-                        const percent = Math.round((e.loaded / e.total) * 100);
-                        updateProgress(percent, e.loaded, e.total);
+                share: async () => {
+                    App.UI.hideContextMenu();
+                    if(App.State.activeFile) {
+                        await navigator.clipboard.writeText(App.State.activeFile.webViewLink);
+                        App.UI.toast('Link copied to clipboard!', 'success');
                     }
-                };
-                
-                xhr.onload = () => {
-                    if (xhr.status === 200 || xhr.status === 201) {
-                        hideProgress();
-                        showToast('Upload complete');
-                        loadFiles(STATE.currentFolder);
-                    } else {
-                        showToast('Upload failed');
+                },
+
+                download: async () => {
+                    App.UI.hideContextMenu();
+                    const f = App.State.activeFile;
+                    if(!f) return;
+                    App.UI.toast('Starting Download...', 'info');
+                    
+                    // Using WebContentLink for direct download
+                    const a = document.createElement('a');
+                    a.href = f.webContentLink;
+                    a.target = '_blank';
+                    a.click();
+                },
+
+                rename: async () => {
+                    App.UI.hideContextMenu();
+                    const f = App.State.activeFile;
+                    const { value: newName } = await Swal.fire({
+                        title: 'Rename File',
+                        input: 'text',
+                        inputValue: f.name,
+                        background: '#1e293b',
+                        color: '#fff',
+                        showCancelButton: true
+                    });
+
+                    if (newName && newName !== f.name) {
+                        await gapi.client.drive.files.update({
+                            fileId: f.id,
+                            resource: { name: newName }
+                        });
+                        App.Drive.loadFiles(App.State.currentFolder, false);
+                        App.UI.toast('Renamed successfully', 'success');
                     }
-                };
-                
-                xhr.send(file);
-                
-            } catch (error) {
-                showToast('Upload failed');
-                hideProgress();
-            }
-        }
+                },
 
-        // ===================== FOLDER OPERATIONS =====================
-        async function createFolder() {
-            const name = prompt('Enter folder name:');
-            if (!name) return;
-            
-            try {
-                const response = await fetch('https://www.googleapis.com/drive/v3/files', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${STATE.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        mimeType: 'application/vnd.google-apps.folder',
-                        parents: [STATE.currentFolder]
-                    })
-                });
-                
-                if (response.ok) {
-                    showToast('Folder created');
-                    loadFiles(STATE.currentFolder);
-                } else {
-                    showToast('Failed to create folder');
-                }
-                
-            } catch (error) {
-                showToast('Failed to create folder');
-            }
-        }
+                delete: async () => {
+                    App.UI.hideContextMenu();
+                    App.Actions.deleteFileById(App.State.activeFile.id);
+                },
 
-        async function createVault() {
-            const name = prompt('Enter vault name:');
-            if (!name) return;
-            
-            try {
-                const response = await fetch('https://www.googleapis.com/drive/v3/files', {
-                    method: 'POST',
-                    headers: {
-                        'Authorization': `Bearer ${STATE.token}`,
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        name: name,
-                        mimeType: 'application/vnd.google-apps.folder'
-                    })
-                });
-                
-                if (response.ok) {
-                    showToast('Vault created');
-                    loadFiles(STATE.currentFolder);
-                } else {
-                    showToast('Failed to create vault');
-                }
-                
-            } catch (error) {
-                showToast('Failed to create vault');
-            }
-        }
+                deleteFileById: async (id) => {
+                    const result = await Swal.fire({
+                        title: 'Delete file?',
+                        text: "Move to trash?",
+                        icon: 'warning',
+                        showCancelButton: true,
+                        background: '#1e293b',
+                        color: '#fff',
+                        confirmButtonColor: '#ef4444',
+                        confirmButtonText: 'Delete'
+                    });
 
-        // ===================== UI CONTROLS =====================
-        function setView(mode) {
-            STATE.viewMode = mode;
-            const buttons = document.querySelectorAll('.view-btn');
-            buttons.forEach(btn => btn.classList.remove('active'));
-            
-            if (mode === 'list') {
-                document.querySelector('.view-btn:nth-child(1)').classList.add('active');
-                document.getElementById('file-list').className = 'file-list';
-            } else {
-                document.querySelector('.view-btn:nth-child(2)').classList.add('active');
-                document.getElementById('file-list').className = 'file-grid';
-            }
-            
-            renderFiles();
-        }
-
-        function switchTab(tab) {
-            STATE.currentTab = tab;
-            
-            // Update active tab
-            document.querySelectorAll('.nav-item').forEach(item => {
-                item.classList.remove('active');
-            });
-            
-            event.target.closest('.nav-item').classList.add('active');
-            
-            // Load appropriate content
-            switch(tab) {
-                case 'drive':
-                    loadFiles('root');
-                    break;
-                case 'vault':
-                    loadFiles(CONFIG.vaultId);
-                    break;
-                case 'shared':
-                    // Load shared files
-                    showToast('Shared files feature coming soon');
-                    break;
-                case 'recent':
-                    // Load recent files
-                    showToast('Recent files feature coming soon');
-                    break;
-            }
-        }
-
-        function toggleFabMenu() {
-            const menu = document.getElementById('fab-menu');
-            menu.style.display = menu.style.display === 'flex' ? 'none' : 'flex';
-        }
-
-        function refreshFiles() {
-            loadFiles(STATE.currentFolder);
-            showToast('Refreshing...');
-        }
-
-        // ===================== SETTINGS =====================
-        function openSettings() {
-            document.getElementById('settings-modal').classList.add('active');
-            
-            // Load current settings
-            const settings = STATE.settings;
-            document.getElementById('dark-mode-toggle').checked = settings.darkMode || false;
-            document.getElementById('proxy-toggle').checked = settings.proxy !== false;
-            document.getElementById('cdn-toggle').checked = settings.cdn !== false;
-        }
-
-        function closeSettings() {
-            document.getElementById('settings-modal').classList.remove('active');
-        }
-
-        function toggleDarkMode() {
-            const enabled = document.getElementById('dark-mode-toggle').checked;
-            STATE.settings.darkMode = enabled;
-            localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
-            
-            if (enabled) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-            } else {
-                document.documentElement.removeAttribute('data-theme');
-            }
-        }
-
-        function toggleProxy() {
-            STATE.settings.proxy = document.getElementById('proxy-toggle').checked;
-            localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
-            showToast('Proxy ' + (STATE.settings.proxy ? 'enabled' : 'disabled'));
-        }
-
-        function toggleCDN() {
-            STATE.settings.cdn = document.getElementById('cdn-toggle').checked;
-            localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
-            showToast('CDN libraries ' + (STATE.settings.cdn ? 'enabled' : 'disabled'));
-        }
-
-        async function showStorageInfo() {
-            try {
-                const response = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
-                    headers: { 'Authorization': `Bearer ${STATE.token}` }
-                });
-                
-                const data = await response.json();
-                const used = formatFileSize(data.storageQuota.usage);
-                const total = formatFileSize(data.storageQuota.limit);
-                
-                alert(`Storage Usage:\n\n${used} used of ${total}\n\n${Math.round((data.storageQuota.usage / data.storageQuota.limit) * 100)}% full`);
-                
-            } catch (error) {
-                showToast('Failed to load storage info');
-            }
-        }
-
-        function clearCache() {
-            localStorage.removeItem('file_cache');
-            showToast('Cache cleared');
-        }
-
-        // ===================== PROGRESS =====================
-        function showProgress(title) {
-            document.getElementById('progress-title').textContent = title;
-            document.getElementById('progress-modal').classList.add('active');
-        }
-
-        function updateProgress(percent, current, total) {
-            document.getElementById('progress-fill').style.width = percent + '%';
-            document.getElementById('progress-current').textContent = formatFileSize(current);
-            document.getElementById('progress-total').textContent = formatFileSize(total);
-            document.getElementById('progress-text').textContent = `${percent}% uploaded`;
-        }
-
-        function hideProgress() {
-            document.getElementById('progress-modal').classList.remove('active');
-            document.getElementById('progress-fill').style.width = '0%';
-        }
-
-        // ===================== UTILITY FUNCTIONS =====================
-        function showLoading() {
-            const container = document.getElementById('file-list');
-            container.innerHTML = `
-                <div class="loading">
-                    <div class="loading-spinner"></div>
-                    <div>Loading files...</div>
-                </div>
-            `;
-        }
-
-        function showEmptyState() {
-            const container = document.getElementById('file-list');
-            container.innerHTML = `
-                <div class="empty-state">
-                    <div class="empty-icon">
-                        <span class="material-icons-round">folder_open</span>
-                    </div>
-                    <h3>No files found</h3>
-                    <p>Upload files or create folders to get started</p>
-                </div>
-            `;
-        }
-
-        function showToast(message) {
-            const toast = document.getElementById('toast');
-            document.getElementById('toast-message').textContent = message;
-            toast.style.display = 'flex';
-            
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
-        }
-
-        function hideToast() {
-            document.getElementById('toast').style.display = 'none';
-        }
-
-        function toggleSidebar() {
-            showToast('Sidebar coming soon');
-        }
-
-        // ===================== INITIALIZATION =====================
-        window.addEventListener('DOMContentLoaded', () => {
-            // Check for existing PIN lock
-            const lockedUntil = localStorage.getItem('pin_locked_until');
-            if (lockedUntil && Date.now() < parseInt(lockedUntil)) {
-                STATE.pinLockedUntil = parseInt(lockedUntil);
-            }
-            
-            // Setup Google Sign-in button
-            const signInBtn = document.getElementById('google-signin-btn');
-            if (signInBtn) {
-                signInBtn.addEventListener('click', signInWithGoogle);
-            }
-            
-            // Apply saved theme
-            if (STATE.settings.darkMode) {
-                document.documentElement.setAttribute('data-theme', 'dark');
-                document.getElementById('dark-mode-toggle').checked = true;
-            }
-            
-            // Initialize search
-            const searchInput = document.getElementById('search-input');
-            if (searchInput) {
-                searchInput.addEventListener('input', (e) => {
-                    // Implement search
-                    console.log('Search:', e.target.value);
-                });
-            }
-            
-            // Close modals on backdrop click
-            document.querySelectorAll('.modal-backdrop').forEach(modal => {
-                modal.addEventListener('click', function(e) {
-                    if (e.target === this) {
-                        this.classList.remove('active');
+                    if (result.isConfirmed) {
+                        try {
+                            await gapi.client.drive.files.update({
+                                fileId: id,
+                                resource: { trashed: true }
+                            });
+                            App.Drive.loadFiles(App.State.currentFolder, false);
+                            App.UI.toast('File moved to trash', 'success');
+                            // Remove from UI if cleaner is open
+                            const btn = document.querySelector(`button[onclick*="${id}"]`);
+                            if(btn) btn.closest('.flex').remove();
+                        } catch(e) {
+                            App.UI.toast('Delete failed', 'error');
+                        }
                     }
-                });
-            });
-            
-            // Initialize Google Auth
-            if (typeof google !== 'undefined') {
-                initGoogleAuth();
-            } else {
-                console.error('Google Identity Services not loaded');
+                }
+            },
+
+            Utils: {
+                debounce: (func, wait) => {
+                    let timeout;
+                    return (...args) => {
+                        clearTimeout(timeout);
+                        timeout = setTimeout(() => func.apply(this, args), wait);
+                    };
+                },
+                formatBytes: (bytes) => {
+                    if (!+bytes) return '0 B';
+                    const k = 1024;
+                    const sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
+                    const i = Math.floor(Math.log(bytes) / Math.log(k));
+                    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
+                },
+                getFileIcon: (mime) => {
+                    if(!mime) return 'description';
+                    if(mime.includes('image')) return 'image';
+                    if(mime.includes('video')) return 'movie';
+                    if(mime.includes('audio')) return 'audiotrack';
+                    if(mime.includes('pdf')) return 'picture_as_pdf';
+                    if(mime.includes('zip') || mime.includes('rar')) return 'folder_zip';
+                    if(mime.includes('spreadsheet') || mime.includes('excel')) return 'table_view';
+                    if(mime.includes('presentation')) return 'slideshow';
+                    return 'description';
+                }
             }
+        };
+
+        // GLOBAL LISTENERS
+        document.addEventListener('click', (e) => {
+            if (!e.target.closest('#context-menu')) App.UI.hideContextMenu();
         });
+        
+        // Go back functionality
+        App.State.goBack = () => {
+            if (App.State.history.length > 0) {
+                const prev = App.State.history.pop();
+                App.Drive.loadFiles(prev.id, false);
+                if(App.State.history.length === 0) document.getElementById('btn-back').disabled = true;
+            }
+        };
 
-        // Load Google Identity Services if not already loaded
-        if (typeof google === 'undefined') {
-            const script = document.createElement('script');
-            script.src = 'https://accounts.google.com/gsi/client';
-            script.async = true;
-            script.defer = true;
-            script.onload = initGoogleAuth;
-            document.head.appendChild(script);
-        }
+        // START APP
+        window.onload = App.Auth.init;
     </script>
 </body>
 </html>
