@@ -312,6 +312,7 @@
         </main>
     </div>
 
+    <!-- AI Studio Modal -->
     <div id="ai-studio" class="fixed inset-0 z-[60] bg-black/80 backdrop-blur-xl hidden flex items-center justify-center p-4 animate-fade-in">
         <div class="w-full max-w-5xl h-[85vh] bg-[#0f172a] border border-white/10 rounded-2xl shadow-2xl flex flex-col overflow-hidden relative">
             
@@ -354,6 +355,7 @@
 
                 <div class="flex-1 bg-slate-950 relative overflow-y-auto custom-scroll p-6">
                     
+                    <!-- OCR Tab -->
                     <div id="tab-ocr" class="ai-view block max-w-3xl mx-auto">
                         <h3 class="text-lg font-bold mb-4">Extract Text (OCR)</h3>
                         <div class="border-2 border-dashed border-white/10 rounded-2xl p-8 text-center hover:border-blue-500/50 transition cursor-pointer bg-slate-900" onclick="document.getElementById('ocr-upload').click()">
@@ -373,6 +375,7 @@
                         </div>
                     </div>
 
+                    <!-- BG Remove Tab -->
                     <div id="tab-bg-remove" class="ai-view hidden max-w-3xl mx-auto">
                         <h3 class="text-lg font-bold mb-4">Background Remover</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -400,6 +403,7 @@
                         </div>
                     </div>
 
+                    <!-- Face Swap Tab -->
                     <div id="tab-faceswap" class="ai-view hidden max-w-3xl mx-auto">
                         <h3 class="text-lg font-bold mb-4">Face Swap Pro</h3>
                         <div class="grid grid-cols-2 gap-4 mb-6">
@@ -436,12 +440,12 @@
                              <a id="fs-download" class="mt-4 block text-center w-full bg-slate-800 py-2 rounded text-sm hover:bg-slate-700 transition">Download Result</a>
                         </div>
                     </div>
-
                 </div>
             </div>
         </div>
     </div>
 
+    <!-- Cleaner Modal -->
     <div id="cleaner-modal" class="fixed inset-0 z-[70] bg-black/90 hidden flex items-center justify-center p-4">
         <div class="w-full max-w-2xl bg-slate-900 border border-white/10 rounded-2xl shadow-2xl overflow-hidden flex flex-col max-h-[80vh]">
             <div class="p-4 border-b border-white/10 flex justify-between items-center bg-slate-800">
@@ -463,6 +467,7 @@
         </div>
     </div>
 
+    <!-- Chat Window -->
     <div class="fixed bottom-6 right-6 z-40 flex flex-col items-end gap-4">
         
         <div id="chat-window" class="w-80 md:w-96 h-[500px] bg-slate-900/95 backdrop-blur-xl border border-white/10 rounded-2xl shadow-2xl flex flex-col transition-all duration-300 transform origin-bottom-right scale-0 opacity-0 overflow-hidden">
@@ -500,10 +505,13 @@
         </button>
     </div>
 
+    <!-- Toast Container -->
     <div id="toast-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none"></div>
 
+    <!-- Tesseract.js for OCR -->
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
-    
+
+    <!-- Context Menu -->
     <div id="context-menu" class="fixed z-[90] bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl py-1 w-52 hidden backdrop-blur-md transition-all duration-200 origin-top-left transform scale-95 opacity-0">
         <div class="px-3 py-2 border-b border-white/5 mb-1">
             <p id="ctx-filename" class="text-xs text-slate-400 truncate">Filename.ext</p>
@@ -529,21 +537,11 @@
     <script>
         const App = {
             Config: {
-                // 🔑 YOUR ACTUAL KEYS - Already inserted
+                // 🔑 YOUR GOOGLE DRIVE CLIENT ID (from earlier)
                 clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
-                geminiKey: 'AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo',
-                hfToken: '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',
-                
-                vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn',
-                
-                // Updated Hugging Face models with new router endpoint
-                models: {
-                    bgRemove: 'https://router.huggingface.co/models/briaai/RMBG-1.4',
-                    faceSwap: 'https://router.huggingface.co/models/tonyassi/face-swap',
-                },
-                
-                // CORS proxy for Hugging Face (for demo)
-                hfProxy: 'https://corsproxy.io/?'
+                // 🔗 YOUR APPS SCRIPT WEB APP URL
+                scriptUrl: 'https://script.google.com/macros/s/AKfycbzhAYKHdInMJlKcoldrB05LBY-sCy7at-HHuEwR1QhMyxx3FbaDTIJBcOEEqeKjDYM/exec',
+                vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn'
             },
 
             State: {
@@ -778,7 +776,7 @@
                 }
             },
 
-            // ================= 3. AI STUDIO LOGIC =================
+            // ================= 3. AI STUDIO (via Apps Script) =================
             AI: {
                 switchTab: (tab) => {
                     document.querySelectorAll('.ai-view').forEach(e => e.classList.add('hidden'));
@@ -787,6 +785,7 @@
                     document.querySelector(`[data-tab="${tab}"]`).classList.add('bg-white/10', 'border-l-2', 'border-blue-500');
                 },
 
+                // --- OCR (Tesseract) remains client-side ---
                 handleOCR: async (file) => {
                     if(!file) return;
                     
@@ -819,6 +818,7 @@
                     }
                 },
 
+                // --- BG Remove via Apps Script ---
                 handleBGRemove: async (file) => {
                     if(!file) return;
                     
@@ -829,28 +829,29 @@
                     document.getElementById('bg-loader').classList.remove('hidden');
 
                     try {
-                        const apiUrl = App.Config.models.bgRemove;
-                        const response = await fetch(App.Config.hfProxy + encodeURIComponent(apiUrl), {
-                            method: "POST",
-                            headers: { 
-                                "Authorization": `Bearer ${App.Config.hfToken}`,
-                                "Content-Type": "application/octet-stream"
-                            },
-                            body: file
+                        // Convert file to base64
+                        const base64 = await App.Utils.fileToBase64(file);
+                        
+                        const response = await fetch(App.Config.scriptUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                type: 'bgremove',
+                                image: base64
+                            })
                         });
-
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            throw new Error(`API Error: ${response.status} - ${errorText}`);
+                        
+                        const data = await response.json();
+                        
+                        if (data.error) throw new Error(data.error);
+                        
+                        if (data.image) {
+                            const resultImg = document.getElementById('bg-result');
+                            resultImg.src = 'data:image/png;base64,' + data.image;
+                            resultImg.classList.remove('hidden');
+                            document.getElementById('bg-download').classList.remove('hidden');
+                            App.UI.toast('Background Removed!', 'success');
                         }
-                        
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
-                        
-                        document.getElementById('bg-result').src = url;
-                        document.getElementById('bg-result').classList.remove('hidden');
-                        document.getElementById('bg-download').classList.remove('hidden');
-                        App.UI.toast('Background Removed!', 'success');
                     } catch(e) {
                         App.UI.toast('BG Remove failed: ' + e.message, 'error');
                         console.error(e);
@@ -881,6 +882,7 @@
                     }
                 },
 
+                // --- Face Swap via Apps Script ---
                 processFaceSwap: async () => {
                     const source = document.getElementById('fs-source').files[0];
                     const target = document.getElementById('fs-target').files[0];
@@ -894,45 +896,30 @@
                     document.getElementById('fs-loader').classList.remove('hidden');
 
                     try {
-                        const toBase64 = (file) => {
-                            return new Promise((resolve, reject) => {
-                                const reader = new FileReader();
-                                reader.readAsDataURL(file);
-                                reader.onload = () => resolve(reader.result.split(',')[1]);
-                                reader.onerror = error => reject(error);
-                            });
-                        };
+                        const sourceB64 = await App.Utils.fileToBase64(source);
+                        const targetB64 = await App.Utils.fileToBase64(target);
 
-                        const sourceB64 = await toBase64(source);
-                        const targetB64 = await toBase64(target);
-
-                        const apiUrl = App.Config.models.faceSwap;
-                        const response = await fetch(App.Config.hfProxy + encodeURIComponent(apiUrl), {
-                            method: "POST",
-                            headers: { 
-                                "Authorization": `Bearer ${App.Config.hfToken}`,
-                                "Content-Type": "application/json"
-                            },
+                        const response = await fetch(App.Config.scriptUrl, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                inputs: {
-                                    source: sourceB64,
-                                    target: targetB64
-                                }
+                                type: 'faceswap',
+                                source: sourceB64,
+                                target: targetB64
                             })
                         });
-
-                        if (!response.ok) {
-                            const errorText = await response.text();
-                            throw new Error(`API Error: ${response.status} - ${errorText}`);
-                        }
-
-                        const blob = await response.blob();
-                        const url = URL.createObjectURL(blob);
                         
-                        document.getElementById('fs-result').src = url;
-                        document.getElementById('fs-download').href = url;
-                        document.getElementById('fs-download').download = 'faceswap.png';
-                        App.UI.toast('Face Swap Complete!', 'success');
+                        const data = await response.json();
+                        
+                        if (data.error) throw new Error(data.error);
+                        
+                        if (data.image) {
+                            const resultImg = document.getElementById('fs-result');
+                            resultImg.src = 'data:image/png;base64,' + data.image;
+                            document.getElementById('fs-download').href = resultImg.src;
+                            document.getElementById('fs-download').download = 'faceswap.png';
+                            App.UI.toast('Face Swap Complete!', 'success');
+                        }
                     } catch(e) {
                         console.error(e);
                         App.UI.toast('Face Swap failed: ' + e.message, 'error');
@@ -942,7 +929,7 @@
                 }
             },
 
-            // ================= 4. CHAT SYSTEM (GEMINI) =================
+            // ================= 4. GEMINI CHAT via Apps Script =================
             Chat: {
                 toggle: () => {
                     const win = document.getElementById('chat-window');
@@ -960,27 +947,31 @@
 
                     const box = document.getElementById('chat-messages');
                     
+                    // User message
                     box.innerHTML += `<div class="text-right animate-slide-up"><span class="bg-blue-600 text-white px-3 py-2 rounded-xl rounded-br-none inline-block shadow-lg text-sm">${msg.replace(/</g, '&lt;')}</span></div>`;
                     input.value = '';
                     box.scrollTop = box.scrollHeight;
 
+                    // Loader
                     const loadId = 'loader-' + Date.now();
                     box.innerHTML += `<div id="${loadId}" class="text-left"><span class="bg-slate-800 text-slate-400 px-3 py-2 rounded-xl inline-block text-xs animate-pulse">Gemini is thinking...</span></div>`;
 
                     try {
-                        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${App.Config.geminiKey}`;
-                        const response = await fetch(url, {
+                        const response = await fetch(App.Config.scriptUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ contents: [{ parts: [{ text: msg }] }] })
+                            body: JSON.stringify({
+                                type: 'gemini',
+                                prompt: msg
+                            })
                         });
                         
-                        if (!response.ok) {
-                            throw new Error(`HTTP ${response.status}`);
-                        }
+                        if (!response.ok) throw new Error(`HTTP ${response.status}`);
                         
                         const data = await response.json();
-                        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "I'm having trouble connecting.";
+                        
+                        // The backend returns the full Gemini response
+                        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
                         
                         document.getElementById(loadId).remove();
                         box.innerHTML += `<div class="text-left animate-slide-up"><div class="bg-slate-800 border border-white/10 text-slate-200 px-3 py-2 rounded-xl rounded-bl-none inline-block text-sm prose prose-invert max-w-none shadow">${marked.parse(reply)}</div></div>`;
@@ -1260,6 +1251,16 @@
                         App.UI.toast('Copied to clipboard!', 'success');
                     }).catch(() => {
                         App.UI.toast('Copy failed', 'error');
+                    });
+                },
+
+                // Convert file to base64 string
+                fileToBase64: (file) => {
+                    return new Promise((resolve, reject) => {
+                        const reader = new FileReader();
+                        reader.readAsDataURL(file);
+                        reader.onload = () => resolve(reader.result.split(',')[1]); // remove data:image/png;base64,
+                        reader.onerror = reject;
                     });
                 }
             }
