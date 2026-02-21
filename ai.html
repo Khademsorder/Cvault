@@ -1,0 +1,539 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AI Realism OS | Pro</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <style>
+        :root {
+            --bg: #030305;
+            --glass: rgba(255, 255, 255, 0.03);
+            --border: rgba(255, 255, 255, 0.08);
+            --primary: #00f2ff;
+            --accent: #7000ff;
+            --success: #00ff9d;
+            --text: #ffffff;
+            --text-muted: #888899;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Space Grotesk', sans-serif; outline: none; }
+        
+        body {
+            background-color: var(--bg);
+            background-image: radial-gradient(circle at 50% 0%, #1a1a2e 0%, var(--bg) 60%);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* --- Header & Config --- */
+        nav {
+            padding: 15px 25px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border);
+            backdrop-filter: blur(20px);
+            position: sticky;
+            top: 0;
+            z-index: 50;
+            background: rgba(3, 3, 5, 0.8);
+        }
+
+        .logo {
+            font-size: 1.2rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            letter-spacing: -0.5px;
+        }
+        .logo i { color: var(--primary); }
+
+        .api-input-group {
+            position: relative;
+            width: 250px;
+        }
+        
+        .api-input {
+            background: var(--glass);
+            border: 1px solid var(--border);
+            padding: 8px 35px 8px 12px;
+            border-radius: 8px;
+            color: var(--primary);
+            font-size: 0.8rem;
+            width: 100%;
+            transition: 0.3s;
+        }
+        .api-input:focus { border-color: var(--primary); box-shadow: 0 0 10px rgba(0, 242, 255, 0.1); }
+        .save-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--success); font-size: 0.8rem; opacity: 0; transition: 0.3s; }
+        .save-icon.saved { opacity: 1; }
+
+        /* --- Main Content --- */
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+            width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+
+        /* Controls Bar */
+        .controls {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 10px;
+            overflow-x: auto;
+            padding-bottom: 5px;
+        }
+
+        .select-style {
+            background: var(--glass);
+            color: white;
+            border: 1px solid var(--border);
+            padding: 10px 15px;
+            border-radius: 8px;
+            cursor: pointer;
+            min-width: 150px;
+        }
+        .select-style option { background: #111; }
+
+        /* Comparison Grid */
+        .grid-compare {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            height: 400px;
+        }
+
+        .upload-card {
+            background: #0a0a0c;
+            border: 1px dashed var(--border);
+            border-radius: 16px;
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            overflow: hidden;
+            cursor: pointer;
+        }
+
+        .upload-card:hover, .upload-card.drag-over {
+            border-color: var(--primary);
+            background: rgba(0, 242, 255, 0.02);
+        }
+
+        .upload-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            position: absolute;
+            z-index: 1;
+        }
+
+        .placeholder-content {
+            text-align: center;
+            z-index: 2;
+            pointer-events: none;
+            color: var(--text-muted);
+        }
+
+        .placeholder-content i { font-size: 2rem; margin-bottom: 10px; color: var(--border); }
+        .tag {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(5px);
+            padding: 5px 10px;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            z-index: 5;
+            border: 1px solid rgba(255,255,255,0.1);
+        }
+
+        /* Scan Effect */
+        .scanner {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(to bottom, transparent, var(--primary), transparent);
+            opacity: 0;
+            z-index: 10;
+            transform: translateY(-100%);
+        }
+        .scanning .scanner {
+            animation: scan 2s infinite linear;
+            opacity: 0.3;
+        }
+        @keyframes scan { 0% { transform: translateY(-100%); } 100% { transform: translateY(100%); } }
+
+        /* --- Output Section --- */
+        .output-section {
+            background: #08080a;
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 0;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .output-header {
+            padding: 12px 20px;
+            border-bottom: 1px solid var(--border);
+            background: rgba(255,255,255,0.02);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .output-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; color: var(--text-muted); letter-spacing: 1px; }
+
+        textarea {
+            width: 100%;
+            height: 150px;
+            background: transparent;
+            border: none;
+            padding: 20px;
+            color: #d0d0d0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.95rem;
+            line-height: 1.6;
+            resize: none;
+        }
+
+        /* --- Action Bar --- */
+        .action-bar {
+            display: flex;
+            gap: 15px;
+            margin-top: auto;
+            padding: 20px;
+            background: rgba(0,0,0,0.5);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+        }
+
+        .btn {
+            padding: 16px 30px;
+            border-radius: 10px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.9rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: #000;
+            flex: 2;
+            box-shadow: 0 0 20px rgba(0, 242, 255, 0.15);
+        }
+        .btn-primary:hover { box-shadow: 0 0 30px rgba(0, 242, 255, 0.4); transform: translateY(-2px); }
+        
+        .btn-secondary {
+            background: rgba(255,255,255,0.05);
+            color: white;
+            border: 1px solid var(--border);
+            flex: 1;
+        }
+        .btn-secondary:hover { background: rgba(255,255,255,0.1); }
+
+        .btn-copy {
+            background: transparent;
+            color: var(--primary);
+            border: 1px solid var(--primary);
+            font-size: 0.75rem;
+            padding: 6px 12px;
+            border-radius: 6px;
+        }
+        .btn-copy:hover { background: rgba(0, 242, 255, 0.1); }
+
+        /* Loader */
+        .loader {
+            display: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid #000;
+            border-bottom-color: transparent;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .grid-compare { grid-template-columns: 1fr; height: auto; }
+            .upload-card { height: 250px; }
+            .action-bar { flex-direction: column; }
+        }
+
+        input[type="file"] { display: none; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo"><i class="fa-solid fa-cube"></i> REALISM OS</div>
+        <div class="api-input-group">
+            <input type="password" class="api-input" id="apiKeyInput" placeholder="Paste Gemini API Key here...">
+            <i class="fa-solid fa-check-circle save-icon" id="saveIcon"></i>
+        </div>
+    </nav>
+
+    <div class="container">
+        
+        <div class="controls">
+            <select id="styleSelect" class="select-style">
+                <option value="photorealistic">📸 Photorealistic (Default)</option>
+                <option value="cinematic">🎬 Cinematic Movie Scene</option>
+                <option value="analog">🎞️ 35mm Analog Film</option>
+                <option value="cyberpunk">🌃 Cyberpunk / Neon</option>
+                <option value="studio">💡 High-End Studio Headshot</option>
+            </select>
+        </div>
+
+        <div class="grid-compare">
+            <div class="upload-card" id="cardRef">
+                <div class="scanner"></div>
+                <div class="tag">REFERENCE FACE</div>
+                <div class="placeholder-content" id="phRef">
+                    <i class="fa-regular fa-id-badge"></i>
+                    <p>Click or Drag Face</p>
+                </div>
+                <input type="file" id="fileRef" accept="image/*">
+            </div>
+
+            <div class="upload-card" id="cardTgt">
+                <div class="scanner"></div>
+                <div class="tag">TARGET STYLE</div>
+                <div class="placeholder-content" id="phTgt">
+                    <i class="fa-solid fa-wand-magic-sparkles"></i>
+                    <p>Click or Drag Style</p>
+                </div>
+                <input type="file" id="fileTgt" accept="image/*">
+            </div>
+        </div>
+
+        <div class="output-section">
+            <div class="output-header">
+                <span class="output-title">Generative Prompt Output</span>
+                <button class="btn-copy" id="copyBtn"><i class="fa-regular fa-copy"></i> Copy</button>
+            </div>
+            <textarea id="output" readonly placeholder="// AI Analysis pending... waiting for input streams."></textarea>
+        </div>
+
+    </div>
+
+    <div class="action-bar">
+        <button class="btn btn-secondary" id="clearBtn"><i class="fa-solid fa-trash"></i> Reset</button>
+        <button class="btn btn-primary" id="generateBtn">
+            <span class="btn-text">INITIALIZE GENERATION</span>
+            <div class="loader" id="btnLoader"></div>
+        </button>
+    </div>
+
+    <script>
+        // --- State Management ---
+        const state = {
+            refImage: null,
+            tgtImage: null,
+            apiKey: localStorage.getItem('gemini_api_key') || ''
+        };
+
+        // --- Elements ---
+        const els = {
+            keyInput: document.getElementById('apiKeyInput'),
+            saveIcon: document.getElementById('saveIcon'),
+            cardRef: document.getElementById('cardRef'),
+            cardTgt: document.getElementById('cardTgt'),
+            fileRef: document.getElementById('fileRef'),
+            fileTgt: document.getElementById('fileTgt'),
+            output: document.getElementById('output'),
+            genBtn: document.getElementById('generateBtn'),
+            clearBtn: document.getElementById('clearBtn'),
+            copyBtn: document.getElementById('copyBtn'),
+            loader: document.getElementById('btnLoader'),
+            btnText: document.querySelector('.btn-text'),
+            styleSelect: document.getElementById('styleSelect')
+        };
+
+        // --- Init ---
+        if(state.apiKey) els.keyInput.value = state.apiKey;
+
+        // --- API Key Handling ---
+        els.keyInput.addEventListener('input', (e) => {
+            state.apiKey = e.target.value;
+            localStorage.setItem('gemini_api_key', state.apiKey);
+            els.saveIcon.classList.add('saved');
+            setTimeout(() => els.saveIcon.classList.remove('saved'), 2000);
+        });
+
+        // --- Image Handling (Click & Drag) ---
+        function setupUploader(card, input, type) {
+            // Click
+            card.addEventListener('click', () => input.click());
+            
+            // File Change
+            input.addEventListener('change', (e) => handleFile(e.target.files[0], card, type));
+
+            // Drag & Drop
+            card.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                card.classList.add('drag-over');
+            });
+            card.addEventListener('dragleave', () => card.classList.remove('drag-over'));
+            card.addEventListener('drop', (e) => {
+                e.preventDefault();
+                card.classList.remove('drag-over');
+                handleFile(e.dataTransfer.files[0], card, type);
+            });
+        }
+
+        function handleFile(file, card, type) {
+            if (!file || !file.type.startsWith('image/')) return;
+
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                // Remove existing img
+                const oldImg = card.querySelector('img');
+                if(oldImg) oldImg.remove();
+
+                // Add new img
+                const img = document.createElement('img');
+                img.src = e.target.result;
+                card.appendChild(img);
+                
+                // Hide placeholder
+                card.querySelector('.placeholder-content').style.display = 'none';
+
+                // Update State
+                if(type === 'ref') state.refImage = e.target.result.split(',')[1];
+                if(type === 'tgt') state.tgtImage = e.target.result.split(',')[1];
+            };
+            reader.readAsDataURL(file);
+        }
+
+        setupUploader(els.cardRef, els.fileRef, 'ref');
+        setupUploader(els.cardTgt, els.fileTgt, 'tgt');
+
+        // --- Generation Logic ---
+        els.genBtn.addEventListener('click', async () => {
+            if(!state.apiKey) {
+                alert("⚠️ Please enter your Gemini API Key in the top right corner.");
+                els.keyInput.focus();
+                return;
+            }
+            if(!state.refImage || !state.tgtImage) {
+                alert("⚠️ Please upload both Reference and Target images.");
+                return;
+            }
+
+            // UI Loading State
+            els.btnText.textContent = "ANALYZING PIXELS...";
+            els.loader.style.display = 'block';
+            els.cardRef.classList.add('scanning');
+            els.cardTgt.classList.add('scanning');
+
+            const styleMode = els.styleSelect.value;
+            
+            // Advanced Prompt Engineering
+            const basePrompt = `
+                Role: You are an expert Image Prompt Engineer for high-end AI generators (Midjourney v6, Stable Diffusion XL).
+                
+                Input:
+                1. Image A (Reference): Extract facial structure, ethnicity, age, hair, and expression.
+                2. Image B (Target): Extract lighting, composition, color grading, clothing style, and background environment.
+                
+                Context: The user wants to recreate the Person from A inside the Scene/Style of B.
+                Selected Mode: ${styleMode.toUpperCase()}
+                
+                Instructions:
+                - Combine the physical attributes of A with the aesthetic of B.
+                - Write a single, highly detailed prompt.
+                - Include technical camera settings suitable for '${styleMode}' (e.g., 85mm f/1.2 for portrait, 35mm film grain for analog).
+                - End with high-quality keywords (8k, photorealistic, masterpiece).
+                
+                Output Format:
+                [Subject Description] + [Environment/Action] + [Lighting/Atmosphere] + [Camera/Technical Tags] --ar 16:9
+            `;
+
+            try {
+                const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${state.apiKey}`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        contents: [{
+                            parts: [
+                                { text: basePrompt },
+                                { inline_data: { mime_type: "image/jpeg", data: state.refImage } },
+                                { inline_data: { mime_type: "image/jpeg", data: state.tgtImage } }
+                            ]
+                        }]
+                    })
+                });
+
+                const data = await response.json();
+                
+                if(data.error) throw new Error(data.error.message);
+                
+                const result = data.candidates[0].content.parts[0].text;
+                animateText(result);
+
+            } catch (error) {
+                els.output.value = `Error: ${error.message}`;
+            } finally {
+                els.btnText.textContent = "GENERATE AGAIN";
+                els.loader.style.display = 'none';
+                els.cardRef.classList.remove('scanning');
+                els.cardTgt.classList.remove('scanning');
+            }
+        });
+
+        // --- Utilities ---
+        function animateText(text) {
+            els.output.value = "";
+            let i = 0;
+            const speed = 10;
+            function type() {
+                if (i < text.length) {
+                    els.output.value += text.charAt(i);
+                    els.output.scrollTop = els.output.scrollHeight;
+                    i++;
+                    setTimeout(type, speed);
+                }
+            }
+            type();
+        }
+
+        els.copyBtn.addEventListener('click', () => {
+            navigator.clipboard.writeText(els.output.value);
+            const originalText = els.copyBtn.innerHTML;
+            els.copyBtn.innerHTML = '<i class="fa-solid fa-check"></i> Copied';
+            setTimeout(() => els.copyBtn.innerHTML = originalText, 1500);
+        });
+
+        els.clearBtn.addEventListener('click', () => location.reload());
+
+    </script>
+</body>
+</html>
