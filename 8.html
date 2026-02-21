@@ -69,7 +69,6 @@
     </script>
 
     <style>
-        /* GLOBAL STYLES */
         :root {
             --bg-deep: #020617;
             --bg-card: #0f172a;
@@ -131,7 +130,6 @@
             .file-grid-layout { grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); }
         }
 
-        /* Fix for context menu */
         #context-menu {
             transition: opacity 0.2s, transform 0.2s;
         }
@@ -184,7 +182,7 @@
 
             <nav class="flex-1 p-2 md:p-4 flex flex-row md:flex-col gap-1 md:gap-2 overflow-x-auto md:overflow-y-auto custom-scroll items-center md:items-stretch justify-around md:justify-start">
                 
-                <button onclick="App.Drive.loadFiles('root')" id="nav-root" class="nav-btn w-full flex flex-col md:flex-row items-center md:px-4 py-2 md:py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-blue-400 transition-all group active-nav">
+                <button onclick="App.Drive.loadFiles('root')" id="nav-root" class="nav-btn w-full flex flex-col md:flex-row items-center md:px-4 py-2 md:py-3 rounded-xl text-slate-400 hover:bg-white/5 hover:text-blue-400 transition-all group">
                     <span class="material-icons-round text-2xl md:text-xl md:mr-3 mb-1 md:mb-0 group-hover:scale-110 transition-transform">dashboard</span>
                     <span class="text-[10px] md:text-sm font-medium">My Drive</span>
                 </button>
@@ -224,6 +222,7 @@
                 </div>
             </div>
         </aside>
+        
         <main class="flex-1 flex flex-col min-w-0 relative h-full overflow-hidden">
             
             <header class="h-20 glass-panel border-b border-glass-border flex items-center justify-between px-6 z-30 shrink-0">
@@ -457,8 +456,7 @@
                 <p class="text-slate-400 text-sm mb-6">This will scan the current folder for files with identical names and sizes.</p>
                 <button onclick="App.Tools.scanDuplicates()" class="px-6 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg font-medium transition">Start Scan</button>
             </div>
-            <div class="hidden flex-1 overflow-y-auto p-4 custom-scroll" id="cleaner-results">
-                </div>
+            <div class="hidden flex-1 overflow-y-auto p-4 custom-scroll" id="cleaner-results"></div>
             <div class="hidden p-4 border-t border-white/10 bg-slate-800 flex justify-end gap-3" id="cleaner-actions">
                 <button onclick="App.Tools.deleteSelected()" class="px-4 py-2 bg-red-500/20 text-red-400 hover:bg-red-500 hover:text-white border border-red-500/30 rounded-lg text-sm transition font-bold">Delete Selected</button>
             </div>
@@ -505,6 +503,7 @@
     <div id="toast-container" class="fixed bottom-24 left-1/2 -translate-x-1/2 z-[100] flex flex-col gap-2 items-center pointer-events-none"></div>
 
     <script src='https://unpkg.com/tesseract.js@v2.1.0/dist/tesseract.min.js'></script>
+    
     <div id="context-menu" class="fixed z-[90] bg-[#1e293b] border border-white/10 rounded-xl shadow-2xl py-1 w-52 hidden backdrop-blur-md transition-all duration-200 origin-top-left transform scale-95 opacity-0">
         <div class="px-3 py-2 border-b border-white/5 mb-1">
             <p id="ctx-filename" class="text-xs text-slate-400 truncate">Filename.ext</p>
@@ -530,20 +529,20 @@
     <script>
         const App = {
             Config: {
-                // 🔑 REPLACE WITH YOUR ACTUAL KEYS
+                // 🔑 YOUR ACTUAL KEYS - Already inserted
                 clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
-                geminiKey: 'AIzaSyA-DWajUZmaTRjGRQIbkOY_lAxUjjO_A2M', // Your Gemini key
-                hfToken: 'hf_your_actual_token_here', // Your Hugging Face token
+                geminiKey: 'AIzaSyDa9xQWqxE71j3ZaI7NI_0hGztmLcx4USo',
+                hfToken: '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',
                 
                 vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn',
                 
-                // Models
+                // Updated Hugging Face models with new router endpoint
                 models: {
-                    bgRemove: 'briaai/RMBG-1.4',
-                    faceSwap: 'tonyassi/face-swap',
+                    bgRemove: 'https://router.huggingface.co/models/briaai/RMBG-1.4',
+                    faceSwap: 'https://router.huggingface.co/models/tonyassi/face-swap',
                 },
                 
-                // CORS proxy for Hugging Face (for demo only - replace with your own backend in production)
+                // CORS proxy for Hugging Face (for demo)
                 hfProxy: 'https://corsproxy.io/?'
             },
 
@@ -579,7 +578,7 @@
                                 return;
                             }
                             App.State.token = resp.access_token;
-                            App.State.tokenExpiry = Date.now() + 3600 * 1000; // 1 hour
+                            App.State.tokenExpiry = Date.now() + 3600 * 1000;
                             localStorage.setItem('g_token', resp.access_token);
                             localStorage.setItem('token_expiry', App.State.tokenExpiry);
                             App.Auth.onSuccess();
@@ -637,7 +636,6 @@
                         document.getElementById('user-avatar').src = App.State.user.photoLink;
                         App.Drive.updateStorage(res.result.storageQuota);
                         
-                        // Load initial files
                         App.Drive.loadFiles('root');
                     } catch (e) {
                         App.UI.toast('Failed to load user info', 'error');
@@ -648,7 +646,6 @@
             // ================= 2. DRIVE OPERATIONS =================
             Drive: {
                 loadFiles: async (folderId, pushHistory = true) => {
-                    // Check token validity
                     if (!App.State.token || App.State.tokenExpiry < Date.now()) {
                         App.UI.toast('Session expired. Please login again.', 'error');
                         App.Auth.signIn();
@@ -664,7 +661,6 @@
                     document.getElementById('loader').classList.remove('hidden');
                     document.getElementById('file-grid').innerHTML = '';
 
-                    // Set folder name
                     let query = `'${folderId}' in parents and trashed = false`;
                     if (folderId === 'root') App.State.folderName = "My Drive";
                     else if (folderId === 'starred') { 
@@ -833,11 +829,8 @@
                     document.getElementById('bg-loader').classList.remove('hidden');
 
                     try {
-                        // Use CORS proxy to avoid browser restrictions
-                        const proxyUrl = App.Config.hfProxy;
-                        const apiUrl = `https://api-inference.huggingface.co/models/${App.Config.models.bgRemove}`;
-                        
-                        const response = await fetch(proxyUrl + encodeURIComponent(apiUrl), {
+                        const apiUrl = App.Config.models.bgRemove;
+                        const response = await fetch(App.Config.hfProxy + encodeURIComponent(apiUrl), {
                             method: "POST",
                             headers: { 
                                 "Authorization": `Bearer ${App.Config.hfToken}`,
@@ -901,7 +894,6 @@
                     document.getElementById('fs-loader').classList.remove('hidden');
 
                     try {
-                        // Convert files to base64
                         const toBase64 = (file) => {
                             return new Promise((resolve, reject) => {
                                 const reader = new FileReader();
@@ -914,11 +906,8 @@
                         const sourceB64 = await toBase64(source);
                         const targetB64 = await toBase64(target);
 
-                        // Use proxy for face swap
-                        const proxyUrl = App.Config.hfProxy;
-                        const apiUrl = `https://api-inference.huggingface.co/models/${App.Config.models.faceSwap}`;
-                        
-                        const response = await fetch(proxyUrl + encodeURIComponent(apiUrl), {
+                        const apiUrl = App.Config.models.faceSwap;
+                        const response = await fetch(App.Config.hfProxy + encodeURIComponent(apiUrl), {
                             method: "POST",
                             headers: { 
                                 "Authorization": `Bearer ${App.Config.hfToken}`,
@@ -971,12 +960,10 @@
 
                     const box = document.getElementById('chat-messages');
                     
-                    // User message
                     box.innerHTML += `<div class="text-right animate-slide-up"><span class="bg-blue-600 text-white px-3 py-2 rounded-xl rounded-br-none inline-block shadow-lg text-sm">${msg.replace(/</g, '&lt;')}</span></div>`;
                     input.value = '';
                     box.scrollTop = box.scrollHeight;
 
-                    // Loader
                     const loadId = 'loader-' + Date.now();
                     box.innerHTML += `<div id="${loadId}" class="text-left"><span class="bg-slate-800 text-slate-400 px-3 py-2 rounded-xl inline-block text-xs animate-pulse">Gemini is thinking...</span></div>`;
 
@@ -1229,7 +1216,6 @@
                             App.Drive.loadFiles(App.State.currentFolder, false);
                             App.UI.toast('File moved to trash', 'success');
                             
-                            // Remove from cleaner UI if present
                             const btn = document.querySelector(`button[onclick*="'${id}'"]`);
                             if(btn) btn.closest('.flex').remove();
                         } catch(e) {
@@ -1284,7 +1270,6 @@
             if (!e.target.closest('#context-menu')) App.UI.hideContextMenu();
         });
 
-        // Back navigation
         App.State.goBack = () => {
             if (App.State.history.length > 0) {
                 const prev = App.State.history.pop();
@@ -1293,9 +1278,7 @@
             }
         };
 
-        // Start the app
         window.onload = () => {
-            // Check if all required libraries are loaded
             if (typeof google === 'undefined') {
                 App.UI.toast('Google API failed to load. Refresh.', 'error');
                 return;
