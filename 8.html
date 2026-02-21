@@ -537,10 +537,10 @@
     <script>
         const App = {
             Config: {
-                // 🔑 YOUR GOOGLE DRIVE CLIENT ID (from earlier)
+                // 🔑 YOUR GOOGLE DRIVE CLIENT ID
                 clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
-                // 🔗 YOUR APPS SCRIPT WEB APP URL
-                scriptUrl: 'https://script.google.com/macros/s/AKfycbzhAYKHdInMJlKcoldrB05LBY-sCy7at-HHuEwR1QhMyxx3FbaDTIJBcOEEqeKjDYM/exec',
+                // 🔗 YOUR CLOUDFLARE WORKER URL
+                workerUrl: 'https://purple-lab-b644.khadimsorder1.workers.dev/',
                 vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn'
             },
 
@@ -776,7 +776,7 @@
                 }
             },
 
-            // ================= 3. AI STUDIO (via Apps Script) =================
+            // ================= 3. AI STUDIO (via Cloudflare Worker) =================
             AI: {
                 switchTab: (tab) => {
                     document.querySelectorAll('.ai-view').forEach(e => e.classList.add('hidden'));
@@ -818,7 +818,7 @@
                     }
                 },
 
-                // --- BG Remove via Apps Script ---
+                // --- BG Remove via Worker ---
                 handleBGRemove: async (file) => {
                     if(!file) return;
                     
@@ -829,10 +829,9 @@
                     document.getElementById('bg-loader').classList.remove('hidden');
 
                     try {
-                        // Convert file to base64
                         const base64 = await App.Utils.fileToBase64(file);
                         
-                        const response = await fetch(App.Config.scriptUrl, {
+                        const response = await fetch(App.Config.workerUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -882,7 +881,7 @@
                     }
                 },
 
-                // --- Face Swap via Apps Script ---
+                // --- Face Swap via Worker ---
                 processFaceSwap: async () => {
                     const source = document.getElementById('fs-source').files[0];
                     const target = document.getElementById('fs-target').files[0];
@@ -899,7 +898,7 @@
                         const sourceB64 = await App.Utils.fileToBase64(source);
                         const targetB64 = await App.Utils.fileToBase64(target);
 
-                        const response = await fetch(App.Config.scriptUrl, {
+                        const response = await fetch(App.Config.workerUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -929,7 +928,7 @@
                 }
             },
 
-            // ================= 4. GEMINI CHAT via Apps Script =================
+            // ================= 4. GEMINI CHAT via Worker =================
             Chat: {
                 toggle: () => {
                     const win = document.getElementById('chat-window');
@@ -957,7 +956,7 @@
                     box.innerHTML += `<div id="${loadId}" class="text-left"><span class="bg-slate-800 text-slate-400 px-3 py-2 rounded-xl inline-block text-xs animate-pulse">Gemini is thinking...</span></div>`;
 
                     try {
-                        const response = await fetch(App.Config.scriptUrl, {
+                        const response = await fetch(App.Config.workerUrl, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
@@ -970,7 +969,7 @@
                         
                         const data = await response.json();
                         
-                        // The backend returns the full Gemini response
+                        // The worker returns the full Gemini response
                         const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "No response from Gemini.";
                         
                         document.getElementById(loadId).remove();
