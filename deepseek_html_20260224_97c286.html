@@ -1,0 +1,1107 @@
+<!DOCTYPE html>
+<html lang="bn">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ইসলামিক জ্ঞান · এক্সপার্ট সংস্করণ</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@300;400;500;600;700;800&family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" />
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    
+    :root {
+      --bg-primary: #f4f7f9; 
+      --bg-secondary: #eaeef3;
+      --surface: #ffffff; 
+      --text-primary: #1f2937; 
+      --text-secondary: #4b5563;
+      --text-muted: #9ca3af;
+      --primary: #3b8c7a; 
+      --primary-dark: #2d6f61; 
+      --primary-light: #5cb8a3;
+      --primary-glow: rgba(59, 140, 122, 0.1);
+      --primary-soft: rgba(59, 140, 122, 0.06);
+      --border: #d1d9e6; 
+      --border-light: #e5e9f0;
+      --error: #b85c5c; 
+      --success: #3c8c5c;
+      --warning: #b88c3c;
+      
+      --gradient-primary: linear-gradient(135deg, #3b8c7a 0%, #4a9c8a 100%);
+      --gradient-hero: linear-gradient(135deg, #3b8c7a 0%, #2d7a8c 100%);
+      
+      --shadow-sm: 0 2px 8px rgba(0,0,0,0.04); 
+      --shadow-md: 0 8px 24px rgba(0,0,0,0.06);
+      
+      --radius-md: 12px; 
+      --radius-lg: 16px; 
+      --radius-xl: 24px;
+      
+      --quran-bg: linear-gradient(135deg, #fefcf8 0%, #fdf8ee 100%);
+      --quran-border: #e0c896;
+      --quran-accent: #9a7830;
+      
+      --hadith-bg: linear-gradient(135deg, #f5faf7 0%, #eaf4ee 100%);
+      --hadith-border: #a8c8b0;
+      --hadith-accent: #3a7850;
+      
+      --explain-bg: linear-gradient(135deg, #f8f9fa 0%, #f0f2f5 100%);
+      --explain-border: #c0c8d0;
+      --explain-accent: #4a5a6a;
+      
+      --story-bg: linear-gradient(135deg, #fcf8fa 0%, #f5f0f4 100%);
+      --story-border: #d0b8c0;
+      --story-accent: #7a4a68;
+      
+      --context-bg: linear-gradient(135deg, #f4f8fa 0%, #eaf0f4 100%);
+      --context-border: #a8c0c8;
+      --context-accent: #3a6878;
+      
+      --modern-bg: linear-gradient(135deg, #faf8f4 0%, #f4f0e8 100%);
+      --modern-border: #c8c0a8;
+      --modern-accent: #78684a;
+      
+      --example-bg: linear-gradient(135deg, #f4faf5 0%, #eaf4ec 100%);
+      --example-border: #a8d0b0;
+      --example-accent: #3a7848;
+      
+      --misconception-bg: linear-gradient(135deg, #fef6f6 0%, #fcf0f0 100%);
+      --misconception-border: #e0b0b0;
+      --misconception-accent: #a05050;
+      
+      --summary-bg: linear-gradient(135deg, #f0f8f4 0%, #e4f4ea 50%, #eaf6f0 100%);
+      --summary-border: #80c090;
+      
+      --main-answer-bg: linear-gradient(135deg, #f0f7fc 0%, #e8f2fa 100%);
+      --main-answer-border: #a8c8e0;
+      --main-answer-accent: #2a6088;
+      
+      --sidebar-width: 380px;
+      --header-height: 72px;
+    }
+    
+    body.dark {
+      --bg-primary: #10141a; 
+      --bg-secondary: #181e26;
+      --surface: #1c222a; 
+      --text-primary: #e8ecf0; 
+      --text-secondary: #a0a8b4;
+      --text-muted: #5c6878;
+      --primary: #4cd0b8; 
+      --primary-glow: rgba(76, 208, 184, 0.08);
+      --border: #2a3440; 
+      
+      --quran-bg: linear-gradient(135deg, #282418 0%, #201c12 100%);
+      --quran-border: #5a4820;
+      --quran-accent: #c8a040;
+    }
+    
+    body {
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 16px;
+      line-height: 1.7;
+      min-height: 100vh;
+    }
+
+    .app-layout { display: flex; min-height: 100vh; }
+    .main-area { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+
+    /* Desktop Header */
+    .desktop-header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border-light);
+      padding: 0 32px;
+      height: var(--header-height);
+      display: none;
+      align-items: center;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      backdrop-filter: blur(16px);
+    }
+
+    @media (min-width: 900px) {
+      .desktop-header { display: flex; }
+      .mobile-header { display: none !important; }
+      .mobile-status { display: none; }
+    }
+
+    .header-inner {
+      max-width: 1200px;
+      width: 100%;
+      margin: 0 auto;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+
+    .logo-section { display: flex; align-items: center; gap: 12px; }
+    .logo-icon {
+      width: 44px; height: 44px;
+      background: var(--gradient-primary);
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      color: white;
+    }
+    .logo-icon .material-symbols-rounded { font-size: 24px; }
+    .logo-text h1 { font-size: 20px; font-weight: 800; color: var(--text-primary); }
+    .logo-text span { font-size: 12px; color: var(--text-muted); font-weight: 500; }
+
+    .header-actions { margin-left: auto; display: flex; gap: 8px; }
+    .header-btn {
+      display: flex; align-items: center; gap: 8px;
+      padding: 10px 16px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      font-size: 14px; font-weight: 600; font-family: inherit;
+      cursor: pointer; transition: all 0.2s;
+    }
+    .header-btn:hover { background: var(--primary-soft); border-color: var(--primary); color: var(--primary); }
+    .header-btn.primary { background: var(--gradient-primary); border-color: transparent; color: white; }
+
+    .content-wrapper { flex: 1; display: flex; flex-direction: column; }
+    .content-inner { max-width: 1000px; width: 100%; margin: 0 auto; padding: 24px 20px; }
+    @media (min-width: 900px) { .content-inner { padding: 32px 40px; } }
+
+    /* Mobile Header */
+    .mobile-status { height: 28px; background: var(--gradient-primary); position: fixed; top: 0; left: 0; right: 0; z-index: 1000; }
+    .mobile-header {
+      position: fixed; top: 28px; left: 0; right: 0; height: 56px;
+      background: var(--surface); border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; padding: 0 12px; z-index: 999;
+    }
+    .mobile-header-title { font-size: 18px; font-weight: 800; margin-left: 8px; flex: 1; }
+    .mobile-header-actions { display: flex; gap: 4px; }
+    .mobile-icon-btn {
+      width: 42px; height: 42px;
+      display: flex; align-items: center; justify-content: center;
+      background: transparent; border: none; border-radius: var(--radius-md);
+      color: var(--text-secondary); cursor: pointer;
+    }
+    .mobile-icon-btn:active { background: var(--primary-soft); }
+
+    /* Hero Section */
+    .hero-section {
+      background: var(--surface);
+      border-radius: var(--radius-xl);
+      padding: 28px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      border: 1px solid var(--border-light);
+    }
+    @media (min-width: 900px) {
+      .hero-section { padding: 36px; display: grid; grid-template-columns: 1fr 320px; gap: 32px; align-items: center; }
+    }
+    .hero-content h2 { font-size: 24px; font-weight: 800; margin-bottom: 8px; color: var(--text-primary); }
+    .hero-content p { color: var(--text-secondary); font-size: 15px; margin-bottom: 20px; }
+    
+    .search-box {
+      display: flex;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-lg);
+      border: 2px solid var(--border-light);
+      transition: all 0.25s;
+    }
+    .search-box:focus-within { border-color: var(--primary); box-shadow: 0 0 0 4px var(--primary-glow); background: var(--surface); }
+    .search-input { flex: 1; padding: 16px; font-size: 16px; font-family: inherit; border: none; background: transparent; color: inherit; outline: none; }
+    .search-input::placeholder { color: var(--text-muted); }
+    .search-submit {
+      padding: 16px 24px;
+      background: var(--gradient-primary);
+      border: none; border-radius: 0 var(--radius-lg) var(--radius-lg) 0;
+      color: white; font-weight: 700; font-family: inherit; font-size: 16px;
+      cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;
+    }
+    .search-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+    .hero-illustration { display: none; background: var(--gradient-hero); border-radius: var(--radius-xl); padding: 24px; color: white; text-align: center; }
+    @media (min-width: 900px) { .hero-illustration { display: block; } }
+    .hero-illustration .material-symbols-rounded { font-size: 80px; opacity: 0.9; margin-bottom: 16px; }
+
+    /* Quick Action Buttons */
+    .quick-actions {
+      display: flex;
+      gap: 12px;
+      margin: 20px 0 16px;
+      flex-wrap: wrap;
+    }
+    .quick-btn {
+      padding: 10px 18px;
+      background: var(--surface);
+      border: 2px solid var(--border-light);
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 14px;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+    .quick-btn:hover { border-color: var(--primary); background: var(--primary-soft); }
+    .quick-btn .material-symbols-rounded { font-size: 18px; }
+
+    /* Error Banner */
+    .error-banner { background: rgba(184, 92, 92, 0.06); border: 1px solid rgba(184, 92, 92, 0.15); border-radius: var(--radius-md); padding: 14px 18px; margin-bottom: 20px; display: none; align-items: center; gap: 12px; }
+    .error-banner.visible { display: flex; }
+    .error-banner .material-symbols-rounded { color: var(--error); font-size: 20px; }
+
+    /* Section Headers */
+    .section-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+    .section-title { font-size: 13px; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.6px; display: flex; align-items: center; gap: 8px; }
+    .section-title::before { content: ''; width: 3px; height: 14px; background: var(--primary); border-radius: 2px; }
+
+    /* Categories */
+    .category-grid { display: flex; gap: 10px; overflow-x: auto; padding-bottom: 4px; margin-bottom: 24px; }
+    @media (min-width: 900px) { .category-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(120px, 1fr)); overflow: visible; gap: 12px; } }
+    
+    .category-item {
+      padding: 12px 16px;
+      background: var(--surface); border: 2px solid var(--border-light); border-radius: var(--radius-md);
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+      cursor: pointer; transition: all 0.2s; white-space: nowrap;
+      display: flex; align-items: center; gap: 8px; justify-content: center;
+    }
+    .category-item:hover { border-color: var(--primary-light); background: var(--surface-elevated); }
+    .category-item.active { background: var(--gradient-primary); color: white; border-color: transparent; }
+    .category-item .material-symbols-rounded { font-size: 18px; }
+
+    /* Questions */
+    .question-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px; margin-bottom: 24px; }
+    @media (min-width: 600px) { .question-grid { grid-template-columns: repeat(3, 1fr); } }
+    @media (min-width: 900px) { .question-grid { grid-template-columns: repeat(4, 1fr); gap: 16px; } }
+    
+    .question-card {
+      background: var(--surface); border: 2px solid var(--border-light); border-radius: var(--radius-lg);
+      padding: 16px; cursor: pointer; transition: all 0.2s;
+      display: flex; flex-direction: column; gap: 10px; min-height: 100px;
+    }
+    .question-card:hover { border-color: var(--primary-light); transform: translateY(-2px); box-shadow: var(--shadow-sm); }
+    .q-icon-box { width: 36px; height: 36px; background: var(--primary-soft); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+    .q-icon-box .material-symbols-rounded { font-size: 18px; color: var(--primary); }
+    .q-text { font-size: 13px; font-weight: 500; color: var(--text-primary); line-height: 1.5; }
+
+    /* Result Card */
+    .result-card { background: var(--surface); border-radius: var(--radius-xl); box-shadow: var(--shadow-md); margin-bottom: 24px; display: none; border: 1px solid var(--border-light); overflow: hidden; }
+    .result-card.visible { display: block; animation: slideUp 0.3s ease; }
+    
+    .result-header { background: var(--gradient-primary); padding: 20px 24px; display: flex; align-items: center; gap: 16px; }
+    .result-icon { width: 48px; height: 48px; background: rgba(255,255,255,0.15); border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; }
+    .result-icon .material-symbols-rounded { font-size: 26px; }
+    .result-title { font-size: 18px; font-weight: 700; color: white; line-height: 1.4; }
+    
+    .result-body { padding: 24px; }
+    
+    .result-actions { display: flex; border-top: 1px solid var(--border-light); background: var(--bg-secondary); }
+    .result-btn {
+      flex: 1; display: flex; flex-direction: column; align-items: center; gap: 4px;
+      padding: 14px; background: transparent; border: none; border-right: 1px solid var(--border-light);
+      color: var(--text-secondary); cursor: pointer; transition: all 0.2s;
+    }
+    .result-btn:last-child { border-right: none; }
+    .result-btn:hover { background: var(--primary-soft); color: var(--primary); }
+    .result-btn .material-symbols-rounded { font-size: 22px; }
+    .result-btn span { font-size: 11px; font-weight: 600; }
+
+    /* Content Blocks - Completely Separate, No Nesting */
+    .content-block {
+      border-radius: var(--radius-lg);
+      padding: 20px;
+      margin-bottom: 20px;  /* distinct gap between blocks */
+      transition: all 0.2s;
+      border-left-width: 4px;
+      border-left-style: solid;
+      background-origin: border-box;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .block-main { background: var(--main-answer-bg); border-left-color: var(--main-answer-accent); }
+    .block-quran { background: var(--quran-bg); border-left-color: var(--quran-border); }
+    .block-hadith { background: var(--hadith-bg); border-left-color: var(--hadith-border); }
+    .block-explain { background: var(--explain-bg); border-left-color: var(--explain-border); }
+    .block-story { background: var(--story-bg); border-left-color: var(--story-border); }
+    .block-context { background: var(--context-bg); border-left-color: var(--context-border); }
+    .block-modern { background: var(--modern-bg); border-left-color: var(--modern-border); }
+    .block-example { background: var(--example-bg); border-left-color: var(--example-border); }
+    .block-misconception { background: var(--misconception-bg); border-left-color: var(--misconception-border); }
+    .block-summary { background: var(--summary-bg); border-left-color: var(--summary-border); }
+    .block-secret { background: linear-gradient(135deg, #fff8fc 0%, #f8f0f8 100%); border-left-color: #c080b0; }
+
+    .block-label {
+      font-size: 12px; font-weight: 700; margin-bottom: 10px;
+      display: flex; align-items: center; gap: 6px;
+      text-transform: uppercase; letter-spacing: 0.4px;
+    }
+
+    .block-main .block-label { color: var(--main-answer-accent); }
+    .block-quran .block-label { color: var(--quran-accent); }
+    .block-hadith .block-label { color: var(--hadith-accent); }
+    .block-explain .block-label { color: var(--explain-accent); }
+    .block-story .block-label { color: var(--story-accent); }
+    .block-context .block-label { color: var(--context-accent); }
+    .block-modern .block-label { color: var(--modern-accent); }
+    .block-example .block-label { color: var(--example-accent); }
+    .block-misconception .block-label { color: var(--misconception-accent); }
+    .block-secret .block-label { color: #a05090; }
+    .block-summary .block-label { color: var(--primary-dark); }
+
+    .block-label .material-symbols-rounded { font-size: 18px; }
+
+    /* Arabic text: each verse in its own line */
+    .arabic-text {
+      font-family: 'Scheherazade New', 'Amiri', serif;
+      font-size: 24px; direction: rtl; text-align: right;
+      margin: 8px 0; line-height: 2;
+      padding: 8px 12px; background: rgba(255,255,255,0.5); border-radius: var(--radius-md);
+      display: block;
+      border: 1px dashed var(--quran-border);
+    }
+    .dark .arabic-text { background: rgba(0,0,0,0.15); }
+
+    /* line separator for multiple ayats */
+    .arabic-text + .arabic-text { margin-top: 12px; }
+
+    .block-content { font-size: 15px; line-height: 1.85; }
+    .block-content strong { color: var(--text-primary); }
+
+    /* Fact Check Result */
+    .fact-check-result { background: var(--surface-elevated); border: 2px solid var(--border); border-radius: var(--radius-lg); padding: 18px; margin-top: 20px; }
+    .fact-check-header { display: flex; align-items: center; gap: 10px; font-weight: 700; margin-bottom: 12px; }
+    .fact-check-header.verified { color: var(--success); }
+    .fact-check-header.warning { color: var(--warning); }
+    .fact-check-header.error { color: var(--error); }
+
+    /* Side Panel */
+    .side-panel {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 100%; max-width: var(--sidebar-width);
+      background: var(--surface); z-index: 200;
+      transform: translateX(100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column; box-shadow: var(--shadow-xl);
+    }
+    .side-panel.visible { transform: translateX(0); }
+    .panel-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 16px; }
+    .panel-header h2 { font-size: 18px; font-weight: 800; color: var(--primary); flex: 1; }
+    .panel-close { width: 38px; height: 38px; display: flex; align-items: center; justify-content: center; background: var(--bg-secondary); border: 1px solid var(--border); border-radius: var(--radius-md); cursor: pointer; color: var(--text-secondary); }
+    .panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+    .panel-item { background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 14px; margin-bottom: 10px; cursor: pointer; }
+    .panel-item:hover { border-color: var(--primary-light); transform: translateX(4px); }
+    .panel-item-title { font-weight: 600; font-size: 14px; margin-bottom: 4px; }
+    .panel-item-date { font-size: 12px; color: var(--text-muted); }
+
+    /* Settings Modal */
+    .settings-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 299; opacity: 0; visibility: hidden; transition: all 0.3s; backdrop-filter: blur(4px); }
+    .settings-overlay.visible { opacity: 1; visibility: visible; }
+    .settings-modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.95);
+      width: 90%; max-width: 520px; max-height: 85vh;
+      background: var(--surface); border-radius: var(--radius-xl); z-index: 300;
+      opacity: 0; visibility: hidden; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex; flex-direction: column; box-shadow: var(--shadow-xl);
+    }
+    .settings-modal.visible { opacity: 1; visibility: visible; transform: translate(-50%, -50%) scale(1); }
+    .settings-header { padding: 20px 24px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; gap: 16px; }
+    .settings-header h2 { font-size: 18px; font-weight: 800; flex: 1; }
+    .settings-body { flex: 1; overflow-y: auto; padding: 20px; }
+    .settings-card { background: var(--bg-secondary); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 18px; margin-bottom: 14px; }
+    .settings-label { font-size: 13px; font-weight: 700; color: var(--text-secondary); margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+    .settings-label .material-symbols-rounded { font-size: 18px; color: var(--primary); }
+    .settings-input { width: 100%; padding: 12px 14px; background: var(--surface); border: 2px solid var(--border); border-radius: var(--radius-md); font-size: 14px; font-family: inherit; color: inherit; }
+    .settings-input:focus { border-color: var(--primary); outline: none; }
+    .settings-hint { font-size: 12px; color: var(--text-muted); margin-top: 8px; }
+    
+    .provider-grid { display: grid; gap: 10px; }
+    .provider-option { padding: 14px; border: 2px solid var(--border); border-radius: var(--radius-md); cursor: pointer; display: flex; align-items: center; gap: 12px; }
+    .provider-option:hover { border-color: var(--primary-light); }
+    .provider-option.active { border-color: var(--primary); background: var(--primary-soft); }
+    .provider-radio { width: 18px; height: 18px; border: 2px solid var(--border); border-radius: 50%; display: flex; align-items: center; justify-content: center; }
+    .provider-option.active .provider-radio { border-color: var(--primary); }
+    .provider-option.active .provider-radio::after { content: ''; width: 8px; height: 8px; background: var(--primary); border-radius: 50%; }
+    .provider-name { font-weight: 700; font-size: 14px; }
+    .provider-desc { font-size: 11px; color: var(--text-muted); }
+    
+    .settings-btn { width: 100%; padding: 12px; background: var(--gradient-primary); color: white; border: none; border-radius: var(--radius-md); font-size: 14px; font-weight: 700; font-family: inherit; cursor: pointer; margin-top: 12px; }
+    .settings-btn.danger { background: var(--error); }
+    .settings-btn.secondary { background: var(--surface); color: var(--text-primary); border: 2px solid var(--border); }
+
+    /* Loader */
+    .loader-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 500; display: none; align-items: center; justify-content: center; backdrop-filter: blur(8px); flex-direction: column; gap: 16px; }
+    .loader-overlay.visible { display: flex; }
+    .loader-spinner { width: 48px; height: 48px; border: 3px solid rgba(255,255,255,0.2); border-top-color: var(--primary-light); border-radius: 50%; animation: spin 0.7s linear infinite; }
+    .loader-text { color: white; font-weight: 600; font-size: 15px; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .toast { position: fixed; bottom: 32px; left: 50%; transform: translateX(-50%) translateY(80px); background: var(--text-primary); color: var(--bg-primary); padding: 12px 24px; border-radius: var(--radius-xl); font-size: 14px; font-weight: 600; opacity: 0; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 600; box-shadow: var(--shadow-md); }
+    .toast.visible { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+    .empty-state { text-align: center; padding: 48px 24px; color: var(--text-muted); }
+    .empty-state .material-symbols-rounded { font-size: 56px; opacity: 0.25; margin-bottom: 12px; }
+
+    input[type=range] { width: 100%; height: 6px; background: var(--border); border-radius: 3px; -webkit-appearance: none; margin: 10px 0; }
+    input[type=range]::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; background: var(--gradient-primary); border-radius: 50%; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="app-layout">
+    <div class="main-area">
+      <div class="mobile-status"></div>
+      
+      <header class="mobile-header">
+        <h1 class="mobile-header-title">ইসলামিক জ্ঞান</h1>
+        <div class="mobile-header-actions">
+          <button class="mobile-icon-btn" id="mHistoryBtn"><span class="material-symbols-rounded">history</span></button>
+          <button class="mobile-icon-btn" id="mBookmarkBtn"><span class="material-symbols-rounded">bookmark</span></button>
+          <button class="mobile-icon-btn" id="mSettingsBtn"><span class="material-symbols-rounded">tune</span></button>
+        </div>
+      </header>
+      
+      <header class="desktop-header">
+        <div class="header-inner">
+          <div class="logo-section">
+            <div class="logo-icon"><span class="material-symbols-rounded">menu_book</span></div>
+            <div class="logo-text">
+              <h1>ইসলামিক জ্ঞান</h1>
+              <span>সঠিক দলীল ভিত্তিক উত্তর</span>
+            </div>
+          </div>
+          <div class="header-actions">
+            <button class="header-btn" id="dHistoryBtn"><span class="material-symbols-rounded">history</span> ইতিহাস</button>
+            <button class="header-btn" id="dBookmarkBtn"><span class="material-symbols-rounded">bookmark</span> বুকমার্ক</button>
+            <button class="header-btn primary" id="dSettingsBtn"><span class="material-symbols-rounded">tune</span> সেটিংস</button>
+          </div>
+        </div>
+      </header>
+
+      <div class="content-wrapper">
+        <div class="content-inner">
+          <section class="hero-section">
+            <div class="hero-content">
+              <h2>আপনার প্রশ্ন করুন</h2>
+              <p>কুরআন, হাদিস ও সাহাবীদের বক্তব্য ভিত্তিক বিস্তারিত উত্তর</p>
+              <div class="search-box">
+                <input type="text" class="search-input" id="searchInput" placeholder="প্রশ্ন লিখুন...">
+                <button class="search-submit" id="searchBtn"><span class="material-symbols-rounded">search</span> জানুন</button>
+              </div>
+            </div>
+            <div class="hero-illustration">
+              <span class="material-symbols-rounded">auto_stories</span>
+              <p>কুরআন, হাদিস ও<br>ইসলামী জ্ঞানের ভাণ্ডার</p>
+            </div>
+          </section>
+
+          <!-- Quick actions: random question, clear, prompt preview -->
+          <div class="quick-actions">
+            <button class="quick-btn" id="randomQuestionBtn"><span class="material-symbols-rounded">casino</span> এলোমেলো প্রশ্ন</button>
+            <button class="quick-btn" id="clearSearchBtn"><span class="material-symbols-rounded">refresh</span> রিসেট</button>
+            <button class="quick-btn" id="showPromptBtn"><span class="material-symbols-rounded">code</span> প্রম্পট দেখুন</button>
+          </div>
+
+          <div class="error-banner" id="errorBanner">
+            <span class="material-symbols-rounded">error</span>
+            <span class="error-banner-text" id="errorText"></span>
+          </div>
+
+          <div class="section-header"><span class="section-title">বিষয় নির্বাচন</span></div>
+          <div class="category-grid" id="categoryGrid"></div>
+
+          <div class="section-header"><span class="section-title">জনপ্রিয় প্রশ্নাবলী</span></div>
+          <div class="question-grid" id="questionGrid"></div>
+
+          <div class="result-card" id="resultCard">
+            <div class="result-header">
+              <div class="result-icon"><span class="material-symbols-rounded">menu_book</span></div>
+              <div class="result-title" id="resultTitle">উত্তর</div>
+            </div>
+            <div class="result-body" id="resultBody"></div>
+            <div class="result-actions">
+              <button class="result-btn" id="copyBtn"><span class="material-symbols-rounded">content_copy</span><span>কপি</span></button>
+              <button class="result-btn" id="factCheckBtn"><span class="material-symbols-rounded">verified</span><span>যাচাই</span></button>
+              <button class="result-btn" id="shareBtn"><span class="material-symbols-rounded">share</span><span>শেয়ার</span></button>
+              <button class="result-btn" id="speakBtn"><span class="material-symbols-rounded">volume_up</span><span>শুনুন</span></button>
+              <button class="result-btn" id="bookmarkBtn"><span class="material-symbols-rounded">bookmark_add</span><span>সংরক্ষণ</span></button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="side-panel" id="historyPanel">
+    <div class="panel-header"><h2>ইতিহাস</h2><button class="panel-close" id="closeHistory"><span class="material-symbols-rounded">close</span></button></div>
+    <div class="panel-body" id="historyList"></div>
+  </div>
+
+  <div class="side-panel" id="bookmarkPanel">
+    <div class="panel-header"><h2>বুকমার্ক</h2><button class="panel-close" id="closeBookmark"><span class="material-symbols-rounded">close</span></button></div>
+    <div class="panel-body" id="bookmarkList"></div>
+  </div>
+
+  <div class="settings-overlay" id="settingsOverlay"></div>
+  <div class="settings-modal" id="settingsModal">
+    <div class="settings-header"><h2>সেটিংস</h2><button class="panel-close" id="closeSettings"><span class="material-symbols-rounded">close</span></button></div>
+    <div class="settings-body">
+      <div class="settings-card">
+        <div class="settings-label"><span class="material-symbols-rounded">api</span> API প্রোভাইডার</div>
+        <div class="provider-grid">
+          <div class="provider-option active" data-provider="gemini"><div class="provider-radio"></div><div><div class="provider-name">Google Gemini</div><div class="provider-desc">Flash / Pro মডেল</div></div></div>
+          <div class="provider-option" data-provider="openrouter"><div class="provider-radio"></div><div><div class="provider-name">OpenRouter</div><div class="provider-desc">Multi-model API</div></div></div>
+          <div class="provider-option" data-provider="custom"><div class="provider-radio"></div><div><div class="provider-name">Custom API</div><div class="provider-desc">OpenAI-compatible</div></div></div>
+        </div>
+      </div>
+
+      <div class="settings-card" id="geminiCard">
+        <div class="settings-label"><span class="material-symbols-rounded">key</span> Gemini API Key</div>
+        <input type="password" class="settings-input" id="geminiKey" placeholder="API Key লিখুন">
+        <div class="settings-label" style="margin-top:14px;"><span class="material-symbols-rounded">model_training</span> মডেল</div>
+        <input type="text" class="settings-input" id="geminiModel" placeholder="gemini-2.0-flash" value="gemini-2.0-flash">
+        <p class="settings-hint">Google AI Studio থেকে বিনামূল্যে কী নিন</p>
+        <button class="settings-btn" id="saveGemini">সংরক্ষণ</button>
+      </div>
+
+      <div class="settings-card" id="openrouterCard" style="display:none;">
+        <div class="settings-label"><span class="material-symbols-rounded">key</span> OpenRouter API Key</div>
+        <input type="password" class="settings-input" id="orKey" placeholder="sk-or-...">
+        <div class="settings-label" style="margin-top:14px;"><span class="material-symbols-rounded">smart_toy</span> মডেল নাম</div>
+        <input type="text" class="settings-input" id="orModel" placeholder="deepseek/deepseek-r1:free">
+        <button class="settings-btn" id="saveOR">সংরক্ষণ</button>
+      </div>
+
+      <div class="settings-card" id="customCard" style="display:none;">
+        <div class="settings-label"><span class="material-symbols-rounded">link</span> API Endpoint</div>
+        <input type="text" class="settings-input" id="customUrl" placeholder="https://api.example.com/v1/chat/completions">
+        <div class="settings-label" style="margin-top:14px;"><span class="material-symbols-rounded">key</span> API Key (ঐচ্ছিক)</div>
+        <input type="password" class="settings-input" id="customKey" placeholder="Key (যদি লাগে)">
+        <div class="settings-label" style="margin-top:14px;"><span class="material-symbols-rounded">label</span> মডেল নাম</div>
+        <input type="text" class="settings-input" id="customModel" placeholder="model-name">
+        <button class="settings-btn" id="saveCustom">সংরক্ষণ</button>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-label"><span class="material-symbols-rounded">text_fields</span> ফন্ট সাইজ</div>
+        <input type="range" id="fontSizeSlider" min="14" max="22" step="1" value="16">
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-label"><span class="material-symbols-rounded">dark_mode</span> থিম</div>
+        <button class="settings-btn secondary" id="darkToggle">ডার্ক / লাইট টগল</button>
+      </div>
+
+      <div class="settings-card">
+        <div class="settings-label"><span class="material-symbols-rounded">delete</span> ডেটা মুছুন</div>
+        <button class="settings-btn danger" id="clearHistory">ইতিহাস মুছুন</button>
+        <button class="settings-btn danger" id="clearBookmark" style="margin-top:8px;">বুকমার্ক মুছুন</button>
+      </div>
+
+      <!-- Extra: Prompt preview toggle (just a dummy, we'll show alert) -->
+      <div class="settings-card">
+        <div class="settings-label"><span class="material-symbols-rounded">info</span> প্রম্পট প্রিভিউ</div>
+        <button class="settings-btn secondary" id="previewPromptExample">নমুনা প্রম্পট দেখান</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loader-overlay" id="loader">
+    <div class="loader-spinner"></div>
+    <p class="loader-text" id="loaderText">লোড হচ্ছে...</p>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    (function() {
+      'use strict';
+
+      // Data - Extended (added more questions)
+      const questions = [
+        { text: "নামাজের ফরজ কতগুলো?", cat: "namaz" },
+        { text: "ওযু ভঙ্গের কারণ কী?", cat: "oju" },
+        { text: "রোজা ভঙ্গের কারণ কী?", cat: "roja" },
+        { text: "ঘুমানোর দোয়া কী?", cat: "dua" },
+        { text: "সকালের দোয়া কী কী?", cat: "dua" },
+        { text: "জুমার নামাজের বিধান", cat: "namaz" },
+        { text: "তারাবীহর নামাজের নিয়ম", cat: "namaz" },
+        { text: "কুরআনে রোজার বিধান", cat: "quran" },
+        { text: "মসজিদে ঢোকার দোয়া", cat: "dua" },
+        { text: "খাওয়ার পরের দোয়া", cat: "dua" },
+        { text: "হজ্জের ফরজ কী কী?", cat: "hajj" },
+        { text: "যাকাত কাকে দিতে হয়?", cat: "zakat" },
+        { text: "তাওহীদ কী?", cat: "aqida" },
+        { text: "শিরকের প্রকারভেদ", cat: "aqida" },
+        { text: "পাঁচ ওয়াক্ত নামাজের সময়", cat: "namaz" },
+        { text: "সূরা ফাতিহার তাফসীর", cat: "quran" },
+        { text: "সূরা ইখলাসের ফজিলত", cat: "quran" },
+        { text: "সূরা মুলকের বরকত", cat: "quran" },
+        { text: "আয়াতুল কুরসির উপকারিতা", cat: "quran" },
+        { text: "ক্বিয়ামতের প্রথম হিসাব", cat: "aqida" },
+        { text: "কবরের আযাব কী?", cat: "aqida" },
+        { text: "শাফাআত কাকে বলে?", cat: "aqida" },
+        { text: "বিদআত কী ও এর প্রকারভেদ?", cat: "aqida" },
+        { text: "হাদিসের সংজ্ঞা ও প্রকারভেদ", cat: "hadith" },
+        { text: "সহিহ বুখারীর গুরুত্ব", cat: "hadith" },
+        { text: "সাহাবীদের ইজমা কী?", cat: "hadith" },
+        { text: "ইস্তিনজার নিয়ম", cat: "oju" },
+        { text: "তায়াম্মুমের নিয়ম", cat: "oju" },
+        { text: "গোসলের ফরজ কতগুলো?", cat: "oju" },
+        { text: "জানাজার নামাজের নিয়ম", cat: "namaz" },
+        { text: "ইশরাক নামাজের ফজিলত", cat: "namaz" },
+        { text: "তাহাজ্জুদ নামাজের নিয়ম", cat: "namaz" },
+        { text: "সদকার বরকত কী?", cat: "zakat" },
+        { text: "ফিতরা কাদের জন্য ফরজ?", cat: "zakat" },
+        { text: "হজ্জের মাস কতগুলো?", cat: "hajj" },
+        { text: "উমরার নিয়ম ও ফজিলত", cat: "hajj" },
+        { text: "জিহাদের মর্মার্থ", cat: "aqida" },
+        { text: "পর্দার বিধান কী?", cat: "aqida" },
+        { text: "নিয়তের হুকুম কী?", cat: "aqida" }
+      ];
+
+      const categories = [
+        { id: 'all', name: 'সব', icon: 'apps' },
+        { id: 'quran', name: 'আল-কুরআন', icon: 'auto_stories' },
+        { id: 'namaz', name: 'নামাজ', icon: 'self_improvement' },
+        { id: 'oju', name: 'ওযু', icon: 'water_drop' },
+        { id: 'roja', name: 'রোজা', icon: 'nightlight' },
+        { id: 'dua', name: 'দোয়া', icon: 'favorite' },
+        { id: 'hajj', name: 'হজ্জ', icon: 'mosque' },
+        { id: 'zakat', name: 'যাকাত', icon: 'payments' },
+        { id: 'hadith', name: 'হাদিস', icon: 'history_edu' },
+        { id: 'aqida', name: 'আকিদা', icon: 'psychology' }
+      ];
+
+      // Storage
+      const S = {
+        get: (k) => localStorage.getItem(k) || '',
+        set: (k, v) => localStorage.setItem(k, v),
+        getJSON: (k) => JSON.parse(localStorage.getItem(k) || '[]'),
+        setJSON: (k, v) => localStorage.setItem(k, JSON.stringify(v))
+      };
+
+      // Elements
+      const $ = id => document.getElementById(id);
+      const el = {
+        searchInput: $('searchInput'), searchBtn: $('searchBtn'), resultCard: $('resultCard'), resultTitle: $('resultTitle'),
+        resultBody: $('resultBody'), errorBanner: $('errorBanner'), errorText: $('errorText'), loader: $('loader'),
+        loaderText: $('loaderText'), toast: $('toast'), categoryGrid: $('categoryGrid'), questionGrid: $('questionGrid'),
+        copyBtn: $('copyBtn'), factCheckBtn: $('factCheckBtn'), shareBtn: $('shareBtn'), speakBtn: $('speakBtn'), bookmarkBtn: $('bookmarkBtn'),
+        historyPanel: $('historyPanel'), bookmarkPanel: $('bookmarkPanel'), historyList: $('historyList'), bookmarkList: $('bookmarkList'),
+        closeHistory: $('closeHistory'), closeBookmark: $('closeBookmark'), settingsOverlay: $('settingsOverlay'), settingsModal: $('settingsModal'),
+        closeSettings: $('closeSettings'), geminiCard: $('geminiCard'), openrouterCard: $('openrouterCard'), customCard: $('customCard'),
+        geminiKey: $('geminiKey'), geminiModel: $('geminiModel'), saveGemini: $('saveGemini'), orKey: $('orKey'), orModel: $('orModel'), saveOR: $('saveOR'),
+        customUrl: $('customUrl'), customKey: $('customKey'), customModel: $('customModel'), saveCustom: $('saveCustom'),
+        fontSizeSlider: $('fontSizeSlider'), darkToggle: $('darkToggle'), clearHistory: $('clearHistory'), clearBookmark: $('clearBookmark'),
+        randomQuestionBtn: $('randomQuestionBtn'), clearSearchBtn: $('clearSearchBtn'), showPromptBtn: $('showPromptBtn'),
+        previewPromptExample: $('previewPromptExample')
+      };
+
+      let currentQ = '';
+      let currentA = '';
+      let currentCat = 'all';
+
+      // Utils
+      const showLoader = (t = 'লোড হচ্ছে...') => { el.loaderText.textContent = t; el.loader.classList.add('visible'); };
+      const hideLoader = () => el.loader.classList.remove('visible');
+      const showError = (m) => { el.errorText.textContent = m; el.errorBanner.classList.add('visible'); };
+      const hideError = () => el.errorBanner.classList.remove('visible');
+      const showToast = (m) => { el.toast.textContent = m; el.toast.classList.add('visible'); setTimeout(() => el.toast.classList.remove('visible'), 2500); };
+
+      // API
+      const API = {
+        async call(prompt) {
+          const provider = S.get('isl_provider') || 'gemini';
+          if (provider === 'gemini') return await this.gemini(prompt);
+          if (provider === 'openrouter') return await this.openrouter(prompt);
+          return await this.custom(prompt);
+        },
+        async gemini(prompt) {
+          const key = S.get('isl_gemini_key');
+          const model = S.get('isl_gemini_model') || 'gemini-2.0-flash';
+          if (!key) throw new Error('Gemini API Key দিন');
+          const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+          const res = await fetch(url, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }], generationConfig: { temperature: 0.4, maxOutputTokens: 8192 } })
+          });
+          if (!res.ok) throw new Error('Gemini API Error');
+          const d = await res.json();
+          return d.candidates?.[0]?.content?.parts?.[0]?.text || 'Error';
+        },
+        async openrouter(prompt) {
+          const key = S.get('isl_or_key');
+          const model = S.get('isl_or_model');
+          if (!key) throw new Error('OpenRouter Key দিন');
+          if (!model) throw new Error('OpenRouter Model দিন');
+          const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}`, 'HTTP-Referer': location.href },
+            body: JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.4 })
+          });
+          if (!res.ok) throw new Error('OpenRouter Error');
+          const d = await res.json();
+          return d.choices?.[0]?.message?.content || 'Error';
+        },
+        async custom(prompt) {
+          const url = S.get('isl_custom_url');
+          const key = S.get('isl_custom_key');
+          const model = S.get('isl_custom_model');
+          if (!url) throw new Error('Custom URL দিন');
+          const headers = { 'Content-Type': 'application/json' };
+          if (key) headers['Authorization'] = `Bearer ${key}`;
+          const body = { messages: [{ role: 'user', content: prompt }], temperature: 0.4 };
+          if (model) body.model = model;
+          const res = await fetch(url, { method: 'POST', headers, body: JSON.stringify(body) });
+          if (!res.ok) throw new Error('Custom API Error');
+          const d = await res.json();
+          return d.choices?.[0]?.message?.content || 'Error';
+        }
+      };
+
+      // Enhanced Expert Prompt with clear instruction: each ayat on new line
+      const buildPrompt = (q) => `তুমি একজন বিশিষ্ট ইসলামী আলেমে দ্বীন এবং মুফাসসির। কঠোরভাবে নির্দেশনা অনুসরণ কর:
+1. কখনো মিথ্যা বা বানোয়াট তথ্য দেবে না।
+2. প্রতিটি দলিলে সঠিক সূত্র উল্লেখ করবে।
+3. ন্যূনতম ৪-৫টি কুরআনের আয়াত ও হাদিস দলিল হিসেবে পেশ করবে।
+4. আরবি আয়াত লিখে তার বাংলা উচ্চারণ ও অনুবাদ দেবে। **প্রতিটি আরবি আয়াত আলাদা লাইনে লিখবে, একই লাইনে একাধিক আয়াত দেবে না।**
+5. শানে নুযূল বা প্রেক্ষাপট বাধ্যতামূলকভাবে আনবে।
+
+প্রতিটি উত্তর নিচের কাঠামো অনুযায়ী দিবে, প্রতিটি অংশ আলাদাভাবে চিহ্নিত করবে:
+
+**মূল উত্তর:**
+(বিষয়টির সংক্ষিপ্ত, স্পষ্ট উত্তর বুলেট পয়েন্ট আকারে দাও)
+
+**১. কুরআনের দলীল:**
+(ন্যূনতম ৪টি আয়াত। প্রতিটির জন্য: আরবি (এক লাইনে), বাংলা উচ্চারণ, অনুবাদ, সূরা-আয়াত নম্বর)
+
+**২. সহিহ হাদিসের দলীল:**
+(ন্যূনতম ৩টি হাদিস। প্রতিটির জন্য: বাংলা অনুবাদ, সূত্র ও হাদিস নম্বর)
+
+**৩. শানে নুযূল ও প্রেক্ষাপট:**
+(আয়াত বা বিষয়টির ঐতিহাসিক প্রেক্ষাপট ও নাযিলের কারণ)
+
+**৪. বিস্তারিত ব্যাখ্যা:**
+(ভাষাগত, শরয়ী ও যৌক্তিক ব্যাখ্যা)
+
+**৫. গোপন রহস্য ও হিকমত:**
+(আয়াত বা বিষয়ের মধ্যে লুকানো জ্ঞান, গভীর হিকমত ও আধ্যাত্মিক দিক)
+
+**৬. বাস্তব উদাহরণ:**
+(সাহাবায়ে কেরাম বা তাবেয়ীনদের জীবনের ঘটনা)
+
+**৭. বর্তমান যুগে প্রয়োগ:**
+(বর্তমান প্রেক্ষাপটে কীভাবে কাজে লাগাবে)
+
+**৮. ভুল ধারণা:**
+(প্রচলিত ভুল ধারণা স্পষ্ট কর)
+
+**৯. সারসংক্ষেপ:**
+(উপসংহার)
+
+প্রশ্ন: ${q}`;
+
+      // New formatter: produces separate blocks, each with its own styling, no nesting.
+      // Each Arabic line (identified by Unicode range) gets wrapped in .arabic-text individually.
+      const formatAns = (text) => {
+        // First, escape HTML to prevent injection (but we want to keep ** for bold)
+        let escaped = text.replace(/[&<>]/g, function(m) {
+          if (m === '&') return '&amp;';
+          if (m === '<') return '&lt;';
+          if (m === '>') return '&gt;';
+          return m;
+        });
+
+        // Now process markdown bold
+        escaped = escaped.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+        // Define section headers and their corresponding block classes/icons/labels
+        const sections = [
+          { header: '**মূল উত্তর:**', className: 'block-main', icon: 'format_list_bulleted', label: 'মূল উত্তর' },
+          { header: '**১. কুরআনের দলীল:**', className: 'block-quran', icon: 'menu_book', label: 'কুরআনের দলীল' },
+          { header: '**২. সহিহ হাদিসের দলীল:**', className: 'block-hadith', icon: 'auto_stories', label: 'হাদিসের দলীল' },
+          { header: '**৩. শানে নুযূল ও প্রেক্ষাপট:**', className: 'block-context', icon: 'history', label: 'শানে নুযূল' },
+          { header: '**৪. বিস্তারিত ব্যাখ্যা:**', className: 'block-explain', icon: 'lightbulb', label: 'ব্যাখ্যা' },
+          { header: '**৫. গোপন রহস্য ও হিকমত:**', className: 'block-secret', icon: 'visibility', label: 'গোপন রহস্য' },
+          { header: '**৬. বাস্তব উদাহরণ:**', className: 'block-example', icon: 'format_list_bulleted', label: 'উদাহরণ' },
+          { header: '**৭. বর্তমান যুগে প্রয়োগ:**', className: 'block-modern', icon: 'today', label: 'বর্তমান প্রয়োগ' },
+          { header: '**৮. ভুল ধারণা:**', className: 'block-misconception', icon: 'warning', label: 'ভুল ধারণা' },
+          { header: '**৯. সারসংক্ষেপ:**', className: 'block-summary', icon: 'summarize', label: 'সারসংক্ষেপ' }
+        ];
+
+        // Split the text by the headers to extract each section's content.
+        // We'll build an array of { header, content }.
+        let remaining = escaped;
+        let blocks = [];
+
+        // For each section in order, find its content.
+        for (let i = 0; i < sections.length; i++) {
+          const currentHeader = sections[i].header;
+          const nextHeader = (i < sections.length - 1) ? sections[i+1].header : null;
+          
+          // Find index of current header
+          const headerIndex = remaining.indexOf(currentHeader);
+          if (headerIndex === -1) continue; // section missing
+
+          // Extract content after header until next header or end
+          let startContent = headerIndex + currentHeader.length;
+          let endContent = nextHeader ? remaining.indexOf(nextHeader, startContent) : remaining.length;
+          if (endContent === -1) endContent = remaining.length;
+          
+          let content = remaining.substring(startContent, endContent).trim();
+          
+          // Remove the processed part from remaining to avoid re-matching
+          remaining = remaining.substring(endContent);
+
+          // Process content: split into lines and wrap Arabic lines
+          const lines = content.split('\n');
+          let processedContent = '';
+          for (let line of lines) {
+            // Check if line contains Arabic script (Unicode range 0600-06FF)
+            if (/[\u0600-\u06FF]/.test(line)) {
+              processedContent += `<div class="arabic-text">${line}</div>`;
+            } else {
+              processedContent += (line ? line + '<br>' : '');
+            }
+          }
+
+          // Create block HTML
+          const blockHtml = `
+            <div class="content-block ${sections[i].className}">
+              <div class="block-label">
+                <span class="material-symbols-rounded">${sections[i].icon}</span>${sections[i].label}
+              </div>
+              <div class="block-content">
+                ${processedContent}
+              </div>
+            </div>
+          `;
+          blocks.push(blockHtml);
+        }
+
+        // Any remaining text (if any) can be added as a plain block
+        if (remaining.trim()) {
+          blocks.push(`<div class="content-block"><div class="block-content">${remaining}</div></div>`);
+        }
+
+        return blocks.join('\n');
+      };
+
+      // Render
+      const renderCats = () => {
+        el.categoryGrid.innerHTML = categories.map(c => `
+          <button class="category-item ${c.id === currentCat ? 'active' : ''}" data-id="${c.id}">
+            <span class="material-symbols-rounded">${c.icon}</span>${c.name}
+          </button>
+        `).join('');
+      };
+
+      const renderQs = () => {
+        const filtered = currentCat === 'all' ? questions : questions.filter(q => q.cat === currentCat);
+        el.questionGrid.innerHTML = filtered.map(q => `
+          <div class="question-card" data-q="${q.text}">
+            <div class="q-icon-box"><span class="material-symbols-rounded">help</span></div>
+            <div class="q-text">${q.text}</div>
+          </div>
+        `).join('');
+      };
+
+      const renderHistory = () => {
+        const h = S.getJSON('isl_history');
+        el.historyList.innerHTML = h.length ? h.map(i => `
+          <div class="panel-item" data-q="${encodeURIComponent(i.q)}" data-a="${encodeURIComponent(i.a)}">
+            <div class="panel-item-title">${i.q}</div>
+            <div class="panel-item-date">${new Date(i.date).toLocaleDateString('bn-BD')}</div>
+          </div>
+        `).join('') : '<div class="empty-state"><span class="material-symbols-rounded">history</span><p>কোনো ইতিহাস নেই</p></div>';
+      };
+
+      const renderBookmark = () => {
+        const b = S.getJSON('isl_bookmark');
+        el.bookmarkList.innerHTML = b.length ? b.map(i => `
+          <div class="panel-item" data-q="${encodeURIComponent(i.q)}" data-a="${encodeURIComponent(i.a)}">
+            <div class="panel-item-title">${i.q}</div>
+            <div class="panel-item-date">${new Date(i.date).toLocaleDateString('bn-BD')}</div>
+          </div>
+        `).join('') : '<div class="empty-state"><span class="material-symbols-rounded">bookmark</span><p>কোনো বুকমার্ক নেই</p></div>';
+      };
+
+      const updateProviderUI = () => {
+        const p = S.get('isl_provider') || 'gemini';
+        document.querySelectorAll('.provider-option').forEach(o => o.classList.toggle('active', o.dataset.provider === p));
+        el.geminiCard.style.display = p === 'gemini' ? 'block' : 'none';
+        el.openrouterCard.style.display = p === 'openrouter' ? 'block' : 'none';
+        el.customCard.style.display = p === 'custom' ? 'block' : 'none';
+      };
+
+      // Actions
+      const search = async (q) => {
+        q = q || el.searchInput.value.trim();
+        if (!q) return showError('প্রশ্ন লিখুন');
+        hideError();
+        showLoader('বিশেষজ্ঞ আলেমের উত্তর তৈরি হচ্ছে...');
+        el.searchBtn.disabled = true;
+        try {
+          const prompt = buildPrompt(q);
+          const ans = await API.call(prompt);
+          currentQ = q;
+          currentA = ans;
+          el.resultTitle.textContent = q;
+          el.resultBody.innerHTML = formatAns(ans);
+          el.resultCard.classList.add('visible');
+          const h = S.getJSON('isl_history');
+          h.unshift({ q, a: ans, date: Date.now() });
+          S.setJSON('isl_history', h.slice(0, 50));
+          renderHistory();
+          el.resultCard.scrollIntoView({ behavior: 'smooth' });
+        } catch (e) {
+          showError(e.message);
+        } finally {
+          hideLoader();
+          el.searchBtn.disabled = false;
+        }
+      };
+
+      const factCheck = async () => {
+        if (!currentA) return;
+        showLoader('দলিল যাচাই করা হচ্ছে...');
+        try {
+          const prompt = `নিচের উত্তরের কুরআন ও হাদিসের দলিলগুলো যাচাই কর। সূরা ও আয়াত নম্বর সঠিক কিনা দেখ। সূত্র ঠিক আছে কিনা দেখ। ভুল থাকলে সংশোধন দাও:\n\n${currentA.substring(0, 3000)}`;
+          const res = await API.call(prompt);
+          const existing = el.resultBody.querySelector('.fact-check-result');
+          if (existing) existing.remove();
+          let status = 'verified';
+          if (res.includes('ভুল') || res.includes('সংশোধন')) status = 'warning';
+          if (res.includes('সঠিক নয়')) status = 'error';
+          el.resultBody.insertAdjacentHTML('beforeend', `
+            <div class="fact-check-result">
+              <div class="fact-check-header ${status}">
+                <span class="material-symbols-rounded">${status === 'verified' ? 'verified' : 'warning'}</span>
+                দলিল যাচাই
+              </div>
+              <div class="block-content">${res.replace(/\n/g, '<br>')}</div>
+            </div>
+          `);
+          showToast('যাচাই সম্পন্ন');
+        } catch (e) {
+          showError(e.message);
+        } finally {
+          hideLoader();
+        }
+      };
+
+      const showResult = (q, a) => {
+        currentQ = q;
+        currentA = a;
+        el.resultTitle.textContent = q;
+        el.resultBody.innerHTML = formatAns(a);
+        el.resultCard.classList.add('visible');
+      };
+
+      // Events
+      el.searchBtn.onclick = () => search();
+      el.searchInput.onkeypress = e => e.key === 'Enter' && search();
+      el.categoryGrid.onclick = e => { const btn = e.target.closest('.category-item'); if (btn) { currentCat = btn.dataset.id; renderCats(); renderQs(); } };
+      el.questionGrid.onclick = e => { const card = e.target.closest('.question-card'); if (card) { el.searchInput.value = card.dataset.q; search(); } };
+      el.copyBtn.onclick = () => currentA && navigator.clipboard.writeText(currentA).then(() => showToast('কপি হয়েছে'));
+      el.factCheckBtn.onclick = factCheck;
+      el.shareBtn.onclick = () => currentA && navigator.share && navigator.share({ title: currentQ, text: currentA.substring(0, 500) });
+      el.speakBtn.onclick = () => {
+        if (!currentA || !speechSynthesis) return;
+        const u = new SpeechSynthesisUtterance(currentA.replace(/\*\*/g, '').replace(/[\u0600-\u06FF]/g, '').substring(0, 2000));
+        u.rate = 0.85; u.lang = 'bn-BD';
+        speechSynthesis.cancel(); speechSynthesis.speak(u);
+        showToast('পড়া হচ্ছে...');
+      };
+      el.bookmarkBtn.onclick = () => {
+        if (!currentA) return;
+        const b = S.getJSON('isl_bookmark');
+        if (!b.some(x => x.q === currentQ)) {
+          b.unshift({ q: currentQ, a: currentA, date: Date.now() });
+          S.setJSON('isl_bookmark', b);
+          showToast('বুকমার্ক হয়েছে'); renderBookmark();
+        } else showToast('আগে থেকেই আছে');
+      };
+
+      // Quick actions
+      el.randomQuestionBtn.onclick = () => {
+        const randomIndex = Math.floor(Math.random() * questions.length);
+        const randomQ = questions[randomIndex].text;
+        el.searchInput.value = randomQ;
+        search(randomQ);
+      };
+      el.clearSearchBtn.onclick = () => {
+        el.searchInput.value = '';
+        el.resultCard.classList.remove('visible');
+        hideError();
+      };
+      el.showPromptBtn.onclick = () => {
+        const q = el.searchInput.value.trim() || 'নামাজের ফরজ কতগুলো?';
+        const prompt = buildPrompt(q);
+        alert('প্রম্পট প্রিভিউ (কনসোল দেখুন)');
+        console.log(prompt);
+        showToast('প্রম্পট কনসোল এ প্রিন্ট করা হয়েছে');
+      };
+      el.previewPromptExample.onclick = () => {
+        alert('সেটিংসে প্রম্পট প্রিভিউ: কনসোল দেখুন');
+        console.log(buildPrompt('নামাজের ফরজ কতগুলো?'));
+      };
+
+      // Panels
+      const openPanel = (panel) => panel.classList.add('visible');
+      const closePanel = (panel) => panel.classList.remove('visible');
+
+      $('mHistoryBtn').onclick = $('dHistoryBtn').onclick = () => { renderHistory(); openPanel(el.historyPanel); };
+      $('mBookmarkBtn').onclick = $('dBookmarkBtn').onclick = () => { renderBookmark(); openPanel(el.bookmarkPanel); };
+      el.closeHistory.onclick = () => closePanel(el.historyPanel);
+      el.closeBookmark.onclick = () => closePanel(el.bookmarkPanel);
+
+      el.historyList.onclick = e => { const item = e.target.closest('.panel-item'); if (item) { showResult(decodeURIComponent(item.dataset.q), decodeURIComponent(item.dataset.a)); closePanel(el.historyPanel); } };
+      el.bookmarkList.onclick = e => { const item = e.target.closest('.panel-item'); if (item) { showResult(decodeURIComponent(item.dataset.q), decodeURIComponent(item.dataset.a)); closePanel(el.bookmarkPanel); } };
+
+      // Settings
+      const openSettings = () => {
+        el.geminiKey.value = S.get('isl_gemini_key');
+        el.geminiModel.value = S.get('isl_gemini_model') || 'gemini-2.0-flash';
+        el.orKey.value = S.get('isl_or_key');
+        el.orModel.value = S.get('isl_or_model');
+        el.customUrl.value = S.get('isl_custom_url');
+        el.customKey.value = S.get('isl_custom_key');
+        el.customModel.value = S.get('isl_custom_model');
+        updateProviderUI();
+        el.settingsOverlay.classList.add('visible');
+        el.settingsModal.classList.add('visible');
+      };
+      const closeSettings = () => { el.settingsOverlay.classList.remove('visible'); el.settingsModal.classList.remove('visible'); };
+
+      $('mSettingsBtn').onclick = $('dSettingsBtn').onclick = openSettings;
+      el.closeSettings.onclick = el.settingsOverlay.onclick = closeSettings;
+
+      document.querySelectorAll('.provider-option').forEach(o => { o.onclick = () => { S.set('isl_provider', o.dataset.provider); updateProviderUI(); }; });
+      el.saveGemini.onclick = () => { S.set('isl_gemini_key', el.geminiKey.value.trim()); S.set('isl_gemini_model', el.geminiModel.value.trim() || 'gemini-2.0-flash'); showToast('সংরক্ষিত'); };
+      el.saveOR.onclick = () => { S.set('isl_or_key', el.orKey.value.trim()); S.set('isl_or_model', el.orModel.value.trim()); showToast('সংরক্ষিত'); };
+      el.saveCustom.onclick = () => { S.set('isl_custom_url', el.customUrl.value.trim()); S.set('isl_custom_key', el.customKey.value.trim()); S.set('isl_custom_model', el.customModel.value.trim()); showToast('সংরক্ষিত'); };
+
+      el.fontSizeSlider.oninput = e => { document.body.style.fontSize = e.target.value + 'px'; S.set('isl_font_size', e.target.value); };
+      el.darkToggle.onclick = () => { document.body.classList.toggle('dark'); S.set('isl_dark', document.body.classList.contains('dark')); };
+      el.clearHistory.onclick = () => { localStorage.removeItem('isl_history'); renderHistory(); showToast('মুছে ফেলা হয়েছে'); };
+      el.clearBookmark.onclick = () => { localStorage.removeItem('isl_bookmark'); renderBookmark(); showToast('মুছে ফেলা হয়েছে'); };
+
+      // Init
+      const init = () => {
+        if (S.get('isl_dark') === 'true') document.body.classList.add('dark');
+        el.fontSizeSlider.value = S.get('isl_font_size') || '16';
+        document.body.style.fontSize = el.fontSizeSlider.value + 'px';
+        renderCats();
+        renderQs();
+      };
+
+      init();
+    })();
+  </script>
+</body>
+</html>
