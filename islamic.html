@@ -1,0 +1,1900 @@
+<!DOCTYPE html>
+<html lang="bn">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=yes">
+  <meta http-equiv="Content-Security-Policy"
+    content="default-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com https://generativelanguage.googleapis.com https://openrouter.ai https://api.x.ai https://code.responsivevoice.org; img-src 'self' data: blob:;">
+  <title>ইসলামিক জ্ঞান · আল্টিমেট এডিশন (v4.0)</title>
+
+  <!-- Fonts & Icons -->
+  <link rel="stylesheet"
+    href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0,1" />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Noto+Sans+Bengali:wght@400;500;600;700;800&family=Amiri:wght@400;700&family=Scheherazade+New:wght@400;700&display=swap"
+    rel="stylesheet">
+  <!-- ResponsiveVoice for TTS -->
+  <script src="https://code.responsivevoice.org/responsivevoice.js"></script>
+  <!-- Islamic Data Module -->
+  <script src="quran-module.js"></script>
+
+  <!-- PWA & Native App Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0b5e42" id="meta-theme-color">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <link rel="apple-touch-icon" href="logo.png">
+
+  <style>
+    /* ==================================================
+       [1] PURE CSS VARIABLES & THEME ENGINE
+       ================================================== */
+    :root {
+      --bg-main: #f4f7f6;
+      --bg-surface: #ffffff;
+      --text-primary: #1f2937;
+      --text-secondary: #4b5563;
+      --border-color: #e5e7eb;
+      --accent-primary: #0b5e42;
+      --accent-hover: #084c35;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.1);
+      --mag-font-size: 16px;
+
+      /* Magazine 10 Color System (Light) */
+      --mag-1-bg: #e8f5e9;
+      --mag-1-border: #81c784;
+      /* Soft Green */
+      --mag-2-bg: #fce4ec;
+      --mag-2-border: #f06292;
+      /* Soft Pink */
+      --mag-3-bg: #e3f2fd;
+      --mag-3-border: #64b5f6;
+      /* Soft Blue */
+      --mag-4-bg: #fff3e0;
+      --mag-4-border: #ffb74d;
+      /* Soft Orange */
+      --mag-5-bg: #f3e5f5;
+      --mag-5-border: #ba68c8;
+      /* Soft Purple */
+      --mag-6-bg: #e0f2f1;
+      --mag-6-border: #4db6ac;
+      /* Soft Teal */
+      --mag-7-bg: #fbe9e7;
+      --mag-7-border: #ff8a65;
+      /* Soft Peach */
+      --mag-8-bg: #f0f4c3;
+      --mag-8-border: #aed581;
+      /* Soft Lime */
+      --mag-9-bg: #ffebee;
+      --mag-9-border: #e57373;
+      /* Soft Red */
+      --mag-10-bg: #e8eaf6;
+      --mag-10-border: #7986cb;
+      /* Soft Indigo */
+    }
+
+    [data-theme="dark"] {
+      --bg-main: #0f172a;
+      --bg-surface: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --border-color: #334155;
+      --accent-primary: #10b981;
+      --accent-hover: #059669;
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+      --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.5);
+
+      /* Magazine 10 Color System (Dark Inverted) */
+      --mag-1-bg: #064e3b;
+      --mag-1-border: #059669;
+      --mag-2-bg: #1e3a8a;
+      --mag-2-border: #2563eb;
+      --mag-3-bg: #78350f;
+      --mag-3-border: #d97706;
+      --mag-4-bg: #4c1d95;
+      --mag-4-border: #7c3aed;
+      --mag-5-bg: #134e4a;
+      --mag-5-border: #0d9488;
+      --mag-6-bg: #7f1d1d;
+      --mag-6-border: #dc2626;
+      --mag-7-bg: #831843;
+      --mag-7-border: #e11d48;
+      --mag-8-bg: #334155;
+      --mag-8-border: #64748b;
+      --mag-9-bg: #3f6212;
+      --mag-9-border: #65a30d;
+      --mag-10-bg: #312e81;
+      --mag-10-border: #4f46e5;
+    }
+
+    /* ==================================================[2] CORE STYLES & ANIMATIONS
+       ================================================== */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Noto Sans Bengali', sans-serif;
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      transition: background-color 0.4s ease, color 0.4s ease;
+      line-height: 1.6;
+      overflow-x: hidden;
+    }
+
+    button,
+    input,
+    select {
+      font-family: inherit;
+      outline: none;
+      border: none;
+    }
+
+    .container {
+      margin: 0 auto;
+      padding: 0 16px;
+      max-width: 900px;
+    }
+
+    /* Animations */
+    @keyframes slideDown {
+      from {
+        transform: translateY(-20px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes slideUp {
+      from {
+        transform: translateY(30px);
+        opacity: 0;
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1;
+      }
+    }
+
+    @keyframes fadeInScale {
+      from {
+        transform: scale(0.95);
+        opacity: 0;
+      }
+
+      to {
+        transform: scale(1);
+        opacity: 1;
+      }
+    }
+
+    @keyframes pulseGlow {
+      0% {
+        box-shadow: 0 0 0 0 rgba(11, 94, 66, 0.4);
+      }
+
+      70% {
+        box-shadow: 0 0 0 10px rgba(11, 94, 66, 0);
+      }
+
+      100% {
+        box-shadow: 0 0 0 0 rgba(11, 94, 66, 0);
+      }
+    }
+
+    /* Header */
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 24px;
+      background: var(--bg-surface);
+      border-bottom: 2px solid var(--accent-primary);
+      border-radius: 0 0 24px 24px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-sm);
+      animation: slideDown 0.5s ease;
+    }
+
+    .logo {
+      font-size: 22px;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--accent-primary);
+    }
+
+    .icon-btn {
+      background: transparent;
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 10px;
+      border-radius: 50%;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icon-btn:hover {
+      background: var(--border-color);
+      transform: scale(1.1) rotate(5deg);
+      color: var(--accent-primary);
+    }
+
+    /* Search Bar */
+    .search-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--bg-surface);
+      border: 2px solid transparent;
+      border-radius: 50px;
+      padding: 6px 16px;
+      box-shadow: var(--shadow-md);
+      margin-bottom: 24px;
+      transition: all 0.3s ease;
+      animation: fadeInScale 0.6s ease;
+    }
+
+    .search-wrapper:focus-within {
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+    }
+
+    .search-input {
+      flex: 1;
+      font-size: 16px;
+      background: transparent;
+      color: var(--text-primary);
+      padding: 12px 0;
+      width: 100%;
+    }
+
+    .action-btn {
+      background: var(--accent-primary);
+      color: #fff;
+      padding: 12px 24px;
+      border-radius: 50px;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 12px rgba(11, 94, 66, 0.3);
+    }
+
+    .action-btn:hover {
+      transform: translateY(-2px);
+      background: var(--accent-hover);
+      box-shadow: 0 6px 16px rgba(11, 94, 66, 0.4);
+    }
+
+    #imageInput {
+      display: none;
+    }
+
+    .vision-indicator {
+      display: none;
+      padding: 6px 12px;
+      background: var(--mag-3-bg);
+      color: var(--text-primary);
+      border-radius: 20px;
+      font-size: 12px;
+      font-weight: bold;
+      border: 1px solid var(--mag-3-border);
+      animation: slideDown 0.3s ease;
+    }
+
+    .mic-active {
+      color: #ef4444 !important;
+      animation: pulseGlow 1.5s infinite;
+    }
+
+    /* Category Scroll (Fixed & Draggable) */
+    .cat-scroll-container {
+      position: relative;
+      margin-bottom: 24px;
+      animation: slideUp 0.7s ease;
+    }
+
+    .cat-scroll {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      padding-bottom: 12px;
+      scroll-behavior: smooth;
+      -webkit-overflow-scrolling: touch;
+      cursor: grab;
+    }
+
+    .cat-scroll:active {
+      cursor: grabbing;
+    }
+
+    .cat-scroll::-webkit-scrollbar {
+      height: 6px;
+    }
+
+    .cat-scroll::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    .cat-scroll::-webkit-scrollbar-thumb {
+      background: var(--border-color);
+      border-radius: 10px;
+    }
+
+    .cat-scroll::-webkit-scrollbar-thumb:hover {
+      background: var(--text-secondary);
+    }
+
+    .cat-chip {
+      padding: 10px 20px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-size: 14px;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.3s ease;
+      box-shadow: var(--shadow-sm);
+      user-select: none;
+    }
+
+    .cat-chip:hover {
+      transform: translateY(-2px);
+      border-color: var(--accent-primary);
+    }
+
+    .cat-chip.active {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+      box-shadow: 0 4px 12px rgba(11, 94, 66, 0.3);
+    }
+
+    /* Question Grid */
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 16px;
+      padding-bottom: 40px;
+    }
+
+    .q-card {
+      background: var(--bg-surface);
+      padding: 20px;
+      border-radius: 20px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+      cursor: pointer;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.3s ease;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      animation: fadeInScale 0.5s ease backwards;
+    }
+
+    .q-card:hover {
+      transform: translateY(-6px);
+      border-color: var(--accent-primary);
+      box-shadow: var(--shadow-md);
+    }
+
+    .q-card span.material-symbols-rounded {
+      color: var(--accent-primary);
+      font-size: 36px;
+      transition: transform 0.3s ease;
+    }
+
+    .q-card:hover span.material-symbols-rounded {
+      transform: scale(1.1);
+    }
+
+    /* Gamified Loader */
+    .loader-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.8);
+      backdrop-filter: blur(5px);
+      z-index: 1000;
+      display: none;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      color: #fff;
+    }
+
+    .loader-circle {
+      width: 70px;
+      height: 70px;
+      border: 6px solid rgba(255, 255, 255, 0.1);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+      margin-bottom: 24px;
+    }
+
+    .loader-text {
+      font-size: 22px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      text-align: center;
+    }
+
+    .loader-subtext {
+      font-size: 16px;
+      color: #cbd5e1;
+      font-family: monospace;
+      background: rgba(0, 0, 0, 0.5);
+      padding: 4px 12px;
+      border-radius: 20px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    /* ==================================================
+       [3] MAGAZINE RENDER ENGINE
+       ================================================== */
+    .result-area {
+      display: none;
+      margin-top: 20px;
+      padding-bottom: 60px;
+      animation: slideUp 0.6s ease;
+    }
+
+    .mag-section {
+      background: var(--bg-surface);
+      border-radius: 20px;
+      margin-bottom: 20px;
+      border-left: 8px solid;
+      overflow: hidden;
+      box-shadow: var(--shadow-md);
+      transition: transform 0.3s ease;
+    }
+
+    .mag-section:hover {
+      transform: translateX(4px);
+    }
+
+    .mag-header {
+      padding: 16px 20px;
+      font-weight: 800;
+      font-size: 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    }
+
+    .mag-body {
+      padding: 20px;
+      font-size: var(--mag-font-size);
+      line-height: 1.8;
+    }
+
+    .mag-body ul {
+      margin-left: 24px;
+      margin-top: 12px;
+      margin-bottom: 12px;
+    }
+
+    .mag-body li {
+      margin-bottom: 8px;
+    }
+
+    /* Dynamic Colors */
+    .color-1 {
+      background-color: var(--mag-1-bg);
+      border-left-color: var(--mag-1-border);
+    }
+
+    .color-2 {
+      background-color: var(--mag-2-bg);
+      border-left-color: var(--mag-2-border);
+    }
+
+    .color-3 {
+      background-color: var(--mag-3-bg);
+      border-left-color: var(--mag-3-border);
+    }
+
+    .color-4 {
+      background-color: var(--mag-4-bg);
+      border-left-color: var(--mag-4-border);
+    }
+
+    .color-5 {
+      background-color: var(--mag-5-bg);
+      border-left-color: var(--mag-5-border);
+    }
+
+    .color-6 {
+      background-color: var(--mag-6-bg);
+      border-left-color: var(--mag-6-border);
+    }
+
+    .color-7 {
+      background-color: var(--mag-7-bg);
+      border-left-color: var(--mag-7-border);
+    }
+
+    .color-8 {
+      background-color: var(--mag-8-bg);
+      border-left-color: var(--mag-8-border);
+    }
+
+    .color-9 {
+      background-color: var(--mag-9-bg);
+      border-left-color: var(--mag-9-border);
+    }
+
+    .arabic-text {
+      font-family: 'Scheherazade New', 'Amiri', serif;
+      font-size: 32px;
+      line-height: 1.8;
+      text-align: right;
+      direction: rtl;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.04);
+      border-radius: 12px;
+      margin: 16px 0;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+    }
+
+    /* Action Bar */
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      margin-top: 32px;
+      padding-top: 20px;
+      border-top: 2px dashed var(--border-color);
+    }
+
+    .btn-outline {
+      padding: 10px 20px;
+      border: 2px solid var(--border-color);
+      border-radius: 50px;
+      background: var(--bg-surface);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      color: var(--text-primary);
+      font-weight: 600;
+      transition: all 0.3s ease;
+    }
+
+    .btn-outline:hover {
+      background: var(--accent-primary);
+      color: #fff;
+      border-color: var(--accent-primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* ==================================================
+       [4] MODALS & TOGGLES
+       ================================================== */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.7);
+      backdrop-filter: blur(4px);
+      z-index: 500;
+      display: none;
+      justify-content: center;
+      align-items: center;
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+
+    .modal-overlay.show {
+      opacity: 1;
+    }
+
+    .modal-content {
+      background: var(--bg-surface);
+      width: 92%;
+      max-width: 500px;
+      border-radius: 28px;
+      padding: 32px;
+      max-height: 85vh;
+      overflow-y: auto;
+      position: relative;
+      transform: scale(0.9);
+      transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+      box-shadow: 0 20px 40px rgba(0, 0, 0, 0.2);
+    }
+
+    .modal-overlay.show .modal-content {
+      transform: scale(1);
+    }
+
+    .modal-close {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      cursor: pointer;
+      background: var(--bg-main);
+      border-radius: 50%;
+      padding: 8px;
+      transition: all 0.2s;
+    }
+
+    .modal-close:hover {
+      background: #ef4444;
+      color: #fff;
+      transform: rotate(90deg);
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+      background: var(--bg-main);
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+    }
+
+    .form-group label {
+      display: block;
+      font-size: 14px;
+      font-weight: bold;
+      margin-bottom: 12px;
+      color: var(--text-primary);
+    }
+
+    .form-input {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-surface);
+      color: var(--text-primary);
+      font-size: 15px;
+      transition: border 0.3s;
+      margin-bottom: 8px;
+    }
+
+    .form-input:focus {
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 0 3px rgba(11, 94, 66, 0.1);
+    }
+
+    /* Toggle Switch */
+    .toggle-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .switch {
+      position: relative;
+      display: inline-block;
+      width: 50px;
+      height: 28px;
+    }
+
+    .switch input {
+      opacity: 0;
+      width: 0;
+      height: 0;
+    }
+
+    .slider {
+      position: absolute;
+      cursor: pointer;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background-color: #ccc;
+      transition: .4s;
+      border-radius: 34px;
+    }
+
+    .slider:before {
+      position: absolute;
+      content: "";
+      height: 20px;
+      width: 20px;
+      left: 4px;
+      bottom: 4px;
+      background-color: white;
+      transition: .4s;
+      border-radius: 50%;
+    }
+
+    input:checked+.slider {
+      background-color: var(--accent-primary);
+    }
+
+    input:checked+.slider:before {
+      transform: translateX(22px);
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: -80px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--text-primary);
+      color: var(--bg-surface);
+      padding: 14px 28px;
+      border-radius: 50px;
+      transition: bottom 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+      z-index: 2000;
+      font-weight: bold;
+      box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.show {
+      bottom: 32px;
+    }
+
+    /* ==================================================
+       [5] NATIVE APP UI COMPONENTS (PWA)
+       ================================================== */
+    body {
+      padding-bottom: 70px;
+      /* Space for bottom nav */
+      overflow-x: hidden;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    .no-scrollbar::-webkit-scrollbar {
+      display: none;
+    }
+
+    .no-scrollbar {
+      -ms-overflow-style: none;
+      scrollbar-width: none;
+    }
+
+    /* Bottom Navigation Bar (Mobile) */
+    .bottom-nav {
+      position: fixed;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 65px;
+      background: var(--bg-surface);
+      display: flex;
+      justify-content: space-around;
+      align-items: center;
+      box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.05);
+      z-index: 1000;
+      border-top: 1px solid var(--border-color);
+      padding-bottom: env(safe-area-inset-bottom, 0px);
+      transition: background 0.3s;
+    }
+
+    .nav-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      color: var(--text-secondary);
+      text-decoration: none;
+      font-size: 11px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: color 0.3s;
+      flex: 1;
+      padding: 8px 0;
+    }
+
+    .nav-item .material-symbols-rounded {
+      font-size: 24px;
+      margin-bottom: 4px;
+      transition: transform 0.3s;
+    }
+
+    .nav-item.active {
+      color: var(--accent-primary);
+    }
+
+    .nav-item.active .material-symbols-rounded {
+      font-variation-settings: 'FILL' 1;
+      transform: translateY(-2px);
+    }
+
+    /* Sidebar / Drawer */
+    .sidebar-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 1999;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.3s;
+      backdrop-filter: blur(2px);
+    }
+
+    .sidebar-overlay.show {
+      opacity: 1;
+      pointer-events: auto;
+    }
+
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      bottom: 0;
+      width: 280px;
+      background: var(--bg-surface);
+      z-index: 2000;
+      transform: translateX(-100%);
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .sidebar.open {
+      transform: translateX(0);
+    }
+
+    .sb-header {
+      padding: 24px;
+      background: var(--accent-primary);
+      color: #fff;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      border-bottom-right-radius: 20px;
+      transition: background 0.3s;
+    }
+
+    .sb-content {
+      padding: 16px;
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .sb-item {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 14px 16px;
+      color: var(--text-primary);
+      text-decoration: none;
+      border-radius: 12px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      transition: background 0.3s, color 0.3s;
+      cursor: pointer;
+    }
+
+    .sb-item:hover,
+    .sb-item.active {
+      background: var(--bg-main);
+      color: var(--accent-primary);
+    }
+
+    .sb-item .material-symbols-rounded {
+      color: var(--text-secondary);
+      transition: color 0.3s;
+    }
+
+    .sb-item:hover .material-symbols-rounded,
+    .sb-item.active .material-symbols-rounded {
+      color: var(--accent-primary);
+    }
+
+    /* Desktop View adjustments */
+    @media (min-width: 768px) {
+      .bottom-nav {
+        display: none;
+      }
+
+      body {
+        padding-bottom: 0;
+        padding-left: 260px;
+      }
+
+      header {
+        border-radius: 0 0 24px 24px;
+        margin-left: 0;
+      }
+
+      .sidebar {
+        transform: translateX(0) !important;
+        width: 260px !important;
+        box-shadow: none !important;
+        border-right: 1px solid var(--border-color);
+      }
+
+      .sidebar-overlay {
+        display: none !important;
+      }
+
+      .menu-btn {
+        display: none !important;
+      }
+
+      .header-actions {
+        display: none !important;
+      }
+    }
+  </style>
+</head>
+
+<body data-theme="light">
+
+  <!-- Sidebar (Drawer on Mobile, Fixed on PC) -->
+  <div class="sidebar-overlay" id="sidebarOverlay" onclick="UI.toggleSidebar()"></div>
+  <div class="sidebar" id="sidebar">
+    <div class="sb-header">
+      <div style="display: flex; align-items: center; gap: 12px;">
+        <img src="logo.png" alt="Logo"
+          style="width: 48px; height: 48px; border-radius: 12px; background: white; padding: 2px;">
+        <div>
+          <div style="font-size: 18px; font-weight: bold;">Islamic Hub</div>
+          <div style="font-size: 12px; opacity: 0.9;">v4.0 Premium Edition</div>
+        </div>
+      </div>
+    </div>
+    <div class="sb-content no-scrollbar">
+      <div class="sb-item active" onclick="window.location.href='ai_studio_code (10).html'">
+        <span class="material-symbols-rounded">home</span> মূল পাতা
+      </div>
+      <div class="sb-item" onclick="window.location.href='quran.html'">
+        <span class="material-symbols-rounded">menu_book</span> কুরআন ও হাদিস
+      </div>
+      <div class="sb-item" onclick="UI.openModal('historyModal'); UI.toggleSidebar();">
+        <span class="material-symbols-rounded">history</span> ইতিহাস ও বুকমার্ক
+      </div>
+      <div class="sb-item" onclick="UI.openModal('settingsModal'); UI.toggleSidebar();">
+        <span class="material-symbols-rounded">settings</span> সেটিংস
+      </div>
+      <div style="height: 1px; background: var(--border-color); margin: 16px 0;"></div>
+      <div class="sb-item" onclick="UI.toggleTheme()">
+        <span class="material-symbols-rounded" id="sbThemeIcon">dark_mode</span> থিম পরিবর্তন
+      </div>
+    </div>
+  </div>
+
+  <!-- Bottom Navigation Bar (Mobile) -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="window.location.href='ai_studio_code (10).html'">
+      <span class="material-symbols-rounded">home</span>
+      <span>হোম</span>
+    </div>
+    <div class="nav-item" onclick="window.location.href='quran.html'">
+      <span class="material-symbols-rounded">menu_book</span>
+      <span>কুরআন</span>
+    </div>
+    <div class="nav-item" onclick="UI.openModal('historyModal')">
+      <span class="material-symbols-rounded">bookmark</span>
+      <span>সেভড</span>
+    </div>
+    <div class="nav-item" onclick="UI.openModal('settingsModal')">
+      <span class="material-symbols-rounded">settings</span>
+      <span>সেটিংস</span>
+    </div>
+  </div>
+
+  <div class="container">
+    <!-- Header -->
+    <header>
+      <div class="logo">
+        <button class="icon-btn menu-btn" onclick="UI.toggleSidebar()"
+          style="padding: 4px; margin-right: 4px; margin-left: -8px;">
+          <span class="material-symbols-rounded">menu</span>
+        </button>
+        <span class="material-symbols-rounded" style="color:var(--accent-primary);">mosque</span>
+        <span style="font-size: 18px;">ইসলামিক জ্ঞান</span>
+      </div>
+      <div class="header-actions" style="display: flex; gap: 4px; align-items: center;">
+        <button class="icon-btn" onclick="window.location.href='quran.html'" title="কুরআন ও হাদিস ভাণ্ডার">
+          <span class="material-symbols-rounded" style="color:var(--mag-3-border);">menu_book</span>
+        </button>
+        <button class="icon-btn" onclick="UI.toggleTheme()"><span class="material-symbols-rounded"
+            id="themeIcon">dark_mode</span></button>
+      </div>
+    </header>
+
+    <!-- Search & Vision Module -->
+    <div style="text-align: center; margin-bottom: 32px;">
+      <p style="color: var(--text-secondary); margin-bottom: 16px; font-size: 15px; animation: slideDown 0.4s ease;">
+        প্রশ্ন করুন, দলিলভিত্তিক উত্তর জানুন (প্যারালাল AI ইঞ্জিন)</p>
+      <div class="search-wrapper">
+        <input type="text" id="searchInput" class="search-input"
+          placeholder="আপনার প্রশ্ন লিখুন (যেমন: ওযুর ফরজ কয়টি?)..." autocomplete="off">
+        <div id="visionIndicator" class="vision-indicator">📷 ছবি যুক্ত</div>
+        <button class="icon-btn" onclick="document.getElementById('imageInput').click()" title="ছবি আপলোড"><span
+            class="material-symbols-rounded">add_a_photo</span></button>
+        <input type="file" id="imageInput" accept="image/*" onchange="VisionProcessor.handleImage(event)">
+        <button class="icon-btn" id="micBtn" onclick="AIEngine.startVoice()" title="ভয়েস ইনপুট"><span
+            class="material-symbols-rounded">mic</span></button>
+        <button class="action-btn" onclick="Logic.handleSearch()"><span class="material-symbols-rounded">search</span>
+          খুঁজুন</button>
+      </div>
+    </div>
+
+    <!-- Categories (Scrollable & Draggable) -->
+    <div class="cat-scroll-container">
+      <div class="cat-scroll" id="catContainer"></div>
+    </div>
+
+    <!-- Question Grid -->
+    <div class="grid" id="qContainer"></div>
+
+    <!-- Results Area (Magazine Render) -->
+    <div class="result-area" id="resultArea">
+      <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+        <button class="btn-outline"
+          style="display: inline-flex; width: auto; padding: 6px 16px; border-color: var(--accent-primary);"
+          onclick="Logic.goBack()">
+          <span class="material-symbols-rounded">arrow_back</span> ফিরে যান
+        </button>
+        <div
+          style="display: flex; gap: 8px; background: var(--bg-surface); padding: 4px 12px; border-radius: 50px; border: 1px solid var(--border-color);">
+          <span
+            style="font-size: 13px; font-weight: bold; margin-right: 4px; display: flex; align-items: center;">ফন্ট:</span>
+          <button class="icon-btn" style="padding: 4px;" onclick="UI.changeFontSize(-1)" title="ছোট করুন"><span
+              class="material-symbols-rounded" style="font-size: 20px;">text_decrease</span></button>
+          <button class="icon-btn" style="padding: 4px;" onclick="UI.changeFontSize(1)" title="বড় করুন"><span
+              class="material-symbols-rounded" style="font-size: 20px;">text_increase</span></button>
+        </div>
+      </div>
+      <div
+        style="font-size: 26px; font-weight: 800; margin-bottom: 24px; color: var(--accent-primary); line-height: 1.4;"
+        id="resQuestionTitle"></div>
+      <div id="magazineContent"></div>
+
+      <!-- Smart Suggestions -->
+      <div
+        style="margin-top: 32px; background: var(--bg-surface); padding: 20px; border-radius: 20px; border: 1px solid var(--border-color);">
+        <h3
+          style="font-size: 16px; color: var(--text-secondary); margin-bottom: 16px; display: flex; align-items: center; gap: 8px;">
+          <span class="material-symbols-rounded">lightbulb</span> সম্পর্কিত আরো প্রশ্ন:
+        </h3>
+        <div id="suggestionChips" style="display: flex; flex-wrap: wrap; gap: 12px;"></div>
+      </div>
+
+      <!-- Action Bar -->
+      <div class="action-bar">
+        <button class="btn-outline" onclick="Logic.copyAns()"><span class="material-symbols-rounded">content_copy</span>
+          কপি</button>
+        <button class="btn-outline" onclick="Logic.shareAns()"><span class="material-symbols-rounded">share</span>
+          শেয়ার</button>
+        <button class="btn-outline" onclick="Logic.downloadAns()"><span class="material-symbols-rounded">download</span>
+          ডাউনলোড</button>
+        <button class="btn-outline" id="speakBtn" onclick="Logic.speakAns()"><span
+            class="material-symbols-rounded">volume_up</span> শুনুন</button>
+        <button class="btn-outline" onclick="Logic.saveBookmark()"><span
+            class="material-symbols-rounded">bookmark_add</span> সেভ করুন</button>
+        <button class="btn-outline" onclick="Logic.verifyAns()"
+          style="border-color: var(--mag-6-border); color: var(--mag-6-border);"><span
+            class="material-symbols-rounded">verified</span> যাচাই করুন</button>
+        <span
+          style="margin-left:auto; font-size: 13px; color: var(--text-secondary); align-self: center; background: var(--bg-main); padding: 6px 12px; border-radius: 20px;"
+          id="aiStats"></span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loader -->
+  <div class="loader-overlay" id="loader">
+    <div class="loader-circle"></div>
+    <div class="loader-text" id="loaderText">অপেক্ষা করুন...</div>
+    <div class="loader-subtext" id="loaderSubText">0.0s</div>
+    <div id="loaderQuote"
+      style="margin-top: 24px; font-size: 15px; color: #a7f3d0; font-style: italic; text-align: center; max-width: 80%; line-height: 1.5; font-weight: 500;">
+    </div>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal-overlay" id="settingsModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="UI.closeModal('settingsModal')"><span
+          class="material-symbols-rounded">close</span></button>
+      <h2 style="margin-bottom: 24px; display: flex; align-items: center; gap: 8px;"><span
+          class="material-symbols-rounded">tune</span> সেটিংস ও API</h2>
+
+      <!-- Parallel Execution Toggle -->
+      <div class="form-group toggle-container">
+        <div>
+          <label style="margin-bottom: 4px;">প্যারালাল এক্সিকিউশন (Parallel Mode)</label>
+          <span style="font-size: 12px; color: var(--text-secondary);">চালু থাকলে ৩টি API একসাথে কল হবে, যেটি আগে উত্তর
+            দেবে সেটি দেখানো হবে। বন্ধ থাকলে সিরিয়ালি ট্রাই করবে।</span>
+        </div>
+        <label class="switch">
+          <input type="checkbox" id="parallelToggle">
+          <span class="slider"></span>
+        </label>
+      </div>
+
+      <div class="form-group">
+        <label>Google Gemini (Primary)</label>
+        <input type="password" id="geminiKey" class="form-input" placeholder="API Key (AIzaSy...)">
+        <input type="text" id="geminiModel" class="form-input" value="gemini-1.5-flash" placeholder="Model Name">
+      </div>
+      <div class="form-group">
+        <label>OpenRouter (Fallback 1)</label>
+        <input type="password" id="orKey" class="form-input" placeholder="API Key (sk-or-v1-...)">
+        <input type="text" id="orModel" class="form-input" value="deepseek/deepseek-chat" placeholder="Model Name">
+      </div>
+      <div class="form-group">
+        <label>Grok / xAI (Fallback 2)</label>
+        <input type="password" id="grokKey" class="form-input" placeholder="API Key (xai-...)">
+        <input type="text" id="grokModel" class="form-input" value="grok-1" placeholder="Model Name">
+      </div>
+      <div style="display: flex; gap: 12px; margin-top: 12px;">
+        <button class="btn-outline" style="flex: 1; justify-content: center; color: #ef4444; border-color: #ef4444;"
+          onclick="StorageEngine.clearCache()">ক্যাশ মুছুন</button>
+        <button class="action-btn" style="flex: 2; justify-content: center; font-size: 16px; padding: 14px;"
+          onclick="StorageEngine.saveSettings()">সংরক্ষণ করুন</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- History Modal -->
+  <div class="modal-overlay" id="historyModal">
+    <div class="modal-content">
+      <button class="modal-close" onclick="UI.closeModal('historyModal')"><span
+          class="material-symbols-rounded">close</span></button>
+      <h2 style="margin-bottom: 24px;">ইতিহাস ও বুকমার্ক</h2>
+      <div style="display: flex; gap: 12px; margin-bottom: 20px;">
+        <button class="btn-outline" style="flex:1; justify-content:center;"
+          onclick="UI.renderHistory('history')">ইতিহাস</button>
+        <button class="btn-outline" style="flex:1; justify-content:center;"
+          onclick="UI.renderHistory('bookmark')">বুকমার্ক</button>
+      </div>
+      <div id="historyList" style="max-height: 400px; overflow-y: auto; padding-right: 8px;"></div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"><span class="material-symbols-rounded">info</span> <span id="toastMsg">বার্তা</span>
+  </div>
+
+  <script>
+    /**
+     * ==================================================
+     * ISLAMIC KNOWLEDGE HUB - ARCHITECTURE JS (v4.0)
+     * ==================================================
+     */
+
+    // ==========================================
+    // 1. DATA MODULE (Strict 800+ Questions)
+    // ==========================================
+    const DataModule = (function () {
+      const mod = {
+        categories: [],
+        questions: [],
+        loadData: async () => {
+          try {
+            const res = await fetch('question.json');
+            const data = await res.json();
+
+            mod.categories = [{ id: 'all', name: 'সব', icon: 'apps', color: '#6366f1' }];
+            mod.questions = [];
+
+            for (const key in data) {
+              const cat = data[key];
+              mod.categories.push({
+                id: key,
+                name: cat.name,
+                icon: cat.icon || 'help',
+                color: cat.color || '#10b981'
+              });
+
+              if (cat.questions) {
+                cat.questions.forEach(q => {
+                  mod.questions.push({ q: q, c: key });
+                });
+              }
+            }
+          } catch (e) {
+            console.error("Failed to load question.json", e);
+          }
+        }
+      };
+      return mod;
+    })();
+
+
+    // ==========================================
+    // 2. STORAGE ENGINE
+    // ==========================================
+    const StorageEngine = (function () {
+      const DB_NAME = 'IslamicKnowledgeV4';
+      let dbInstance = null;
+
+      async function initDB() {
+        return new Promise((resolve, reject) => {
+          const req = indexedDB.open(DB_NAME, 1);
+          req.onupgradeneeded = e => {
+            const db = e.target.result;
+            if (!db.objectStoreNames.contains('cache')) db.createObjectStore('cache', { keyPath: 'q' });
+          };
+          req.onsuccess = e => { dbInstance = e.target.result; resolve(dbInstance); };
+          req.onerror = e => reject(e);
+        });
+      }
+
+      const keysToSave = ['geminiKey', 'geminiModel', 'orKey', 'orModel', 'grokKey', 'grokModel'];
+
+      return {
+        init: async () => await initDB(),
+        getCache: async (q) => {
+          if (!dbInstance) await initDB();
+          return new Promise(resolve => {
+            const tx = dbInstance.transaction('cache', 'readonly');
+            const req = tx.objectStore('cache').get(q);
+            req.onsuccess = () => resolve(req.result ? req.result.a : null);
+            req.onerror = () => resolve(null);
+          });
+        },
+        setCache: async (q, a) => {
+          if (!dbInstance) await initDB();
+          const tx = dbInstance.transaction('cache', 'readwrite');
+          tx.objectStore('cache').put({ q, a, ts: Date.now() });
+        },
+        saveSettings: () => {
+          keysToSave.forEach(id => {
+            const val = document.getElementById(id).value.trim();
+            if (val) localStorage.setItem(id, val);
+          });
+          localStorage.setItem('parallelMode', document.getElementById('parallelToggle').checked);
+          UI.showToast("সেটিংস সফলভাবে সংরক্ষিত হয়েছে");
+          UI.closeModal('settingsModal');
+        },
+        loadSettings: () => {
+          keysToSave.forEach(id => {
+            if (localStorage.getItem(id)) document.getElementById(id).value = localStorage.getItem(id);
+          });
+          document.getElementById('parallelToggle').checked = localStorage.getItem('parallelMode') === 'true';
+        },
+        clearCache: async () => {
+          if (!dbInstance) await initDB();
+          const tx = dbInstance.transaction('cache', 'readwrite');
+          tx.objectStore('cache').clear();
+          UI.showToast("লোকাল ক্যাশ মুছে ফেলা হয়েছে!");
+        },
+        getArray: (key) => JSON.parse(localStorage.getItem(key) || '[]'),
+        pushArray: (key, obj) => {
+          let arr = JSON.parse(localStorage.getItem(key) || '[]');
+          // Prevent duplicate bookmarks
+          if (key === 'bookmark' && arr.find(x => x.q === obj.q)) return false;
+          arr.unshift(obj);
+          if (arr.length > 30) arr.pop();
+          localStorage.setItem(key, JSON.stringify(arr));
+          return true;
+        }
+      };
+    })();
+
+
+    // ==========================================
+    // 3. VISION PROCESSOR
+    // ==========================================
+    const VisionProcessor = (function () {
+      let currentBase64 = null;
+
+      return {
+        handleImage: (event) => {
+          const file = event.target.files[0];
+          if (!file) return;
+
+          const img = new Image();
+          const reader = new FileReader();
+
+          reader.onload = e => {
+            img.src = e.target.result;
+            img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              let w = img.width, h = img.height;
+              if (w > 1024) { h *= 1024 / w; w = 1024; }
+              canvas.width = w; canvas.height = h;
+              ctx.drawImage(img, 0, 0, w, h);
+              currentBase64 = canvas.toDataURL('image/jpeg', 0.7).split(',')[1];
+
+              document.getElementById('visionIndicator').style.display = 'block';
+              UI.showToast("ছবি যুক্ত করা হয়েছে। এবার প্রশ্ন করুন।");
+            };
+          };
+          reader.readAsDataURL(file);
+        },
+        getImage: () => currentBase64,
+        clearImage: () => {
+          currentBase64 = null;
+          document.getElementById('visionIndicator').style.display = 'none';
+          document.getElementById('imageInput').value = '';
+        }
+      };
+    })();
+
+
+    // ==========================================
+    // 4. AI ENGINE (Parallel & Failover)
+    // ==========================================
+    const AIEngine = (function () {
+      let abortController = null;
+
+      const promptTemplate = `তুমি একজন প্রাজ্ঞ ও বিশ্বস্ত ইসলামিক পণ্ডিত। নিচের প্রশ্নটির বিস্তারিত, দলিলভিত্তিক উত্তর দাও।
+প্রশ্ন: "{q}"
+
+অবশ্যই নিচের কাঠামো এবং শিরোনামগুলো হুবহু ব্যবহার করবে (মার্কডাউন ফরম্যাটে):
+
+**১. সারসংক্ষেপ**
+**২. বিস্তারিত ব্যাখ্যা**
+**৩. কুরআনের দলিল** (আরবি, উচ্চারণ ও অনুবাদসহ)
+**৪. হাদিসের দলিল**
+**৫. ইমামদের মতামত**
+**৬. বাস্তব জীবনে প্রয়োগ**
+**৭. সতর্কতা**
+**৮. প্রশ্নোত্তর**
+**৯. উপসংহার**`;
+
+      async function callAPI(provider, q, imageB64) {
+        const prompt = promptTemplate.replace('{q}', q);
+        let url, headers, body;
+
+        if (provider === 'gemini') {
+          const key = localStorage.getItem('geminiKey');
+          const model = localStorage.getItem('geminiModel') || 'gemini-1.5-flash';
+          if (!key) throw new Error('Gemini Key Missing');
+          url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${key}`;
+          let parts = [{ text: prompt }];
+          if (imageB64) parts.push({ inlineData: { mimeType: "image/jpeg", data: imageB64 } });
+          headers = { 'Content-Type': 'application/json' };
+          body = JSON.stringify({ contents: [{ parts }], generationConfig: { temperature: 0.2 } });
+        }
+        else if (provider === 'openrouter') {
+          const key = localStorage.getItem('orKey');
+          const model = localStorage.getItem('orModel') || 'deepseek/deepseek-chat';
+          if (!key) throw new Error('OpenRouter Key Missing');
+          url = 'https://openrouter.ai/api/v1/chat/completions';
+          headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` };
+          body = JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2 });
+        }
+        else if (provider === 'grok') {
+          const key = localStorage.getItem('grokKey');
+          const model = localStorage.getItem('grokModel') || 'grok-1';
+          if (!key) throw new Error('Grok Key Missing');
+          url = 'https://api.x.ai/v1/chat/completions';
+          headers = { 'Content-Type': 'application/json', 'Authorization': `Bearer ${key}` };
+          body = JSON.stringify({ model, messages: [{ role: 'user', content: prompt }], temperature: 0.2 });
+        }
+
+        const res = await fetch(url, { method: 'POST', headers, body, signal: abortController.signal });
+        const data = await res.json();
+
+        if (data.error) throw new Error(data.error.message || "API Error");
+
+        if (provider === 'gemini') return { text: data.candidates[0].content.parts[0].text, source: 'Gemini' };
+        return { text: data.choices[0].message.content, source: provider === 'grok' ? 'Grok' : 'OpenRouter' };
+      }
+
+      return {
+        run: async (q) => {
+          if (abortController) abortController.abort();
+          abortController = new AbortController();
+
+          const imageB64 = VisionProcessor.getImage();
+          const isParallel = document.getElementById('parallelToggle').checked;
+
+          if (isParallel) {
+            // PARALLEL EXECUTION (Race Condition)
+            const promises = [];
+            if (localStorage.getItem('geminiKey')) promises.push(callAPI('gemini', q, imageB64));
+            // Only send text to OR/Grok if image is present to avoid payload errors
+            if (localStorage.getItem('orKey')) promises.push(callAPI('openrouter', q, null));
+            if (localStorage.getItem('grokKey')) promises.push(callAPI('grok', q, null));
+
+            if (promises.length === 0) throw new Error("কোনো API Key দেওয়া নেই! সেটিংসে গিয়ে Key দিন।");
+
+            try {
+              return await Promise.any(promises); // First one to resolve wins
+            } catch (e) {
+              throw new Error("সবগুলো API ব্যর্থ হয়েছে। দয়া করে আপনার ইন্টারনেট বা API Key চেক করুন।");
+            }
+          } else {
+            // SEQUENTIAL FAILOVER
+            try {
+              return await callAPI('gemini', q, imageB64);
+            } catch (e1) {
+              if (e1.name === 'AbortError') throw e1;
+              if (imageB64) throw new Error("ছবি বিশ্লেষণের জন্য শুধুমাত্র Gemini কাজ করে। সঠিক Gemini Key দিন।");
+
+              try {
+                return await callAPI('openrouter', q, null);
+              } catch (e2) {
+                if (e2.name === 'AbortError') throw e2;
+                try {
+                  return await callAPI('grok', q, null);
+                } catch (e3) {
+                  throw new Error("সবগুলো API প্রদানকারী ব্যর্থ হয়েছে।");
+                }
+              }
+            }
+          }
+        },
+
+        // Voice Input (STT)
+        startVoice: () => {
+          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          if (!SpeechRecognition) {
+            UI.showToast('আপনার ব্রাউজার ভয়েস ইনপুট সাপোর্ট করে না।'); return;
+          }
+          const recognition = new SpeechRecognition();
+          recognition.lang = 'bn-BD';
+
+          recognition.onstart = () => {
+            document.getElementById('micBtn').classList.add('mic-active');
+            UI.showToast("বলুন, আমি শুনছি...");
+          };
+          recognition.onresult = (e) => {
+            document.getElementById('searchInput').value = e.results[0][0].transcript;
+            Logic.handleSearch();
+          };
+          recognition.onend = () => document.getElementById('micBtn').classList.remove('mic-active');
+          recognition.onerror = () => {
+            document.getElementById('micBtn').classList.remove('mic-active');
+            UI.showToast("ভয়েস চিনতে সমস্যা হয়েছে।");
+          };
+
+          recognition.start();
+        }
+      };
+    })();
+
+
+    // ==========================================
+    // 5. UI ENGINE (Magazine Render, Loader, Scroll)
+    // ==========================================
+    const UIEngine = (function () {
+      let loaderInterval;
+
+      function parseMagazine(text) {
+        let safeText = text.replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        safeText = safeText.replace(/([\u0600-\u06FF\s]{15,})/g, '<div class="arabic-text">$1</div>');
+
+        const parts = safeText.split(/\*\*(.*?)\*\*/g);
+        let html = '';
+
+        let colorIndex = 0;
+
+        for (let i = 1; i < parts.length; i += 2) {
+          const title = parts[i].trim();
+          let content = (parts[i + 1] || '').trim();
+          content = content.replace(/\n\*/g, '<br>•').replace(/\n/g, '<br>');
+
+          let colorClass = 'color-' + ((colorIndex % 10) + 1);
+          colorIndex++;
+
+          if (title && content) {
+            // Add staggered animation delay
+            let delay = (i * 0.05).toFixed(2);
+            html += `
+          <div class="mag-section ${colorClass}" style="animation: slideUp 0.5s ease ${delay}s backwards;">
+            <div class="mag-header">${title}</div>
+            <div class="mag-body">${content}</div>
+          </div>
+        `;
+          }
+        }
+        if (html === '') html = `<div class="mag-section color-1"><div class="mag-body">${safeText.replace(/\n/g, '<br>')}</div></div>`;
+        return html;
+      }
+
+      // Setup Drag to Scroll for Categories
+      function setupDragScroll() {
+        const slider = document.getElementById('catContainer');
+        let isDown = false; let startX; let scrollLeft;
+
+        slider.addEventListener('mousedown', (e) => {
+          isDown = true; slider.classList.add('active');
+          startX = e.pageX - slider.offsetLeft;
+          scrollLeft = slider.scrollLeft;
+        });
+        slider.addEventListener('mouseleave', () => { isDown = false; slider.classList.remove('active'); });
+        slider.addEventListener('mouseup', () => { isDown = false; slider.classList.remove('active'); });
+        slider.addEventListener('mousemove', (e) => {
+          if (!isDown) return;
+          e.preventDefault();
+          const x = e.pageX - slider.offsetLeft;
+          const walk = (x - startX) * 2; // scroll-fast
+          slider.scrollLeft = scrollLeft - walk;
+        });
+      }
+
+      return {
+        initScroll: setupDragScroll,
+
+        renderCategories: (activeId) => {
+          const html = DataModule.categories.map(c => {
+            const iconHtml = c.icon.length <= 2 ? c.icon : `<span class="material-symbols-rounded" style="font-size: 18px;">${c.icon}</span>`;
+            return `
+        <div class="cat-chip ${c.id === activeId ? 'active' : ''}" onclick="Logic.filterCat('${c.id}')">
+          <span style="font-size: 18px; margin-right: 4px;">${iconHtml}</span> ${c.name}
+        </div>
+      `;
+          }).join('');
+          document.getElementById('catContainer').innerHTML = html;
+        },
+
+        renderQuestions: (filterCat = 'all') => {
+          const filtered = filterCat === 'all'
+            ? DataModule.questions.slice(0, 40) // Show 40 to prevent DOM lag
+            : DataModule.questions.filter(q => q.c === filterCat).slice(0, 40);
+
+          const html = filtered.map((q, index) => {
+            let delay = (index * 0.02).toFixed(2);
+            return `
+        <div class="q-card" style="animation-delay: ${delay}s" onclick="Logic.ask('${q.q}')">
+          <span class="material-symbols-rounded">help</span>
+          <span style="font-size: 15px; font-weight: 600;">${q.q}</span>
+        </div>
+      `}).join('');
+          document.getElementById('qContainer').innerHTML = html;
+        },
+
+        startGamifiedLoader: () => {
+          const steps = ["বিশ্লেষণ করা হচ্ছে...", "কুরআনের আয়াত অনুসন্ধান...", "হাদিস যাচাই করা হচ্ছে...", "ফিকহ দেখা হচ্ছে...", "ফলাফল সাজানো হচ্ছে..."];
+          const quotes = [
+            "❝ জ্ঞান অন্বেষণ করা প্রত্যেক মুসলিমের উপর ফরজ ❞",
+            "❝ যে ব্যক্তি জ্ঞান অর্জনের পথে চলে, আল্লাহ তার জান্নাতের পথ সহজ করে দেন ❞",
+            "❝ আল্লাহ যাকে কল্যাণ দিতে চান, তাকে দ্বীনের প্রগাঢ় জ্ঞান দান করেন ❞",
+            "❝ দোলনা থেকে কবর পর্যন্ত জ্ঞান অন্বেষণ কর ❞",
+            "❝ জ্ঞানী ও মূর্খ কি সমান হতে পারে? ❞"
+          ];
+          document.getElementById('loader').style.display = 'flex';
+          let stepIndex = 0; let startTime = Date.now();
+          document.getElementById('loaderText').innerText = steps[0];
+          document.getElementById('loaderQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+
+          loaderInterval = setInterval(() => {
+            let elapsed = ((Date.now() - startTime) / 1000).toFixed(1);
+            document.getElementById('loaderSubText').innerText = elapsed + "s";
+            if (stepIndex < steps.length - 1 && Math.random() > 0.6) {
+              stepIndex++;
+              document.getElementById('loaderText').innerText = steps[stepIndex];
+              document.getElementById('loaderQuote').innerText = quotes[Math.floor(Math.random() * quotes.length)];
+            }
+          }, 700);
+        },
+
+        stopLoader: () => {
+          clearInterval(loaderInterval);
+          document.getElementById('loader').style.display = 'none';
+        },
+
+        displayResult: (q, ansObj, elapsed) => {
+          document.getElementById('qContainer').style.display = 'none';
+          document.querySelector('.cat-scroll-container').style.display = 'none';
+          document.getElementById('resultArea').style.display = 'block';
+
+          document.getElementById('resQuestionTitle').innerText = q;
+
+          const magazineHtml = parseMagazine(ansObj.text);
+          const magaZineRenderedNode = document.getElementById('magazineContent');
+
+          if (typeof IslamicModule !== 'undefined') {
+            IslamicModule.AutoMatcher.processText(magazineHtml, magaZineRenderedNode);
+          } else {
+            magaZineRenderedNode.innerHTML = magazineHtml;
+          }
+
+          document.getElementById('aiStats').innerText = `মডেল: ${ansObj.source} | সময়: ${elapsed}s`;
+
+          // Smart Suggestions
+          const suggestions = [`${q} এর ব্যতিক্রম কি?`, `এ সম্পর্কে আরো কোনো হাদিস আছে?`, `বর্তমান সমাজে এর প্রয়োগ কিভাবে করব?`];
+          document.getElementById('suggestionChips').innerHTML = suggestions.map(s =>
+            `<button class="cat-chip" onclick="Logic.ask('${s}')">${s}</button>`
+          ).join('');
+
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
+        showToast: (msg) => {
+          const t = document.getElementById('toast');
+          document.getElementById('toastMsg').innerText = msg;
+          t.classList.add('show');
+          setTimeout(() => t.classList.remove('show'), 3500);
+        },
+
+        toggleTheme: () => {
+          const root = document.documentElement;
+          const next = root.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+          root.setAttribute('data-theme', next);
+          localStorage.setItem('theme', next);
+          document.getElementById('themeIcon').innerText = next === 'dark' ? 'light_mode' : 'dark_mode';
+
+          const sbTheme = document.getElementById('sbThemeIcon');
+          if (sbTheme) sbTheme.innerText = next === 'dark' ? 'light_mode' : 'dark_mode';
+
+          const metaColor = document.getElementById('meta-theme-color');
+          if (metaColor) metaColor.content = next === 'dark' ? '#064e3b' : '#0b5e42';
+        },
+
+        openModal: (id) => {
+          const m = document.getElementById(id);
+          m.style.display = 'flex';
+          setTimeout(() => m.classList.add('show'), 10); // Trigger animation
+        },
+        closeModal: (id) => {
+          const m = document.getElementById(id);
+          m.classList.remove('show');
+          setTimeout(() => m.style.display = 'none', 300); // Wait for animation
+        },
+
+        renderHistory: (type) => {
+          const data = StorageEngine.getArray(type);
+          const html = data.length ? data.map(item => `
+        <div style="background: var(--bg-main); padding: 16px; border-radius: 16px; margin-bottom: 12px; cursor:pointer; border: 1px solid var(--border-color); transition: all 0.2s;"
+             onmouseover="this.style.borderColor='var(--accent-primary)'" onmouseout="this.style.borderColor='var(--border-color)'"
+             onclick="Logic.ask('${item.q}'); UI.closeModal('historyModal');">
+           <b style="font-size: 15px;">${item.q}</b>
+        </div>
+      `).join('') : '<p style="text-align:center; color:gray; padding: 20px;">কোনো তথ্য নেই</p>';
+          document.getElementById('historyList').innerHTML = html;
+        },
+
+        changeFontSize: (step) => {
+          const root = document.documentElement;
+          let currentSize = parseFloat(getComputedStyle(root).getPropertyValue('--mag-font-size')) || 16;
+          let newSize = currentSize + step;
+          if (newSize < 12) newSize = 12;
+          if (newSize > 26) newSize = 26;
+          root.style.setProperty('--mag-font-size', newSize + 'px');
+          UI.showToast(`ফন্ট সাইজ: ${newSize}px`);
+        },
+
+        toggleSidebar: () => {
+          const sidebar = document.getElementById('sidebar');
+          const overlay = document.getElementById('sidebarOverlay');
+          if (sidebar.classList.contains('open')) {
+            sidebar.classList.remove('open');
+            overlay.classList.remove('show');
+          } else {
+            sidebar.classList.add('open');
+            overlay.classList.add('show');
+          }
+        },
+
+        registerServiceWorker: () => {
+          if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+              navigator.serviceWorker.register('sw.js').then(registration => {
+                console.log('SW registered: ', registration.scope);
+              }).catch(registrationError => {
+                console.log('SW registration failed: ', registrationError);
+              });
+            });
+          }
+        }
+      };
+    })();
+
+
+    // ==========================================
+    // 6. LOGIC & EVENT HANDLERS
+    // ==========================================
+    const Logic = {
+      currentQ: '',
+      currentAnsText: '',
+      isSpeaking: false,
+
+      init: async () => {
+        UIEngine.registerServiceWorker(); // Setup PWA
+        await DataModule.loadData();
+        await StorageEngine.init();
+        StorageEngine.loadSettings();
+
+        if (typeof IslamicModule !== 'undefined') {
+          await IslamicModule.init();
+        }
+
+        if (localStorage.getItem('theme') === 'dark') {
+          document.documentElement.setAttribute('data-theme', 'dark');
+          document.getElementById('themeIcon').innerText = 'light_mode';
+          const sbTheme = document.getElementById('sbThemeIcon');
+          if (sbTheme) sbTheme.innerText = 'light_mode';
+          const metaColor = document.getElementById('meta-theme-color');
+          if (metaColor) metaColor.content = '#064e3b';
+        }
+
+        UIEngine.initScroll();
+        UIEngine.renderCategories('all');
+        UIEngine.renderQuestions('all');
+
+        document.getElementById('searchInput').addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') Logic.handleSearch();
+        });
+      },
+
+      filterCat: (id) => {
+        UIEngine.renderCategories(id);
+        UIEngine.renderQuestions(id);
+        document.getElementById('resultArea').style.display = 'none';
+        document.querySelector('.cat-scroll-container').style.display = 'block';
+        if (Logic.isSpeaking) Logic.stopSpeak();
+      },
+
+      handleSearch: () => {
+        const q = document.getElementById('searchInput').value.trim();
+        if (q) Logic.ask(q);
+      },
+
+      goBack: () => {
+        document.getElementById('resultArea').style.display = 'none';
+        document.querySelector('.cat-scroll-container').style.display = 'block';
+        document.getElementById('qContainer').style.display = 'grid';
+        if (Logic.isSpeaking) Logic.stopSpeak();
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      },
+
+      ask: async (q) => {
+        Logic.currentQ = q;
+        document.getElementById('searchInput').value = q;
+        if (Logic.isSpeaking) Logic.stopSpeak();
+
+        if (!VisionProcessor.getImage()) {
+          const cached = await StorageEngine.getCache(q);
+          if (cached) {
+            Logic.currentAnsText = cached;
+            UIEngine.displayResult(q, { text: cached, source: 'Cache' }, '0.1');
+            StorageEngine.pushArray('history', { q });
+            return;
+          }
+        }
+
+        UIEngine.startGamifiedLoader();
+        const start = Date.now();
+        try {
+          const ansObj = await AIEngine.run(q);
+          const elapsed = ((Date.now() - start) / 1000).toFixed(1);
+
+          Logic.currentAnsText = ansObj.text;
+          if (!VisionProcessor.getImage()) await StorageEngine.setCache(q, ansObj.text);
+
+          UIEngine.displayResult(q, ansObj, elapsed);
+          StorageEngine.pushArray('history', { q });
+          VisionProcessor.clearImage();
+
+        } catch (err) {
+          if (err.name !== 'AbortError') UIEngine.showToast(err.message);
+        } finally {
+          UIEngine.stopLoader();
+        }
+      },
+
+      copyAns: () => {
+        navigator.clipboard.writeText(Logic.currentAnsText.replace(/<[^>]*>/g, ''));
+        UIEngine.showToast('উত্তর কপি করা হয়েছে!');
+      },
+
+      shareAns: async () => {
+        const text = Logic.currentAnsText.replace(/<[^>]*>/g, '');
+        if (navigator.share) {
+          try {
+            await navigator.share({
+              title: Logic.currentQ,
+              text: "প্রশ্ন: " + Logic.currentQ + "\n\n" + text.substring(0, 150) + "... (আরও পড়ুন ইসলামিক জ্ঞানHub অ্যাপে)"
+            });
+          } catch (e) {
+            console.log("Share failed", e);
+          }
+        } else {
+          Logic.copyAns();
+          UIEngine.showToast('ডিভাইসে শেয়ারিং সাপোর্টেড নয়, উত্তর কপি করা হয়েছে!');
+        }
+      },
+
+      downloadAns: () => {
+        const textToSave = "প্রশ্ন: " + Logic.currentQ + "\n\n" + Logic.currentAnsText.replace(/<[^>]*>/g, '');
+        const blob = new Blob([textToSave], { type: 'text/plain;charset=utf-8' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = "Islamic_Knowledge_" + Date.now() + ".txt";
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        UIEngine.showToast('ডাউনলোড শুরু হয়েছে...');
+      },
+
+      // Robust Voice Output (TTS) with Fallback
+      speakAns: () => {
+        if (Logic.isSpeaking) { Logic.stopSpeak(); return; }
+
+        const text = Logic.currentAnsText.replace(/<[^>]*>/g, '').replace(/[\u0600-\u06FF]/g, ' ').substring(0, 1500);
+
+        if (typeof responsiveVoice !== 'undefined') {
+          Logic.isSpeaking = true;
+          document.getElementById('speakBtn').innerHTML = '<span class="material-symbols-rounded">stop_circle</span> থামুন';
+          responsiveVoice.speak(text, "Bengali Female", {
+            rate: 0.9,
+            onend: Logic.stopSpeak
+          });
+          UIEngine.showToast('পড়ানো হচ্ছে...');
+        } else if ('speechSynthesis' in window) {
+          Logic.isSpeaking = true;
+          document.getElementById('speakBtn').innerHTML = '<span class="material-symbols-rounded">stop_circle</span> থামুন';
+          const utterance = new SpeechSynthesisUtterance(text);
+          utterance.lang = 'bn-BD';
+          utterance.rate = 0.9;
+          utterance.onend = Logic.stopSpeak;
+          window.speechSynthesis.speak(utterance);
+          UIEngine.showToast('ডিভাইস ভয়েস চালু হয়েছে...');
+        } else {
+          UIEngine.showToast('আপনার ব্রাউজার Text-to-Speech সমর্থন করে না।');
+        }
+      },
+
+      stopSpeak: () => {
+        if (typeof responsiveVoice !== 'undefined') responsiveVoice.cancel();
+        if ('speechSynthesis' in window) window.speechSynthesis.cancel();
+        Logic.isSpeaking = false;
+        const btn = document.getElementById('speakBtn');
+        if (btn) btn.innerHTML = '<span class="material-symbols-rounded">volume_up</span> শুনুন';
+      },
+
+      saveBookmark: () => {
+        const success = StorageEngine.pushArray('bookmark', { q: Logic.currentQ });
+        if (success) UIEngine.showToast('বুকমার্কে সংরক্ষিত হয়েছে');
+        else UIEngine.showToast('এটি আগেই বুকমার্ক করা আছে');
+      },
+
+      verifyAns: () => {
+        Logic.ask(`${Logic.currentQ} - উপরের উত্তরের দলিলগুলো শতভাগ সহিহ কিনা তা যাচাই করুন এবং কোন ভুল থাকলে ধরিয়ে দিন।`);
+      }
+    };
+
+    // Application Bootstrap
+    window.onload = Logic.init;
+    window.UI = UIEngine;
+    window.VisionProcessor = VisionProcessor;
+    window.AIEngine = AIEngine;
+    window.Logic = Logic;
+    window.StorageEngine = StorageEngine;
+
+  </script>
+</body>
+
+</html>
