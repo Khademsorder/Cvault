@@ -1,0 +1,2452 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Drive OS Pro+</title>
+
+    <script src="https://accounts.google.com/gsi/client"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Round" rel="stylesheet">
+
+    <style>
+        :root {
+            --bg: #0a0b0f;
+            --bg2: #0f1117;
+            --surface: #13151e;
+            --surface2: #1a1d2a;
+            --surface3: #21253a;
+            --border: rgba(255,255,255,0.07);
+            --border2: rgba(255,255,255,0.12);
+            --accent: #6c63ff;
+            --accent2: #a78bfa;
+            --accent3: #38bdf8;
+            --green: #34d399;
+            --red: #f87171;
+            --yellow: #fbbf24;
+            --text: #f0f0ff;
+            --text2: #8b8fa8;
+            --text3: #5a5e78;
+            --glass: rgba(255,255,255,0.04);
+            --glass-border: rgba(255,255,255,0.08);
+            --glow: 0 0 30px rgba(108,99,255,0.2);
+            --glow2: 0 0 20px rgba(56,189,248,0.15);
+            --radius: 12px;
+            --radius-lg: 18px;
+            --radius-xl: 24px;
+            --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+
+            /* Light mode overrides (toggled by class) */
+        }
+
+        .light-mode {
+            --bg: #f0f2fa;
+            --bg2: #e8eaf5;
+            --surface: #ffffff;
+            --surface2: #f5f6fd;
+            --surface3: #eceef9;
+            --border: rgba(0,0,0,0.07);
+            --border2: rgba(0,0,0,0.12);
+            --text: #0f1020;
+            --text2: #5a5e78;
+            --text3: #9da2bb;
+            --glass: rgba(255,255,255,0.7);
+            --glass-border: rgba(255,255,255,0.9);
+            --glow: 0 0 30px rgba(108,99,255,0.1);
+        }
+
+        * {
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+            outline: none;
+            user-select: none;
+            margin: 0; padding: 0;
+        }
+
+        body {
+            font-family: 'Space Grotesk', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transition: background 0.4s, color 0.4s;
+        }
+
+        /* ═══════════════════════════════════════
+           BACKGROUNDS & AMBIENT EFFECTS
+        ═══════════════════════════════════════ */
+        .bg-ambient {
+            position: fixed; inset: 0; pointer-events: none; z-index: 0;
+            overflow: hidden;
+        }
+        .bg-orb {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.12;
+        }
+        .bg-orb-1 { width: 400px; height: 400px; background: var(--accent); top: -100px; right: -100px; }
+        .bg-orb-2 { width: 300px; height: 300px; background: var(--accent3); bottom: -50px; left: -50px; }
+        .bg-orb-3 { width: 200px; height: 200px; background: var(--green); top: 40%; left: 30%; opacity: 0.06; }
+
+        /* ═══════════════════════════════════════
+           SCREENS
+        ═══════════════════════════════════════ */
+        .screen {
+            position: absolute; inset: 0;
+            display: none; flex-direction: column;
+            background: var(--bg);
+            z-index: 10;
+        }
+        .screen.active { display: flex; animation: screenIn 0.35s cubic-bezier(0.4, 0, 0.2, 1); }
+        @keyframes screenIn {
+            from { opacity: 0; transform: scale(0.98); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* ═══════════════════════════════════════
+           LOCK SCREEN
+        ═══════════════════════════════════════ */
+        #lock-screen {
+            justify-content: center; align-items: center;
+            background: var(--bg);
+        }
+
+        .lock-wrapper {
+            text-align: center; width: 100%; max-width: 340px;
+            padding: 40px 24px;
+            position: relative; z-index: 1;
+        }
+
+        .lock-logo-icon {
+            width: 72px; height: 72px;
+            background: linear-gradient(135deg, var(--accent), var(--accent3));
+            border-radius: 22px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 24px;
+            box-shadow: 0 8px 32px rgba(108,99,255,0.4), 0 0 0 1px rgba(108,99,255,0.3);
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+        @keyframes logoFloat {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-6px); }
+        }
+        .lock-logo-icon .material-icons-round { color: #fff; font-size: 32px; }
+
+        .lock-app-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 26px; font-weight: 800;
+            color: var(--text);
+            letter-spacing: -0.5px;
+            margin-bottom: 6px;
+        }
+        .lock-subtitle {
+            font-size: 13px; color: var(--text3); margin-bottom: 40px;
+            letter-spacing: 0.5px;
+        }
+
+        /* PIN Dots */
+        .pin-dots {
+            display: flex; justify-content: center; gap: 14px; margin-bottom: 36px;
+        }
+        .dot {
+            width: 14px; height: 14px; border-radius: 50%;
+            border: 2px solid var(--border2);
+            background: transparent;
+            transition: var(--transition);
+        }
+        .dot.filled {
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 12px rgba(108,99,255,0.6);
+            transform: scale(1.15);
+        }
+        .dot.error {
+            background: var(--red);
+            border-color: var(--red);
+            animation: dotShake 0.4s ease;
+        }
+        @keyframes dotShake {
+            0%, 100% { transform: translateX(0); }
+            20% { transform: translateX(-6px); }
+            40% { transform: translateX(6px); }
+            60% { transform: translateX(-4px); }
+            80% { transform: translateX(4px); }
+        }
+
+        /* Keypad */
+        .keypad {
+            display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+            padding: 0 10px;
+        }
+        .key {
+            width: 70px; height: 70px; border-radius: 50%;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            color: var(--text);
+            font-size: 22px; font-weight: 500;
+            font-family: 'Space Grotesk', sans-serif;
+            display: flex; align-items: center; justify-content: center;
+            margin: auto; cursor: pointer;
+            transition: var(--transition);
+            touch-action: manipulation;
+            position: relative; overflow: hidden;
+        }
+        .key::after {
+            content: ''; position: absolute; inset: 0;
+            background: radial-gradient(circle, rgba(255,255,255,0.15) 0%, transparent 70%);
+            opacity: 0; transition: opacity 0.15s;
+        }
+        .key:active::after { opacity: 1; }
+        .key:active { transform: scale(0.9); background: var(--surface3); }
+        .key:hover { background: var(--surface3); border-color: var(--border2); }
+
+        .key.clear {
+            background: transparent; border: none; font-size: 11px;
+            color: var(--text3); letter-spacing: 0.5px; font-weight: 600;
+        }
+        .key.backspace { font-size: 0; color: var(--text2); }
+        .key.backspace .material-icons-round { font-size: 20px; }
+
+        .biometric-row {
+            margin-top: 24px; display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .biometric-btn {
+            display: flex; align-items: center; gap: 8px;
+            padding: 10px 20px;
+            background: var(--glass);
+            border: 1px solid var(--glass-border);
+            border-radius: 40px;
+            color: var(--text2); font-size: 13px;
+            cursor: pointer; transition: var(--transition);
+        }
+        .biometric-btn:hover { background: var(--surface2); color: var(--text); }
+        .biometric-btn .material-icons-round { font-size: 18px; color: var(--accent2); }
+
+        .pin-footer {
+            margin-top: 20px; font-size: 12px; color: var(--text3);
+        }
+        .pin-footer a { color: var(--accent2); text-decoration: none; }
+
+        /* ═══════════════════════════════════════
+           AUTH SCREEN
+        ═══════════════════════════════════════ */
+        #auth-screen {
+            justify-content: center; align-items: center;
+            text-align: center;
+        }
+
+        .auth-card {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-xl);
+            padding: 40px 32px;
+            width: 90%; max-width: 380px;
+            box-shadow: 0 24px 64px rgba(0,0,0,0.4);
+            position: relative; z-index: 1;
+        }
+
+        .auth-logo {
+            width: 60px; height: 60px;
+            background: linear-gradient(135deg, var(--accent), var(--accent3));
+            border-radius: 18px;
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 24px;
+        }
+        .auth-logo .material-icons-round { color: #fff; font-size: 28px; }
+
+        .auth-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 22px; font-weight: 700; margin-bottom: 8px;
+        }
+        .auth-subtitle {
+            font-size: 13px; color: var(--text2); margin-bottom: 32px;
+            line-height: 1.5;
+        }
+
+        .google-signin-btn {
+            display: flex; align-items: center; justify-content: center; gap: 12px;
+            width: 100%; padding: 14px 20px;
+            background: var(--surface2);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius);
+            color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 14px; font-weight: 500;
+            cursor: pointer; transition: var(--transition);
+        }
+        .google-signin-btn:hover {
+            background: var(--surface3);
+            border-color: var(--accent);
+            box-shadow: var(--glow);
+        }
+        .google-logo { width: 20px; height: 20px; }
+
+        .auth-terms {
+            margin-top: 20px; font-size: 11px; color: var(--text3);
+            line-height: 1.5;
+        }
+
+        /* ═══════════════════════════════════════
+           APP SCREEN LAYOUT
+        ═══════════════════════════════════════ */
+        #app-screen {
+            display: none; flex-direction: column;
+            background: var(--bg);
+            overflow: hidden;
+        }
+        #app-screen.active { display: flex; }
+
+        /* TOP HEADER */
+        .app-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 0 16px;
+            height: 60px;
+            display: flex; align-items: center;
+            gap: 12px;
+            flex-shrink: 0;
+            position: relative; z-index: 30;
+        }
+
+        .menu-btn {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text2);
+            transition: var(--transition); flex-shrink: 0;
+        }
+        .menu-btn:hover { background: var(--surface2); color: var(--text); }
+
+        .search-wrap {
+            flex: 1;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius);
+            display: flex; align-items: center;
+            padding: 0 12px;
+            height: 40px;
+            transition: var(--transition);
+            min-width: 0;
+        }
+        .search-wrap:focus-within {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(108,99,255,0.15);
+        }
+        .search-wrap .material-icons-round { font-size: 18px; color: var(--text3); flex-shrink: 0; }
+        .search-input {
+            border: none; background: transparent;
+            margin-left: 10px; flex: 1;
+            font-size: 14px; color: var(--text);
+            font-family: 'Space Grotesk', sans-serif;
+            min-width: 0;
+        }
+        .search-input::placeholder { color: var(--text3); }
+
+        .header-actions {
+            display: flex; align-items: center; gap: 8px; flex-shrink: 0;
+        }
+        .header-icon-btn {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text2);
+            transition: var(--transition);
+        }
+        .header-icon-btn:hover { background: var(--surface2); color: var(--text); }
+
+        .user-avatar-btn {
+            width: 34px; height: 34px; border-radius: 50%;
+            overflow: hidden; cursor: pointer;
+            border: 2px solid var(--border2);
+            transition: var(--transition);
+        }
+        .user-avatar-btn:hover { border-color: var(--accent); }
+        .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .user-avatar-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--accent), var(--accent3));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 13px; font-weight: 600; color: #fff;
+        }
+
+        /* TOOLBAR */
+        .toolbar {
+            padding: 8px 16px;
+            display: flex; justify-content: space-between; align-items: center;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+            flex-shrink: 0;
+            min-height: 50px;
+        }
+
+        .breadcrumb-area {
+            display: flex; align-items: center;
+            overflow-x: auto; white-space: nowrap; flex: 1; min-width: 0;
+            scrollbar-width: none;
+        }
+        .breadcrumb-area::-webkit-scrollbar { display: none; }
+
+        .back-btn {
+            width: 32px; height: 32px; border-radius: 8px;
+            background: var(--surface2); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text2);
+            margin-right: 8px; flex-shrink: 0;
+            transition: var(--transition);
+        }
+        .back-btn:hover { background: var(--surface3); color: var(--text); }
+        .back-btn .material-icons-round { font-size: 18px; }
+
+        .crumb-item {
+            font-size: 13px; font-weight: 500;
+            color: var(--text2); padding: 4px 8px;
+            border-radius: 6px; cursor: pointer;
+            transition: var(--transition);
+            white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; max-width: 160px;
+        }
+        .crumb-item:hover { background: var(--surface2); color: var(--text); }
+        .crumb-item.active { color: var(--text); }
+        .crumb-sep { color: var(--text3); margin: 0 2px; font-size: 13px; }
+
+        .toolbar-right {
+            display: flex; align-items: center; gap: 6px; flex-shrink: 0;
+        }
+
+        .toolbar-btn {
+            height: 32px; padding: 0 10px;
+            border-radius: 8px;
+            background: var(--surface2); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center; gap: 4px;
+            cursor: pointer; color: var(--text2); font-size: 12px;
+            transition: var(--transition);
+        }
+        .toolbar-btn:hover { background: var(--surface3); color: var(--text); }
+        .toolbar-btn .material-icons-round { font-size: 16px; }
+
+        .view-switcher {
+            display: flex; background: var(--surface2); border-radius: 8px;
+            border: 1px solid var(--border); overflow: hidden;
+        }
+        .view-btn {
+            width: 32px; height: 32px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text3);
+            transition: var(--transition);
+        }
+        .view-btn .material-icons-round { font-size: 16px; }
+        .view-btn.active { background: var(--accent); color: #fff; }
+        .view-btn:not(.active):hover { background: var(--surface3); color: var(--text); }
+
+        /* ═══════════════════════════════════════
+           FILE AREA
+        ═══════════════════════════════════════ */
+        .file-area {
+            flex: 1; overflow-y: auto; min-height: 0;
+            padding: 12px;
+            scrollbar-width: thin;
+            scrollbar-color: var(--border2) transparent;
+            position: relative; z-index: 1;
+        }
+        .file-area::-webkit-scrollbar { width: 4px; }
+        .file-area::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+        /* LIST VIEW */
+        .file-list-view { display: flex; flex-direction: column; gap: 2px; }
+
+        .list-item {
+            display: flex; align-items: center;
+            padding: 10px 14px;
+            border-radius: var(--radius);
+            cursor: pointer;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            min-height: 58px;
+            position: relative; overflow: hidden;
+        }
+        .list-item:hover {
+            background: var(--surface);
+            border-color: var(--border);
+        }
+        .list-item:active { transform: scale(0.99); }
+
+        /* GRID VIEW */
+        .file-grid-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+            gap: 10px;
+        }
+
+        .grid-item {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            padding: 16px 10px 12px;
+            display: flex; flex-direction: column; align-items: center;
+            text-align: center; cursor: pointer;
+            transition: var(--transition);
+            height: 130px; overflow: hidden;
+            position: relative;
+        }
+        .grid-item:hover {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 1px var(--accent), var(--glow);
+            transform: translateY(-2px);
+        }
+
+        /* GALLERY VIEW */
+        .file-gallery-view {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 10px;
+        }
+
+        .gallery-item {
+            border-radius: var(--radius-lg);
+            overflow: hidden; cursor: pointer;
+            transition: var(--transition);
+            aspect-ratio: 1;
+            position: relative;
+            background: var(--surface2);
+        }
+        .gallery-item img {
+            width: 100%; height: 100%; object-fit: cover;
+            display: block;
+        }
+        .gallery-item:hover { transform: scale(1.03); box-shadow: 0 12px 32px rgba(0,0,0,0.4); }
+        .gallery-overlay {
+            position: absolute; bottom: 0; left: 0; right: 0;
+            background: linear-gradient(transparent, rgba(0,0,0,0.75));
+            padding: 20px 8px 8px;
+            transform: translateY(100%); transition: transform 0.25s ease;
+        }
+        .gallery-item:hover .gallery-overlay { transform: translateY(0); }
+        .gallery-name {
+            font-size: 11px; color: #fff; font-weight: 500;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* FILE ICONS */
+        .file-icon-wrap {
+            width: 38px; height: 38px; border-radius: 10px;
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0; margin-right: 14px;
+        }
+        .file-icon-wrap .material-icons-round { font-size: 20px; }
+        .icon-folder { background: rgba(251,191,36,0.12); color: var(--yellow); }
+        .icon-image { background: rgba(52,211,153,0.12); color: var(--green); }
+        .icon-video { background: rgba(248,113,113,0.12); color: var(--red); }
+        .icon-pdf { background: rgba(248,113,113,0.15); color: #ff6b6b; }
+        .icon-audio { background: rgba(167,139,250,0.12); color: var(--accent2); }
+        .icon-doc { background: rgba(56,189,248,0.12); color: var(--accent3); }
+        .icon-default { background: var(--surface2); color: var(--text3); }
+
+        /* Grid icon bigger */
+        .grid-item .file-icon-wrap {
+            width: 48px; height: 48px; border-radius: 14px;
+            margin-right: 0; margin-bottom: 10px;
+        }
+        .grid-item .file-icon-wrap .material-icons-round { font-size: 24px; }
+
+        .item-text { flex: 1; overflow: hidden; min-width: 0; }
+        .item-name {
+            display: block; font-size: 13px; font-weight: 500;
+            color: var(--text); white-space: nowrap; overflow: hidden;
+            text-overflow: ellipsis; margin-bottom: 3px;
+            line-height: 1.3;
+        }
+        .item-meta { display: block; font-size: 11px; color: var(--text3); }
+        .item-meta span { margin-right: 4px; }
+
+        .grid-item .item-text {
+            text-align: center; width: 100%;
+        }
+        .grid-item .item-name { font-size: 11px; }
+
+        .item-actions { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+        .item-action-btn {
+            width: 30px; height: 30px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text3); transition: var(--transition);
+        }
+        .item-action-btn:hover { background: var(--surface2); color: var(--text); }
+        .item-action-btn .material-icons-round { font-size: 16px; }
+
+        /* ═══════════════════════════════════════
+           EMPTY & LOADING STATES
+        ═══════════════════════════════════════ */
+        .empty-state {
+            text-align: center; padding: 60px 20px; color: var(--text3);
+        }
+        .empty-icon-wrap {
+            width: 80px; height: 80px; border-radius: 24px;
+            background: var(--surface2); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 20px;
+        }
+        .empty-icon-wrap .material-icons-round { font-size: 36px; color: var(--text3); }
+        .empty-title { font-size: 16px; font-weight: 600; color: var(--text2); margin-bottom: 6px; }
+        .empty-desc { font-size: 13px; color: var(--text3); }
+
+        .loading-state {
+            display: flex; flex-direction: column; align-items: center;
+            justify-content: center; padding: 60px 20px; gap: 16px;
+            color: var(--text3);
+        }
+        .spinner {
+            width: 32px; height: 32px;
+            border: 3px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* ═══════════════════════════════════════
+           BOTTOM NAV
+        ═══════════════════════════════════════ */
+        .bottom-nav {
+            height: 62px;
+            background: var(--surface);
+            border-top: 1px solid var(--border);
+            display: flex; justify-content: space-around; align-items: center;
+            flex-shrink: 0; position: relative; z-index: 30;
+            padding: 0 4px;
+        }
+
+        .nav-tab {
+            flex: 1; display: flex; flex-direction: column; align-items: center;
+            gap: 3px; padding: 6px 0; cursor: pointer; color: var(--text3);
+            font-size: 10px; font-weight: 500; letter-spacing: 0.3px;
+            transition: var(--transition);
+            border-radius: 12px;
+            margin: 4px 2px;
+            position: relative;
+        }
+        .nav-tab:hover { color: var(--text2); }
+        .nav-tab.active { color: var(--accent2); }
+
+        .nav-tab-icon-wrap {
+            width: 36px; height: 26px; border-radius: 13px;
+            display: flex; align-items: center; justify-content: center;
+            transition: var(--transition);
+        }
+        .nav-tab.active .nav-tab-icon-wrap {
+            background: rgba(108,99,255,0.15);
+        }
+        .nav-tab .material-icons-round { font-size: 20px; }
+        .nav-tab.active .material-icons-round { color: var(--accent2); }
+
+        /* ═══════════════════════════════════════
+           FAB
+        ═══════════════════════════════════════ */
+        .fab-wrap {
+            position: fixed; bottom: 78px; right: 16px; z-index: 100;
+        }
+
+        .fab-btn {
+            width: 52px; height: 52px; border-radius: 16px;
+            background: linear-gradient(135deg, var(--accent), #8b80ff);
+            box-shadow: 0 8px 24px rgba(108,99,255,0.45);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff; transition: var(--transition);
+            border: none;
+        }
+        .fab-btn:hover { transform: scale(1.05); box-shadow: 0 12px 32px rgba(108,99,255,0.55); }
+        .fab-btn:active { transform: scale(0.96); }
+        .fab-btn .material-icons-round { font-size: 24px; transition: transform 0.3s; }
+        .fab-btn.open .material-icons-round { transform: rotate(45deg); }
+
+        .fab-menu {
+            position: absolute; bottom: 64px; right: 0;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            min-width: 190px;
+            display: none;
+            animation: fabMenuIn 0.2s ease;
+        }
+        @keyframes fabMenuIn {
+            from { opacity: 0; transform: translateY(10px) scale(0.95); }
+            to { opacity: 1; transform: translateY(0) scale(1); }
+        }
+        .fab-menu.open { display: block; }
+
+        .fab-menu-item {
+            display: flex; align-items: center; gap: 12px;
+            padding: 13px 16px; cursor: pointer; color: var(--text);
+            font-size: 13px; font-weight: 500;
+            transition: background 0.2s;
+        }
+        .fab-menu-item:hover { background: var(--surface2); }
+        .fab-menu-item + .fab-menu-item { border-top: 1px solid var(--border); }
+        .fab-menu-item .material-icons-round { font-size: 18px; color: var(--accent2); }
+
+        /* ═══════════════════════════════════════
+           SIDEBAR
+        ═══════════════════════════════════════ */
+        .sidebar-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.6);
+            backdrop-filter: blur(4px);
+            z-index: 200;
+            display: none; opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .sidebar-overlay.open { display: block; opacity: 1; }
+
+        .sidebar {
+            position: fixed; top: 0; left: -290px; width: 290px;
+            height: 100%; background: var(--surface);
+            border-right: 1px solid var(--border);
+            z-index: 210;
+            transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            display: flex; flex-direction: column;
+            overflow: hidden;
+        }
+        .sidebar.open { left: 0; }
+
+        .sidebar-top {
+            padding: 20px 20px 16px;
+            border-bottom: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: space-between;
+        }
+
+        .sidebar-brand {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .sidebar-brand-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: linear-gradient(135deg, var(--accent), var(--accent3));
+            display: flex; align-items: center; justify-content: center;
+        }
+        .sidebar-brand-icon .material-icons-round { font-size: 18px; color: #fff; }
+        .sidebar-brand-name {
+            font-family: 'Syne', sans-serif;
+            font-size: 16px; font-weight: 700; color: var(--text);
+        }
+
+        .sidebar-close {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text3); transition: var(--transition);
+        }
+        .sidebar-close:hover { background: var(--surface2); color: var(--text); }
+
+        .sidebar-user {
+            padding: 16px 20px;
+            display: flex; align-items: center; gap: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sidebar-avatar {
+            width: 44px; height: 44px; border-radius: 50%;
+            overflow: hidden; border: 2px solid var(--border2);
+        }
+        .sidebar-avatar img { width: 100%; height: 100%; object-fit: cover; }
+        .sidebar-avatar-placeholder {
+            width: 100%; height: 100%;
+            background: linear-gradient(135deg, var(--accent), var(--accent3));
+            display: flex; align-items: center; justify-content: center;
+            font-size: 16px; font-weight: 700; color: #fff;
+        }
+        .sidebar-user-name { font-size: 14px; font-weight: 600; color: var(--text); }
+        .sidebar-user-email { font-size: 11px; color: var(--text3); margin-top: 2px; }
+
+        /* Storage bar */
+        .sidebar-storage {
+            margin: 0 16px; padding: 14px 16px;
+            background: var(--surface2);
+            border: 1px solid var(--border);
+            border-radius: var(--radius-lg);
+            margin-top: 16px;
+        }
+        .storage-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 10px;
+        }
+        .storage-label { font-size: 12px; font-weight: 600; color: var(--text); }
+        .storage-badge {
+            font-size: 11px; color: var(--accent2); font-weight: 600;
+        }
+        .storage-bar-track {
+            height: 5px; background: var(--surface3); border-radius: 3px; overflow: hidden;
+        }
+        .storage-bar-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--accent), var(--accent3));
+            border-radius: 3px;
+            width: 0%;
+            transition: width 1s ease;
+        }
+        .storage-desc {
+            font-size: 11px; color: var(--text3); margin-top: 6px;
+        }
+
+        .sidebar-nav { flex: 1; overflow-y: auto; padding: 12px 0; }
+        .sidebar-nav::-webkit-scrollbar { display: none; }
+
+        .nav-section-title {
+            padding: 8px 20px 4px;
+            font-size: 10px; font-weight: 700; color: var(--text3);
+            text-transform: uppercase; letter-spacing: 1px;
+        }
+
+        .nav-link {
+            display: flex; align-items: center; gap: 12px;
+            padding: 10px 20px; cursor: pointer; color: var(--text2);
+            font-size: 13px; font-weight: 500;
+            transition: var(--transition);
+            border-left: 3px solid transparent;
+        }
+        .nav-link:hover { background: var(--surface2); color: var(--text); }
+        .nav-link.active {
+            background: rgba(108,99,255,0.1);
+            color: var(--accent2);
+            border-left-color: var(--accent);
+        }
+        .nav-link .material-icons-round { font-size: 18px; }
+
+        .sidebar-footer {
+            padding: 16px; border-top: 1px solid var(--border);
+        }
+        .signout-btn {
+            display: flex; align-items: center; gap: 10px;
+            padding: 11px 16px; border-radius: var(--radius);
+            background: rgba(248,113,113,0.08);
+            border: 1px solid rgba(248,113,113,0.2);
+            color: var(--red); font-size: 13px; font-weight: 500;
+            cursor: pointer; width: 100%; transition: var(--transition);
+            font-family: 'Space Grotesk', sans-serif;
+        }
+        .signout-btn:hover { background: rgba(248,113,113,0.15); }
+
+        /* ═══════════════════════════════════════
+           MODALS & SHEETS
+        ═══════════════════════════════════════ */
+        .modal-overlay {
+            position: fixed; inset: 0;
+            background: rgba(0,0,0,0.65);
+            backdrop-filter: blur(6px);
+            z-index: 500;
+            display: none;
+            justify-content: flex-end;
+            flex-direction: column;
+            align-items: center;
+        }
+        .modal-overlay.open { display: flex; }
+
+        .bottom-sheet {
+            background: var(--surface);
+            border: 1px solid var(--border);
+            border-radius: 20px 20px 0 0;
+            width: 100%; max-width: 600px;
+            max-height: 85vh;
+            overflow-y: auto;
+            padding: 20px;
+            animation: sheetUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .bottom-sheet::-webkit-scrollbar { display: none; }
+        @keyframes sheetUp {
+            from { transform: translateY(100%); opacity: 0.5; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        .sheet-handle {
+            width: 36px; height: 4px; border-radius: 2px;
+            background: var(--border2); margin: 0 auto 20px;
+        }
+
+        .sheet-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 20px; padding-bottom: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .sheet-title {
+            font-family: 'Syne', sans-serif;
+            font-size: 17px; font-weight: 700; color: var(--text);
+        }
+        .sheet-close {
+            width: 30px; height: 30px; border-radius: 8px;
+            background: var(--surface2); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: var(--text3); transition: var(--transition);
+        }
+        .sheet-close:hover { color: var(--text); }
+
+        .sheet-action-list { display: flex; flex-direction: column; gap: 2px; }
+        .sheet-action {
+            display: flex; align-items: center; gap: 14px;
+            padding: 14px 12px; border-radius: var(--radius);
+            cursor: pointer; color: var(--text); font-size: 14px; font-weight: 500;
+            transition: background 0.2s;
+        }
+        .sheet-action:hover { background: var(--surface2); }
+        .sheet-action .material-icons-round { font-size: 20px; color: var(--text2); }
+        .sheet-action.danger { color: var(--red); }
+        .sheet-action.danger .material-icons-round { color: var(--red); }
+
+        /* File info rows */
+        .info-grid { display: flex; flex-direction: column; gap: 0; }
+        .info-row {
+            display: flex; justify-content: space-between;
+            padding: 12px 0; border-bottom: 1px solid var(--border);
+            font-size: 13px;
+        }
+        .info-row:last-child { border: none; }
+        .info-key { color: var(--text3); font-weight: 500; }
+        .info-val { color: var(--text); font-weight: 500; text-align: right; max-width: 60%; word-break: break-all; }
+
+        /* Sort options */
+        .sort-option {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 13px 12px; border-radius: var(--radius);
+            cursor: pointer; color: var(--text); font-size: 13px; font-weight: 500;
+            transition: background 0.2s;
+        }
+        .sort-option:hover { background: var(--surface2); }
+        .sort-option.active { color: var(--accent2); background: rgba(108,99,255,0.08); }
+        .sort-option .material-icons-round { font-size: 16px; color: var(--accent2); }
+
+        /* Settings items */
+        .settings-item {
+            display: flex; align-items: center; justify-content: space-between;
+            padding: 14px 12px; border-radius: var(--radius); cursor: pointer;
+            transition: background 0.2s;
+        }
+        .settings-item:hover { background: var(--surface2); }
+        .settings-item-left { display: flex; align-items: center; gap: 14px; }
+        .settings-item-icon {
+            width: 36px; height: 36px; border-radius: 10px;
+            background: var(--surface2); border: 1px solid var(--border);
+            display: flex; align-items: center; justify-content: center;
+        }
+        .settings-item-icon .material-icons-round { font-size: 18px; color: var(--accent2); }
+        .settings-item-title { font-size: 13px; font-weight: 600; color: var(--text); }
+        .settings-item-desc { font-size: 11px; color: var(--text3); margin-top: 1px; }
+
+        /* Toggle switch */
+        .toggle {
+            position: relative; width: 44px; height: 24px;
+            flex-shrink: 0;
+        }
+        .toggle input { opacity: 0; width: 0; height: 0; }
+        .toggle-track {
+            position: absolute; inset: 0;
+            background: var(--surface3); border-radius: 12px;
+            transition: background 0.3s;
+            border: 1px solid var(--border);
+            cursor: pointer;
+        }
+        .toggle-thumb {
+            position: absolute;
+            top: 3px; left: 3px;
+            width: 18px; height: 18px; border-radius: 50%;
+            background: var(--text3); transition: all 0.3s;
+        }
+        .toggle input:checked ~ .toggle-track { background: var(--accent); border-color: var(--accent); }
+        .toggle input:checked ~ .toggle-track .toggle-thumb {
+            left: calc(100% - 21px);
+            background: #fff;
+        }
+
+        /* ═══════════════════════════════════════
+           PROGRESS DIALOG
+        ═══════════════════════════════════════ */
+        .progress-dialog {
+            position: fixed; bottom: 90px; left: 50%;
+            transform: translateX(-50%);
+            width: calc(100% - 32px); max-width: 400px;
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: var(--radius-xl);
+            padding: 20px;
+            box-shadow: 0 16px 48px rgba(0,0,0,0.4);
+            z-index: 400;
+            display: none;
+        }
+
+        .progress-title-row {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 6px;
+        }
+        .progress-title { font-size: 14px; font-weight: 600; color: var(--text); }
+        .progress-pct { font-size: 14px; font-weight: 700; color: var(--accent2); }
+
+        .progress-filename {
+            font-size: 12px; color: var(--text3); margin-bottom: 12px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        .progress-bar-track {
+            height: 6px; background: var(--surface3); border-radius: 3px;
+            overflow: hidden; margin-bottom: 8px;
+        }
+        .progress-bar-fill {
+            height: 100%; width: 0%;
+            background: linear-gradient(90deg, var(--accent), var(--accent3));
+            border-radius: 3px; transition: width 0.3s;
+        }
+
+        .progress-stats {
+            display: flex; justify-content: space-between;
+            font-size: 11px; color: var(--text3); margin-bottom: 14px;
+        }
+
+        .progress-actions { display: flex; gap: 8px; }
+        .progress-btn {
+            flex: 1; height: 36px; border-radius: var(--radius);
+            font-family: 'Space Grotesk', sans-serif;
+            font-size: 13px; font-weight: 600; cursor: pointer;
+            transition: var(--transition); border: none;
+        }
+        .progress-btn-cancel {
+            background: var(--surface2); border: 1px solid var(--border);
+            color: var(--text2);
+        }
+        .progress-btn-cancel:hover { color: var(--red); border-color: var(--red); }
+        .progress-btn-pause {
+            background: var(--accent); color: #fff;
+        }
+        .progress-btn-pause:hover { background: #5854d6; }
+
+        /* ═══════════════════════════════════════
+           MEDIA VIEWER
+        ═══════════════════════════════════════ */
+        .media-viewer {
+            position: fixed; inset: 0;
+            background: #000;
+            z-index: 600;
+            display: none;
+            flex-direction: column;
+        }
+        .media-viewer.open { display: flex; }
+
+        .media-topbar {
+            padding: 14px 16px;
+            background: rgba(0,0,0,0.8);
+            backdrop-filter: blur(12px);
+            display: flex; align-items: center; justify-content: space-between;
+            flex-shrink: 0;
+            border-bottom: 1px solid rgba(255,255,255,0.08);
+        }
+        .media-title { font-size: 14px; font-weight: 500; color: #fff; flex: 1; margin: 0 12px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .media-topbar-btn {
+            width: 38px; height: 38px; border-radius: 10px;
+            background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: center;
+            cursor: pointer; color: #fff; transition: var(--transition);
+        }
+        .media-topbar-btn:hover { background: rgba(255,255,255,0.2); }
+
+        .media-frame {
+            flex: 1; border: none; background: #111;
+        }
+
+        /* ═══════════════════════════════════════
+           TOAST NOTIFICATIONS
+        ═══════════════════════════════════════ */
+        .toast-container {
+            position: fixed; top: 16px; left: 50%;
+            transform: translateX(-50%);
+            z-index: 9999;
+            display: flex; flex-direction: column; gap: 8px;
+            pointer-events: none;
+        }
+        .toast {
+            background: var(--surface);
+            border: 1px solid var(--border2);
+            border-radius: 12px;
+            padding: 12px 16px;
+            display: flex; align-items: center; gap: 10px;
+            font-size: 13px; font-weight: 500; color: var(--text);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+            animation: toastIn 0.3s ease, toastOut 0.3s ease 2.7s forwards;
+            pointer-events: all; min-width: 240px;
+        }
+        .toast .material-icons-round { font-size: 18px; }
+        .toast.success .material-icons-round { color: var(--green); }
+        .toast.error .material-icons-round { color: var(--red); }
+        .toast.info .material-icons-round { color: var(--accent3); }
+        @keyframes toastIn {
+            from { opacity: 0; transform: translateY(-10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes toastOut {
+            from { opacity: 1; }
+            to { opacity: 0; transform: translateY(-10px); }
+        }
+
+        /* ═══════════════════════════════════════
+           MISC
+        ═══════════════════════════════════════ */
+        .hidden { display: none !important; }
+
+        /* Overlay click close */
+        .modal-overlay[data-modal] { cursor: default; }
+
+        /* Ripple animation for list items */
+        @keyframes ripple {
+            from { transform: scale(0); opacity: 0.5; }
+            to { transform: scale(2); opacity: 0; }
+        }
+
+        /* Stagger animation for file list */
+        .list-item, .grid-item, .gallery-item {
+            animation: itemIn 0.25s ease forwards;
+            opacity: 0;
+        }
+        @keyframes itemIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Section headers in gallery */
+        .gallery-date-header {
+            grid-column: 1 / -1;
+            font-size: 12px; font-weight: 700; color: var(--text3);
+            padding: 4px 0; letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+
+        /* Snackbar-style upload overlay */
+        #cancel-fab {
+            position: fixed; top: 16px; right: 16px;
+            width: 40px; height: 40px;
+            background: var(--red); border-radius: 12px;
+            display: none; align-items: center; justify-content: center;
+            cursor: pointer; z-index: 450; box-shadow: 0 4px 16px rgba(248,113,113,0.4);
+        }
+        #cancel-fab .material-icons-round { color: #fff; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<!-- Ambient bg -->
+<div class="bg-ambient">
+    <div class="bg-orb bg-orb-1"></div>
+    <div class="bg-orb bg-orb-2"></div>
+    <div class="bg-orb bg-orb-3"></div>
+</div>
+
+<!-- Toast container -->
+<div class="toast-container" id="toast-container"></div>
+
+<!-- Upload cancel FAB -->
+<div id="cancel-fab" onclick="Upload.cancel()">
+    <span class="material-icons-round">close</span>
+</div>
+
+<!-- ═══════════════ SCREEN: LOCK ═══════════════ -->
+<div id="lock-screen" class="screen active">
+    <div class="lock-wrapper">
+        <div class="lock-logo-icon">
+            <span class="material-icons-round">cloud_done</span>
+        </div>
+        <div class="lock-app-name">Drive OS Pro+</div>
+        <div class="lock-subtitle">Secure · Fast · Elegant</div>
+
+        <div class="pin-dots" id="pin-dots">
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+            <div class="dot"></div>
+        </div>
+
+        <div class="keypad">
+            <div class="key" onclick="Keypad.press(1)">1</div>
+            <div class="key" onclick="Keypad.press(2)">2</div>
+            <div class="key" onclick="Keypad.press(3)">3</div>
+            <div class="key" onclick="Keypad.press(4)">4</div>
+            <div class="key" onclick="Keypad.press(5)">5</div>
+            <div class="key" onclick="Keypad.press(6)">6</div>
+            <div class="key" onclick="Keypad.press(7)">7</div>
+            <div class="key" onclick="Keypad.press(8)">8</div>
+            <div class="key" onclick="Keypad.press(9)">9</div>
+            <div class="key clear" onclick="Keypad.clear()">CLEAR</div>
+            <div class="key" onclick="Keypad.press(0)">0</div>
+            <div class="key backspace" onclick="Keypad.backspace()">
+                <span class="material-icons-round">backspace</span>
+            </div>
+        </div>
+
+        <div class="biometric-row">
+            <div class="biometric-btn" onclick="Keypad.useFingerprint()">
+                <span class="material-icons-round">fingerprint</span>
+                Use Fingerprint
+            </div>
+        </div>
+
+        <div class="pin-footer">
+            Forgot PIN? <a href="#" onclick="Keypad.resetPin()">Reset</a>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ SCREEN: AUTH ═══════════════ -->
+<div id="auth-screen" class="screen">
+    <div class="auth-card">
+        <div class="auth-logo">
+            <span class="material-icons-round">cloud_done</span>
+        </div>
+        <div class="auth-title">Welcome Back</div>
+        <p class="auth-subtitle">Sign in to access your Google Drive securely</p>
+        <button class="google-signin-btn" onclick="Auth.signIn()">
+            <svg class="google-logo" viewBox="0 0 24 24">
+                <path fill="#4285F4" d="M23.74 12.27c0-.79-.07-1.54-.19-2.27H12v4.3h6.59a5.64 5.64 0 01-2.44 3.7v3.07h3.95c2.31-2.13 3.64-5.27 3.64-8.8z"/>
+                <path fill="#34A853" d="M12 24c3.31 0 6.09-1.1 8.12-2.97l-3.95-3.07a7.15 7.15 0 01-10.67-3.75H1.39v3.17A12 12 0 0012 24z"/>
+                <path fill="#FBBC05" d="M5.5 14.21a7.15 7.15 0 010-4.42V6.62H1.39a12 12 0 000 10.76l4.11-3.17z"/>
+                <path fill="#EA4335" d="M12 4.76a6.48 6.48 0 014.59 1.79l3.43-3.43A11.52 11.52 0 0012 0 12 12 0 001.39 6.62L5.5 9.79A7.16 7.16 0 0112 4.76z"/>
+            </svg>
+            Continue with Google
+        </button>
+        <div class="auth-terms">By signing in, you agree to our Terms of Service and Privacy Policy</div>
+    </div>
+</div>
+
+<!-- ═══════════════ SCREEN: APP ═══════════════ -->
+<div id="app-screen" class="screen">
+
+    <!-- Sidebar -->
+    <div class="sidebar-overlay" id="sidebar-overlay" onclick="UI.closeSidebar()"></div>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-top">
+            <div class="sidebar-brand">
+                <div class="sidebar-brand-icon">
+                    <span class="material-icons-round">cloud_done</span>
+                </div>
+                <div class="sidebar-brand-name">Drive OS</div>
+            </div>
+            <div class="sidebar-close" onclick="UI.closeSidebar()">
+                <span class="material-icons-round" style="font-size:18px">close</span>
+            </div>
+        </div>
+
+        <div class="sidebar-user">
+            <div class="sidebar-avatar" id="sidebar-avatar-wrap">
+                <div class="sidebar-avatar-placeholder" id="sidebar-initial">U</div>
+            </div>
+            <div>
+                <div class="sidebar-user-name" id="sidebar-name">User</div>
+                <div class="sidebar-user-email" id="sidebar-email">user@gmail.com</div>
+            </div>
+        </div>
+
+        <div class="sidebar-storage">
+            <div class="storage-header">
+                <span class="storage-label">Storage</span>
+                <span class="storage-badge" id="storage-label-badge">— GB used</span>
+            </div>
+            <div class="storage-bar-track">
+                <div class="storage-bar-fill" id="storage-bar-fill"></div>
+            </div>
+            <div class="storage-desc" id="storage-desc">Loading storage info...</div>
+        </div>
+
+        <nav class="sidebar-nav">
+            <div class="nav-section-title">Navigation</div>
+            <div class="nav-link active" onclick="Nav.switchTab('home', this)">
+                <span class="material-icons-round">home</span> My Drive
+            </div>
+            <div class="nav-link" onclick="Nav.switchTab('recent', this)">
+                <span class="material-icons-round">schedule</span> Recent
+            </div>
+            <div class="nav-link" onclick="Nav.switchTab('photos', this)">
+                <span class="material-icons-round">photo_library</span> Photos
+            </div>
+            <div class="nav-link" onclick="Nav.switchTab('vault', this)">
+                <span class="material-icons-round">lock</span> Vault
+            </div>
+            <div class="nav-link" onclick="Nav.switchTab('shared', this)">
+                <span class="material-icons-round">people</span> Shared with Me
+            </div>
+
+            <div class="nav-section-title" style="margin-top:8px">Views</div>
+            <div class="nav-link" onclick="UI.switchView('list'); UI.closeSidebar()">
+                <span class="material-icons-round">view_list</span> List View
+            </div>
+            <div class="nav-link" onclick="UI.switchView('grid'); UI.closeSidebar()">
+                <span class="material-icons-round">grid_view</span> Grid View
+            </div>
+            <div class="nav-link" onclick="UI.switchView('gallery'); UI.closeSidebar()">
+                <span class="material-icons-round">collections</span> Gallery View
+            </div>
+
+            <div class="nav-section-title" style="margin-top:8px">Sort By</div>
+            <div class="nav-link" onclick="Drive.applySort('name','asc'); UI.closeSidebar()">
+                <span class="material-icons-round">sort_by_alpha</span> Name (A–Z)
+            </div>
+            <div class="nav-link" onclick="Drive.applySort('date','desc'); UI.closeSidebar()">
+                <span class="material-icons-round">schedule</span> Newest First
+            </div>
+            <div class="nav-link" onclick="Drive.applySort('size','desc'); UI.closeSidebar()">
+                <span class="material-icons-round">data_usage</span> Largest First
+            </div>
+
+            <div class="nav-section-title" style="margin-top:8px">More</div>
+            <div class="nav-link" onclick="Settings.open(); UI.closeSidebar()">
+                <span class="material-icons-round">settings</span> Settings
+            </div>
+            <div class="nav-link" onclick="Settings.storageDetails()">
+                <span class="material-icons-round">storage</span> Storage Details
+            </div>
+            <div class="nav-link" onclick="Settings.about()">
+                <span class="material-icons-round">info</span> About
+            </div>
+        </nav>
+
+        <div class="sidebar-footer">
+            <button class="signout-btn" onclick="Auth.logout()">
+                <span class="material-icons-round" style="font-size:18px">logout</span>
+                Sign Out
+            </button>
+        </div>
+    </div>
+
+    <!-- App Header -->
+    <div class="app-header">
+        <div class="menu-btn" onclick="UI.openSidebar()">
+            <span class="material-icons-round">menu</span>
+        </div>
+        <div class="search-wrap">
+            <span class="material-icons-round">search</span>
+            <input type="text" class="search-input" id="search-input"
+                   placeholder="Search files..."
+                   onkeyup="Drive.search(this.value)">
+        </div>
+        <div class="header-actions">
+            <div class="header-icon-btn" onclick="Drive.refresh()" title="Refresh">
+                <span class="material-icons-round">refresh</span>
+            </div>
+            <div class="user-avatar-btn" onclick="UI.openSidebar()">
+                <div class="user-avatar-placeholder" id="header-initial">U</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toolbar -->
+    <div class="toolbar">
+        <div class="breadcrumb-area">
+            <div class="back-btn hidden" id="back-btn" onclick="Drive.goBack()">
+                <span class="material-icons-round">arrow_back</span>
+            </div>
+            <div id="breadcrumb">
+                <span class="crumb-item active" onclick="Drive.load('root')">My Drive</span>
+            </div>
+        </div>
+        <div class="toolbar-right">
+            <div class="toolbar-btn" onclick="Drive.sortMenu()">
+                <span class="material-icons-round">swap_vert</span>
+            </div>
+            <div class="view-switcher">
+                <div class="view-btn active" data-view="list" onclick="UI.switchView('list')" title="List">
+                    <span class="material-icons-round">view_list</span>
+                </div>
+                <div class="view-btn" data-view="grid" onclick="UI.switchView('grid')" title="Grid">
+                    <span class="material-icons-round">grid_view</span>
+                </div>
+                <div class="view-btn" data-view="gallery" onclick="UI.switchView('gallery')" title="Gallery">
+                    <span class="material-icons-round">photo_library</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- File Area -->
+    <div class="file-area" id="file-area">
+        <div class="loading-state">
+            <div class="spinner"></div>
+            <span style="font-size:13px;color:var(--text3)">Loading files...</span>
+        </div>
+    </div>
+
+    <!-- Bottom Nav -->
+    <div class="bottom-nav">
+        <div class="nav-tab active" id="tab-home" onclick="Nav.switchTab('home', this)">
+            <div class="nav-tab-icon-wrap"><span class="material-icons-round">home</span></div>
+            Home
+        </div>
+        <div class="nav-tab" id="tab-photos" onclick="Nav.switchTab('photos', this)">
+            <div class="nav-tab-icon-wrap"><span class="material-icons-round">photo</span></div>
+            Photos
+        </div>
+        <div class="nav-tab" id="tab-vault" onclick="Nav.switchTab('vault', this)">
+            <div class="nav-tab-icon-wrap"><span class="material-icons-round">lock</span></div>
+            Vault
+        </div>
+        <div class="nav-tab" id="tab-shared" onclick="Nav.switchTab('shared', this)">
+            <div class="nav-tab-icon-wrap"><span class="material-icons-round">people</span></div>
+            Shared
+        </div>
+        <div class="nav-tab" id="tab-recent" onclick="Nav.switchTab('recent', this)">
+            <div class="nav-tab-icon-wrap"><span class="material-icons-round">schedule</span></div>
+            Recent
+        </div>
+    </div>
+
+    <!-- FAB -->
+    <div class="fab-wrap">
+        <div class="fab-menu" id="fab-menu">
+            <label class="fab-menu-item">
+                <span class="material-icons-round">upload_file</span>
+                Upload File
+                <input type="file" hidden multiple onchange="Upload.handleFiles(this.files)">
+            </label>
+            <label class="fab-menu-item">
+                <span class="material-icons-round">drive_folder_upload</span>
+                Upload Folder
+                <input type="file" hidden webkitdirectory onchange="Upload.handleFiles(this.files)">
+            </label>
+            <div class="fab-menu-item" onclick="Ops.createFolder()">
+                <span class="material-icons-round">create_new_folder</span>
+                New Folder
+            </div>
+            <div class="fab-menu-item" onclick="Ops.createDocument()">
+                <span class="material-icons-round">description</span>
+                New Document
+            </div>
+        </div>
+        <button class="fab-btn" id="fab-btn" onclick="UI.toggleFab()">
+            <span class="material-icons-round">add</span>
+        </button>
+    </div>
+
+</div>
+
+<!-- ═══════════════ MODALS ═══════════════ -->
+
+<!-- Context Menu -->
+<div class="modal-overlay" id="ctx-modal" onclick="if(event.target===this)UI.closeModal('ctx-modal')">
+    <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span class="sheet-title" id="ctx-name" style="font-size:14px;font-weight:600;max-width:80%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">Filename</span>
+            <div class="sheet-close" onclick="UI.closeModal('ctx-modal')">
+                <span class="material-icons-round" style="font-size:16px">close</span>
+            </div>
+        </div>
+        <div class="sheet-action-list">
+            <div class="sheet-action" onclick="Ops.preview()">
+                <span class="material-icons-round">visibility</span> Preview
+            </div>
+            <div class="sheet-action" onclick="Ops.download()">
+                <span class="material-icons-round">download</span> Download
+            </div>
+            <div class="sheet-action" onclick="Ops.share()">
+                <span class="material-icons-round">share</span> Share Link
+            </div>
+            <div class="sheet-action" onclick="Ops.rename()">
+                <span class="material-icons-round">edit</span> Rename
+            </div>
+            <div class="sheet-action" onclick="Ops.info()">
+                <span class="material-icons-round">info</span> File Info
+            </div>
+            <div class="sheet-action danger" onclick="Ops.delete()">
+                <span class="material-icons-round">delete</span> Delete
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- File Info -->
+<div class="modal-overlay" id="info-modal" onclick="if(event.target===this)UI.closeModal('info-modal')">
+    <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span class="sheet-title">File Details</span>
+            <div class="sheet-close" onclick="UI.closeModal('info-modal')">
+                <span class="material-icons-round" style="font-size:16px">close</span>
+            </div>
+        </div>
+        <div class="info-grid">
+            <div class="info-row"><span class="info-key">Name</span><span class="info-val" id="info-name">–</span></div>
+            <div class="info-row"><span class="info-key">Type</span><span class="info-val" id="info-type">–</span></div>
+            <div class="info-row"><span class="info-key">Size</span><span class="info-val" id="info-size">–</span></div>
+            <div class="info-row"><span class="info-key">Created</span><span class="info-val" id="info-created">–</span></div>
+            <div class="info-row"><span class="info-key">Modified</span><span class="info-val" id="info-modified">–</span></div>
+            <div class="info-row"><span class="info-key">Location</span><span class="info-val" id="info-location">My Drive</span></div>
+            <div class="info-row"><span class="info-key">ID</span><span class="info-val" id="info-id" style="font-size:10px">–</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Sort Modal -->
+<div class="modal-overlay" id="sort-modal" onclick="if(event.target===this)UI.closeModal('sort-modal')">
+    <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span class="sheet-title">Sort By</span>
+            <div class="sheet-close" onclick="UI.closeModal('sort-modal')">
+                <span class="material-icons-round" style="font-size:16px">close</span>
+            </div>
+        </div>
+        <div id="sort-list">
+            <div class="sort-option" onclick="Drive.applySort('name','asc')"><span>Name (A to Z)</span><span class="material-icons-round hidden" id="sort-name-asc">check</span></div>
+            <div class="sort-option" onclick="Drive.applySort('name','desc')"><span>Name (Z to A)</span><span class="material-icons-round hidden" id="sort-name-desc">check</span></div>
+            <div class="sort-option" onclick="Drive.applySort('size','asc')"><span>Size (Small to Large)</span><span class="material-icons-round hidden" id="sort-size-asc">check</span></div>
+            <div class="sort-option" onclick="Drive.applySort('size','desc')"><span>Size (Large to Small)</span><span class="material-icons-round hidden" id="sort-size-desc">check</span></div>
+            <div class="sort-option" onclick="Drive.applySort('date','desc')"><span>Date (Newest First)</span><span class="material-icons-round hidden" id="sort-date-desc">check</span></div>
+            <div class="sort-option" onclick="Drive.applySort('date','asc')"><span>Date (Oldest First)</span><span class="material-icons-round hidden" id="sort-date-asc">check</span></div>
+        </div>
+    </div>
+</div>
+
+<!-- Settings Modal -->
+<div class="modal-overlay" id="settings-modal" onclick="if(event.target===this)UI.closeModal('settings-modal')">
+    <div class="bottom-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+            <span class="sheet-title">Settings</span>
+            <div class="sheet-close" onclick="UI.closeModal('settings-modal')">
+                <span class="material-icons-round" style="font-size:16px">close</span>
+            </div>
+        </div>
+
+        <div class="settings-item" onclick="event.stopPropagation()">
+            <div class="settings-item-left">
+                <div class="settings-item-icon"><span class="material-icons-round">dark_mode</span></div>
+                <div>
+                    <div class="settings-item-title">Dark Mode</div>
+                    <div class="settings-item-desc">Toggle dark/light theme</div>
+                </div>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="dark-mode" onchange="Settings.toggleDarkMode()">
+                <div class="toggle-track">
+                    <div class="toggle-thumb"></div>
+                </div>
+            </label>
+        </div>
+
+        <div class="settings-item" onclick="event.stopPropagation()">
+            <div class="settings-item-left">
+                <div class="settings-item-icon"><span class="material-icons-round">open_in_new</span></div>
+                <div>
+                    <div class="settings-item-title">External Viewer</div>
+                    <div class="settings-item-desc">Open files in new tab</div>
+                </div>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="ext-player" onchange="Settings.save()">
+                <div class="toggle-track">
+                    <div class="toggle-thumb"></div>
+                </div>
+            </label>
+        </div>
+
+        <div class="settings-item" onclick="event.stopPropagation()">
+            <div class="settings-item-left">
+                <div class="settings-item-icon"><span class="material-icons-round">sync</span></div>
+                <div>
+                    <div class="settings-item-title">Auto-Sync</div>
+                    <div class="settings-item-desc">Sync files automatically</div>
+                </div>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="auto-sync" onchange="Settings.save()">
+                <div class="toggle-track">
+                    <div class="toggle-thumb"></div>
+                </div>
+            </label>
+        </div>
+
+        <div class="settings-item" onclick="Settings.storageDetails()">
+            <div class="settings-item-left">
+                <div class="settings-item-icon"><span class="material-icons-round">storage</span></div>
+                <div>
+                    <div class="settings-item-title">Storage Details</div>
+                    <div class="settings-item-desc">View usage breakdown</div>
+                </div>
+            </div>
+            <span class="material-icons-round" style="color:var(--text3);font-size:18px">chevron_right</span>
+        </div>
+
+        <div class="settings-item" onclick="Settings.security()">
+            <div class="settings-item-left">
+                <div class="settings-item-icon"><span class="material-icons-round">security</span></div>
+                <div>
+                    <div class="settings-item-title">Security & Privacy</div>
+                    <div class="settings-item-desc">PIN, biometric settings</div>
+                </div>
+            </div>
+            <span class="material-icons-round" style="color:var(--text3);font-size:18px">chevron_right</span>
+        </div>
+
+        <div class="settings-item" onclick="Settings.about()">
+            <div class="settings-item-left">
+                <div class="settings-item-icon"><span class="material-icons-round">info</span></div>
+                <div>
+                    <div class="settings-item-title">About Drive OS</div>
+                    <div class="settings-item-desc">Version, licenses</div>
+                </div>
+            </div>
+            <span class="material-icons-round" style="color:var(--text3);font-size:18px">chevron_right</span>
+        </div>
+    </div>
+</div>
+
+<!-- Progress Dialog -->
+<div class="progress-dialog" id="progress-modal">
+    <div class="progress-title-row">
+        <span class="progress-title" id="prog-title">Uploading...</span>
+        <span class="progress-pct" id="prog-pct">0%</span>
+    </div>
+    <div class="progress-filename" id="prog-file">Preparing...</div>
+    <div class="progress-bar-track">
+        <div class="progress-bar-fill" id="prog-bar"></div>
+    </div>
+    <div class="progress-stats">
+        <span id="prog-size">0 B / 0 B</span>
+        <span id="prog-speed">Speed: — KB/s</span>
+        <span id="prog-time">ETA: —</span>
+    </div>
+    <div class="progress-actions">
+        <button class="progress-btn progress-btn-cancel" onclick="Upload.cancel()">Cancel</button>
+        <button class="progress-btn progress-btn-pause" id="pause-btn" onclick="Upload.pause()">Pause</button>
+    </div>
+</div>
+
+<!-- Media Viewer -->
+<div class="media-viewer" id="media-view">
+    <div class="media-topbar">
+        <div class="media-topbar-btn" onclick="UI.closeMedia()">
+            <span class="material-icons-round">arrow_back</span>
+        </div>
+        <div class="media-title" id="media-title">Preview</div>
+        <div class="media-topbar-btn" onclick="Ops.openExternal()">
+            <span class="material-icons-round">open_in_new</span>
+        </div>
+    </div>
+    <iframe id="media-frame" class="media-frame" src=""></iframe>
+</div>
+
+<script>
+/* ═══════════════════════════════════════════════
+   CONFIG
+═══════════════════════════════════════════════ */
+const CONFIG = {
+    clientId: '318681315152-65e9kofptt4c3bk3kmlj9gmksnasu347.apps.googleusercontent.com',
+    scopes: 'https://www.googleapis.com/auth/drive https://www.googleapis.com/auth/userinfo.email',
+    vaultId: '1zIyinAqjQv96QBSuanFS2F0USaG66GPn'
+};
+
+const STATE = {
+    token: localStorage.getItem('g_token'),
+    currFolder: 'root',
+    folderStack: [],
+    files: [],
+    selected: null,
+    viewMode: 'list',
+    sortBy: 'name',
+    sortOrder: 'asc',
+    theme: localStorage.getItem('theme') || 'dark',
+    settings: JSON.parse(localStorage.getItem('d_settings') || '{"extPlayer":false,"autoSync":true}'),
+    uploadQueue: [],
+    currentUpload: null,
+    uploadCanceled: false
+};
+
+/* ═══════════════════════════════════════════════
+   TOAST
+═══════════════════════════════════════════════ */
+const Toast = {
+    show: (msg, type = 'info') => {
+        const icons = { success: 'check_circle', error: 'error', info: 'info' };
+        const container = document.getElementById('toast-container');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        toast.innerHTML = `<span class="material-icons-round">${icons[type]}</span>${msg}`;
+        container.appendChild(toast);
+        setTimeout(() => toast.remove(), 3000);
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   KEYPAD
+═══════════════════════════════════════════════ */
+const Keypad = {
+    input: "",
+    press(num) {
+        if (this.input.length < 4) {
+            this.input += num;
+            this.updateDots();
+            if (this.input.length === 4) setTimeout(() => this.check(), 200);
+        }
+    },
+    clear() { this.input = ""; this.updateDots(); },
+    backspace() {
+        if (this.input.length > 0) {
+            this.input = this.input.slice(0, -1);
+            this.updateDots();
+        }
+    },
+    updateDots() {
+        document.querySelectorAll('.dot').forEach((d, i) => {
+            d.classList.toggle('filled', i < this.input.length);
+            d.classList.remove('error');
+        });
+    },
+    check() {
+        const stored = localStorage.getItem('app_pin');
+        const hash = btoa(this.input);
+        if (!stored) {
+            localStorage.setItem('app_pin', hash);
+            Toast.show('PIN set successfully', 'success');
+            Auth.check();
+        } else if (stored === hash) {
+            Auth.check();
+        } else {
+            document.querySelectorAll('.dot').forEach(d => d.classList.add('error'));
+            setTimeout(() => { this.clear(); }, 700);
+            Toast.show('Wrong PIN, try again', 'error');
+        }
+    },
+    useFingerprint() {
+        if (window.PublicKeyCredential) {
+            Toast.show('Fingerprint authentication not configured', 'info');
+        } else {
+            Toast.show('Fingerprint not supported on this device', 'error');
+        }
+    },
+    resetPin() {
+        if (confirm('Reset PIN? You will need to sign in again.')) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   AUTH
+═══════════════════════════════════════════════ */
+let tokenClient;
+const Auth = {
+    init() { /* overridden below after object definition */ },
+    check() {
+        const exp = localStorage.getItem('g_exp');
+        if (STATE.token && exp && Date.now() < Number(exp)) {
+            UI.switchScreen('app-screen');
+            Drive.load('root');
+            Auth.loadProfile();
+            Auth.loadStorage();
+        } else {
+            UI.switchScreen('auth-screen');
+        }
+    },
+    signIn() { /* overridden below */ },
+    loadProfile() {
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+            headers: { 'Authorization': `Bearer ${STATE.token}` }
+        }).then(r => r.json()).then(d => {
+            const name = d.name || 'User';
+            const email = d.email || '';
+            const initial = name.charAt(0).toUpperCase();
+
+            document.getElementById('sidebar-name').textContent = name;
+            document.getElementById('sidebar-email').textContent = email;
+            document.getElementById('sidebar-initial').textContent = initial;
+            document.getElementById('header-initial').textContent = initial;
+
+            if (d.picture) {
+                const avatarWrap = document.getElementById('sidebar-avatar-wrap');
+                avatarWrap.innerHTML = `<img src="${d.picture}" alt="${name}">`;
+
+                const headerBtn = document.querySelector('.user-avatar-btn');
+                headerBtn.innerHTML = `<img src="${d.picture}" alt="${name}" style="width:100%;height:100%;object-fit:cover;border-radius:50%">`;
+            }
+        }).catch(() => {});
+    },
+    loadStorage() {
+        fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+            headers: { 'Authorization': `Bearer ${STATE.token}` }
+        }).then(r => r.json()).then(d => {
+            const { usage, limit } = d.storageQuota;
+            const pct = Math.min((usage / limit) * 100, 100).toFixed(1);
+            const usedStr = Ops.formatSize(usage);
+            const limitStr = Ops.formatSize(limit);
+            document.getElementById('storage-label-badge').textContent = `${usedStr} used`;
+            document.getElementById('storage-bar-fill').style.width = pct + '%';
+            document.getElementById('storage-desc').textContent = `${usedStr} of ${limitStr} (${pct}%)`;
+        }).catch(() => {});
+    },
+    logout() {
+        if (confirm('Sign out of Drive OS?')) {
+            localStorage.clear();
+            location.reload();
+        }
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   DRIVE ENGINE
+═══════════════════════════════════════════════ */
+const Drive = {
+    async load(id, name) {
+        STATE.currFolder = id;
+        const area = document.getElementById('file-area');
+        area.innerHTML = `<div class="loading-state"><div class="spinner"></div><span style="font-size:13px;color:var(--text3)">Loading files...</span></div>`;
+
+        document.getElementById('back-btn').classList.toggle('hidden', id === 'root');
+        this.updateBreadcrumb(id, name);
+
+        const q = `'${id}' in parents and trashed = false`;
+        const fields = "files(id,name,mimeType,size,iconLink,thumbnailLink,webViewLink,webContentLink,createdTime,modifiedTime,shared)";
+        const url = `https://www.googleapis.com/drive/v3/files?q=${encodeURIComponent(q)}&fields=${encodeURIComponent(fields)}&pageSize=1000`;
+
+        try {
+            const res = await fetch(url, { headers: { 'Authorization': `Bearer ${STATE.token}` } });
+            if (!res.ok) throw new Error('HTTP ' + res.status);
+            const data = await res.json();
+            STATE.files = data.files || [];
+            this.applyCurrentSort();
+            this.render(STATE.files);
+        } catch (e) {
+            area.innerHTML = `<div class="empty-state">
+                <div class="empty-icon-wrap"><span class="material-icons-round">error_outline</span></div>
+                <div class="empty-title">Failed to load</div>
+                <div class="empty-desc">Check your connection and try again</div>
+            </div>`;
+        }
+    },
+
+    render(files) {
+        const area = document.getElementById('file-area');
+        area.innerHTML = '';
+
+        if (files.length === 0) {
+            area.innerHTML = `<div class="empty-state">
+                <div class="empty-icon-wrap"><span class="material-icons-round">folder_open</span></div>
+                <div class="empty-title">No files here</div>
+                <div class="empty-desc">This folder is empty</div>
+            </div>`;
+            return;
+        }
+
+        const container = document.createElement('div');
+
+        if (STATE.viewMode === 'list') {
+            container.className = 'file-list-view';
+            files.forEach((f, i) => {
+                const el = this.buildListItem(f);
+                el.style.animationDelay = Math.min(i * 0.03, 0.5) + 's';
+                container.appendChild(el);
+            });
+        } else if (STATE.viewMode === 'grid') {
+            container.className = 'file-grid-view';
+            files.forEach((f, i) => {
+                const el = this.buildGridItem(f);
+                el.style.animationDelay = Math.min(i * 0.04, 0.6) + 's';
+                container.appendChild(el);
+            });
+        } else if (STATE.viewMode === 'gallery') {
+            const images = files.filter(f => f.mimeType && f.mimeType.includes('image'));
+            if (images.length === 0) {
+                area.innerHTML = `<div class="empty-state">
+                    <div class="empty-icon-wrap"><span class="material-icons-round">photo</span></div>
+                    <div class="empty-title">No images found</div>
+                    <div class="empty-desc">No image files in this folder</div>
+                </div>`;
+                return;
+            }
+            container.className = 'file-gallery-view';
+            images.forEach((f, i) => {
+                const el = this.buildGalleryItem(f);
+                el.style.animationDelay = Math.min(i * 0.04, 0.6) + 's';
+                container.appendChild(el);
+            });
+        }
+
+        area.appendChild(container);
+    },
+
+    buildListItem(f) {
+        const isDir = f.mimeType === 'application/vnd.google-apps.folder';
+        const { icon, cls } = this.getIconInfo(f);
+        const size = isDir ? 'Folder' : Ops.formatSize(f.size);
+        const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '–';
+
+        const el = document.createElement('div');
+        el.className = 'list-item';
+        el.innerHTML = `
+            <div class="file-icon-wrap ${cls}">
+                <span class="material-icons-round">${icon}</span>
+            </div>
+            <div class="item-text">
+                <span class="item-name">${this.escHTML(f.name)}</span>
+                <span class="item-meta"><span>${size}</span><span style="color:var(--text3)">·</span><span>${date}</span></span>
+            </div>
+            <div class="item-actions">
+                <div class="item-action-btn" onclick="event.stopPropagation();Ops.menu('${f.id}')">
+                    <span class="material-icons-round">more_vert</span>
+                </div>
+            </div>
+        `;
+        el.onclick = () => isDir ? this.openFolder(f) : Ops.previewFile(f);
+        return el;
+    },
+
+    buildGridItem(f) {
+        const isDir = f.mimeType === 'application/vnd.google-apps.folder';
+        const { icon, cls } = this.getIconInfo(f);
+        const size = isDir ? '' : Ops.formatSize(f.size);
+
+        const el = document.createElement('div');
+        el.className = 'grid-item';
+        el.innerHTML = `
+            <div class="file-icon-wrap ${cls}">
+                <span class="material-icons-round">${icon}</span>
+            </div>
+            <div class="item-text">
+                <span class="item-name">${this.escHTML(f.name)}</span>
+                ${size ? `<span class="item-meta">${size}</span>` : ''}
+            </div>
+        `;
+        el.onclick = () => isDir ? this.openFolder(f) : Ops.previewFile(f);
+        return el;
+    },
+
+    buildGalleryItem(f) {
+        const thumb = f.thumbnailLink || `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
+        const el = document.createElement('div');
+        el.className = 'gallery-item';
+        el.innerHTML = `
+            <img src="${thumb}" alt="${this.escHTML(f.name)}" loading="lazy">
+            <div class="gallery-overlay">
+                <div class="gallery-name">${this.escHTML(f.name)}</div>
+            </div>
+        `;
+        el.onclick = () => Ops.previewFile(f);
+        return el;
+    },
+
+    getIconInfo(f) {
+        const isDir = f.mimeType === 'application/vnd.google-apps.folder';
+        if (isDir) return { icon: 'folder', cls: 'icon-folder' };
+        if (f.mimeType.includes('image')) return { icon: 'image', cls: 'icon-image' };
+        if (f.mimeType.includes('video')) return { icon: 'play_circle', cls: 'icon-video' };
+        if (f.mimeType.includes('pdf')) return { icon: 'picture_as_pdf', cls: 'icon-pdf' };
+        if (f.mimeType.includes('audio')) return { icon: 'music_note', cls: 'icon-audio' };
+        if (f.mimeType.includes('document') || f.mimeType.includes('word') || f.mimeType.includes('text')) return { icon: 'description', cls: 'icon-doc' };
+        return { icon: 'insert_drive_file', cls: 'icon-default' };
+    },
+
+    escHTML(str) {
+        return String(str || '').replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+    },
+
+    openFolder(f) {
+        STATE.folderStack.push({ id: STATE.currFolder, name: document.getElementById('breadcrumb').querySelector('.crumb-item.active')?.textContent || 'Folder' });
+        this.load(f.id, f.name);
+    },
+
+    goBack() {
+        if (STATE.folderStack.length > 0) {
+            const prev = STATE.folderStack.pop();
+            this.load(prev.id, prev.name);
+        } else {
+            this.load('root');
+        }
+    },
+
+    updateBreadcrumb(id, name) {
+        const b = document.getElementById('breadcrumb');
+        if (id === 'root') {
+            b.innerHTML = `<span class="crumb-item active" onclick="Drive.load('root')">My Drive</span>`;
+        } else {
+            b.innerHTML = `
+                <span class="crumb-item" onclick="Drive.load('root')">My Drive</span>
+                <span class="crumb-sep">/</span>
+                <span class="crumb-item active">${this.escHTML(name || 'Folder')}</span>
+            `;
+        }
+    },
+
+    search(query) {
+        const q = query.trim().toLowerCase();
+        if (!q) { this.render(STATE.files); return; }
+        this.render(STATE.files.filter(f => f.name.toLowerCase().includes(q)));
+    },
+
+    sortMenu() {
+        this.updateSortIcons();
+        UI.openModal('sort-modal');
+    },
+
+    applySort(by, order) {
+        STATE.sortBy = by; STATE.sortOrder = order;
+        this.applyCurrentSort();
+        this.render(STATE.files);
+        UI.closeModal('sort-modal');
+        localStorage.setItem('sort_pref', JSON.stringify({ by, order }));
+    },
+
+    applyCurrentSort() {
+        if (!STATE.files.length) return;
+        STATE.files.sort((a, b) => {
+            if (STATE.sortBy === 'name') {
+                const r = a.name.toLowerCase().localeCompare(b.name.toLowerCase());
+                return STATE.sortOrder === 'asc' ? r : -r;
+            } else if (STATE.sortBy === 'size') {
+                const r = (a.size || 0) - (b.size || 0);
+                return STATE.sortOrder === 'asc' ? r : -r;
+            } else if (STATE.sortBy === 'date') {
+                const r = new Date(a.modifiedTime) - new Date(b.modifiedTime);
+                return STATE.sortOrder === 'asc' ? r : -r;
+            }
+            return 0;
+        });
+    },
+
+    updateSortIcons() {
+        document.querySelectorAll('#sort-list .sort-option').forEach(o => {
+            o.classList.remove('active');
+            const icon = o.querySelector('.material-icons-round');
+            if (icon) icon.classList.add('hidden');
+        });
+        const activeId = `sort-${STATE.sortBy}-${STATE.sortOrder}`;
+        const el = document.getElementById(activeId);
+        if (el) {
+            el.classList.remove('hidden');
+            el.closest('.sort-option')?.classList.add('active');
+        }
+    },
+
+    refresh() { this.load(STATE.currFolder); }
+};
+
+/* ═══════════════════════════════════════════════
+   UPLOAD
+═══════════════════════════════════════════════ */
+const Upload = {
+    handleFiles(files) {
+        if (!files.length) return;
+        UI.closeFab();
+        document.getElementById('cancel-fab').style.display = 'flex';
+        STATE.uploadQueue = Array.from(files);
+        STATE.uploadCanceled = false;
+        this.processQueue();
+    },
+
+    async processQueue() {
+        if (STATE.uploadQueue.length === 0) {
+            document.getElementById('progress-modal').style.display = 'none';
+            document.getElementById('cancel-fab').style.display = 'none';
+            Drive.refresh();
+            Toast.show('Upload complete!', 'success');
+            return;
+        }
+
+        const file = STATE.uploadQueue.shift();
+        STATE.currentUpload = file;
+
+        const modal = document.getElementById('progress-modal');
+        modal.style.display = 'block';
+        document.getElementById('prog-title').textContent = `Uploading (${STATE.uploadQueue.length} remaining)`;
+        document.getElementById('prog-file').textContent = file.name;
+        document.getElementById('prog-bar').style.width = '0%';
+        document.getElementById('prog-pct').textContent = '0%';
+        document.getElementById('prog-size').textContent = `0 / ${Ops.formatSize(file.size)}`;
+        document.getElementById('prog-speed').textContent = 'Speed: —';
+        document.getElementById('prog-time').textContent = 'ETA: —';
+
+        const meta = { name: file.name, mimeType: file.type || 'application/octet-stream', parents: [STATE.currFolder] };
+
+        try {
+            const init = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=resumable', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify(meta)
+            });
+            const location = init.headers.get('Location');
+
+            await new Promise((resolve, reject) => {
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', location, true);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
+                let startTime = Date.now(), lastLoaded = 0, lastTime = Date.now(), speedSamples = [];
+
+                xhr.upload.onprogress = (e) => {
+                    if (STATE.uploadCanceled) { xhr.abort(); return; }
+                    if (!e.lengthComputable) return;
+
+                    const now = Date.now();
+                    const timeDiff = (now - lastTime) / 1000;
+                    if (timeDiff >= 0.5) {
+                        const speed = (e.loaded - lastLoaded) / timeDiff;
+                        speedSamples.push(speed);
+                        if (speedSamples.length > 5) speedSamples.shift();
+                        const avgSpeed = speedSamples.reduce((a, b) => a + b, 0) / speedSamples.length;
+                        const remaining = (e.total - e.loaded) / avgSpeed;
+                        document.getElementById('prog-speed').textContent = `${Ops.formatSize(avgSpeed)}/s`;
+                        if (remaining > 0 && remaining < 3600) {
+                            const m = Math.floor(remaining / 60), s = Math.floor(remaining % 60);
+                            document.getElementById('prog-time').textContent = `ETA: ${m > 0 ? m + 'm ' : ''}${s}s`;
+                        }
+                        lastLoaded = e.loaded; lastTime = now;
+                    }
+
+                    const pct = Math.floor((e.loaded / e.total) * 100);
+                    document.getElementById('prog-bar').style.width = pct + '%';
+                    document.getElementById('prog-pct').textContent = pct + '%';
+                    document.getElementById('prog-size').textContent = `${Ops.formatSize(e.loaded)} / ${Ops.formatSize(e.total)}`;
+                };
+
+                xhr.onload = () => xhr.status === 200 || xhr.status === 201 ? resolve() : reject();
+                xhr.onerror = reject;
+                xhr.send(file);
+            });
+        } catch (e) {
+            if (!STATE.uploadCanceled) Toast.show(`Failed to upload: ${file.name}`, 'error');
+        }
+
+        if (!STATE.uploadCanceled) setTimeout(() => this.processQueue(), 300);
+        else {
+            document.getElementById('progress-modal').style.display = 'none';
+            document.getElementById('cancel-fab').style.display = 'none';
+        }
+    },
+
+    cancel() {
+        STATE.uploadCanceled = true;
+        STATE.uploadQueue = [];
+        document.getElementById('progress-modal').style.display = 'none';
+        document.getElementById('cancel-fab').style.display = 'none';
+        Toast.show('Upload cancelled', 'info');
+    },
+
+    pause() { Toast.show('Pause/resume not supported yet', 'info'); }
+};
+
+/* ═══════════════════════════════════════════════
+   OPERATIONS
+═══════════════════════════════════════════════ */
+const Ops = {
+    menu(id) {
+        STATE.selected = STATE.files.find(f => f.id === id);
+        if (!STATE.selected) return;
+        document.getElementById('ctx-name').textContent = STATE.selected.name;
+        UI.openModal('ctx-modal');
+    },
+
+    previewFile(file) {
+        STATE.selected = file;
+        this.preview();
+    },
+
+    preview() {
+        UI.closeModal('ctx-modal');
+        const f = STATE.selected;
+        if (!f) return;
+
+        if (STATE.settings.extPlayer) {
+            window.open(f.webViewLink, '_blank');
+            return;
+        }
+
+        document.getElementById('media-title').textContent = f.name;
+        document.getElementById('media-frame').src = `https://drive.google.com/file/d/${f.id}/preview`;
+        document.getElementById('media-view').classList.add('open');
+    },
+
+    openExternal() {
+        if (STATE.selected?.webViewLink) window.open(STATE.selected.webViewLink, '_blank');
+    },
+
+    download() {
+        UI.closeModal('ctx-modal');
+        if (STATE.selected?.webContentLink) window.open(STATE.selected.webContentLink, '_blank');
+        else Toast.show('Cannot download this file type', 'error');
+    },
+
+    share() {
+        UI.closeModal('ctx-modal');
+        if (!STATE.selected) return;
+        const link = STATE.selected.webViewLink;
+        if (navigator.share) {
+            navigator.share({ title: STATE.selected.name, url: link }).catch(() => {});
+        } else if (navigator.clipboard) {
+            navigator.clipboard.writeText(link).then(() => Toast.show('Link copied to clipboard!', 'success'));
+        } else {
+            Toast.show('Cannot copy link on this device', 'error');
+        }
+    },
+
+    async rename() {
+        UI.closeModal('ctx-modal');
+        const newName = prompt('Enter new name:', STATE.selected?.name);
+        if (!newName || newName === STATE.selected?.name) return;
+        try {
+            await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name: newName })
+            });
+            Toast.show('Renamed successfully', 'success');
+            Drive.refresh();
+        } catch { Toast.show('Rename failed', 'error'); }
+    },
+
+    info() {
+        const f = STATE.selected;
+        if (!f) return;
+        document.getElementById('info-name').textContent = f.name;
+        document.getElementById('info-type').textContent = f.mimeType;
+        document.getElementById('info-size').textContent = this.formatSize(f.size);
+        document.getElementById('info-created').textContent = f.createdTime ? new Date(f.createdTime).toLocaleString() : '–';
+        document.getElementById('info-modified').textContent = f.modifiedTime ? new Date(f.modifiedTime).toLocaleString() : '–';
+        document.getElementById('info-id').textContent = f.id;
+        UI.closeModal('ctx-modal');
+        UI.openModal('info-modal');
+    },
+
+    async delete() {
+        if (!STATE.selected) return;
+        if (!confirm(`Delete "${STATE.selected.name}"? This cannot be undone.`)) return;
+        try {
+            await fetch(`https://www.googleapis.com/drive/v3/files/${STATE.selected.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': `Bearer ${STATE.token}` }
+            });
+            UI.closeModal('ctx-modal');
+            Toast.show('File deleted', 'success');
+            Drive.refresh();
+        } catch { Toast.show('Delete failed', 'error'); }
+    },
+
+    async createFolder() {
+        UI.closeFab();
+        const name = prompt('Folder name:');
+        if (!name) return;
+        try {
+            await fetch('https://www.googleapis.com/drive/v3/files', {
+                method: 'POST',
+                headers: { 'Authorization': `Bearer ${STATE.token}`, 'Content-Type': 'application/json' },
+                body: JSON.stringify({ name, mimeType: 'application/vnd.google-apps.folder', parents: [STATE.currFolder] })
+            });
+            Toast.show('Folder created', 'success');
+            Drive.refresh();
+        } catch { Toast.show('Failed to create folder', 'error'); }
+    },
+
+    createDocument() {
+        UI.closeFab();
+        window.open('https://docs.google.com/document/create', '_blank');
+    },
+
+    formatSize(bytes) {
+        if (!bytes || bytes == 0) return '0 B';
+        const k = 1024, s = ['B', 'KB', 'MB', 'GB', 'TB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + s[i];
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   UI CONTROLLER
+═══════════════════════════════════════════════ */
+const UI = {
+    switchScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        if (id === 'app-screen') history.pushState({ screen: 'app' }, '', '');
+    },
+
+    openSidebar() {
+        document.getElementById('sidebar').classList.add('open');
+        document.getElementById('sidebar-overlay').classList.add('open');
+    },
+
+    closeSidebar() {
+        document.getElementById('sidebar').classList.remove('open');
+        document.getElementById('sidebar-overlay').classList.remove('open');
+    },
+
+    toggleFab() {
+        const menu = document.getElementById('fab-menu');
+        const btn = document.getElementById('fab-btn');
+        const isOpen = menu.classList.toggle('open');
+        btn.classList.toggle('open', isOpen);
+    },
+
+    closeFab() {
+        document.getElementById('fab-menu').classList.remove('open');
+        document.getElementById('fab-btn').classList.remove('open');
+    },
+
+    openModal(id) {
+        document.getElementById(id).classList.add('open');
+    },
+
+    closeModal(id) {
+        document.getElementById(id).classList.remove('open');
+    },
+
+    closeMedia() {
+        document.getElementById('media-view').classList.remove('open');
+        document.getElementById('media-frame').src = '';
+    },
+
+    switchView(mode) {
+        STATE.viewMode = mode;
+        document.querySelectorAll('.view-btn').forEach(b => b.classList.toggle('active', b.dataset.view === mode));
+        Drive.render(STATE.files);
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   NAVIGATION
+═══════════════════════════════════════════════ */
+const Nav = {
+    switchTab(tab, el) {
+        document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+        el.closest('.nav-tab')?.classList.add('active');
+        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
+
+        UI.closeSidebar();
+
+        if (tab === 'home') {
+            Drive.load('root');
+        } else if (tab === 'photos') {
+            UI.switchView('gallery');
+            Drive.load(STATE.currFolder);
+        } else if (tab === 'vault') {
+            Drive.load(CONFIG.vaultId, 'Vault');
+        } else if (tab === 'shared') {
+            Toast.show('Shared files coming soon', 'info');
+        } else if (tab === 'recent') {
+            STATE.sortBy = 'date'; STATE.sortOrder = 'desc';
+            Drive.applyCurrentSort();
+            Drive.render(STATE.files);
+        }
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   SETTINGS
+═══════════════════════════════════════════════ */
+const Settings = {
+    open() {
+        document.getElementById('ext-player').checked = STATE.settings.extPlayer;
+        document.getElementById('auto-sync').checked = STATE.settings.autoSync;
+        document.getElementById('dark-mode').checked = STATE.theme === 'dark';
+        UI.openModal('settings-modal');
+    },
+
+    save() {
+        STATE.settings.extPlayer = document.getElementById('ext-player').checked;
+        STATE.settings.autoSync = document.getElementById('auto-sync').checked;
+        localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
+    },
+
+    toggleDarkMode() {
+        const isDark = document.getElementById('dark-mode').checked;
+        STATE.theme = isDark ? 'dark' : 'light';
+        document.body.classList.toggle('light-mode', !isDark);
+        localStorage.setItem('theme', STATE.theme);
+        Settings.save();
+    },
+
+    storageDetails() {
+        UI.closeModal('settings-modal');
+        const desc = document.getElementById('storage-desc').textContent;
+        Toast.show(desc || 'Loading storage info...', 'info');
+    },
+
+    security() {
+        Toast.show('PIN Protection enabled · Auto-lock: 5 min', 'info');
+    },
+
+    about() {
+        Toast.show('Drive OS Pro+ v2.0 · Built with ❤️', 'info');
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   INIT
+═══════════════════════════════════════════════ */
+
+// Auth.init must only run after google.accounts is ready.
+// GSI script may not be done even after window.onload on slow connections.
+Auth.init = function() {
+    if (typeof google === 'undefined' || !google.accounts || !google.accounts.oauth2) {
+        // Retry after short delay — GSI not ready yet
+        setTimeout(Auth.init, 150);
+        return;
+    }
+    tokenClient = google.accounts.oauth2.initTokenClient({
+        client_id: CONFIG.clientId,
+        scope: CONFIG.scopes,
+        callback: (r) => {
+            if (r.error) { Toast.show('Login failed: ' + r.error, 'error'); return; }
+            STATE.token = r.access_token;
+            localStorage.setItem('g_token', STATE.token);
+            localStorage.setItem('g_exp', String(Date.now() + 3500 * 1000));
+            UI.switchScreen('app-screen');
+            Drive.load('root');
+            Auth.loadProfile();
+            Auth.loadStorage();
+        }
+    });
+    // Now that tokenClient is ready, check if already logged in
+    Auth.check();
+};
+
+// Auth.signIn must also guard against tokenClient not being ready
+Auth.signIn = function() {
+    if (!tokenClient) {
+        Toast.show('Google auth not ready yet, please wait...', 'info');
+        return;
+    }
+    tokenClient.requestAccessToken();
+};
+
+window.onload = () => {
+    // Apply saved theme
+    if (STATE.theme === 'light') document.body.classList.add('light-mode');
+
+    // Set initial PIN if needed
+    if (!localStorage.getItem('app_pin')) {
+        const pin = prompt('Set your 4-digit PIN (e.g., 1234):');
+        if (pin && /^\d{4}$/.test(pin)) {
+            localStorage.setItem('app_pin', btoa(pin));
+        } else {
+            localStorage.setItem('app_pin', btoa('1234'));
+        }
+    }
+
+    // Load saved sort
+    const savedSort = localStorage.getItem('sort_pref');
+    if (savedSort) {
+        try {
+            const { by, order } = JSON.parse(savedSort);
+            STATE.sortBy = by; STATE.sortOrder = order;
+        } catch {}
+    }
+
+    // Close FAB on outside click
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.fab-wrap')) UI.closeFab();
+    });
+
+    // Back button / hardware back handling
+    window.onpopstate = () => {
+        if (document.getElementById('media-view').classList.contains('open')) {
+            UI.closeMedia();
+            return;
+        }
+        if (document.getElementById('app-screen').classList.contains('active')) {
+            history.pushState({ screen: 'app' }, '', '');
+        }
+    };
+    history.replaceState({ screen: 'lock' }, '', '');
+
+    // Start Auth init (will wait for GSI to be ready internally)
+    Auth.init();
+};
+</script>
+</body>
+</html>
