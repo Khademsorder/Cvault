@@ -36,6 +36,23 @@
             --radius-xl: 24px;
             --transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
 
+            /* Premium extended vars */
+            --gradient: linear-gradient(135deg, #6c63ff 0%, #a78bfa 50%, #38bdf8 100%);
+            --gradient-accent: linear-gradient(135deg, #6c63ff, #8b5cf6);
+            --gradient-success: linear-gradient(135deg, #34d399, #10b981);
+            --gradient-warning: linear-gradient(135deg, #fbbf24, #f59e0b);
+            --gradient-danger: linear-gradient(135deg, #f87171, #ef4444);
+            --gradient-bg: linear-gradient(180deg, #0a0b0f 0%, #13151e 100%);
+            --glass-bg: rgba(19,21,30, 0.8);
+            --glass-blur: blur(20px);
+            --shadow-sm: 0 2px 8px rgba(0,0,0,0.3);
+            --shadow-md: 0 4px 16px rgba(0,0,0,0.4);
+            --shadow-lg: 0 8px 32px rgba(0,0,0,0.5);
+            --shadow-xl: 0 16px 48px rgba(0,0,0,0.6);
+            --shadow-glow: 0 0 40px rgba(108,99,255,0.3);
+            --shadow-glow2: 0 0 40px rgba(56,189,248,0.3);
+            --border-gradient: linear-gradient(135deg, rgba(108,99,255,0.5), rgba(56,189,248,0.5));
+
             /* Light mode overrides (toggled by class) */
         }
 
@@ -462,7 +479,7 @@
             cursor: pointer;
             transition: var(--transition);
             border: 1px solid transparent;
-            min-height: 58px;
+            min-height: 54px;
             position: relative; overflow: hidden;
         }
         .list-item:hover {
@@ -470,29 +487,105 @@
             border-color: var(--border);
         }
         .list-item:active { transform: scale(0.99); }
+        .list-item .file-icon-wrap {
+            width: 34px; height: 34px; border-radius: 8px;
+            margin-right: 12px;
+        }
+        .list-item .file-icon-wrap .material-icons-round { font-size: 18px; }
+        .list-item .item-meta span { margin-right: 4px; }
+
+        /* Mobile List View */
+        @media (max-width: 480px) {
+            .file-list-view { gap: 1px; }
+            .list-item {
+                padding: 8px 10px;
+                min-height: 48px;
+            }
+            .list-item .file-icon-wrap {
+                width: 28px; height: 28px; border-radius: 6px;
+                margin-right: 8px;
+            }
+            .list-item .file-icon-wrap .material-icons-round { font-size: 14px; }
+            .list-item .item-name { font-size: 12px; }
+            .list-item .item-meta { font-size: 10px; }
+            .list-item .item-actions { display: none; }
+        }
+        @media (min-width: 768px) {
+            .file-list-view { gap: 4px; }
+            .list-item {
+                padding: 12px 18px;
+                min-height: 62px;
+            }
+            .list-item .item-name { font-size: 14px; }
+        }
 
         /* GRID VIEW */
         .file-grid-view {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-            gap: 10px;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            gap: 8px;
         }
 
         .grid-item {
             background: var(--surface);
             border: 1px solid var(--border);
             border-radius: var(--radius-lg);
-            padding: 16px 10px 12px;
+            padding: 12px 8px 10px;
             display: flex; flex-direction: column; align-items: center;
             text-align: center; cursor: pointer;
             transition: var(--transition);
-            height: 130px; overflow: hidden;
+            min-height: 110px; overflow: hidden;
             position: relative;
         }
         .grid-item:hover {
             border-color: var(--accent);
             box-shadow: 0 0 0 1px var(--accent), var(--glow);
             transform: translateY(-2px);
+        }
+        .grid-item .file-icon-wrap {
+            width: 40px; height: 40px; border-radius: 12px;
+            margin-right: 0; margin-bottom: 8px;
+        }
+        .grid-item .file-icon-wrap .material-icons-round { font-size: 20px; }
+
+        /* Tablet & Mobile Grid Optimization */
+        @media (max-width: 480px) {
+            .file-grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(85px, 1fr));
+                gap: 6px;
+            }
+            .grid-item {
+                min-height: 90px;
+                padding: 10px 6px 8px;
+            }
+            .grid-item .file-icon-wrap {
+                width: 32px; height: 32px; border-radius: 10px;
+            }
+            .grid-item .file-icon-wrap .material-icons-round {
+                font-size: 16px;
+            }
+            .grid-item .item-name {
+                font-size: 10px;
+            }
+            .grid-item .item-meta {
+                font-size: 9px;
+            }
+        }
+        @media (min-width: 768px) {
+            .file-grid-view {
+                grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+                gap: 14px;
+            }
+            .grid-item {
+                min-height: 150px;
+                padding: 18px 14px 14px;
+            }
+            .grid-item .file-icon-wrap {
+                width: 52px; height: 52px;
+                margin-bottom: 12px;
+            }
+            .grid-item .file-icon-wrap .material-icons-round { font-size: 26px; }
+            .grid-item .item-name { font-size: 13px; }
         }
 
         /* GALLERY VIEW */
@@ -525,6 +618,65 @@
         .gallery-name {
             font-size: 11px; color: #fff; font-weight: 500;
             white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+        }
+
+        /* DETAILED VIEW - Real file manager style */
+        .file-detailed-view {
+            display: flex; flex-direction: column; gap: 1px;
+            background: var(--border);
+            border-radius: var(--radius);
+            overflow: hidden;
+        }
+        .detailed-header {
+            display: grid;
+            grid-template-columns: 1fr 100px 120px 100px;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--surface2);
+            font-size: 10px; font-weight: 700; color: var(--text3);
+            text-transform: uppercase; letter-spacing: 0.5px;
+        }
+        .detailed-row {
+            display: grid;
+            grid-template-columns: 1fr 100px 120px 100px;
+            gap: 8px;
+            padding: 10px 14px;
+            background: var(--surface);
+            font-size: 12px;
+            align-items: center;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .detailed-row:hover { background: var(--surface2); }
+        .detailed-row:active { transform: scale(0.99); }
+        
+        .detailed-name {
+            display: flex; align-items: center; gap: 10px;
+            white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+            font-weight: 500; color: var(--text);
+        }
+        .detailed-name .file-icon-wrap {
+            width: 28px; height: 28px; border-radius: 6px;
+            margin-right: 0;
+        }
+        .detailed-name .file-icon-wrap .material-icons-round { font-size: 14px; }
+        
+        .detailed-size { color: var(--text2); font-size: 11px; }
+        .detailed-date { color: var(--text2); font-size: 11px; }
+        .detailed-type { 
+            color: var(--text3); font-size: 10px; text-transform: capitalize;
+            background: var(--surface3); padding: 2px 6px; border-radius: 4px;
+        }
+
+        /* Mobile detailed view - simplified */
+        @media (max-width: 600px) {
+            .file-detailed-view { display: none; }
+        }
+        @media (min-width: 768px) {
+            .detailed-header, .detailed-row {
+                grid-template-columns: 1fr 120px 140px 120px;
+                gap: 12px; padding: 12px 18px;
+            }
         }
 
         /* FILE ICONS */
@@ -607,36 +759,51 @@
            BOTTOM NAV
         ═══════════════════════════════════════ */
         .bottom-nav {
-            height: 62px;
+            height: 56px;
             background: var(--surface);
             border-top: 1px solid var(--border);
             display: flex; justify-content: space-around; align-items: center;
             flex-shrink: 0; position: relative; z-index: 30;
-            padding: 0 4px;
+            padding: 0 2px;
         }
 
         .nav-tab {
             flex: 1; display: flex; flex-direction: column; align-items: center;
-            gap: 3px; padding: 6px 0; cursor: pointer; color: var(--text3);
-            font-size: 10px; font-weight: 500; letter-spacing: 0.3px;
+            gap: 2px; padding: 4px 0; cursor: pointer; color: var(--text3);
+            font-size: 9px; font-weight: 500; letter-spacing: 0.3px;
             transition: var(--transition);
-            border-radius: 12px;
-            margin: 4px 2px;
+            border-radius: 10px;
+            margin: 2px 1px;
             position: relative;
         }
         .nav-tab:hover { color: var(--text2); }
         .nav-tab.active { color: var(--accent2); }
 
         .nav-tab-icon-wrap {
-            width: 36px; height: 26px; border-radius: 13px;
+            width: 32px; height: 24px; border-radius: 12px;
             display: flex; align-items: center; justify-content: center;
             transition: var(--transition);
         }
         .nav-tab.active .nav-tab-icon-wrap {
             background: rgba(108,99,255,0.15);
         }
-        .nav-tab .material-icons-round { font-size: 20px; }
+        .nav-tab .material-icons-round { font-size: 18px; }
         .nav-tab.active .material-icons-round { color: var(--accent2); }
+
+        /* Mobile Bottom Nav */
+        @media (max-width: 360px) {
+            .bottom-nav { height: 52px; }
+            .nav-tab { margin: 0; }
+            .nav-tab-icon-wrap { width: 28px; height: 22px; }
+            .nav-tab .material-icons-round { font-size: 16px; }
+            .nav-tab { font-size: 8px; }
+        }
+        @media (min-width: 768px) {
+            .bottom-nav { height: 64px; }
+            .nav-tab { font-size: 11px; }
+            .nav-tab-icon-wrap { width: 40px; height: 28px; }
+            .nav-tab .material-icons-round { font-size: 22px; }
+        }
 
         /* ═══════════════════════════════════════
            FAB
@@ -839,19 +1006,56 @@
         .modal-overlay.open { display: flex; }
 
         .bottom-sheet {
-            background: var(--surface);
-            border: 1px solid var(--border);
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: var(--glass-blur);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
             border-radius: 20px 20px 0 0;
             width: 100%; max-width: 600px;
             max-height: 85vh;
             overflow-y: auto;
             padding: 20px;
+            box-shadow: var(--shadow-xl);
             animation: sheetUp 0.28s cubic-bezier(0.4, 0, 0.2, 1);
         }
         .bottom-sheet::-webkit-scrollbar { display: none; }
         @keyframes sheetUp {
             from { transform: translateY(100%); opacity: 0.5; }
             to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Premium sheet with gradient border */
+        .bottom-sheet.premium {
+            position: relative;
+            background: var(--surface);
+        }
+        .bottom-sheet.premium::before {
+            content: '';
+            position: absolute; inset: 0;
+            padding: 1px;
+            border-radius: 20px 20px 0 0;
+            background: var(--border-gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        /* Premium card with glass effect */
+        .glass-card {
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: var(--glass-blur);
+            backdrop-filter: var(--glass-blur);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl);
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+        }
+        .glass-card:hover {
+            border-color: var(--border2);
+            box-shadow: var(--shadow-glow);
+            transform: translateY(-2px);
         }
 
         .sheet-handle {
@@ -1104,6 +1308,91 @@
             to { opacity: 1; transform: translateY(0); }
         }
 
+        /* Premium staggered entrance */
+        @keyframes slideUpFade {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes scaleIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        @keyframes pulseGlow {
+            0%, 100% { box-shadow: var(--shadow-glow); }
+            50% { box-shadow: 0 0 60px rgba(108,99,255,0.4); }
+        }
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-8px); }
+        }
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        /* Premium button effects */
+        .btn-premium {
+            position: relative;
+            background: var(--gradient);
+            border: none;
+            border-radius: var(--radius);
+            color: #fff;
+            font-weight: 600;
+            overflow: hidden;
+            transition: var(--transition);
+        }
+        .btn-premium::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            background-size: 200% 100%;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .btn-premium:hover::before {
+            opacity: 1;
+            animation: shimmer 1.5s infinite;
+        }
+        .btn-premium:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+
+        /* Gradient text */
+        .gradient-text {
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* Glowing borders */
+        .glow-border {
+            position: relative;
+        }
+        .glow-border::after {
+            content: '';
+            position: absolute; inset: -1px;
+            border-radius: inherit;
+            padding: 1px;
+            background: var(--gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .glow-border:hover::after {
+            opacity: 1;
+        }
+
         /* Section headers in gallery */
         .gallery-date-header {
             grid-column: 1 / -1;
@@ -1121,6 +1410,417 @@
             cursor: pointer; z-index: 450; box-shadow: 0 4px 16px rgba(248,113,113,0.4);
         }
         #cancel-fab .material-icons-round { color: #fff; font-size: 20px; }
+
+        /* ═══════════════════════════════════════
+           STORAGE ANALYTICS
+        ═══════════════════════════════════════ */
+        .analytics-header {
+            padding: 20px 16px;
+            border-bottom: 1px solid var(--border);
+            background: var(--surface);
+        }
+        .analytics-title {
+            font-family: 'Syne', sans-serif; font-size: 20px; font-weight: 700;
+        }
+        .analytics-subtitle { font-size: 12px; color: var(--text3); margin-top: 2px; }
+
+        .storage-overview {
+            padding: 20px 16px; display: flex; flex-direction: column; gap: 16px;
+            border-bottom: 1px solid var(--border);
+        }
+        .storage-radial {
+            width: 140px; height: 140px; margin: 0 auto;
+            position: relative;
+            filter: drop-shadow(0 0 20px rgba(108,99,255,0.3));
+        }
+        .storage-radial svg {
+            width: 100%; height: 100%; transform: rotate(-90deg);
+        }
+        .storage-radial-bg {
+            fill: none; stroke: var(--surface3); stroke-width: 10;
+        }
+        .storage-radial-fill {
+            fill: none; stroke: url(#storageGradient); stroke-width: 10;
+            stroke-linecap: round; transition: stroke-dashoffset 1s ease;
+            filter: drop-shadow(0 0 8px rgba(108,99,255,0.5));
+        }
+        .storage-radial-center {
+            position: absolute; top: 50%; left: 50%;
+            transform: translate(-50%, -50%); text-align: center;
+        }
+        .storage-radial-pct { 
+            font-size: 28px; font-weight: 700; 
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .storage-radial-label { font-size: 10px; color: var(--text3); }
+
+        .storage-stats-row {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+        }
+        .storage-stat-box {
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius); padding: 14px;
+            transition: var(--transition);
+        }
+        .storage-stat-box:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-glow);
+        }
+        .storage-stat-icon {
+            width: 32px; height: 32px; border-radius: 8px;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 8px;
+        }
+        .storage-stat-icon .material-icons-round { font-size: 16px; }
+        .storage-stat-icon.ico-used { background: rgba(108,99,255,0.15); color: var(--accent2); }
+        .storage-stat-icon.ico-avail { background: rgba(52,211,153,0.15); color: var(--green); }
+        .storage-stat-val { font-size: 16px; font-weight: 700; color: var(--text); }
+        .storage-stat-label { font-size: 11px; color: var(--text3); }
+
+        .analytics-section { padding: 16px; border-bottom: 1px solid var(--border); }
+        .section-title {
+            font-size: 12px; font-weight: 700; color: var(--text3);
+            text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 14px;
+        }
+
+        .type-bar-list { display: flex; flex-direction: column; gap: 10px; }
+        .type-bar-item { }
+        .type-bar-header {
+            display: flex; justify-content: space-between; margin-bottom: 4px;
+        }
+        .type-bar-name { font-size: 12px; font-weight: 500; color: var(--text); }
+        .type-bar-size { font-size: 11px; color: var(--text2); }
+        .type-bar-track {
+            height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden;
+        }
+        .type-bar-fill { height: 100%; border-radius: 3px; transition: width 0.8s ease; }
+
+        .analytics-grid-btns {
+            display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px;
+        }
+        .analytics-grid-btn {
+            background: var(--surface2); border: 1px solid var(--border);
+            border-radius: var(--radius-lg); padding: 20px 16px;
+            display: flex; flex-direction: column; align-items: center;
+            cursor: pointer; transition: var(--transition);
+        }
+        .analytics-grid-btn:hover { background: var(--surface3); border-color: var(--accent); }
+        .analytics-grid-btn .material-icons-round { font-size: 28px; color: var(--accent2); margin-bottom: 10px; }
+        .analytics-grid-btn-label { font-size: 13px; font-weight: 600; color: var(--text); }
+        .analytics-grid-btn-desc { font-size: 10px; color: var(--text3); margin-top: 2px; }
+
+        .upgrade-card {
+            background: var(--gradient);
+            border-radius: var(--radius-xl); padding: 24px 20px;
+            display: flex; align-items: center; gap: 14px;
+            margin: 16px;
+            box-shadow: var(--shadow-glow);
+            position: relative;
+            overflow: hidden;
+        }
+        .upgrade-card::before {
+            content: ''; position: absolute; top: -50%; right: -50%; width: 100%; height: 200%;
+            background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 60%);
+            animation: shimmer 3s infinite;
+        }
+        .upgrade-card-icon {
+            width: 50px; height: 50px; border-radius: 14px;
+            background: rgba(255,255,255,0.2); display: flex;
+            align-items: center; justify-content: center;
+            flex-shrink: 0;
+            backdrop-filter: blur(10px);
+        }
+        .upgrade-card-icon .material-icons-round { font-size: 24px; color: #fff; }
+        .upgrade-card-text { flex: 1; position: relative; z-index: 1; }
+        .upgrade-card-title { font-size: 15px; font-weight: 700; color: #fff; }
+        .upgrade-card-desc { font-size: 11px; color: rgba(255,255,255,0.75); margin-top: 2px; }
+        .upgrade-card-btn {
+            padding: 10px 18px; border-radius: var(--radius);
+            background: #fff; border: none;
+            color: var(--accent); font-size: 12px;
+            font-weight: 700; cursor: pointer;
+            font-family: 'Space Grotesk', sans-serif;
+            position: relative; z-index: 1;
+            transition: var(--transition);
+        }
+        .upgrade-card-btn:hover {
+            transform: scale(1.05);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* ═══════════════════════════════════════
+           PREMIUM FEATURES
+        ═══════════════════════════════════════ */
+        .premium-badge {
+            display: inline-flex; align-items: center; gap: 4px;
+            padding: 4px 10px; border-radius: 20px;
+            background: linear-gradient(135deg, #6c63ff, #a78bfa);
+            font-size: 10px; font-weight: 700; color: #fff;
+        }
+        .premium-badge .material-icons-round { font-size: 12px; }
+
+        .premium-header {
+            padding: 28px 16px;
+            background: var(--gradient-bg);
+            border-bottom: 1px solid var(--glass-border);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+        .premium-header::before {
+            content: '';
+            position: absolute; top: -50%; left: -50%; width: 200%; height: 200%;
+            background: radial-gradient(circle, rgba(108,99,255,0.15) 0%, transparent 50%);
+            animation: gradientShift 8s ease infinite;
+            background-size: 200% 200%;
+        }
+        .premium-header-icon {
+            width: 60px; height: 60px; border-radius: 18px;
+            background: var(--gradient);
+            display: flex; align-items: center; justify-content: center;
+            margin: 0 auto 16px;
+            box-shadow: var(--shadow-glow);
+            animation: float 3s ease-in-out infinite;
+            position: relative;
+            z-index: 1;
+        }
+        .premium-header-icon .material-icons-round { font-size: 28px; color: #fff; }
+        .premium-header-title {
+            font-family: 'Syne', sans-serif; font-size: 24px; font-weight: 800;
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+            position: relative;
+            z-index: 1;
+        }
+        .premium-header-subtitle { font-size: 13px; color: var(--text2); margin-top: 4px; position: relative; z-index: 1; }
+
+        .plan-card {
+            background: var(--glass-bg);
+            -webkit-backdrop-filter: blur(10px);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: var(--radius-xl); padding: 20px;
+            margin-bottom: 12px; cursor: pointer;
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+        }
+        .plan-card::before {
+            content: '';
+            position: absolute; inset: 0;
+            background: var(--gradient);
+            opacity: 0;
+            transition: opacity 0.3s;
+        }
+        .plan-card:hover { 
+            border-color: var(--accent); 
+            transform: translateY(-4px); 
+            box-shadow: var(--shadow-lg), var(--shadow-glow);
+        }
+        .plan-card:hover::before {
+            opacity: 0.03;
+        }
+        .plan-card.featured {
+            border: 2px solid transparent;
+            background: var(--surface), var(--gradient);
+            background-size: 100% 100%, 200% 200%;
+            position: relative; overflow: hidden;
+        }
+        .plan-card.featured::after {
+            content: ''; position: absolute; inset: 0;
+            border-radius: var(--radius-xl);
+            padding: 2px;
+            background: var(--gradient);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+        .plan-card.featured::before {
+            content: 'POPULAR'; position: absolute; top: 14px; right: -28px;
+            background: var(--gradient);
+            color: #fff; font-size: 9px; font-weight: 700;
+            padding: 4px 32px; transform: rotate(45deg);
+            box-shadow: var(--shadow-md);
+            opacity: 1;
+        }
+        .plan-card.current {
+            border-color: var(--green); 
+            background: linear-gradient(135deg, rgba(52,211,153,0.1) 0%, var(--surface) 100%);
+        }
+        .plan-card.current::after {
+            content: ''; position: absolute; inset: 0;
+            border-radius: var(--radius-xl);
+            padding: 2px;
+            background: var(--green);
+            -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+            -webkit-mask-composite: xor;
+            mask-composite: exclude;
+            pointer-events: none;
+        }
+
+        .plan-header { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; position: relative; z-index: 1; }
+        .plan-name { font-size: 16px; font-weight: 700; }
+        .plan-price { 
+            font-size: 24px; font-weight: 700; text-align: right; 
+            background: var(--gradient);
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .plan-price span { font-size: 12px; font-weight: 400; color: var(--text3); }
+        .plan-desc { font-size: 11px; color: var(--text3); margin-top: 2px; }
+        .plan-features { margin-top: 14px; display: grid; grid-template-columns: 1fr 1fr; gap: 4px; position: relative; z-index: 1; }
+        .plan-feature {
+            display: flex; align-items: center; gap: 6px; font-size: 11px; color: var(--text2);
+            padding: 4px 0;
+        }
+        .plan-feature .material-icons-round { font-size: 14px; color: var(--green); }
+        .plan-cta {
+            margin-top: 16px; width: 100%; height: 44px; border-radius: var(--radius);
+            background: var(--gradient); border: none;
+            color: #fff; font-size: 14px; font-weight: 600;
+            cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+            transition: var(--transition);
+            position: relative; overflow: hidden;
+        }
+        .plan-cta::before {
+            content: ''; position: absolute; inset: 0;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            -webkit-transform: translateX(-100%); transform: translateX(-100%);
+            transition: transform 0.5s;
+        }
+        .plan-cta:hover::before {
+            -webkit-transform: translateX(100%); transform: translateX(100%);
+        }
+        .plan-cta:hover { 
+            transform: translateY(-2px); 
+            box-shadow: var(--shadow-glow);
+        }
+        .plan-cta.current { background: var(--green); }
+            cursor: pointer; font-family: 'Space Grotesk', sans-serif;
+            transition: var(--transition);
+        }
+        .plan-cta:hover { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .plan-cta.current { background: var(--green); border-color: var(--green); color: #fff; }
+
+        /* Premium Plans Grid - Mobile Responsive */
+        .plans-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+            padding: 16px;
+        }
+        @media (min-width: 480px) {
+            .plans-grid { grid-template-columns: repeat(2, 1fr); }
+            .plan-card.featured { grid-column: span 2; }
+        }
+        @media (min-width: 768px) {
+            .plans-grid { grid-template-columns: repeat(3, 1fr); }
+            .plan-card.featured { grid-column: span 3; }
+        }
+
+        .feature-compare { padding: 16px; border-top: 1px solid var(--border); }
+        .feature-compare-title { font-size: 14px; font-weight: 700; margin-bottom: 14px; }
+        .feature-row {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 12px 0; border-bottom: 1px solid var(--border);
+            font-size: 12px;
+        }
+        .feature-row:last-child { border: none; }
+        .feature-name { color: var(--text); flex: 1; }
+        .feature-check { color: var(--green); }
+        .feature-x { color: var(--text3); }
+        .feature-basic { color: var(--text2); }
+
+        /* Responsive feature comparison */
+        .feature-compare-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 8px;
+        }
+        @media (min-width: 600px) {
+            .feature-compare-grid { grid-template-columns: repeat(5, 1fr); }
+            .feature-row { flex-direction: column; gap: 6px; padding: 16px; border: 1px solid var(--border); border-radius: var(--radius); }
+            .feature-compare { display: flex; gap: 12px; }
+            .feature-compare-title { width: 120px; flex-shrink: 0; position: sticky; left: 0; background: var(--surface); }
+            .feature-compare-scroll { flex: 1; overflow-x: auto; }
+        }
+
+        .offer-banner {
+            margin: 16px; padding: 16px; border-radius: var(--radius-lg);
+            background: linear-gradient(135deg, rgba(251,191,36,0.2) 0%, rgba(248,113,113,0.2) 100%);
+            border: 1px solid rgba(251,191,36,0.4);
+            display: flex; align-items: center; gap: 12px;
+            position: relative;
+            overflow: hidden;
+            animation: pulseGlow 2s ease-in-out infinite;
+        }
+        .offer-banner::before {
+            content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+            width: 4px; background: var(--yellow);
+        }
+        .offer-icon {
+            width: 44px; height: 44px; border-radius: 12px;
+            background: linear-gradient(135deg, var(--yellow), #f59e0b);
+            display: flex; align-items: center; justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(251,191,36,0.4);
+        }
+        .offer-icon .material-icons-round { font-size: 22px; color: #000; }
+        .offer-text { flex: 1; }
+        .offer-title { font-size: 13px; font-weight: 700; color: var(--text); }
+        .offer-desc { font-size: 11px; color: var(--text2); margin-top: 2px; }
+        .offer-btn {
+            padding: 8px 16px; border-radius: var(--radius);
+            background: var(--gradient-success); border: none;
+            color: #fff; font-size: 11px; font-weight: 700;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+        .offer-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 16px rgba(52,211,153,0.4);
+        }
+
+        .current-plan-box {
+            margin: 16px; padding: 16px;
+            background: linear-gradient(135deg, rgba(52,211,153,0.1) 0%, var(--surface) 100%);
+            border: 1px solid var(--green);
+            border-radius: var(--radius-lg); display: flex;
+            align-items: center; gap: 12px;
+            box-shadow: 0 4px 20px rgba(52,211,153,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        .current-plan-box::before {
+            content: ''; position: absolute; right: 0; top: 0; bottom: 0;
+            width: 60px;
+            background: linear-gradient(90deg, transparent, rgba(52,211,153,0.1));
+        }
+        .current-plan-icon {
+            width: 40px; height: 40px; border-radius: 10px;
+            background: var(--gradient-success); display: flex;
+            align-items: center; justify-content: center;
+            flex-shrink: 0;
+            box-shadow: 0 4px 12px rgba(52,211,153,0.3);
+        }
+        .current-plan-icon .material-icons-round { font-size: 20px; color: #fff; }
+        .current-plan-info { flex: 1; }
+        .current-plan-label { font-size: 10px; color: var(--green); text-transform: uppercase; letter-spacing: 0.5px; }
+        .current-plan-name { font-size: 14px; font-weight: 700; color: var(--text); }
+        .current-plan-detail { font-size: 11px; color: var(--text2); }
     </style>
 </head>
 <body>
@@ -1274,6 +1974,9 @@
             <div class="nav-link" onclick="UI.switchView('gallery'); UI.closeSidebar()">
                 <span class="material-icons-round">collections</span> Gallery View
             </div>
+            <div class="nav-link" onclick="UI.switchView('detailed'); UI.closeSidebar()">
+                <span class="material-icons-round">view_stream</span> Detailed View
+            </div>
 
             <div class="nav-section-title" style="margin-top:8px">Sort By</div>
             <div class="nav-link" onclick="Drive.applySort('name','asc'); UI.closeSidebar()">
@@ -1286,12 +1989,20 @@
                 <span class="material-icons-round">data_usage</span> Largest First
             </div>
 
+            <div class="nav-section-title" style="margin-top:8px">Search</div>
+            <div class="nav-link" onclick="Drive.searchAll()">
+                <span class="material-icons-round">search</span> Search All Files
+            </div>
+
             <div class="nav-section-title" style="margin-top:8px">More</div>
             <div class="nav-link" onclick="Settings.open(); UI.closeSidebar()">
                 <span class="material-icons-round">settings</span> Settings
             </div>
             <div class="nav-link" onclick="Settings.storageDetails()">
                 <span class="material-icons-round">storage</span> Storage Details
+            </div>
+            <div class="nav-link" onclick="Premium.show()">
+                <span class="material-icons-round">workspace_premium</span> Upgrade to Pro
             </div>
             <div class="nav-link" onclick="Settings.about()">
                 <span class="material-icons-round">info</span> About
@@ -1351,6 +2062,9 @@
                 <div class="view-btn" data-view="gallery" onclick="UI.switchView('gallery')" title="Gallery">
                     <span class="material-icons-round">photo_library</span>
                 </div>
+                <div class="view-btn" data-view="detailed" onclick="UI.switchView('detailed')" title="Detailed">
+                    <span class="material-icons-round">view_stream</span>
+                </div>
             </div>
         </div>
     </div>
@@ -1381,9 +2095,9 @@
             <div class="nav-tab-icon-wrap"><span class="material-icons-round">people</span></div>
             Shared
         </div>
-        <div class="nav-tab" id="tab-recent" onclick="Nav.switchTab('recent', this)">
-            <div class="nav-tab-icon-wrap"><span class="material-icons-round">schedule</span></div>
-            Recent
+        <div class="nav-tab" id="tab-analytics" onclick="Nav.switchTab('analytics', this)">
+            <div class="nav-tab-icon-wrap"><span class="material-icons-round">analytics</span></div>
+            Analytics
         </div>
     </div>
 
@@ -1412,6 +2126,290 @@
         <button class="fab-btn" id="fab-btn" onclick="UI.toggleFab()">
             <span class="material-icons-round">add</span>
         </button>
+    </div>
+
+    <!-- Analytics View -->
+    <div id="analytics-view" class="screen">
+        <div class="analytics-header">
+            <div class="analytics-title">Storage Analytics</div>
+            <div class="analytics-subtitle">Your storage usage at a glance</div>
+        </div>
+        <div class="file-area" style="padding:0">
+            <div class="storage-overview">
+                <div class="storage-radial">
+                    <svg viewBox="0 0 100 100">
+                        <defs>
+                            <linearGradient id="storageGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                <stop offset="0%" stop-color="#6c63ff"/>
+                                <stop offset="100%" stop-color="#38bdf8"/>
+                            </linearGradient>
+                        </defs>
+                        <circle class="storage-radial-bg" cx="50" cy="50" r="40"/>
+                        <circle class="storage-radial-fill" cx="50" cy="50" r="40" 
+                            id="storage-radial-circle" stroke-dasharray="251.2" stroke-dashoffset="251.2"/>
+                    </svg>
+                    <div class="storage-radial-center">
+                        <div class="storage-radial-pct" id="storage-pct-text">0%</div>
+                        <div class="storage-radial-label">used</div>
+                    </div>
+                </div>
+                <div class="storage-stats-row">
+                    <div class="storage-stat-box">
+                        <div class="storage-stat-icon ico-used">
+                            <span class="material-icons-round">cloud_done</span>
+                        </div>
+                        <div class="storage-stat-val" id="stat-used">—</div>
+                        <div class="storage-stat-label">Used</div>
+                    </div>
+                    <div class="storage-stat-box">
+                        <div class="storage-stat-icon ico-avail">
+                            <span class="material-icons-round">cloud_off</span>
+                        </div>
+                        <div class="storage-stat-val" id="stat-avail">—</div>
+                        <div class="storage-stat-label">Available</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="upgrade-card">
+                <div class="upgrade-card-icon">
+                    <span class="material-icons-round">workspace_premium</span>
+                </div>
+                <div class="upgrade-card-text">
+                    <div class="upgrade-card-title">Upgrade to Pro</div>
+                    <div class="upgrade-card-desc">Get 100GB storage · No ads · Priority support</div>
+                </div>
+                <button class="upgrade-card-btn" onclick="Settings.upgrade()">Upgrade</button>
+            </div>
+
+            <div class="analytics-section">
+                <div class="section-title">File Types</div>
+                <div class="type-bar-list" id="type-bar-list">
+                    <div class="type-bar-item">
+                        <div class="type-bar-header">
+                            <span class="type-bar-name">Images</span>
+                            <span class="type-bar-size" id="type-images">—</span>
+                        </div>
+                        <div class="type-bar-track">
+                            <div class="type-bar-fill" id="type-images-bar" style="width:0%;background:var(--green)"></div>
+                        </div>
+                    </div>
+                    <div class="type-bar-item">
+                        <div class="type-bar-header">
+                            <span class="type-bar-name">Documents</span>
+                            <span class="type-bar-size" id="type-docs">—</span>
+                        </div>
+                        <div class="type-bar-track">
+                            <div class="type-bar-fill" id="type-docs-bar" style="width:0%;background:var(--accent3)"></div>
+                        </div>
+                    </div>
+                    <div class="type-bar-item">
+                        <div class="type-bar-header">
+                            <span class="type-bar-name">Videos</span>
+                            <span class="type-bar-size" id="type-videos">—</span>
+                        </div>
+                        <div class="type-bar-track">
+                            <div class="type-bar-fill" id="type-videos-bar" style="width:0%;background:var(--red)"></div>
+                        </div>
+                    </div>
+                    <div class="type-bar-item">
+                        <div class="type-bar-header">
+                            <span class="type-bar-name">Audio</span>
+                            <span class="type-bar-size" id="type-audio">—</span>
+                        </div>
+                        <div class="type-bar-track">
+                            <div class="type-bar-fill" id="type-audio-bar" style="width:0%;background:var(--accent2)"></div>
+                        </div>
+                    </div>
+                    <div class="type-bar-item">
+                        <div class="type-bar-header">
+                            <span class="type-bar-name">Other</span>
+                            <span class="type-bar-size" id="type-other">—</span>
+                        </div>
+                        <div class="type-bar-track">
+                            <div class="type-bar-fill" id="type-other-bar" style="width:0%;background:var(--text3)"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="analytics-section" style="border-bottom:none">
+                <div class="section-title">Quick Actions</div>
+                <div class="analytics-grid-btns">
+                    <div class="analytics-grid-btn" onclick="Nav.switchTab('uploads', this)">
+                        <span class="material-icons-round">cloud_upload</span>
+                        <span class="analytics-grid-btn-label">Uploads</span>
+                        <span class="analytics-grid-btn-desc" id="upload-count">0 active</span>
+                    </div>
+                    <div class="analytics-grid-btn" onclick="Nav.switchTab('premium', this)">
+                        <span class="material-icons-round">workspace_premium</span>
+                        <span class="analytics-grid-btn-label">Upgrade</span>
+                        <span class="analytics-grid-btn-desc">Unlock more storage</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Uploads View -->
+    <div id="uploads-view" class="screen">
+        <div class="analytics-header">
+            <div class="analytics-title">Uploads</div>
+            <div class="analytics-subtitle" id="uploads-subtitle">No active uploads</div>
+        </div>
+        <div class="file-area" style="padding:0">
+            <div class="upload-list-view" id="upload-list">
+            </div>
+        </div>
+    </div>
+
+    <!-- Downloads View -->
+    <div id="downloads-view" class="screen">
+        <div class="analytics-header">
+            <div class="analytics-title">Downloads</div>
+            <div class="analytics-subtitle" id="downloads-subtitle">No active downloads</div>
+        </div>
+        <div class="file-area" style="padding:0">
+            <div class="download-list-view" id="download-list">
+            </div>
+        </div>
+    </div>
+
+    <!-- Premium View -->
+    <div id="premium-view" class="screen">
+        <div class="premium-header">
+            <div class="premium-header-icon">
+                <span class="material-icons-round">workspace_premium</span>
+            </div>
+            <div class="premium-header-title">Upgrade to Pro</div>
+            <div class="premium-header-subtitle">Unlock unlimited possibilities</div>
+        </div>
+        <div class="file-area" style="padding:0">
+            <div class="current-plan-box">
+                <div class="current-plan-icon">
+                    <span class="material-icons-round">verified</span>
+                </div>
+                <div class="current-plan-info">
+                    <div class="current-plan-label">Current Plan</div>
+                    <div class="current-plan-name">Free (15GB)</div>
+                    <div class="current-plan-detail">Standard storage · With ads</div>
+                </div>
+            </div>
+
+            <div class="offer-banner">
+                <div class="offer-icon">
+                    <span class="material-icons-round">local_offer</span>
+                </div>
+                <div class="offer-text">
+                    <div class="offer-title">Limited Time Offer!</div>
+                    <div class="offer-desc">Get 20% off annual plans</div>
+                </div>
+                <button class="offer-btn" onclick="Premium.select('base-annual')">Claim</button>
+            </div>
+
+            <div class="plans-grid">
+            <div class="plan-card" onclick="Premium.select('base')">
+                <div class="plan-header">
+                    <div>
+                        <div class="plan-name">Pro Basic</div>
+                        <div class="plan-desc">Best for personal use</div>
+                    </div>
+                    <div class="plan-price">$2.99<span>/mo</span></div>
+                </div>
+                <div class="plan-features">
+                    <div class="plan-feature"><span class="material-icons-round">check</span> 100GB storage</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> No ads</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> Priority support</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> Advanced encryption</div>
+                </div>
+                <button class="plan-cta">Get Started</button>
+            </div>
+
+            <div class="plan-card featured" onclick="Premium.select('plus')">
+                <div class="plan-header">
+                    <div>
+                        <div class="plan-name">Pro Plus</div>
+                        <div class="plan-desc">For power users</div>
+                    </div>
+                    <div class="plan-price">$7.99<span>/mo</span></div>
+                </div>
+                <div class="plan-features">
+                    <div class="plan-feature"><span class="material-icons-round">check</span> 2TB storage</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> No ads</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> Priority support</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> Advanced encryption</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> File history (30 days)</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> Team sharing</div>
+                </div>
+                <button class="plan-cta">Get Started</button>
+            </div>
+
+            <div class="plan-card" onclick="Premium.select('family')">
+                <div class="plan-header">
+                    <div>
+                        <div class="plan-name">Pro Family</div>
+                        <div class="plan-desc">Share with family</div>
+                    </div>
+                    <div class="plan-price">$14.99<span>/mo</span></div>
+                </div>
+                <div class="plan-features">
+                    <div class="plan-feature"><span class="material-icons-round">check</span> 5TB storage</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> No ads</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> 24/7 support</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> Advanced encryption</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> File history (1 year)</div>
+                    <div class="plan-feature"><span class="material-icons-round">check</span> Family sharing (6 members)</div>
+                </div>
+                <button class="plan-cta">Get Started</button>
+            </div>
+            </div>
+
+            <div class="feature-compare">
+                <div class="feature-compare-title">Compare Features</div>
+                <div class="feature-row">
+                    <span class="feature-name">Storage</span>
+                    <span class="feature-basic">15GB</span>
+                    <span class="feature-check">100GB</span>
+                    <span class="feature-check">2TB</span>
+                    <span class="feature-check">5TB</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">Ad-free</span>
+                    <span class="feature-x">clear</span>
+                    <span class="feature-check">check</span>
+                    <span class="feature-check">check</span>
+                    <span class="feature-check">check</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">File History</span>
+                    <span class="feature-basic">30 days</span>
+                    <span class="feature-basic">30 days</span>
+                    <span class="feature-check">30 days</span>
+                    <span class="feature-check">1 year</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">Priority Support</span>
+                    <span class="feature-x">clear</span>
+                    <span class="feature-check">check</span>
+                    <span class="feature-check">check</span>
+                    <span class="feature-check">check</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">Family Sharing</span>
+                    <span class="feature-x">clear</span>
+                    <span class="feature-x">clear</span>
+                    <span class="feature-check">check</span>
+                    <span class="feature-check">6 members</span>
+                </div>
+                <div class="feature-row">
+                    <span class="feature-name">Team Features</span>
+                    <span class="feature-x">clear</span>
+                    <span class="feature-x">clear</span>
+                    <span class="feature-check">check</span>
+                    <span class="feature-check">check</span>
+                </div>
+            </div>
+        </div>
     </div>
 
 </div>
@@ -1539,6 +2537,22 @@
 
         <div class="settings-item" onclick="event.stopPropagation()">
             <div class="settings-item-left">
+                <div class="settings-item-icon"><span class="material-icons-round">tv</span></div>
+                <div>
+                    <div class="settings-item-title">In-App Viewer</div>
+                    <div class="settings-item-desc">View files inside app</div>
+                </div>
+            </div>
+            <label class="toggle">
+                <input type="checkbox" id="inapp-player" onchange="Settings.save()">
+                <div class="toggle-track">
+                    <div class="toggle-thumb"></div>
+                </div>
+            </label>
+        </div>
+
+        <div class="settings-item" onclick="event.stopPropagation()">
+            <div class="settings-item-left">
                 <div class="settings-item-icon"><span class="material-icons-round">sync</span></div>
                 <div>
                     <div class="settings-item-title">Auto-Sync</div>
@@ -1643,10 +2657,13 @@ const STATE = {
     sortBy: 'name',
     sortOrder: 'asc',
     theme: localStorage.getItem('theme') || 'dark',
-    settings: JSON.parse(localStorage.getItem('d_settings') || '{"extPlayer":false,"autoSync":true}'),
+    settings: JSON.parse(localStorage.getItem('d_settings') || '{"extPlayer":false,"inAppPlayer":true,"autoSync":true}'),
     uploadQueue: [],
     currentUpload: null,
-    uploadCanceled: false
+    uploadCanceled: false,
+    downloads: [],
+    currentDownload: null,
+    fileIndex: []
 };
 
 /* ═══════════════════════════════════════════════
@@ -1825,6 +2842,9 @@ const Drive = {
             return;
         }
 
+        // Store in file index
+        STATE.fileIndex = [...STATE.fileIndex, ...files];
+
         const container = document.createElement('div');
 
         if (STATE.viewMode === 'list') {
@@ -1855,6 +2875,26 @@ const Drive = {
             images.forEach((f, i) => {
                 const el = this.buildGalleryItem(f);
                 el.style.animationDelay = Math.min(i * 0.04, 0.6) + 's';
+                container.appendChild(el);
+            });
+        } else if (STATE.viewMode === 'detailed') {
+            container.className = 'file-detailed-view';
+            
+            // Header
+            const header = document.createElement('div');
+            header.className = 'detailed-header';
+            header.innerHTML = `
+                <div>Name</div>
+                <div>Size</div>
+                <div>Modified</div>
+                <div>Type</div>
+            `;
+            container.appendChild(header);
+            
+            // Rows
+            files.forEach((f, i) => {
+                const el = this.buildDetailedItem(f);
+                el.style.animationDelay = Math.min(i * 0.02, 0.3) + 's';
                 container.appendChild(el);
             });
         }
@@ -1908,6 +2948,30 @@ const Drive = {
         return el;
     },
 
+    buildDetailedItem(f) {
+        const isDir = f.mimeType === 'application/vnd.google-apps.folder';
+        const { icon, cls } = this.getIconInfo(f);
+        const size = isDir ? '—' : Ops.formatSize(f.size);
+        const date = f.modifiedTime ? new Date(f.modifiedTime).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: '2-digit' }) : '—';
+        const type = isDir ? 'Folder' : f.mimeType?.split('.').pop() || 'File';
+
+        const el = document.createElement('div');
+        el.className = 'detailed-row';
+        el.innerHTML = `
+            <div class="detailed-name">
+                <div class="file-icon-wrap ${cls}">
+                    <span class="material-icons-round">${icon}</span>
+                </div>
+                <span>${this.escHTML(f.name)}</span>
+            </div>
+            <div class="detailed-size">${size}</div>
+            <div class="detailed-date">${date}</div>
+            <div class="detailed-type">${type}</div>
+        `;
+        el.onclick = () => isDir ? this.openFolder(f) : Ops.previewFile(f);
+        return el;
+    },
+
     buildGalleryItem(f) {
         const thumb = f.thumbnailLink || `https://drive.google.com/thumbnail?id=${f.id}&sz=w400`;
         const el = document.createElement('div');
@@ -1940,6 +3004,46 @@ const Drive = {
     openFolder(f) {
         STATE.folderStack.push({ id: STATE.currFolder, name: document.getElementById('breadcrumb').querySelector('.crumb-item.active')?.textContent || 'Folder' });
         this.load(f.id, f.name);
+    },
+
+    async searchAll() {
+        if (!STATE.token) return;
+        UI.closeSidebar();
+        
+        const area = document.getElementById('file-area');
+        area.innerHTML = `<div class="loading-state">
+            <div class="spinner"></div>
+            <span style="font-size:13px;color:var(--text3)">Indexing all files...</span>
+        </div>`;
+        
+        Toast.show('Searching all files...', 'info');
+        
+        try {
+            const fields = "files(id,name,mimeType,size,iconLink,thumbnailLink,webViewLink,webContentLink,createdTime,modifiedTime,parents)";
+            const url = `https://www.googleapis.com/drive/v3/files?fields=${encodeURIComponent(fields)}&pageSize=1000`;
+            
+            const res = await fetch(url, {
+                headers: { 'Authorization': `Bearer ${STATE.token}` }
+            });
+            const data = await res.json();
+            STATE.fileIndex = data.files || [];
+            
+            // Show in detailed view
+            STATE.viewMode = 'detailed';
+            document.querySelectorAll('.view-btn').forEach(b => b.classList.remove('active'));
+            document.querySelector('[data-view="detailed"]')?.classList.add('active');
+            
+            this.updateBreadcrumb('all', 'Search Results');
+            this.render(STATE.fileIndex);
+            
+            Toast.show(`Found ${STATE.fileIndex.length} files`, 'success');
+        } catch (e) {
+            area.innerHTML = `<div class="empty-state">
+                <div class="empty-icon-wrap"><span class="material-icons-round">error_outline</span></div>
+                <div class="empty-title">Search failed</div>
+                <div class="empty-desc">Check your connection</div>
+            </div>`;
+        }
     },
 
     goBack() {
@@ -2027,6 +3131,7 @@ const Upload = {
         document.getElementById('cancel-fab').style.display = 'flex';
         STATE.uploadQueue = Array.from(files);
         STATE.uploadCanceled = false;
+        Analytics.updateCounts();
         this.processQueue();
     },
 
@@ -2034,6 +3139,8 @@ const Upload = {
         if (STATE.uploadQueue.length === 0) {
             document.getElementById('progress-modal').style.display = 'none';
             document.getElementById('cancel-fab').style.display = 'none';
+            STATE.currentUpload = null;
+            Analytics.updateCounts();
             Drive.refresh();
             Toast.show('Upload complete!', 'success');
             return;
@@ -2041,6 +3148,7 @@ const Upload = {
 
         const file = STATE.uploadQueue.shift();
         STATE.currentUpload = file;
+        Analytics.renderUploads();
 
         const modal = document.getElementById('progress-modal');
         modal.style.display = 'block';
@@ -2142,11 +3250,19 @@ const Ops = {
         const f = STATE.selected;
         if (!f) return;
 
+        // External viewer takes priority if enabled
         if (STATE.settings.extPlayer) {
             window.open(f.webViewLink, '_blank');
             return;
         }
 
+        // Check if in-app viewer is disabled, open externally
+        if (!STATE.settings.inAppPlayer) {
+            window.open(f.webViewLink, '_blank');
+            return;
+        }
+
+        // Default: in-app preview
         document.getElementById('media-title').textContent = f.name;
         document.getElementById('media-frame').src = `https://drive.google.com/file/d/${f.id}/preview`;
         document.getElementById('media-view').classList.add('open');
@@ -2158,8 +3274,10 @@ const Ops = {
 
     download() {
         UI.closeModal('ctx-modal');
-        if (STATE.selected?.webContentLink) window.open(STATE.selected.webContentLink, '_blank');
-        else Toast.show('Cannot download this file type', 'error');
+        if (STATE.selected?.webContentLink) {
+            Downloads.add(STATE.selected);
+            window.open(STATE.selected.webContentLink, '_blank');
+        } else Toast.show('Cannot download this file type', 'error');
     },
 
     share() {
@@ -2299,28 +3417,38 @@ const UI = {
 
 /* ═══════════════════════════════════════════════
    NAVIGATION
-═══════════════════════════════════════════════ */
+ ═══════════════════════════════════════════════ */
 const Nav = {
     switchTab(tab, el) {
         document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-        el.closest('.nav-tab')?.classList.add('active');
+        if (el && el.closest('.nav-tab')) el.closest('.nav-tab').classList.add('active');
         document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
 
         UI.closeSidebar();
 
         if (tab === 'home') {
+            UI.switchScreen('app-screen');
             Drive.load('root');
         } else if (tab === 'photos') {
+            UI.switchScreen('app-screen');
             UI.switchView('gallery');
             Drive.load(STATE.currFolder);
         } else if (tab === 'vault') {
+            UI.switchScreen('app-screen');
             Drive.load(CONFIG.vaultId, 'Vault');
         } else if (tab === 'shared') {
+            UI.switchScreen('app-screen');
             Toast.show('Shared files coming soon', 'info');
-        } else if (tab === 'recent') {
-            STATE.sortBy = 'date'; STATE.sortOrder = 'desc';
-            Drive.applyCurrentSort();
-            Drive.render(STATE.files);
+        } else if (tab === 'analytics') {
+            UI.switchScreen('analytics-view');
+            Analytics.load();
+        } else if (tab === 'uploads') {
+            Analytics.renderUploads();
+            UI.switchScreen('uploads-view');
+        } else if (tab === 'downloads') {
+            UI.switchScreen('downloads-view');
+        } else if (tab === 'premium') {
+            Premium.show();
         }
     }
 };
@@ -2331,6 +3459,7 @@ const Nav = {
 const Settings = {
     open() {
         document.getElementById('ext-player').checked = STATE.settings.extPlayer;
+        document.getElementById('inapp-player').checked = STATE.settings.inAppPlayer;
         document.getElementById('auto-sync').checked = STATE.settings.autoSync;
         document.getElementById('dark-mode').checked = STATE.theme === 'dark';
         UI.openModal('settings-modal');
@@ -2338,6 +3467,7 @@ const Settings = {
 
     save() {
         STATE.settings.extPlayer = document.getElementById('ext-player').checked;
+        STATE.settings.inAppPlayer = document.getElementById('inapp-player').checked;
         STATE.settings.autoSync = document.getElementById('auto-sync').checked;
         localStorage.setItem('d_settings', JSON.stringify(STATE.settings));
     },
@@ -2356,8 +3486,12 @@ const Settings = {
         Toast.show(desc || 'Loading storage info...', 'info');
     },
 
-    security() {
+security() {
         Toast.show('PIN Protection enabled · Auto-lock: 5 min', 'info');
+    },
+
+    upgrade() {
+        Premium.show();
     },
 
     about() {
@@ -2366,8 +3500,228 @@ const Settings = {
 };
 
 /* ═══════════════════════════════════════════════
+   PREMIUM
+ ═══════════════════════════════════════════════ */
+const Premium = {
+    plans: {
+        'base': { name: 'Pro Basic', price: 2.99, storage: 100, period: 'month' },
+        'base-annual': { name: 'Pro Basic (20% off)', price: 28.70, storage: 100, period: 'year' },
+        'plus': { name: 'Pro Plus', price: 7.99, storage: 2000, period: 'month' },
+        'plus-annual': { name: 'Pro Plus (20% off)', price: 76.70, storage: 2000, period: 'year' },
+        'family': { name: 'Pro Family', price: 14.99, storage: 5000, period: 'month' },
+        'family-annual': { name: 'Pro Family (20% off)', price: 143.90, storage: 5000, period: 'year' }
+    },
+    
+    async select(planId) {
+        const plan = this.plans[planId];
+        if (!plan) return;
+        
+        Toast.show(`Opening ${plan.name} checkout...`, 'info');
+        
+        // Open Google One in new tab
+        setTimeout(() => {
+            window.open('https://one.google.com/', '_blank');
+        }, 500);
+    },
+    
+    show() {
+        UI.switchScreen('premium-view');
+    },
+    
+    async checkStatus() {
+        if (!STATE.token) return 'free';
+        
+        try {
+            const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=name,user', {
+                headers: { 'Authorization': `Bearer ${STATE.token}` }
+            });
+            
+            // Check if user has any indication of premium
+            // This would need API call - returning free for now
+            return 'free';
+        } catch {
+            return 'free';
+        }
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   ANALYTICS
+ ═══════════════════════════════════════════════ */
+const Analytics = {
+    async load() {
+        if (!STATE.token) return;
+        
+        try {
+            const res = await fetch('https://www.googleapis.com/drive/v3/about?fields=storageQuota', {
+                headers: { 'Authorization': `Bearer ${STATE.token}` }
+            });
+            const data = await res.json();
+            const { usage, limit } = data.storageQuota;
+            const pct = Math.min((usage / limit) * 100, 100);
+            const usedStr = Ops.formatSize(usage);
+            const availStr = Ops.formatSize(limit - usage);
+            
+            document.getElementById('storage-pct-text').textContent = pct.toFixed(0) + '%';
+            document.getElementById('stat-used').textContent = usedStr;
+            document.getElementById('stat-avail').textContent = availStr;
+            
+            const circle = document.getElementById('storage-radial-circle');
+            const circumference = 251.2;
+            const offset = circumference - (pct / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+            
+            this.loadFileTypes();
+            this.updateCounts();
+        } catch (e) {
+            console.error('Analytics load error:', e);
+        }
+    },
+    
+    async loadFileTypes() {
+        if (!STATE.token) return;
+        
+        try {
+            const fields = "files(id,mimeType,size)";
+            const res = await fetch(`https://www.googleapis.com/drive/v3/files?fields=${encodeURIComponent(fields)}&pageSize=1000`, {
+                headers: { 'Authorization': `Bearer ${STATE.token}` }
+            });
+            const data = await res.json();
+            const files = data.files || [];
+            
+            let images = 0, docs = 0, videos = 0, audio = 0, other = 0;
+            
+            files.forEach(f => {
+                const size = f.size || 0;
+                if (f.mimeType?.includes('image')) images += size;
+                else if (f.mimeType?.includes('document') || f.mimeType?.includes('pdf') || f.mimeType?.includes('word')) docs += size;
+                else if (f.mimeType?.includes('video')) videos += size;
+                else if (f.mimeType?.includes('audio')) audio += size;
+                else other += size;
+            });
+            
+            const total = images + docs + videos + audio + other || 1;
+            
+            const setBar = (id, size, total) => {
+                const pct = total > 0 ? (size / total) * 100 : 0;
+                document.getElementById(id).textContent = Ops.formatSize(size);
+                document.getElementById(id + '-bar').style.width = pct + '%';
+            };
+            
+            setBar('type-images', images, total);
+            setBar('type-docs', docs, total);
+            setBar('type-videos', videos, total);
+            setBar('type-audio', audio, total);
+            setBar('type-other', other, total);
+        } catch (e) {
+            console.error('File types load error:', e);
+        }
+    },
+    
+    updateCounts() {
+        const uploadCount = STATE.uploadQueue.length + (STATE.currentUpload ? 1 : 0);
+        const downloadCount = STATE.downloads.length + (STATE.currentDownload ? 1 : 0);
+        
+        document.getElementById('upload-count').textContent = uploadCount + ' active';
+        document.getElementById('download-count').textContent = downloadCount + ' active';
+        document.getElementById('uploads-subtitle').textContent = uploadCount > 0 ? uploadCount + ' file(s) uploading' : 'No active uploads';
+        document.getElementById('downloads-subtitle').textContent = downloadCount > 0 ? downloadCount + ' file(s) downloading' : 'No active downloads';
+    },
+    
+    renderUploads() {
+        const list = document.getElementById('upload-list');
+        list.innerHTML = '';
+        
+        if (STATE.currentUpload) {
+            const el = document.createElement('div');
+            el.className = 'upload-item';
+            el.innerHTML = `
+                <div class="upload-item-icon"><span class="material-icons-round">insert_drive_file</span></div>
+                <div class="upload-item-info">
+                    <div class="upload-item-name">${STATE.currentUpload.name}</div>
+                    <div class="upload-item-meta">Uploading...</div>
+                </div>
+                <div class="upload-item-pct" id="current-upload-pct">0%</div>
+            `;
+            list.appendChild(el);
+        }
+        
+        STATE.uploadQueue.forEach((f, i) => {
+            const el = document.createElement('div');
+            el.className = 'upload-item';
+            el.innerHTML = `
+                <div class="upload-item-icon"><span class="material-icons-round">insert_drive_file</span></div>
+                <div class="upload-item-info">
+                    <div class="upload-item-name">${f.name}</div>
+                    <div class="upload-item-meta">Queued</div>
+                </div>
+            `;
+            list.appendChild(el);
+        });
+        
+        this.updateCounts();
+    }
+};
+
+/* ═══════════════════════════════════════════════
+   DOWNLOADS
+ ═══════════════════════════════════════════════ */
+const Downloads = {
+    add(file) {
+        const item = {
+            id: file.id,
+            name: file.name,
+            size: file.size,
+            progress: 0
+        };
+        STATE.downloads.push(item);
+        this.render();
+    },
+    
+    updateProgress(id, pct) {
+        const item = STATE.downloads.find(d => d.id === id);
+        if (item) {
+            item.progress = pct;
+            this.render();
+        }
+    },
+    
+    complete(id) {
+        STATE.downloads = STATE.downloads.filter(d => d.id !== id);
+        this.render();
+    },
+    
+    cancel(id) {
+        STATE.downloads = STATE.downloads.filter(d => d.id !== id);
+        this.render();
+        Toast.show('Download cancelled', 'info');
+    },
+    
+    render() {
+        const list = document.getElementById('download-list');
+        list.innerHTML = '';
+        
+        STATE.downloads.forEach(d => {
+            const el = document.createElement('div');
+            el.className = 'download-item';
+            el.innerHTML = `
+                <div class="download-item-icon"><span class="material-icons-round">download</span></div>
+                <div class="download-item-info">
+                    <div class="download-item-name">${d.name}</div>
+                    <div class="download-item-meta">${Ops.formatSize(d.size)}</div>
+                </div>
+                <div class="download-item-pct">${d.progress}%</div>
+            `;
+            list.appendChild(el);
+        });
+        
+        Analytics.updateCounts();
+    }
+};
+
+/* ═══════════════════════════════════════════════
    INIT
-═══════════════════════════════════════════════ */
+ ════════════════════════════════��══════════════ */
 
 // Auth.init must only run after google.accounts is ready.
 // GSI script may not be done even after window.onload on slow connections.
